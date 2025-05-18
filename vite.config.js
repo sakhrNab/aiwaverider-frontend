@@ -1,7 +1,21 @@
 // vite.config.js
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import fs from 'fs';
+import path from 'path';
 
+// Vite plugin to write the CNAME file for GitHub Pages
+function cnamePlugin(domain) {
+  return {
+    name: 'vite-plugin-cname',
+    apply: 'build', // Only run on build
+    async writeBundle(options) {
+      const cnamePath = path.resolve(options.dir, 'CNAME');
+      fs.writeFileSync(cnamePath, domain + '\n');
+      console.log(`✅ CNAME file created at: ${cnamePath} for: ${domain}`);
+    }
+  };
+}
 export default defineConfig(({ mode }) => {
   // process.cwd() is /app in the container
   const CWD = process.cwd();
@@ -23,9 +37,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: '/',
-    plugins: [react()],
+    plugins: [react(), cnamePlugin('aiwaverider.com')],
     // If you have a root option, ensure it's correct, e.g., root: CWD,
     // But default is fine if index.html is in /app
+    
     server: {
       host: '0.0.0.0',
       port: 5173,
