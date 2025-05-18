@@ -1,0 +1,75 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the 'main' branch
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required for peaceiris/actions-gh-pages to push to gh-pages
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        # This will checkout the 'main' branch (or whatever branch triggered the workflow)
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: 'npm'
+
+      - name: Clean npm cache and remove problematic files
+        run: |
+          npm cache clean --force
+          rm -f package-lock.json
+          rm -rf node_modules
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Create .env.production file
+        run: |
+          echo "VITE_NODE_ENV=production" > .env.production
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env.production
+          echo "VITE_API_TIMEOUT=${{ secrets.VITE_API_TIMEOUT }}" >> .env.production
+          echo "VITE_API_RETRY_ATTEMPTS=${{ secrets.VITE_API_RETRY_ATTEMPTS }}" >> .env.production
+          echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}" >> .env.production
+          echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}" >> .env.production
+          echo "VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID }}" >> .env.production
+          echo "VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}" >> .env.production
+          echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}" >> .env.production
+          echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }}" >> .env.production
+          echo "VITE_YOUTUBE_API_KEY=${{ secrets.VITE_YOUTUBE_API_KEY }}" >> .env.production
+          echo "VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}" >> .env.production
+          echo "VITE_PAYPAL_CLIENT_ID=${{ secrets.VITE_PAYPAL_CLIENT_ID }}" >> .env.production
+          echo "VITE_GOOGLE_PAY_ENVIRONMENT=${{ secrets.VITE_GOOGLE_PAY_ENVIRONMENT }}" >> .env.production
+          echo "VITE_GOOGLE_PAY_GATEWAY=${{ secrets.VITE_GOOGLE_PAY_GATEWAY }}" >> .env.production
+          echo "VITE_MERCHANT_NAME=${{ secrets.VITE_MERCHANT_NAME }}" >> .env.production
+          echo "VITE_APPLE_PAY_MERCHANT_ID=${{ secrets.VITE_APPLE_PAY_MERCHANT_ID }}" >> .env.production
+          echo "VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}" >> .env.production
+          echo "VITE_LOGROCKET_APP_ID=${{ secrets.VITE_LOGROCKET_APP_ID }}" >> .env.production
+          echo "VITE_DEBUG_MODE=${{ secrets.VITE_DEBUG_MODE }}" >> .env.production
+          echo "VITE_ENABLE_PAYMENT_SIMULATION=${{ secrets.VITE_ENABLE_PAYMENT_SIMULATION }}" >> .env.production
+          echo "VITE_ENABLE_CRYPTO=${{ secrets.VITE_ENABLE_CRYPTO }}" >> .env.production
+          echo "VITE_ENABLE_APPLE_PAY=${{ secrets.VITE_ENABLE_APPLE_PAY }}" >> .env.production
+          echo "VITE_ENABLE_GOOGLE_PAY=${{ secrets.VITE_ENABLE_GOOGLE_PAY }}" >> .env.production
+          echo "VITE_ENABLE_SEPA=${{ secrets.VITE_ENABLE_SEPA }}" >> .env.production
+          echo "VITE_SHOW_TEST_FEATURES=${{ secrets.VITE_SHOW_TEST_FEATURES }}" >> .env.production
+
+      - name: Build React Vite app
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages # Explicitly set the branch to deploy to
+          force_orphan: true      # Crucial for ensuring gh-pages has a clean history of build artifacts
+          # user_name: 'github-actions[bot]' # Optional
+          # user_email: 'github-actions[bot]@users.noreply.github.com' # Optional
