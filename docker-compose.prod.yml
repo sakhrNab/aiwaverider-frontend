@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile.prod
       args:
-        VITE_API_URL: "https://aiwaverider.com/api" # IMPORTANT: Your actual prod backend URL
+        VITE_API_URL: "https://aiwaverider.com/api" # IMPORTAN : Your actual prod backend URL
     env_file:
       - .env.production
     container_name: frontend_prod
