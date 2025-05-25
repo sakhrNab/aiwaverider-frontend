@@ -7,9 +7,6 @@ import { signIn, signInWithGoogle, signInWithMicrosoft } from '../../api/auth/au
 
 import { toast } from 'react-toastify';
 import { getLockInfo, setLockInfo, clearLockInfo } from '../../utils/lockManager';
-// Add firebase import and remove duplicate auth import
-// import firebase from 'firebase/compat/app';
-// import { auth } from '../utils/firebase';
 
 const SignIn = () => {
   const [formData, setFormData] = useState({
@@ -294,7 +291,7 @@ const SignIn = () => {
   };
   // Add password requirements hint
   const PasswordHint = () => (
-    <div className="text-xs text-gray-500 mt-1">
+    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
       Password must contain at least 8 characters, including uppercase, lowercase, number and special character (@$!%*?&)
     </div>
   );
@@ -361,167 +358,138 @@ const SignIn = () => {
   );
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white shadow-lg p-8 rounded-lg w-full max-w-md">
-        <h2 className="text-3xl font-semibold mb-6 text-center">Sign In</h2>
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[90%] sm:max-w-md mx-auto p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center text-gray-800 dark:text-white">Sign In</h2>
         
-        {isLocked && timeLeft && (
-          <div className="mb-4 p-4 bg-red-50 rounded-lg">
-            <h3 className="font-semibold text-red-800 mb-2">Account Temporarily Locked</h3>
-            <p className="text-sm text-red-600">
-              Time remaining: {timeLeft}
-            </p>
-          </div>
-        )}
-
-        {attempts > 0 && !isLocked && (
-          <div className="text-sm text-gray-600 mb-4 text-center">
-            Attempts remaining: {5 - attempts}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username or Email */}
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
-            <label htmlFor="usernameOrEmail" className="block text-lg font-medium mb-2">Username or Email</label>
+            <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Username or Email
+            </label>
             <input
               type="text"
               id="usernameOrEmail"
               name="usernameOrEmail"
-              required
-              disabled={isLocked}
               value={formData.usernameOrEmail}
               onChange={handleInputChange}
-              className={`w-full p-3 border border-gray-300 rounded-md ${
-                isLocked ? 'bg-gray-100' : ''
-              }`}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+                       text-gray-900 dark:text-white 
+                       bg-white dark:bg-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                       placeholder-gray-400 dark:placeholder-gray-500"
               placeholder="Enter your username or email"
+              required
             />
           </div>
 
-          {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-lg font-medium mb-2">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Password
+            </label>
             <input
               type="password"
               id="password"
               name="password"
-              required
-              disabled={isLocked}
               value={formData.password}
               onChange={handleInputChange}
-              className={`w-full p-3 border border-gray-300 rounded-md ${
-                isLocked ? 'bg-gray-100' : ''
-              }`}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+                       text-gray-900 dark:text-white 
+                       bg-white dark:bg-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                       placeholder-gray-400 dark:placeholder-gray-500"
               placeholder="Enter your password"
+              required
             />
-            <PasswordHint />
+            {showTips && <PasswordHint />}
           </div>
 
-          {/* Submit Button */}
-          <div>
-            <button
-              type="submit"
-              disabled={isLocked}
-              className={`w-full py-3 ${
-                isLocked 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700'
-              } text-white rounded-md transition duration-300 mb-4`}
-            >
-              {isLocked ? 'Account Locked' : 'Sign In'}
-            </button>
-          </div>
-        </form>
+          <button
+            type="submit"
+            disabled={isLocked || isLoading}
+            className="w-full py-2 sm:py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 
+                     text-white text-sm sm:text-base font-semibold rounded-md shadow-sm transition-colors
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            {isLoading ? 'Signing in...' : 'Sign In'}
+          </button>
 
-        {/* Social Login Buttons */}
-        <div className="mt-6">
-          <div className="relative">
+          <div className="relative my-4 sm:my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            <div className="relative flex justify-center text-xs sm:text-sm">
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                Or continue with
+              </span>
             </div>
           </div>
-          
-          <div className="mt-6 grid grid-cols-2 gap-3">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed relative"
+              className="flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 
+                       rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 
+                       bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <span className="sr-only">Sign in with Google</span>
-              {isLoading ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-                </div>
-              ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                  />
-                </svg>
-              )}
-              <span className={`ml-2 ${isLoading ? 'opacity-0' : ''}`}>Google</span>
+              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
+              Google
             </button>
-            
+
             <button
               type="button"
               onClick={handleMicrosoftSignIn}
               disabled={isLoading}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed relative"
+              className="flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 
+                       rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 
+                       bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <span className="sr-only">Sign in with Microsoft</span>
-              {isLoading ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-                </div>
-              ) : (
-                <svg className="w-5 h-5" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
-                  <path fill="#f3f3f3" d="M0 0h23v23H0z" />
-                  <path fill="#f35325" d="M1 1h10v10H1z" />
-                  <path fill="#81bc06" d="M12 1h10v10H12z" />
-                  <path fill="#05a6f0" d="M1 12h10v10H1z" />
-                  <path fill="#ffba08" d="M12 12h10v10H12z" />
-                </svg>
-              )}
-              <span className={`ml-2 ${isLoading ? 'opacity-0' : ''}`}>Microsoft</span>
+              <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft" className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
+              Microsoft
             </button>
           </div>
-        </div>
 
-        {/* Link to Sign Up */}
-        <div className="mt-4 text-center">
-          <p>Don't have an account? 
-            <span
-              onClick={() => navigate('/sign-up')}
-              className="text-blue-500 hover:underline cursor-pointer"
-            >
-              Sign Up
-            </span>
-          </p>
-        </div>
+          {!isLocked && (
+            <p className="mt-4 text-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              Don't have an account?{' '}
+              <a href="/sign-up" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                Sign Up
+              </a>
+            </p>
+          )}
 
-        {/* Help tips - shown after 2 failed attempts */}
-        {showTips && !isLocked && (
-          <div className="mt-6 text-sm text-gray-600">
-            <p className="font-medium mb-2">If you're having trouble signing in:</p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Check your caps lock is off</li>
-              <li>Verify your username/email is correct</li>
-              <li>Try resetting your password</li>
-            </ul>
-          </div>
-        )}
+          {isLocked && timeLeft && (
+            <div className="mt-4 text-center text-xs sm:text-sm text-red-600 dark:text-red-400">
+              Account is locked. Please try again in {timeLeft}
+            </div>
+          )}
 
-        {networkIssue && showNetworkGuide && (
+          {networkIssue && (
+            <div className="mt-4 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-md">
+              <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200">
+                {networkIssue}
+              </p>
+            </div>
+          )}
+        </form>
+
+        {showNetworkGuide && (
           <NetworkGuide />
         )}
       </div>
     </div>
   );
 };
+
+// Update the PasswordHint component to be dark mode compatible
+const PasswordHint = () => (
+  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+    Password must contain at least 8 characters, including uppercase, lowercase, number and special character (@$!%*?&)
+  </div>
+);
 
 export default SignIn;

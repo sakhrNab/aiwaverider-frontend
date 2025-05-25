@@ -12,9 +12,36 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// Validate Firebase configuration
+const validateConfig = () => {
+  const requiredFields = [
+    'apiKey',
+    'authDomain',
+    'projectId',
+    'storageBucket',
+    'messagingSenderId',
+    'appId'
+  ];
+  
+  const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+  
+  if (missingFields.length > 0) {
+    console.error('Missing Firebase configuration fields:', missingFields);
+    console.error('Please check your environment variables: ', 
+      missingFields.map(field => `VITE_FIREBASE_${field.toUpperCase()}`).join(', '));
+    return false;
+  }
+  return true;
+}
+
 // Initialize Firebase
 if (!firebase.apps.length) {
   try {
+    // Validate configuration before initializing
+    if (!validateConfig()) {
+      throw new Error('Invalid Firebase configuration');
+    }
+
     // Initialize the app first
     firebase.initializeApp(firebaseConfig);
     
@@ -23,6 +50,11 @@ if (!firebase.apps.length) {
       firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     } catch (error) {
       console.error('Error setting Firebase auth persistence:', error);
+      console.error('Current environment variables:', {
+        apiKey: firebaseConfig.apiKey ? 'Set' : 'Not set',
+        authDomain: firebaseConfig.authDomain ? 'Set' : 'Not set',
+        projectId: firebaseConfig.projectId ? 'Set' : 'Not set',
+      });
     }
     
     // Configure Firestore settings BEFORE any other Firestore operations
@@ -45,6 +77,7 @@ if (!firebase.apps.length) {
     }
   } catch (error) {
     console.error('Firebase initialization error:', error);
+    console.error('Please check your .env file and Firebase configuration');
   }
 }
 

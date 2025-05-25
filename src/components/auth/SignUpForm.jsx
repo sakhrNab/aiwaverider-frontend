@@ -19,39 +19,39 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Define PasswordRequirements outside of SignUp for effective memoization
 const PasswordRequirements = React.memo(({ validation }) => (
-  <div className="text-sm text-gray-600 mt-2">
+  <div className="text-sm text-gray-700 dark:text-gray-300 mt-2 space-y-1">
     <p>
-      <span className={validation.hasLength ? 'text-green-600' : 'text-red-600'}>
+      <span className={validation.hasLength ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
         {validation.hasLength ? '✓' : '✗'}
       </span>{' '}
       At least 8 characters
     </p>
     <p>
-      <span className={validation.hasUpper ? 'text-green-600' : 'text-red-600'}>
+      <span className={validation.hasUpper ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
         {validation.hasUpper ? '✓' : '✗'}
       </span>{' '}
       At least one uppercase letter
     </p>
     <p>
-      <span className={validation.hasLower ? 'text-green-600' : 'text-red-600'}>
+      <span className={validation.hasLower ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
         {validation.hasLower ? '✓' : '✗'}
       </span>{' '}
       At least one lowercase letter
     </p>
     <p>
-      <span className={validation.hasNumber ? 'text-green-600' : 'text-red-600'}>
+      <span className={validation.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
         {validation.hasNumber ? '✓' : '✗'}
       </span>{' '}
       At least one number
     </p>
     <p>
-      <span className={validation.hasSpecial ? 'text-green-600' : 'text-red-600'}>
+      <span className={validation.hasSpecial ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
         {validation.hasSpecial ? '✓' : '✗'}
       </span>{' '}
       At least one special character (@$!%*?&)
     </p>
     <p>
-      <span className={validation.passwordsMatch ? 'text-green-600' : 'text-red-600'}>
+      <span className={validation.passwordsMatch ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
         {validation.passwordsMatch ? '✓' : '✗'}
       </span>{' '}
       Passwords match
@@ -73,7 +73,7 @@ PasswordRequirements.propTypes = {
 // Define PasswordInput outside of SignUp and memoize it
 const PasswordInput = React.memo(({ password, onChange, validation }) => (
   <div className="form-group">
-    <label htmlFor="password" className="form-label">Password</label>
+    <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
     <input
       type="password"
       id="password"
@@ -82,7 +82,7 @@ const PasswordInput = React.memo(({ password, onChange, validation }) => (
       aria-required="true"
       value={password}
       onChange={onChange}
-      className={`form-input ${validation.isValid ? 'border-green-500' : ''}`}
+      className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
       placeholder="Enter your password"
     />
     <PasswordRequirements validation={validation} />
