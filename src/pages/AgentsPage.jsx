@@ -371,7 +371,7 @@ const Agents = () => {
           </div>
           <div className="mt-4 sm:mt-0">
             <a 
-              href="https://calendly.com/your-booking-link" 
+              href="https://calendly.com/aiwaverider8/30min" 
               target="_blank" 
               rel="noopener noreferrer"
               className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse text-sm sm:text-base"
