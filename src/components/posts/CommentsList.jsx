@@ -3,6 +3,7 @@ import React, { useState, useContext, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 import { AuthContext } from '../../contexts/AuthContext';
 import { PostsContext } from '../../contexts/PostsContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { likeComment, unlikeComment, deleteComment, updateComment, addComment } from '../../api/content/postApi';
 import '../../styles/comments.css';  // Import the new CSS
 import { FaRegHeart, FaHeart } from 'react-icons/fa';
@@ -13,6 +14,7 @@ import debounce from 'lodash/debounce';
 const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => {
   const { user } = useContext(AuthContext);
   const { updateCommentInCache, addCommentToCache, removeCommentFromCache } = useContext(PostsContext);
+  const { darkMode } = useTheme();
   const [likingComments, setLikingComments] = useState(new Set());
 
   // Show only a few comments by default; increase as needed.
@@ -240,7 +242,7 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
 
   const renderComments = (commentsList, level = 0) => {
     return commentsList.slice(0, visibleCount).map(comment => (
-      <div key={comment.id} className="comment-container" style={{ marginLeft: level * 20 }}>
+      <div key={comment.id} className={`comment-container ${darkMode ? 'dark-mode' : ''}`} style={{ marginLeft: level * 20 }}>
         <div>
           <span className="comment-username">{comment.username || 'Anonymous'}</span>
           <span className="comment-time">
@@ -283,8 +285,8 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
             onClick={() => handleToggleLike(comment)}
             className={`flex items-center space-x-2 px-3 py-1 rounded-full transition-all duration-200 ${
               user && comment.likes && Array.isArray(comment.likes) && comment.likes.includes(user.uid)
-                ? 'bg-red-50 text-red-500 hover:bg-red-100'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? (darkMode ? 'bg-red-900 bg-opacity-30 text-red-400 hover:bg-red-800 hover:bg-opacity-40' : 'bg-red-50 text-red-500 hover:bg-red-100')
+                : (darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
             } ${likingComments.has(comment.id) ? 'opacity-60 cursor-not-allowed' : ''}`}
             disabled={!user || likingComments.has(comment.id)}
             title={user ? undefined : 'Sign in to like comments'}
@@ -300,8 +302,8 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
             )}
             <span className={`font-medium ${
               user && comment.likes && Array.isArray(comment.likes) && comment.likes.includes(user.uid)
-                ? 'text-red-500'
-                : 'text-gray-600'
+                ? (darkMode ? 'text-red-400' : 'text-red-500')
+                : (darkMode ? 'text-gray-300' : 'text-gray-600')
             }`}>
               {Array.isArray(comment.likes) ? comment.likes.length : 0}
             </span>
@@ -309,7 +311,7 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
 
           <button 
             onClick={() => setReplyingTo(comment.id)}
-            className="reply-button hover:text-blue-600"
+            className={`reply-button ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'hover:text-blue-600'}`}
             disabled={!user}
             title={user ? undefined : 'Sign in to reply to comments'}
           >
@@ -323,13 +325,13 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
                     setEditingCommentId(comment.id);
                   setEditText(comment.text);
                 }}
-                className="edit-button hover:text-blue-600"
+                className={`edit-button ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'hover:text-blue-600'}`}
               >
                 Edit
               </button>
               <button 
                 onClick={() => handleDeleteComment(comment.id)}
-                className="delete-button hover:text-red-600"
+                className={`delete-button ${darkMode ? 'text-red-400 hover:text-red-300' : 'hover:text-red-600'}`}
               >
                 Delete
               </button>
@@ -369,7 +371,7 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${darkMode ? 'comments-dark' : 'comments-light'}`}>
       {error && <p className="text-red-500">{error}</p>}
       {renderComments(topLevelComments)}
       {topLevelComments.length > visibleCount && (

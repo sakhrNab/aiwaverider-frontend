@@ -7,6 +7,15 @@
     border-radius: 8px;
     padding: 12px;
     margin-bottom: 12px;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Dark mode for comment container */
+  .comment-container.dark-mode {
+    background: #1e293b;          /* darker background for better contrast */
+    border: 1px solid #4a5568;    /* darker border */
+    color: #e2e8f0;               /* light text for dark background */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* subtle shadow for depth */
   }
   
   /* Username styling */
@@ -14,6 +23,12 @@
     font-weight: 600;
     margin-right: 8px;
     color: #0079d3;  /* Reddit blue */
+    transition: color 0.3s ease;
+  }
+
+  /* Dark mode username styling */
+  .dark-mode .comment-username {
+    color: #63b3ed;  /* lighter blue for dark mode */
   }
   
   /* Comment time styling */
@@ -21,6 +36,12 @@
     font-size: 0.85em;
     color: #666;
     margin-left: 4px;
+    transition: color 0.3s ease;
+  }
+
+  /* Dark mode comment time styling */
+  .dark-mode .comment-time {
+    color: #a0aec0;  /* lighter gray for dark mode */
   }
   
   /* Comment text styling */
@@ -29,6 +50,12 @@
     color: #333;
     display: block;
     margin-top: 4px;
+    transition: color 0.3s ease;
+  }
+
+  /* Dark mode comment text styling */
+  .dark-mode .comment-text {
+    color: #e2e8f0;  /* light text for dark background */
   }
   
   /* Action buttons container */
@@ -60,13 +87,28 @@
     border: 1px solid #e1e4e8;
     border-radius: 6px;
     font-size: 0.95em;
-    transition: border-color 0.2s ease;
+    background-color: #fff;
+    color: #333;
+    transition: border-color 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Dark mode input styling */
+  .comments-dark .comment-input,
+  .dark-mode .comment-input {
+    background-color: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
   }
   
   .comment-input:focus {
     outline: none;
     border-color: #0079d3;
     box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.1);
+  }
+
+  .dark-mode .comment-input:focus {
+    border-color: #63b3ed;
+    box-shadow: 0 0 0 2px rgba(99, 179, 237, 0.2);
   }
   
   /* Reply section container */
@@ -85,6 +127,29 @@
     margin-top: 8px;
     margin-right: 8px;
     transition: all 0.2s ease;
+  }
+
+  /* Dark mode button styles */
+  .dark-mode .reply-btn,
+  .comments-dark .reply-btn {
+    background-color: #4299e1;
+  }
+
+  .dark-mode .reply-btn:hover,
+  .comments-dark .reply-btn:hover {
+    background-color: #3182ce;
+  }
+
+  .dark-mode .cancel-btn,
+  .comments-dark .cancel-btn {
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+    color: #e2e8f0;
+  }
+
+  .dark-mode .cancel-btn:hover,
+  .comments-dark .cancel-btn:hover {
+    background-color: #4a5568;
   }
   
   .reply-btn {
@@ -119,8 +184,29 @@
     margin-top: 12px;
     transition: all 0.2s ease;
   }
-  
+
   .load-more-btn:hover {
     background-color: #e4e6e9;
   }
-  
+
+  /* Dark mode load more button */
+  .dark-mode .load-more-btn,
+  .comments-dark .load-more-btn {
+    background-color: #2d3748;
+    border-color: #4a5568;
+    color: #63b3ed;
+  }
+
+  .dark-mode .load-more-btn:hover,
+  .comments-dark .load-more-btn:hover {
+    background-color: #4a5568;
+  }
+
+  /* Dark mode general styles for comments section */
+  .comments-dark {
+    color: #e2e8f0;
+  }
+
+  .comments-section-dark {
+    color: #e2e8f0;
+  }

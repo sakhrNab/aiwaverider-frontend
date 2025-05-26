@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { updatePost, incrementPostView } from '../../api/content/postApi';
 import CommentsSection from './CommentsSection';
 import DOMPurify from 'dompurify';
@@ -9,6 +10,7 @@ import { PostsContext } from '../../contexts/PostsContext';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../../utils/firebase';
 import LikeButton from '../common/LikeButton';
+import './PostDetail.css';
 
 // TipTap + EditorProvider
 import { EditorProvider } from '@tiptap/react';
@@ -118,6 +120,7 @@ const PostDetail = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
   const { user, token } = useContext(AuthContext);
+  const { darkMode } = useTheme();
   const isAdmin = user?.role === 'admin';
   const { getPostById, updatePostInCache, getComments, postDetails } = useContext(PostsContext);
 
@@ -320,13 +323,13 @@ const PostDetail = () => {
   };
 
   if (loading) {
-    return <div className="text-center mt-10">Loading post...</div>;
+    return <div className={`text-center mt-10 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Loading post...</div>;
   }
   if (error) {
-    return <div className="text-center mt-10 text-red-500">{error}</div>;
+    return <div className={`text-center mt-10 ${darkMode ? 'text-red-400' : 'text-red-500'}`}>{error}</div>;
   }
   if (!post) {
-    return <div className="text-center mt-10">No post data found.</div>;
+    return <div className={`text-center mt-10 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>No post data found.</div>;
   }
 
   // Utility to format date
@@ -337,7 +340,7 @@ const PostDetail = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className={`post-detail-container max-w-5xl mx-auto p-6 ${darkMode ? 'theme-dark' : 'theme-light'}`}>
       {successMessage && (
         <p className="text-green-600 text-center font-semibold mb-4">
           {successMessage}
@@ -370,7 +373,7 @@ const PostDetail = () => {
           {/* Stats section */}
           <div className="flex items-center space-x-4 mb-4">
             <LikeButton postId={postId} initialLikes={post.likes || []} />
-            <span className="text-gray-600">{post.views || 0} views</span>
+            <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{post.views || 0} views</span>
           </div>
 
           {post.additionalHTML && (
@@ -382,10 +385,10 @@ const PostDetail = () => {
             />
           )}
 
-          <p className="text-sm text-gray-500">
+          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
             Created At: {formatDate(post.createdAt)}
           </p>
-          <p className="text-sm text-gray-500">
+          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
             Created By: {post.createdByUsername || 'Unknown'}
           </p>
 
