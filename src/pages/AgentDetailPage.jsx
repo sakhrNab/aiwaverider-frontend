@@ -16,6 +16,7 @@ import {
 } from '../api/marketplace/agentApi.js';
 import { useCart } from '../contexts/CartContext.jsx';
 import { AuthContext } from '../contexts/AuthContext.jsx';
+import { useTheme } from '../contexts/ThemeContext.jsx';
 import { trackProductView } from '../services/recommendationService.js';
 import { formatPrice } from '../utils/priceUtils.js';
 import useAgentStore from '../store/agentStore.js';
@@ -62,6 +63,7 @@ const StarRating = ({ rating, onRatingChange, size = "large", interactive = fals
 // Like Button Component
 const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
   const { user } = useContext(AuthContext);
+  const { darkMode } = useTheme();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -325,6 +327,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
 // Comments/Reviews Section Component
 const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
   const { user } = useContext(AuthContext);
+  const { darkMode } = useTheme();
   console.log('CommentSection received existingReviews:', existingReviews);
   const [comments, setComments] = useState(existingReviews);
   const [newComment, setNewComment] = useState('');
@@ -562,22 +565,22 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
   
   // Update the AuthPrompt component to show different message based on eligibility
   const AuthPrompt = () => (
-    <div className="auth-prompt">
-      <div className="auth-prompt-content">
+    <div className={`auth-prompt ${darkMode ? 'dark-mode' : ''}`}>
+      <div className={`auth-prompt-content ${darkMode ? 'dark-bg' : ''}`}>
         <div className="auth-prompt-icon">
-          <FaComment className="comment-icon" />
+          <FaComment className={`comment-icon ${darkMode ? 'text-gray-300' : ''}`} />
         </div>
-        <h3>Join the conversation!</h3>
-        <p>Sign in to leave a review and share your experience with this product.</p>
+        <h3 className={darkMode ? 'text-gray-200' : ''}>Join the conversation!</h3>
+        <p className={darkMode ? 'text-gray-300' : ''}>Sign in to leave a review and share your experience with this product.</p>
         <div className="auth-prompt-buttons">
           <button 
-            className="auth-button signin-button" 
+            className={`auth-button signin-button ${darkMode ? 'dark-button' : ''}`} 
             onClick={handleOpenSignInPopup}
           >
             Sign In
           </button>
           <button 
-            className="auth-button signup-button" 
+            className={`auth-button signup-button ${darkMode ? 'dark-button' : ''}`} 
             onClick={handleOpenSignUpPopup}
           >
             Sign Up
@@ -589,14 +592,14 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
   
   // Create a component for users who are signed in but not eligible to review
   const EligibilityPrompt = () => (
-    <div className="eligibility-prompt">
-      <div className="eligibility-prompt-content">
+    <div className={`eligibility-prompt ${darkMode ? 'dark-mode' : ''}`}>
+      <div className={`eligibility-prompt-content ${darkMode ? 'dark-bg' : ''}`}>
         <div className="eligibility-prompt-icon">
-          <FaComment className="comment-icon" />
+          <FaComment className={`comment-icon ${darkMode ? 'text-gray-300' : ''}`} />
         </div>
-        <h3>Want to share your experience?</h3>
-        <p>{reviewEligibilityReason}</p>
-        <p>You can only review agents that you've purchased or downloaded.</p>
+        <h3 className={darkMode ? 'text-gray-200' : ''}>Want to share your experience?</h3>
+        <p className={darkMode ? 'text-gray-300' : ''}>{reviewEligibilityReason}</p>
+        <p className={darkMode ? 'text-gray-300' : ''}>You can only review agents that you've purchased or downloaded.</p>
       </div>
     </div>
   );
@@ -616,13 +619,13 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
   );
   
   return (
-    <div className="comments-section">
-      <h3 className="section-heading">Reviews & Ratings</h3>
+    <div className={`comments-section ${darkMode ? 'dark-mode' : ''}`}>
+      <h3 className={`section-heading ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Reviews & Ratings</h3>
       
       {user && !hasUserReviewed && canReview ? (
         <form onSubmit={handleCommentSubmit} className="comment-form">
           <div className="rating-input">
-            <label>Your Rating:</label>
+            <label className={darkMode ? 'text-white font-medium' : 'text-gray-700'}>Your Rating:</label>
             <StarRating rating={rating} onRatingChange={setRating} interactive={true} />
           </div>
           
@@ -630,7 +633,7 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Share your thoughts about this agent..."
-            className="comment-textarea"
+            className={`comment-textarea ${darkMode ? 'dark-input' : ''}`}
             rows={4}
           />
           
@@ -645,8 +648,8 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
           </button>
         </form>
       ) : user && hasUserReviewed ? (
-        <div className="already-reviewed-message">
-          <p>You have already submitted a review for this agent. Thank you for your feedback!</p>
+        <div className={`already-reviewed-message ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          <p className={`section-heading-paragraph ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>You have already submitted a review for this agent. Thank you for your feedback!</p>
         </div>
       ) : user && reviewEligibilityChecked && !canReview ? (
         <EligibilityPrompt />
@@ -656,28 +659,30 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
       
       <div className="comments-list">
         {isLoadingComments ? (
-          <div className="loading-comments">Loading reviews...</div>
+          <div className={`loading-comments ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Loading reviews...</div>
         ) : comments.length > 0 ? (
           comments.map(comment => (
-            <div key={comment.id} className="comment-item">
+            <div key={comment.id} className={`comment-item ${darkMode ? 'dark-mode' : ''}`}>
               <div className="comment-header">
                 <div className="comment-user">
-                  <span className="user-name">{comment.userName || 'Anonymous'}</span>
-                  <span className="comment-date">{formatDate(comment.createdAt)}</span>
+                  <span className={`user-name ${darkMode ? 'text-gray-200' : ''}`}>{comment.userName || 'Anonymous'}</span>
+                  <span className={`comment-date ${darkMode ? 'text-gray-400' : ''}`}>{formatDate(comment.createdAt)}</span>
                 </div>
                 <StarRating rating={comment.rating} size="small" />
               </div>
-              <div className="comment-content">{comment.content}</div>
+              <div className={`comment-content ${darkMode ? 'text-gray-300' : ''}`}>{comment.content}</div>
             </div>
           ))
         ) : (
-          <div className="no-comments">No reviews yet. {user ? 'Be the first to review!' : 'Sign in to be the first to review!'}</div>
+          <div className={`no-comments ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            No reviews yet. {user ? 'Be the first to review!' : 'Sign in to be the first to review!'}
+          </div>
         )}
       </div>
       
       {/* Authentication Popups */}
-      {showSignInPopup && <AuthPopup isSignIn={true} onClose={handleClosePopups} />}
-      {showSignUpPopup && <AuthPopup isSignIn={false} onClose={handleClosePopups} />}
+      {showSignInPopup && <AuthPopup isSignIn={true} onClose={handleClosePopups} darkMode={darkMode} />}
+      {showSignUpPopup && <AuthPopup isSignIn={false} onClose={handleClosePopups} darkMode={darkMode} />}
     </div>
   );
 };
@@ -686,6 +691,7 @@ const AgentDetail = () => {
   const { agentId } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const { darkMode } = useTheme();
   const { addToCart } = useCart();
   const [agent, setAgent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -707,7 +713,12 @@ const AgentDetail = () => {
   const loadAttempt = useRef(0); // Track load attempts
   
   // Access the agent store
-  const { allAgents, isLoading: isStoreLoading } = useAgentStore();
+  const { 
+    allAgents, 
+    isStoreLoading,
+    loadInitialData, // Add this to ensure store is loaded
+    setAllAgents // Add this to update the store with fetched agent
+  } = useAgentStore();
   
   // Image slider refs
   const sliderRef = useRef(null);
@@ -870,14 +881,41 @@ const AgentDetail = () => {
     }
   };
   
+  // Track loading attempts to prevent infinite loops
+  const MAX_LOAD_ATTEMPTS = 2;
+  
+  // Track whether we've already started loading to prevent duplicate requests
+  const isLoadingRef = useRef(false);
+  
+  // Track API calls to prevent duplicate requests in development mode
+  const apiCallInProgressRef = useRef(false);
+  
   useEffect(() => {
-    // Skip if we already loaded data
-    if (dataLoaded || !agentId) return;
+    // Skip if we already loaded data or exceeded max attempts or already loading
+    if (dataLoaded || !agentId || loadAttempt.current >= MAX_LOAD_ATTEMPTS || isLoadingRef.current) return;
+    
+    // Mark as loading to prevent duplicate requests from React's double invocation in dev mode
+    isLoadingRef.current = true;
+    console.log(`Starting to load agent ${agentId}, attempt ${loadAttempt.current + 1}`);
+    
+    // First ensure the store is loaded with initial data
+    if (allAgents.length === 0 && !isStoreLoading) {
+      console.log('Store is empty, loading initial data first');
+      loadInitialData(false).catch(err => {
+        console.error('Failed to load initial store data:', err);
+      });
+    }
+    
+    // Define a single global timeoutId reference for cleanup
+    let timeoutId;
     
     const loadAgent = async () => {
       try {
         setLoading(true);
         setError(null);
+        
+        // Add a small delay to ensure auth is ready
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         // Validate agent ID format
         if (!agentId) {
@@ -890,8 +928,8 @@ const AgentDetail = () => {
         
         // First check if data is already in the agent store
         console.log('Checking agent store for agent data...', allAgents);
-        if (allAgents) {
-          const storeAgent = allAgents.find(a => a.id === agentId);
+        if (allAgents && Array.isArray(allAgents) && allAgents.length > 0) {
+          const storeAgent = allAgents.find(a => a.id === agentId || a._id === agentId);
           if (storeAgent && !loadAttempt.current) {
             console.log('Using agent data from store:', storeAgent);
             setAgent(storeAgent);
@@ -933,31 +971,85 @@ const AgentDetail = () => {
         // If not in store or we're forcing a refresh, fetch from API
         console.log('Fetching agent data from API...');
         
-        // Create an abort controller with a longer timeout for initial load
+        // Create an abort controller with a shorter timeout for initial load
         const abortController = new AbortController();
         const timeoutId = setTimeout(() => {
           console.log('Aborting initial agent fetch due to timeout');
           abortController.abort('Initial load timeout');
-        }, 20000); // 20 second timeout for initial load
+          // Set error state and stop loading when timeout occurs
+          setError("Request timed out. Please try again later.");
+          setLoading(false);
+          setDataLoaded(true); // Mark as loaded even on error to prevent retries
+        }, 10000); // 10 second timeout for initial load
         
         // Increment load attempt counter - mark this as our first attempt
         loadAttempt.current += 1;
         
-        const data = await fetchAgentById(agentId, { 
-          signal: abortController.signal,
-          skipCache: loadAttempt.current > 1 // Only use cache on retries
-        });
-
-
-        
-        // Clear the timeout since request completed
-        clearTimeout(timeoutId);
+        let data;
+        try {
+          // Give a small delay to ensure auth is initialized
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Prevent duplicate API calls
+          if (apiCallInProgressRef.current) {
+            console.log('API call already in progress, waiting...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          
+          apiCallInProgressRef.current = true;
+          console.log(`Making API call for agent ${agentId}`);
+          
+          // Add a unique timestamp to prevent caching issues on refresh
+          data = await fetchAgentById(agentId, { 
+            signal: abortController.signal,
+            skipCache: false, // Always try to use cache first
+            timestamp: Date.now() // Add timestamp to prevent caching issues
+          });
+          
+          apiCallInProgressRef.current = false;
+          
+          // Clear the timeout since request completed
+          clearTimeout(timeoutId);
+        } catch (error) {
+          console.error('Error fetching agent data:', error);
+          clearTimeout(timeoutId);
+          
+          // Check if this was an abort error (timeout)
+          if (error.name === 'AbortError') {
+            setError("Request timed out. Please try again later.");
+          } else {
+            setError(error.message || "Failed to load agent data. Please try again later.");
+          }
+          
+          setLoading(false);
+          setDataLoaded(true); // Mark as loaded even on error to prevent infinite retries
+          return; // Exit early on error
+        }
         
         console.log('Raw API response for fetchAgentById:', data);
         
         // Add data validation
         if (!data) {
           throw new Error("No agent data returned from API");
+        }
+        
+        // Log success
+        console.log(`Successfully loaded agent data for ${agentId}`);
+        
+        // Cache the agent data in localStorage for future use
+        try {
+          localStorage.setItem(`agent_${agentId}`, JSON.stringify(data));
+          console.log(`Cached agent data for ${agentId} in localStorage`);
+          
+          // Also update the store with this agent if it's not already there
+          const existingAgent = allAgents.find(a => a.id === agentId || a._id === agentId);
+          if (!existingAgent) {
+            console.log('Adding agent to store for future reference');
+            // Add the agent to the store without replacing existing agents
+            setAllAgents([...allAgents, data]);
+          }
+        } catch (cacheError) {
+          console.warn('Failed to cache agent data:', cacheError);
         }
         
         // Add fallback values for critical fields
@@ -1077,7 +1169,10 @@ const AgentDetail = () => {
         
         // Set up periodic updates instead of real-time updates with Firebase
         setupRealtimeUpdates(agentId, setAgent, setLikesCount, setDownloadCount);
+        setLoading(false);
         setDataLoaded(true); // Mark data as loaded
+        isLoadingRef.current = false; // Reset loading flag
+        
       } catch (err) {
         console.error('Error loading agent:', err);
         
@@ -1085,6 +1180,9 @@ const AgentDetail = () => {
         if (typeof timeoutId !== 'undefined') {
           clearTimeout(timeoutId);
         }
+        
+        // Reset loading flag
+        isLoadingRef.current = false;
         
         // Handle aborted request specially
         if (err.name === 'AbortError' || (err.message && err.message.includes('aborted'))) {
@@ -1103,6 +1201,8 @@ const AgentDetail = () => {
               setAgent(cachedData);
               setLoading(false);
               setDataLoaded(true);
+              // Reset loading flag
+              isLoadingRef.current = false;
               // Setup updates with the cached data
               setupRealtimeUpdates(agentId, setAgent, setLikesCount, setDownloadCount);
               return;
@@ -1121,23 +1221,34 @@ const AgentDetail = () => {
           setError(`There was a problem loading this product. Please try again later.`);
         }
         setLoading(false);
+        setDataLoaded(true); // Important: Mark as loaded even on error to prevent infinite retries
+        isLoadingRef.current = false; // Reset loading flag
+        apiCallInProgressRef.current = false; // Reset API call flag
+        
+        // Show error message to user
+        showToast(`Error loading agent: ${err.message || 'Unknown error'}`, 'error');
       }
     };
-
+    
     loadAgent();
     
-    // Track product view for recommendations
+    // Track product view for recommendations - only if not already tracked
     if (agentId && !viewTracked) {
       console.log('Tracking product view for recommendations:', agentId);
-      trackProductView(agentId)
-        .then(() => {
-          console.log('Successfully tracked product view');
-          setViewTracked(true);
-        })
-        .catch(err => {
-          console.warn('Failed to track product view:', err);
-          // Don't show error to user, this is a background tracking feature
-        });
+      // Mark as tracked immediately to prevent duplicate tracking attempts
+      setViewTracked(true);
+      
+      // Use a separate timeout to not block the main loading flow
+      setTimeout(() => {
+        trackProductView(agentId)
+          .then(() => {
+            console.log('Successfully tracked product view');
+          })
+          .catch(err => {
+            console.warn('Failed to track product view:', err);
+            // Don't show error to user, this is a background tracking feature
+          });
+      }, 2000); // Delay tracking to prioritize main content loading
     }
 
     // Update the URL if needed (redirect /product/ to /agents/)
@@ -1147,9 +1258,16 @@ const AgentDetail = () => {
       navigate(correctPath, { replace: true });
     }
     
-    // Clean up periodic updates on unmount
+    // Clean up timeouts and periodic updates on unmount
     return () => {
-      // Cleanup periodic updates
+      // Cleanup any timeouts or polling intervals
+      const timeoutRef = timeoutId;
+      if (typeof timeoutRef !== 'undefined') {
+        clearTimeout(timeoutRef);
+      }
+      // Reset flags on unmount
+      isLoadingRef.current = false;
+      apiCallInProgressRef.current = false;
     };
   }, [agentId, viewTracked, navigate, allAgents, isStoreLoading, dataLoaded]);
   
@@ -1831,7 +1949,8 @@ const AgentDetail = () => {
   const fileDetails = getFileDetails();
 
   return (
-    <div className="agent-detail-container">
+    
+    <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
       <div className="agent-detail-breadcrumb">
         <Link to="/">Home</Link> / <Link to="/agents">Agents</Link> / <span>{agent.title}</span>
       </div>
@@ -1932,23 +2051,23 @@ const AgentDetail = () => {
               // Paid agent - show the normal price input and cart button
               <>
                 <div className="name-your-price">
-                  <label htmlFor="custom-price">Name a fair price:</label>
+                  <label htmlFor="custom-price" className={darkMode ? 'text-gray-200' : 'text-gray-800'}>Name a fair price:</label>
                   <div className="price-input-container">
-                    <span className="currency-symbol">$</span>
+                    <span className={`currency-symbol ${darkMode ? 'text-black font-bold' : 'text-gray-800'}`}>$</span>
                     <input 
                       type="number" 
                       id="custom-price" 
-                      className="custom-price-input" 
+                      className={`custom-price-input ${darkMode ? 'dark-input' : ''}`} 
                       value={customPrice}
                       onChange={handlePriceChange}
                       min={minPrice}
                       step="0.01"
                     />
                   </div>
-                  <p className="minimum-price-note">
+                  <p className={`minimum-price-note ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                     {agent.priceDetails && agent.priceDetails.basePrice > 0 && 
                      agent.priceDetails.discountedPrice < agent.priceDetails.basePrice ? (
-                      <>The minimum price is ${minPrice.toFixed(2)} <span className="pricing-note">(Discounted from ${agent.priceDetails.basePrice.toFixed(2)})</span></>
+                      <>The minimum price is ${minPrice.toFixed(2)} <span className={`pricing-note ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>(Discounted from ${agent.priceDetails.basePrice.toFixed(2)})</span></>
                     ) : (
                       <>The minimum price is {formatPrice(minPrice)}</>
                     )}
@@ -1992,7 +2111,28 @@ const AgentDetail = () => {
               <span>{copySuccess || 'Copy link'}</span>
             </button>
             
-            <button className="share-btn">
+            <button className="share-btn" onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: agent.title,
+                  text: agent.description,
+                  url: window.location.href,
+                })
+                .then(() => {
+                  showToast('success', '🔗 Successfully shared!', {
+                    icon: "🔗",
+                    autoClose: 2000
+                  });
+                })
+                .catch((error) => {
+                  console.error('Error sharing:', error);
+                  handleCopyLink(); // Fallback to copy link if sharing fails
+                });
+              } else {
+                // Fallback for browsers that don't support navigator.share
+                handleCopyLink();
+              }
+            }}>
               <FaShare />
               <span>Share</span>
             </button>
@@ -2059,7 +2199,7 @@ const AgentDetail = () => {
         
         {activeTab === 'related' && (
           <div className="related-tab">
-            <h3 className="section-heading">Related Products</h3>
+            <h3 className={`section-heading ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Related Products</h3>
             {agent.relatedAgents && agent.relatedAgents.length > 0 ? (
               <div className="related-agents-grid">
                 {agent.relatedAgents.map(relatedAgent => (

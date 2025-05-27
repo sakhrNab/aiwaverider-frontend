@@ -140,7 +140,7 @@ const LatestTech = () => {
           </div>
           <div className="mt-4 md:mt-0">
             <a 
-              href="https://calendly.com/your-booking-link" 
+              href="https://calendly.com/aiwaverider8/30min" 
               target="_blank" 
               rel="noopener noreferrer"
               className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse"

@@ -9,7 +9,7 @@ const BookingHeader = () => {
   const { darkMode } = useTheme();
   
   // IMPORTANT: Replace with your actual Calendly link
-  const calendlyLink = "https://calendly.com/your-booking-link";
+  const calendlyLink = "https://calendly.com/aiwaverider8/30min";
   
   // Determine which page we're on to customize the header text
   const getHeaderText = () => {

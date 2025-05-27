@@ -5,18 +5,74 @@
   margin: 0 auto;
   padding: 2rem 1rem;
   font-family: 'Inter', sans-serif;
+  /* Default background and text color for the page (light theme) */
+  /* These will be overridden by .theme-light and .theme-dark */
 }
+
+.checkout-container.theme-light {
+  background-color: #f9f9f9; /* Or your default light page background */
+  color: #333;
+}
+
+.checkout-container.theme-dark {
+  background-color: #121212; /* Example: Very dark page background for high contrast */
+  color: #e0e0e0; /* Default light text for dark theme */
+}
+
 
 .checkout-header {
   display: flex;
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
+  /* border-bottom will be themed below */
   flex-wrap: wrap;
   gap: 1rem;
 }
 
+/* Light theme header */
+.checkout-container.theme-light .checkout-header {
+  border-bottom: 1px solid #eee;
+}
+.checkout-container.theme-light .checkout-header h1 {
+  color: #212529; /* Dark text for light theme header */
+}
+.checkout-container.theme-light .back-link {
+  color: #555;
+}
+.checkout-container.theme-light .back-link svg {
+  fill: #555;
+}
+.checkout-container.theme-light .back-link:hover {
+  color: #000;
+}
+.checkout-container.theme-light .back-link:hover svg {
+  fill: #000;
+}
+
+
+/* Dark theme header */
+.checkout-container.theme-dark .checkout-header {
+  border-bottom: 1px solid #4a5568; /* Darker border for dark theme */
+}
+.checkout-container.theme-dark .checkout-header h1 {
+  color: #e2e8f0; /* Light text for dark theme header */
+}
+.checkout-container.theme-dark .back-link {
+  color: #a0aec0; /* Lighter text for dark theme header */
+}
+.checkout-container.theme-dark .back-link svg {
+  fill: #a0aec0;
+}
+.checkout-container.theme-dark .back-link:hover {
+  color: #f7fafc;
+}
+.checkout-container.theme-dark .back-link:hover svg {
+  fill: #f7fafc;
+}
+
+
+/* General h1 and back-link styles (structure, not color) */
 .checkout-header h1 {
   margin: 0;
   font-size: 2rem;
@@ -27,7 +83,6 @@
 .back-link {
   display: flex;
   align-items: center;
-  color: #555;
   text-decoration: none;
   font-weight: 500;
   margin-right: 1rem;
@@ -35,14 +90,11 @@
   white-space: nowrap;
 }
 
-.back-link:hover {
-  color: #000;
-}
-
 .back-link svg {
   margin-right: 0.5rem;
   flex-shrink: 0;
 }
+
 
 .checkout-content {
   display: grid;
@@ -50,12 +102,13 @@
   gap: 2rem;
 }
 
-/* Cart Items */
+/* Cart Items panel - This panel itself is light, so its internal text should always be dark */
 .checkout-items {
-  background-color: #fff;
+  background-color: #fff; /* Explicitly light background */
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  color: #333; /* Default dark text color for this panel */
 }
 
 .checkout-items h2 {
@@ -63,6 +116,7 @@
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
   font-weight: 600;
+  color: #212529; /* Always dark heading on this light panel */
 }
 
 .cart-item {
@@ -70,7 +124,7 @@
   grid-template-columns: 120px 1fr auto;
   gap: 1.5rem;
   padding: 1.5rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #eee; /* Light border within light panel */
 }
 
 .cart-item:last-child {
@@ -104,11 +158,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: #212529; /* Always dark item title */
 }
 
 .item-price {
   font-size: 1rem;
-  color: #666;
+  color: #495057; /* Always darker gray for price */
   margin-bottom: 1rem;
 }
 
@@ -124,7 +179,7 @@
 .quantity-controls {
   display: flex;
   align-items: center;
-  border: 1px solid #ddd;
+  border: 1px solid #ddd; /* Light border */
   border-radius: 4px;
   overflow: hidden;
 }
@@ -140,6 +195,10 @@
   cursor: pointer;
   transition: background-color 0.2s;
   flex-shrink: 0;
+  color: #495057; /* Always dark icons */
+}
+.quantity-controls button svg {
+  fill: #495057;
 }
 
 .quantity-controls button:hover {
@@ -156,12 +215,13 @@
   font-size: 0.9rem;
   min-width: 24px;
   text-align: center;
+  color: #212529; /* Always dark quantity number */
 }
 
 .remove-button {
   background: none;
   border: none;
-  color: #e53e3e;
+  color: #e53e3e; /* Red color for remove */
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -171,20 +231,19 @@
   transition: background-color 0.2s;
   white-space: nowrap;
 }
+.remove-button svg {
+  fill: #e53e3e;
+}
 
 .remove-button:hover {
   background-color: #feebeb;
-}
-
-.remove-button svg {
-  margin-right: 0.3rem;
-  flex-shrink: 0;
 }
 
 .item-total {
   font-weight: 600;
   font-size: 1.1rem;
   white-space: nowrap;
+  color: #212529; /* Always dark total */
 }
 
 .discount-section {
@@ -196,10 +255,15 @@
 .discount-section input {
   flex-grow: 1;
   padding: 0.8rem 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid #ced4da;
   border-radius: 4px;
   font-size: 0.9rem;
   min-width: 0;
+  color: #212529; /* Always dark text for input on light panel */
+  background-color: #fff; /* Always light background for input on light panel */
+}
+.discount-section input::placeholder {
+  color: #6c757d;
 }
 
 .discount-section button {
@@ -224,7 +288,7 @@
   cursor: not-allowed;
 }
 
-/* Currency Selector */
+/* Currency Selector - on light panel, so always dark text */
 .currency-selector {
   margin-top: 2rem;
   display: flex;
@@ -232,31 +296,42 @@
   gap: 0.5rem;
 }
 
+.currency.value {
+  color: black;
+}
+
 .currency-selector label {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #555;
+  color: #495057; /* Always darker label color */
 }
 
 .currency-selector select {
   padding: 0.8rem 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid #ced4da;
   border-radius: 4px;
-  background-color: #fff;
+  background-color: #fff; /* Always explicit light background */
   font-size: 0.9rem;
   width: 100%;
   cursor: pointer;
+  color: #212529; /* Always dark text for selected value */
+}
+.currency-selector select option {
+  color: #212529; /* Always dark text for options */
+  background-color: #fff; /* Always light background for options */
 }
 
-/* Checkout Summary */
+
+/* Checkout Summary panel - This panel itself is light, so its internal text should always be dark */
 .checkout-summary {
-  background-color: #fff;
+  background-color: #fff; /* Explicitly light background */
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   position: sticky;
   top: 2rem;
   align-self: start;
+  color: #333; /* Default dark text color for this panel */
 }
 
 .checkout-summary h2, .payment-methods-container h3 {
@@ -264,19 +339,27 @@
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
   font-weight: 600;
+  color: #212529; /* Always dark heading on light panel */
 }
 
 .payment-methods-container h3 {
   font-size: 1.2rem;
   margin-bottom: 1rem;
+  color: #212529; /* Always dark heading on light panel */
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
   padding: 0.8rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #eee; /* Light border */
   align-items: center;
+}
+.summary-row span {
+  color: #495057; /* Always dark labels */
+}
+.summary-row span + span {
+  color: #212529; /* Always dark values */
 }
 
 .summary-row.total {
@@ -285,27 +368,36 @@
   font-size: 1.2rem;
   margin-top: 0.5rem;
   padding-top: 1rem;
-  border-top: 2px solid #eee;
+  border-top: 2px solid #eee; /* Light border */
+}
+.summary-row.total span {
+  color: #212529 !important; /* Ensure total text is dark */
 }
 
 .summary-row.discount {
-  color: #e53e3e;
+  color: #e53e3e; /* Red for discount */
+}
+.summary-row.discount span {
+  color: #e53e3e !important;
 }
 
 .info-icon {
-  color: #aaa;
+  color: #555; /* Always darker gray for InfoCircle icon */
   margin-left: 0.3rem;
   cursor: help;
 }
+.info-icon svg {
+  fill: #555;
+}
 
-/* Payment Form */
+/* Payment Form container - on light panel, so always dark text */
 .payment-methods-container {
   margin-top: 2rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #eee; /* Light border */
   padding-top: 1rem;
 }
 
-/* Payment Method Toggle */
+/* Payment Method Toggle - these toggles have their own light bg, so text/icons should be dark */
 .payment-methods {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -314,7 +406,7 @@
 }
 
 .payment-method-toggle {
-  background-color: #f8f9fa;
+  background-color: #f8f9fa; /* Light background for toggle */
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   padding: 8px 6px;
@@ -342,19 +434,28 @@
 .payment-method-toggle .method-icon {
   font-size: 18px;
   margin-bottom: 4px;
-  color: #4a5568;
+  color: #495057; /* Always dark icon color */
+}
+.payment-method-toggle .method-icon svg {
+  fill: #495057;
 }
 
 .payment-method-toggle.active .method-icon {
-  color: #3182ce;
+  color: #007bff;
+}
+.payment-method-toggle.active .method-icon svg {
+  fill: #007bff;
 }
 
 .payment-method-toggle span {
   font-size: 11px;
   font-weight: 500;
+  color: #343a40; /* Always dark text color */
+}
+.payment-method-toggle.active span {
+  color: #007bff;
 }
 
-/* For the centered crypto row */
 .payment-methods .col-span-3 {
   grid-column: span 3;
   display: flex;
@@ -366,7 +467,7 @@
   max-width: 100px;
 }
 
-/* Form Group */
+/* Form Group - on light panel, so always dark text */
 .form-group {
   margin-bottom: 1.2rem;
 }
@@ -376,7 +477,7 @@
   margin-bottom: 0.5rem;
   font-weight: 500;
   font-size: 0.95rem;
-  color: #333;
+  color: #343a40; /* Always dark label color */
 }
 
 .form-group input,
@@ -384,10 +485,20 @@
 .form-group textarea {
   width: 100%;
   padding: 0.8rem 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid #ced4da;
   border-radius: 4px;
   font-size: 1rem;
   transition: border-color 0.2s;
+  color: #212529; /* Always dark text color */
+  background-color: #ffffff; /* Always explicit light background */
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #6c757d;
+}
+.form-group select option {
+  color: #212529; /* Always dark text for options */
+  background-color: #fff; /* Always light background for options */
 }
 
 .form-group input:focus,
@@ -398,7 +509,6 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
-/* Checkbox styles - With increased specificity to override Tailwind */
 .checkout-container .form-group.checkbox {
   position: relative;
   padding-left: 0;
@@ -418,6 +528,7 @@
   min-height: unset;
   z-index: auto;
   flex-shrink: 0;
+  border: 1px solid #adb5bd; /* Ensure checkbox border is visible */
 }
 
 .checkout-container .form-group.checkbox label {
@@ -429,10 +540,9 @@
   width: auto;
   line-height: 1.4;
   cursor: pointer;
-  color: #333;
+  color: #343a40; /* Always dark label text */
 }
 
-/* Override any Tailwind or other CSS framework styles */
 .checkout-container input[type="checkbox"]:not(:checked),
 .checkout-container input[type="checkbox"]:checked {
   position: static !important;
@@ -449,16 +559,16 @@
   border: none !important;
 }
 
-/* Stripe Elements */
+/* Stripe Elements - on light panel, so always dark text/elements */
 .stripe-form {
   margin-top: 1.5rem;
 }
 
 .card-element-container {
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid #ced4da;
   border-radius: 4px;
-  background: white;
+  background: white; /* Always light */
   min-height: 42px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   position: relative;
@@ -469,7 +579,7 @@
   align-items: center;
   justify-content: center;
   height: 42px;
-  color: #666;
+  color: #495057; /* Always darker text */
   font-size: 14px;
 }
 
@@ -479,19 +589,18 @@
   width: 100%;
 }
 
-/* Fix for the Stripe iframe */
 iframe.StripeElement {
   width: 100% !important;
   min-height: 42px !important;
 }
 
-/* Make sure CardElement is visible */
 .card-element-container .StripeElement {
   width: 100%;
   height: 100%;
   min-height: 40px;
   padding: 10px 0;
 }
+/* Stripe CardElement text color is best set via JS options: style: { base: { color: '#212529' } } */
 
 .card-error {
   color: #e53e3e;
@@ -504,7 +613,10 @@ iframe.StripeElement {
   align-items: center;
   gap: 10px;
   margin: 1rem 0;
-  color: #666;
+  color: #495057; /* Always darker color for "and more..." */
+}
+.card-brands svg {
+  fill: #495057; /* Always ensure SVG icons are dark */
 }
 
 .card-brands span {
@@ -512,7 +624,7 @@ iframe.StripeElement {
   margin-left: 5px;
 }
 
-/* Payment Buttons */
+/* Payment Buttons - colors are specific to button type */
 .pay-button {
   width: 100%;
   padding: 12px 16px;
@@ -570,10 +682,10 @@ iframe.StripeElement {
   background-color: #9aecf0;
 }
 
-/* Security & badges */
+/* Security & badges - on light panel, so text/icons should be dark */
 .checkout-container .security-note {
   text-align: center !important;
-  color: #666 !important;
+  color: #495057 !important; /* Always darker text */
   font-size: 0.85rem !important;
   margin-top: 1.5rem !important;
   width: 100% !important;
@@ -586,6 +698,7 @@ iframe.StripeElement {
   line-height: 1.4 !important;
   max-width: 600px !important;
   margin: 0 auto !important;
+  color: #495057 !important; /* Always darker text */
 }
 
 .checkout-container .payment-badges {
@@ -595,19 +708,22 @@ iframe.StripeElement {
   gap: 1rem !important;
   margin-top: 1rem !important;
   margin-bottom: 2rem !important;
-  color: #666 !important;
+  color: #495057 !important;
   width: 100% !important;
+}
+.checkout-container .payment-badges svg {
+  fill: #495057 !important;
 }
 
 .secure-badge, .pci-badge {
-  background-color: #f0f0f0;
+  background-color: #f0f0f0; /* Light badge background */
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.8rem;
-  color: #555;
+  color: #343a40; /* Always dark text on light badge */
 }
 
-/* Container styles for specific payment methods */
+/* Container styles for specific payment methods - these have their own light bg, so text/icons should be dark */
 .paypal-container,
 .sepa-container,
 .ideal-container,
@@ -616,22 +732,27 @@ iframe.StripeElement {
 .google-pay-container,
 .crypto-container,
 .afterpay-container {
-  background-color: #f8f9fa;
+  background-color: #f8f9fa; /* Light background */
   border-radius: 8px;
   padding: 1.2rem;
   margin-bottom: 1rem;
 }
+.paypal-container h3, .sepa-container h3, .ideal-container h3, .upi-container h3, .apple-pay-container h3, .google-pay-container h3, .crypto-container h3, .afterpay-container h3 {
+  color: #212529; /* Always dark heading */
+}
+.paypal-container p, .sepa-container p, .ideal-container p, .upi-container p, .apple-pay-container p, .google-pay-container p, .crypto-container p, .afterpay-container p {
+  color: #495057; /* Always dark paragraph text */
+}
 
-/* SEPA specific styles */
 .sepa-form {
   margin-top: 1rem;
 }
-
+.sepa-form .form-group label { color: #343a40; }
+.sepa-form .form-group input { color: #212529; background-color: #fff; }
 .sepa-form .form-group input.valid {
   border-color: #28a745;
   background-color: #f8fff8;
 }
-
 .sepa-form .form-group input.invalid {
   border-color: #dc3545;
   background-color: #fff8f8;
@@ -642,9 +763,14 @@ iframe.StripeElement {
   font-size: 0.85rem;
   margin-top: 0.3rem;
 }
+.field-info {
+    color: #495057;
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+}
 
 .sepa-reference-container {
-  background-color: #f0f8ff;
+  background-color: #f0f8ff; /* Light blueish background */
   border: 1px solid #d1e3fa;
   border-radius: 6px;
   padding: 12px;
@@ -652,31 +778,29 @@ iframe.StripeElement {
   clear: both;
   width: 100%;
 }
-
 .reference-title {
   font-weight: 600;
   margin-bottom: 8px;
   font-size: 0.95rem;
+  color: #2c3e50; /* Always dark blue/gray */
 }
-
 .reference-item {
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
   font-size: 0.9rem;
 }
-
-.reference-label {
-  color: #666;
+.reference-item .reference-label {
+  color: #525252; /* Always darker gray */
   flex: 0 0 40%;
 }
-
-.reference-value {
+.reference-item .reference-value {
   font-weight: 500;
   text-align: right;
   flex: 0 0 60%;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #2c3e50; /* Always dark blue/gray */
 }
 
 .sepa-consent-container {
@@ -728,7 +852,7 @@ iframe.StripeElement {
   font-size: 0.85rem !important;
   line-height: 1.4 !important;
   font-weight: normal !important;
-  color: #333 !important;
+  color: #343a40 !important; /* Always dark text for consent label */
   white-space: normal !important;
 }
 
@@ -754,14 +878,14 @@ input[type="checkbox"]#sepaConsent {
 .payment-info-note {
   margin-top: 0.8rem;
   font-size: 0.85rem;
-  color: #666;
+  color: #495057; /* Always darker gray */
   font-style: italic;
 }
 
 .paypal-loading {
   text-align: center;
   padding: 1rem;
-  color: #666;
+  color: #495057; /* Always darker text */
   font-style: italic;
   background-color: #f5f5f5;
   border-radius: 4px;
@@ -772,13 +896,13 @@ input[type="checkbox"]#sepaConsent {
   gap: 0.8rem;
   margin: 0.8rem 0;
 }
-
 .crypto-options span {
   background-color: #f0f0f0;
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 0.85rem;
   font-weight: 500;
+  color: #343a40; /* Always dark text on light badge */
 }
 
 .afterpay-installments {
@@ -789,6 +913,10 @@ input[type="checkbox"]#sepaConsent {
   margin: 0.8rem 0;
   font-size: 0.9rem;
 }
+.afterpay-installments p {
+   color: #343a40 !important; /* Always dark text */
+}
+
 
 /* Empty cart styles */
 .empty-cart {
@@ -797,7 +925,7 @@ input[type="checkbox"]#sepaConsent {
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  background-color: #ffffff;
+  background-color: #ffffff; /* Light background for empty cart message */
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;
@@ -807,19 +935,22 @@ input[type="checkbox"]#sepaConsent {
 
 .empty-cart-icon {
   font-size: 5rem;
-  color: #d0d0d0;
+  color: #d0d0d0; /* Light gray, fine */
   margin-bottom: 20px;
+}
+.empty-cart-icon svg {
+  fill: #d0d0d0;
 }
 
 .empty-cart h2 {
   font-size: 1.75rem;
   margin-bottom: 10px;
-  color: #333;
+  color: #333; /* Dark text */
 }
 
 .empty-cart p {
   font-size: 1rem;
-  color: #666;
+  color: #666; /* Darker gray text */
   margin-bottom: 25px;
 }
 
@@ -843,11 +974,13 @@ input[type="checkbox"]#sepaConsent {
   margin-top: 3rem;
 }
 
-.related-products h2 {
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  font-weight: 600;
+.checkout-container.theme-light .related-products h2 {
+  color: #212529;
 }
+.checkout-container.theme-dark .related-products h2 {
+  color: #e2e8f0;
+}
+
 
 .related-grid {
   display: grid;
@@ -856,7 +989,7 @@ input[type="checkbox"]#sepaConsent {
 }
 
 .related-product {
-  background-color: #fff;
+  background-color: #fff; /* Light card background */
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -883,18 +1016,19 @@ input[type="checkbox"]#sepaConsent {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  color: #212529; /* Always dark text on light card */
 }
 
 .related-product p {
   margin: 0 1rem 1rem;
-  color: #666;
+  color: #495057; /* Always darker gray on light card */
 }
 
 .view-button {
   display: block;
   text-align: center;
   background-color: #f5f5f5;
-  color: #333;
+  color: #333; /* Always dark text on light button */
   text-decoration: none;
   padding: 0.8rem;
   margin: 0 1rem 1rem;
@@ -912,33 +1046,33 @@ input[type="checkbox"]#sepaConsent {
   .checkout-content {
     grid-template-columns: 1fr;
   }
-  
+
   .checkout-summary {
     position: static;
     margin-top: 2rem;
   }
-  
+
   .cart-item {
     grid-template-columns: 80px 1fr;
   }
-  
+
   .item-image {
     width: 80px;
     height: 60px;
   }
-  
+
   .item-total {
     grid-column: 1 / -1;
     text-align: right;
     margin-top: 1rem;
   }
-  
+
   .payment-methods {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
-  
+
   .payment-method-toggle {
     margin: 0;
     min-width: auto;
@@ -946,32 +1080,37 @@ input[type="checkbox"]#sepaConsent {
 }
 
 @media (max-width: 480px) {
-  .checkout-header h1 {
+ /* Theme specific h1 for mobile */
+  .checkout-container.theme-light .checkout-header h1,
+  .checkout-container.theme-dark .checkout-header h1 { /* Apply to both if size is same */
     font-size: 1.5rem;
   }
-  
-  .back-link {
+
+  /* Theme specific back-link for mobile */
+  .checkout-container.theme-light .back-link,
+  .checkout-container.theme-dark .back-link {  /* Apply to both if size is same */
     font-size: 0.9rem;
   }
-  
+
   .cart-item {
     grid-template-columns: 1fr;
   }
-  
+
   .item-image {
     width: 100%;
     height: 120px;
     margin-bottom: 1rem;
   }
-  
+
   .payment-methods {
     grid-template-columns: 1fr;
   }
-  
-  .form-group.checkbox label {
+
+  .checkout-container .form-group.checkbox label {
     font-size: 0.85rem;
+    /* color is already handled by general .form-group label rules for light panels */
   }
-  
+
   .card-brands {
     flex-wrap: wrap;
   }
@@ -983,8 +1122,11 @@ input[type="checkbox"]#sepaConsent {
   border-radius: 4px;
   padding: 1rem;
   margin: 1rem 0;
-  color: #856404;
 }
+.payment-warning p {
+  color: #856404 !important;
+}
+
 
 .currency-switch-button {
   background-color: #007bff;
@@ -1009,48 +1151,16 @@ input[type="checkbox"]#sepaConsent {
   padding: 0.5rem;
   background-color: #f0f0f0;
   border-radius: 4px;
-  color: #666;
   font-size: 0.85rem;
 }
-
-.sepa-consent-checkbox {
-  display: flex !important;
-  align-items: flex-start !important;
-  flex-direction: row !important;
-  width: 100% !important;
-  position: relative !important;
+.payment-security-note span {
+  color: #495057; /* Always darker text */
+}
+.payment-security-note svg {
+  fill: #495057;
+  margin-right: 8px;
 }
 
-.sepa-consent-checkbox input[type="checkbox"] {
-  position: relative !important;
-  appearance: auto !important;
-  -webkit-appearance: checkbox !important;
-  opacity: 1 !important;
-  margin-right: 10px !important;
-  margin-top: 3px !important;
-  width: 18px !important;
-  height: 18px !important;
-  min-width: 18px !important;
-  flex-shrink: 0 !important;
-  cursor: pointer !important;
-  z-index: 2 !important;
-  display: block !important;
-  float: left !important;
-}
-
-.sepa-consent-checkbox label {
-  font-size: 0.85rem !important;
-  line-height: 1.4 !important;
-  white-space: normal !important;
-  max-width: calc(100% - 30px) !important;
-  text-align: left !important;
-  display: inline-block !important;
-  font-weight: normal !important;
-  margin-top: 0 !important;
-  cursor: pointer !important;
-  margin-left: 0 !important;
-  float: none !important;
-}
 
 .consent-wrapper {
   display: flex;
@@ -1081,10 +1191,9 @@ input[type="checkbox"]#sepaConsent {
   margin: 0;
   padding: 0;
   font-weight: normal;
-  color: #333;
+  color: #343a40; /* Always dark text for consent label */
 }
 
-/* Override any framework-specific styles */
 #sepaConsent {
   opacity: 1 !important;
   position: static !important;
@@ -1098,7 +1207,39 @@ input[type="checkbox"]#sepaConsent {
   margin-top: 30px;
 }
 
-/* Add space after BIC field specifically */
 #bic {
   margin-bottom: 20px;
-} 
+}
+
+/* Fallback for select options and inputs if system forces dark mode on them
+   Only apply if the element *doesn't* already have an explicit light background
+   set by other rules (like #fff for panels)
+*/
+@media (prefers-color-scheme: dark) {
+  /* These apply if the browser/OS forces dark mode on form elements
+     AND those elements are not already styled with an explicit light background by our panel styles */
+  .form-group select:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"]) option,
+  .currency-selector select:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"]) option {
+    color: #e0e0e0;
+    background-color: #3a3a3a;
+  }
+
+  .form-group select:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"]),
+  .form-group input:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"]):not([type="checkbox"]):not([type="radio"]),
+  .form-group textarea:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"]),
+  .discount-section input:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"]),
+  .currency-selector select:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"]) {
+    background-color: #2c2c2c !important;
+    color: #e0e0e0 !important;
+    border-color: #555 !important;
+  }
+  .form-group input:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"])::placeholder,
+  .form-group textarea:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"])::placeholder,
+  .discount-section input:not([style*="background-color: rgb(255, 255, 255)"]):not([style*="background-color: #fff"])::placeholder {
+    color: #aaa;
+  }
+  .card-element-container:not([style*="background: white"]) { /* Stripe card element container */
+    background: #2c2c2c;
+    border-color: #555;
+  }
+}

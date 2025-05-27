@@ -27,7 +27,7 @@ import GooglePayButton from '../components/payments/GooglePayButton.jsx';
 import ApplePayButton from '../components/payments/ApplePayButton.jsx';
 import PaymentSuccessRecommendations from '../components/payments/PaymentSuccessRecommendations.jsx';
 import './CheckoutPage.css';
-
+import { useTheme } from '../contexts/ThemeContext'; // Make sure this path is correct
 import { HashLoader } from 'react-spinners';
 
 // Add some style fixes for the Stripe Elements and form fields
@@ -464,7 +464,9 @@ const Checkout = () => {
   const [{ isPending }] = usePayPalScriptReducer();
   const { user } = useAuth();
   const isAuthenticated = !!user; // User is authenticated if user object exists
-  
+  const { darkMode } = useTheme();
+  const currentThemeClass = darkMode ? 'theme-dark' : 'theme-light';
+
   // Add loading state for the initial page load
   const [isLoading, setIsLoading] = useState(true);
   
@@ -502,14 +504,12 @@ const Checkout = () => {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
   // Calculate VAT (variable based on country)
   const vatRate = country === 'United States' ? 0 : 0.2; // 20% VAT for non-US
   const vatAmount = (cartTotal - discountAmount) * vatRate;
   
   // Calculate final total
   const finalTotal = cartTotal - discountAmount + vatAmount;
-  
   // Generate a stable order reference when component mounts
   useEffect(() => {
     // Format: ORDER-{YYMMDDhhmm}-{random4digits}
@@ -524,7 +524,6 @@ const Checkout = () => {
     const reference = `ORDER-${year}${month}${day}${hour}${minute}-${randomDigits}`;
     setOrderReference(reference);
   }, []);
-  
   // Get available payment methods based on user location
   useEffect(() => {
     const detectCountry = async () => {
@@ -1608,7 +1607,7 @@ const Checkout = () => {
   }
   
   return (
-    <div className="checkout-container">
+      <div className={`checkout-container ${currentThemeClass}`}>      
       <div className="checkout-header">
         <Link to="/" className="back-link">
           <FaArrowLeft /> Continue Shopping

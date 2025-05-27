@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../../contexts/AuthContext';
 import { PostsContext } from '../../contexts/PostsContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { addComment } from '../../api/content/postApi';
 import CommentsList from './CommentsList';
 import { toast } from 'react-toastify';
@@ -9,6 +10,7 @@ import { toast } from 'react-toastify';
 const CommentsSection = ({ postId }) => {
   const { user } = useContext(AuthContext);
   const { fetchBatchComments, addCommentToCache, commentsCache } = useContext(PostsContext);
+  const { darkMode } = useTheme();
   const [comments, setComments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -193,8 +195,8 @@ const handleAddComment = async () => {
 };
 
   return (
-    <div className="mt-6">
-      <h2 className="text-xl font-semibold mb-2">Comments ({comments?.length || 0})</h2>
+    <div className={`mt-6 ${darkMode ? 'comments-section-dark' : 'comments-section-light'}`}>
+      <h2 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Comments ({comments?.length || 0})</h2>
       
       {/* Add comment section - always visible but conditionally enabled */}
       <div className="mb-4">
@@ -202,7 +204,7 @@ const handleAddComment = async () => {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
           className={`w-full p-2 border rounded resize-none transition-colors ${
-            user ? 'bg-white hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500' : 'bg-gray-100'
+            user ? (darkMode ? 'bg-gray-700 text-white border-gray-600 hover:border-blue-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-400' : 'bg-white hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500') : (darkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100')
           }`}
           placeholder={user ? "Write a comment..." : "Sign in to comment"}
           disabled={!user}
@@ -213,8 +215,8 @@ const handleAddComment = async () => {
             onClick={handleAddComment}
             className={`px-4 py-2 rounded transition-colors ${
               user && newComment.trim()
-                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                ? (darkMode ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-blue-600 text-white hover:bg-blue-700')
+                : (darkMode ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-600 cursor-not-allowed')
             }`}
             disabled={!user || !newComment.trim()}
           >
@@ -230,7 +232,7 @@ const handleAddComment = async () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
       ) : comments.length === 0 ? (
-        <p className="text-gray-600 text-center py-4">
+        <p className={`text-center py-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           No comments yet. {user ? 'Be the first to comment!' : 'Sign in to be the first to comment!'}
         </p>
       ) : (
