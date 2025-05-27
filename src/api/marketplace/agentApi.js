@@ -665,43 +665,105 @@ export const deletePost = async (postId, token) => {
 };
 
 /**
- * Fetch detailed agent information by ID with options
- * @param {string} agentId - ID of the agent to fetch
- * @param {Object} options - Additional options like includeReviews, includePrice, etc.
- * @returns {Promise<Object>} - Agent data with requested details
+ * Fetch a single agent by ID from the backend API
+ * @param {string} agentId - The ID of the agent to fetch
+ * @param {object} options - Additional options including timestamp for cache busting
+ * @returns {Promise<Object>} - Agent data
  */
 export const fetchAgentById = async (agentId, options = {}) => {
   try {
-    const {
-      includeReviews = false,
-      includePrice = true,
-      includeStats = true,
-      forceRefresh = false
-    } = options;
-
-    const queryParams = new URLSearchParams();
+    const { timestamp = Date.now() } = options;
+    console.log(`Attempting to fetch agent with ID: ${agentId}`);
     
-    if (includeReviews) {
-      queryParams.append('includeReviews', 'true');
+    // Validate agent ID format
+    if (!agentId || typeof agentId !== 'string') {
+      console.error('Invalid agent ID format:', agentId);
+      throw new Error('Invalid agent ID format');
     }
     
-    if (includePrice) {
-      queryParams.append('includePrice', 'true');
+    // Special handling for different ID formats
+    
+    // 1. Detect Firebase-style document IDs (typically 20+ chars, alphanumeric)
+    const isFirebaseId = /^[a-zA-Z0-9]{20,}$/.test(agentId);
+    
+    // 2. Detect standard agent-XX format
+    const isStandardAgentId = /^agent-\d+$/.test(agentId);
+    
+    // Default endpoint uses the ID directly
+    let endpoint = `/api/agents/${agentId}`;
+    
+    if (isFirebaseId) {
+      console.log('Detected Firebase-style document ID, using doc endpoint');
+      endpoint = `/api/agents/doc/${agentId}`;
+    } else if (isStandardAgentId) {
+      console.log('Detected standard agent-XX format ID, using specific route');
+      // For agent-XX format, just use it directly
+      // The backend has a special route to handle this format
+      // No need to modify the endpoint
     }
     
-    if (includeStats) {
-      queryParams.append('includeStats', 'true');
+    // Add cache busting timestamp
+    endpoint = `${endpoint}?_t=${timestamp}`;
+    
+    try {
+      // Make the API request
+      console.log(`Making request to: ${endpoint}`);
+      const response = await api.get(endpoint);
+      console.log('Successfully fetched agent from API');
+      
+      if (response.data && response.data.data) {
+        // Format and return the agent data
+        return {
+          ...response.data.data,
+          // Ensure the rating is formatted correctly
+          rating: {
+            average: response.data.data.averageRating || 0,
+            count: response.data.data.reviewCount || 0
+          }
+        };
+      } else if (response.data) {
+        // Some APIs might return the data directly
+        return response.data;
+      }
+      
+      throw new Error('Invalid response structure from API');
+    } catch (apiError) {
+      console.error('API error fetching agent:', apiError);
+      
+      // Generate mock data for development
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Generating mock data for development');
+        // Extract ID number if possible
+        const idNumber = isStandardAgentId ? 
+          parseInt(agentId.replace('agent-', '')) : 
+          Math.floor(Math.random() * 1000);
+        
+        // Generate a mock agent for testing purposes
+        return {
+          id: agentId,
+          name: `Agent ${idNumber}`,
+          title: `Test Agent ${idNumber}`,
+          description: 'This is a mock agent for testing purposes. In production, this would be replaced with real data from the API.',
+          category: 'Test',
+          imageUrl: `https://picsum.photos/seed/${idNumber}/600/400`,
+          price: Math.random() > 0.3 ? (Math.floor(Math.random() * 50) + 10).toFixed(2) : 'Free',
+          rating: {
+            average: (3 + Math.random() * 2).toFixed(1),
+            count: Math.floor(Math.random() * 100) + 10
+          },
+          creator: {
+            name: `Creator ${idNumber % 10}`,
+            avatarUrl: `https://i.pravatar.cc/150?img=${idNumber % 10}`
+          },
+          isFeatured: Math.random() > 0.7,
+          isNew: Math.random() > 0.7,
+          tags: ['Test', 'Mock', 'Development'],
+          dateCreated: new Date(Date.now() - Math.random() * 10000000000).toISOString()
+        };
+      }
+      
+      throw apiError;
     }
-    
-    if (forceRefresh) {
-      queryParams.append('refresh', 'true');
-    }
-    
-    const url = `/api/agents/${agentId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    console.log(`[API] Fetching agent by ID ${agentId} with options:`, options);
-    
-    const response = await api.get(url);
-    return response.data;
   } catch (error) {
     console.error(`Error fetching agent ${agentId}:`, error);
     throw error;
