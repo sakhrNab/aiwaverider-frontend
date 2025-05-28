@@ -56,10 +56,9 @@ const App = () => {
 
     const redirectPath = sessionStorage.redirect;
     if (redirectPath) {
-      sessionStorage.removeItem("redirect");
-      window.history.replaceState(null, "", redirectPath);
+        sessionStorage.removeItem("redirect");
+        window.history.replaceState(null, "", redirectPath);
     }
-    
     // Only initialize once across all renders
     if (initRef.current || appInitialized) return;
     initRef.current = true;
