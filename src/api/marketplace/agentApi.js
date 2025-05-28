@@ -118,9 +118,40 @@ export const getPublicAgents = async (filters = {}) => {
 };
 
 // Get agent by ID
-export const getAgentById = async (agentId) => {
+export const getAgentById = async (agentId, options = {}) => {
   try {
-    const response = await api.get(`/api/agents/${agentId}`);
+    // Extract options with defaults
+    const { skipCache = true, includeReviews = true, timestamp = Date.now() } = options;
+    
+    // Build URL with query parameters to bust all caching layers
+    let url = `/api/agents/${agentId}`;
+    const queryParams = [];
+    
+    // Always add these parameters to ensure we get fresh data
+    if (skipCache) queryParams.push(`skipCache=true`);
+    if (includeReviews) queryParams.push(`includeReviews=true`);
+    
+    // Always add timestamp to bypass browser cache
+    queryParams.push(`_t=${timestamp}`);
+    
+    // Add refresh=true to bypass Redis and HTTP caching
+    queryParams.push(`refresh=true`);
+    
+    // Combine into URL
+    if (queryParams.length > 0) {
+      url += `?${queryParams.join('&')}`;
+    }
+    
+    console.log(`[API] Fetching agent ${agentId} with fresh data`, options);
+    
+    // Set headers to bypass caching layers
+    const headers = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    };
+    
+    const response = await api.get(url, { headers });
     return response.data;
   } catch (error) {
     console.error(`Error fetching agent ${agentId}:`, error);
@@ -164,14 +195,22 @@ export const deleteAgent = async (agentId) => {
   }
 };
 
-// Get agent reviews
-export const getAgentReviews = async (agentId) => {
+// DEPRECATED: Reviews are now included in the agent data from fetchAgentById
+// This function is kept as a stub for backward compatibility
+export const getAgentReviews = async (agentId, options = {}) => {
+  console.log(`[API] DEPRECATED: getAgentReviews for agent ${agentId} - Reviews are already included in agent data`);
+  console.log('[API] To fix: Reviews should be accessed from the agent.reviews property directly');
+  
   try {
-    const response = await api.get(`/api/agents/${agentId}/reviews`);
-    return response.data;
+    // Set a localStorage item to prevent immediate refetches
+    localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
+    
+    // Return an empty array instead of making an API call
+    // The real reviews are already included in the agent data
+    return [];
   } catch (error) {
-    console.error(`Error fetching reviews for agent ${agentId}:`, error);
-    throw error;
+    console.error(`Error in getAgentReviews for agent ${agentId}:`, error);
+    return [];
   }
 };
 
@@ -183,6 +222,18 @@ export const addAgentReview = async (agentId, reviewData) => {
     return response.data;
   } catch (error) {
     console.error(`Error adding review for agent ${agentId}:`, error);
+    throw error;
+  }
+};
+
+// Delete a review for an agent
+export const deleteAgentReview = async (agentId, reviewId) => {
+  try {
+    console.log(`[API] Deleting review ${reviewId} for agent ${agentId}`);
+    const response = await api.delete(`/api/agents/${agentId}/reviews/${reviewId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting review ${reviewId} for agent ${agentId}:`, error);
     throw error;
   }
 };
@@ -664,16 +715,30 @@ export const deletePost = async (postId, token) => {
   }
 };
 
+// Cache and deduplication for fetchAgentById
+let pendingAgentRequests = {};
+const AGENT_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache duration
+
 /**
- * Fetch a single agent by ID from the backend API
+ * Fetch a single agent by ID from the backend API with caching and request deduplication
  * @param {string} agentId - The ID of the agent to fetch
- * @param {object} options - Additional options including timestamp for cache busting
+ * @param {object} options - Additional options
+ * @param {boolean} options.skipCache - Skip cache and force fetch from API
+ * @param {boolean} options.includeReviews - Whether to include reviews in the response
+ * @param {AbortSignal} options.signal - AbortController signal for cancellation
+ * @param {number} options.timestamp - Timestamp for cache busting
  * @returns {Promise<Object>} - Agent data
  */
 export const fetchAgentById = async (agentId, options = {}) => {
   try {
-    const { timestamp = Date.now() } = options;
-    console.log(`Attempting to fetch agent with ID: ${agentId}`);
+    const { 
+      skipCache = false, 
+      includeReviews = true,
+      signal = null,
+      timestamp = Date.now() 
+    } = options;
+    
+    console.log(`Attempting to fetch agent with ID: ${agentId}`, { skipCache });
     
     // Validate agent ID format
     if (!agentId || typeof agentId !== 'string') {
@@ -681,8 +746,47 @@ export const fetchAgentById = async (agentId, options = {}) => {
       throw new Error('Invalid agent ID format');
     }
     
-    // Special handling for different ID formats
+    // Create a cache key that includes any relevant options
+    const cacheKey = `agent_${agentId}_${includeReviews ? 'with_reviews' : 'no_reviews'}`;
     
+    // Check for a pending request for this exact agent
+    // This prevents duplicate requests when components mount simultaneously
+    if (pendingAgentRequests[cacheKey]) {
+      console.log(`Using pending request for agent ${agentId}`);
+      try {
+        return await pendingAgentRequests[cacheKey];
+      } catch (error) {
+        console.error(`Error from pending request for agent ${agentId}:`, error);
+        // If the pending request fails, we'll try again below
+        // So we continue execution rather than throwing
+      }
+    }
+    
+    // Check cache first unless skipCache is true
+    if (!skipCache) {
+      try {
+        const cachedData = localStorage.getItem(cacheKey);
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          const cacheTime = parsedData._cacheTime || 0;
+          const now = Date.now();
+          
+          // Use cache if it's less than the cache duration old
+          if (now - cacheTime < AGENT_CACHE_DURATION) {
+            console.log(`Using cached data for agent ${agentId}`);
+            return parsedData;
+          } else {
+            console.log(`Cache expired for agent ${agentId}, fetching fresh data`);
+          }
+        }
+      } catch (cacheError) {
+        console.warn('Error reading from cache:', cacheError);
+      }
+    } else {
+      console.log(`Skipping cache for agent ${agentId} as requested`);
+    }
+    
+    // Special handling for different ID formats
     // 1. Detect Firebase-style document IDs (typically 20+ chars, alphanumeric)
     const isFirebaseId = /^[a-zA-Z0-9]{20,}$/.test(agentId);
     
@@ -698,72 +802,136 @@ export const fetchAgentById = async (agentId, options = {}) => {
     } else if (isStandardAgentId) {
       console.log('Detected standard agent-XX format ID, using specific route');
       // For agent-XX format, just use it directly
-      // The backend has a special route to handle this format
-      // No need to modify the endpoint
     }
     
-    // Add cache busting timestamp
-    endpoint = `${endpoint}?_t=${timestamp}`;
+    // Prepare query params
+    const queryParams = new URLSearchParams();
     
-    try {
-      // Make the API request
-      console.log(`Making request to: ${endpoint}`);
-      const response = await api.get(endpoint);
-      console.log('Successfully fetched agent from API');
-      
-      if (response.data && response.data.data) {
-        // Format and return the agent data
-        return {
-          ...response.data.data,
-          // Ensure the rating is formatted correctly
-          rating: {
-            average: response.data.data.averageRating || 0,
-            count: response.data.data.reviewCount || 0
-          }
-        };
-      } else if (response.data) {
-        // Some APIs might return the data directly
-        return response.data;
-      }
-      
-      throw new Error('Invalid response structure from API');
-    } catch (apiError) {
-      console.error('API error fetching agent:', apiError);
-      
-      // Generate mock data for development
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Generating mock data for development');
-        // Extract ID number if possible
-        const idNumber = isStandardAgentId ? 
-          parseInt(agentId.replace('agent-', '')) : 
-          Math.floor(Math.random() * 1000);
+    // Add reviews param if specified
+    if (includeReviews) {
+      queryParams.append('includeReviews', 'true');
+    }
+    
+    // Add timestamp for cache busting
+    queryParams.append('_t', timestamp);
+    
+    // Complete endpoint with query params
+    endpoint = `${endpoint}?${queryParams.toString()}`;
+    
+    // Create a promise for this request and store it in pendingAgentRequests
+    const requestPromise = (async () => {
+      try {
+        // Make the API request
+        console.log(`Making request to: ${endpoint}`);
+        const response = await api.get(endpoint, { signal });
+        console.log('Successfully fetched agent from API');
         
-        // Generate a mock agent for testing purposes
-        return {
-          id: agentId,
-          name: `Agent ${idNumber}`,
-          title: `Test Agent ${idNumber}`,
-          description: 'This is a mock agent for testing purposes. In production, this would be replaced with real data from the API.',
-          category: 'Test',
-          imageUrl: `https://picsum.photos/seed/${idNumber}/600/400`,
-          price: Math.random() > 0.3 ? (Math.floor(Math.random() * 50) + 10).toFixed(2) : 'Free',
-          rating: {
-            average: (3 + Math.random() * 2).toFixed(1),
-            count: Math.floor(Math.random() * 100) + 10
-          },
-          creator: {
-            name: `Creator ${idNumber % 10}`,
-            avatarUrl: `https://i.pravatar.cc/150?img=${idNumber % 10}`
-          },
-          isFeatured: Math.random() > 0.7,
-          isNew: Math.random() > 0.7,
-          tags: ['Test', 'Mock', 'Development'],
-          dateCreated: new Date(Date.now() - Math.random() * 10000000000).toISOString()
-        };
+        let responseData;
+        
+        if (response.data && response.data.data) {
+          // Format the agent data
+          responseData = {
+            ...response.data.data,
+            // Ensure the rating is formatted correctly
+            rating: {
+              average: response.data.data.averageRating || 0,
+              count: response.data.data.reviewCount || 0
+            },
+            // Add cache timestamp
+            _cacheTime: Date.now()
+          };
+          
+          // If reviews array is empty and includeReviews is true, fetch reviews separately
+          if (includeReviews && (!responseData.reviews || (Array.isArray(responseData.reviews) && responseData.reviews.length === 0))) {
+            try {
+              console.log(`Agent data doesn't include reviews, fetching them separately for ${agentId}`);
+              const reviewsResponse = await api.get(`/api/agents/${agentId}/reviews`);
+              if (reviewsResponse.data && Array.isArray(reviewsResponse.data)) {
+                console.log(`Received ${reviewsResponse.data.length} reviews from separate API call`);
+                responseData.reviews = reviewsResponse.data;
+              }
+            } catch (reviewsError) {
+              console.warn(`Failed to fetch reviews separately: ${reviewsError.message}`);
+              // Keep the empty reviews array, don't fail the whole request
+            }
+          }
+        } else if (response.data) {
+          // Some APIs might return the data directly
+          responseData = {
+            ...response.data,
+            _cacheTime: Date.now()
+          };
+        } else {
+          throw new Error('Invalid response structure from API');
+        }
+        
+        // Cache the successful response
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(responseData));
+        } catch (cacheError) {
+          console.warn('Error writing to cache:', cacheError);
+        }
+        
+        return responseData;
+      } catch (apiError) {
+        console.error('API error fetching agent:', apiError);
+        
+        // Check if we can return a cached version from localStorage as fallback
+        try {
+          const cachedData = localStorage.getItem(cacheKey);
+          if (cachedData) {
+            console.log(`API call failed, using cached data for agent ${agentId}`);
+            return JSON.parse(cachedData);
+          }
+        } catch (cacheError) {
+          console.error('Error reading from fallback cache:', cacheError);
+        }
+        
+        // Generate mock data for development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Generating mock data for development');
+          // Extract ID number if possible
+          const idNumber = isStandardAgentId ? 
+            parseInt(agentId.replace('agent-', '')) : 
+            Math.floor(Math.random() * 1000);
+          
+          // Generate a mock agent for testing purposes
+          return {
+            id: agentId,
+            name: `Agent ${idNumber}`,
+            title: `Test Agent ${idNumber}`,
+            description: 'This is a mock agent for testing purposes. In production, this would be replaced with real data from the API.',
+            category: 'Test',
+            imageUrl: `https://picsum.photos/seed/${idNumber}/600/400`,
+            price: Math.random() > 0.3 ? (Math.floor(Math.random() * 50) + 10).toFixed(2) : 'Free',
+            rating: {
+              average: (3 + Math.random() * 2).toFixed(1),
+              count: Math.floor(Math.random() * 100) + 10
+            },
+            creator: {
+              name: `Creator ${idNumber % 10}`,
+              avatarUrl: `https://i.pravatar.cc/150?img=${idNumber % 10}`
+            },
+            isFeatured: Math.random() > 0.7,
+            isNew: Math.random() > 0.7,
+            tags: ['Test', 'Mock', 'Development'],
+            dateCreated: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+            _cacheTime: Date.now()
+          };
+        }
+        
+        throw apiError;
+      } finally {
+        // Clean up the pending request reference when done
+        delete pendingAgentRequests[cacheKey];
       }
-      
-      throw apiError;
-    }
+    })();
+    
+    // Store the promise so other components can use it
+    pendingAgentRequests[cacheKey] = requestPromise;
+    
+    // Return the result of the request promise
+    return await requestPromise;
   } catch (error) {
     console.error(`Error fetching agent ${agentId}:`, error);
     throw error;
@@ -814,15 +982,8 @@ export const downloadFreeAgent = async (agentId) => {
     console.log(`[API] Downloading free agent ${agentId}`);
     const response = await api.post(`/api/agents/${agentId}/download`);
     
-    // Increment download count in the background
-    incrementAgentDownloadCount(agentId).catch(err => 
-      console.error(`Failed to increment download count for ${agentId}:`, err)
-    );
-    
-    // Record download in user history
-    recordAgentDownload(agentId).catch(err => 
-      console.error(`Failed to record download for ${agentId}:`, err)
-    );
+    // Note: We don't need to call incrementAgentDownloadCount or recordAgentDownload
+    // because the /download endpoint already handles these operations server-side
     
     return {
       success: true,

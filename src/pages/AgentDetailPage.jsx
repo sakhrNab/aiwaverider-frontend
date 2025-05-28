@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaArrowLeft, FaArrowRight, FaThumbsUp, FaComment, FaShare, FaCheckCircle, FaShoppingCart } from 'react-icons/fa';
+import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaArrowLeft, FaArrowRight, FaThumbsUp, FaComment, FaShare, FaCheckCircle, FaShoppingCart, FaTrash } from 'react-icons/fa';
 import { 
   toggleWishlist, 
   toggleAgentLike,
   getAgentReviews,
   addAgentReview,
+  deleteAgentReview,
   checkCanReviewAgent,
   downloadFreeAgent,
   incrementAgentDownloadCount,
@@ -90,11 +91,49 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
             setInitialStateLoaded(true);
             return;
           }
+          
+          // Check if we already have the like status in the initialLikes data
+          // If initialLikes is an array, we can check if the user's ID is in it
+          if (Array.isArray(initialLikes)) {
+            const userLiked = initialLikes.includes(user.uid) || 
+                            initialLikes.some(like => 
+                              (typeof like === 'object' && like.userId === user.uid) || 
+                              like === user.uid
+                            );
+            console.log(`Determined like status from props: ${userLiked}`);
+            setLiked(userLiked);
+            setInitialStateLoaded(true);
+            return;
+          }
+          
+          // Check if we have a cached like status
+          try {
+            const cachedStatus = localStorage.getItem(`like_status_${agentId}`);
+            if (cachedStatus) {
+              const parsedStatus = JSON.parse(cachedStatus);
+              const cacheTime = parsedStatus._cacheTime || 0;
+              const now = Date.now();
+              
+              // Use cache if it's less than 5 minutes old
+              if (now - cacheTime < 5 * 60 * 1000) {
+                console.log(`Using cached like status for agent ${agentId}`);
+                setLiked(parsedStatus.liked || false);
+                if (parsedStatus.likesCount !== undefined) {
+                  setLikeCount(parsedStatus.likesCount);
+                }
+                setInitialStateLoaded(true);
+                return;
+              }
+            }
+          } catch (cacheError) {
+            console.warn('Error reading from like status cache:', cacheError);
+          }
 
-          // Check if the user has liked this agent using the API function
+          // If we don't have cached data, fetch from API
+          console.log('No valid cached like data, fetching from API');
           const likeStatus = await getUserLikeStatus(agentId);
           const isLiked = likeStatus.liked || false;
-          console.log(`Initial check: User has liked agent: ${isLiked}`);
+          console.log(`API check: User has liked agent: ${isLiked}`);
           setLiked(isLiked);
           
           // Update like count if available
@@ -102,9 +141,12 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
             setLikeCount(likeStatus.likesCount);
           }
           
-          // Cache the like status
+          // Cache the like status with timestamp
           try {
-            localStorage.setItem(`like_status_${agentId}`, JSON.stringify(likeStatus));
+            localStorage.setItem(`like_status_${agentId}`, JSON.stringify({
+              ...likeStatus,
+              _cacheTime: Date.now()
+            }));
           } catch (e) {
             // Ignore storage errors
           }
@@ -323,96 +365,124 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
     </button>
   );
 };
-
-// Comments/Reviews Section Component
-const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
-  const { user } = useContext(AuthContext);
-  const { darkMode } = useTheme();
-  console.log('CommentSection received existingReviews:', existingReviews);
-  const [comments, setComments] = useState(existingReviews);
+const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipExternalFetch = false }) => {
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [rating, setRating] = useState(5);
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [isLoadingComments, setIsLoadingComments] = useState(true);
   const [hasUserReviewed, setHasUserReviewed] = useState(false);
-  const [showSignInPopup, setShowSignInPopup] = useState(false);
-  const [showSignUpPopup, setShowSignUpPopup] = useState(false);
   const [canReview, setCanReview] = useState(false);
   const [reviewEligibilityChecked, setReviewEligibilityChecked] = useState(false);
   const [reviewEligibilityReason, setReviewEligibilityReason] = useState('');
+  const { user } = useContext(AuthContext);
+  const { darkMode } = useTheme();
+  const [showSignInPopup, setShowSignInPopup] = useState(false);
+  const [showSignUpPopup, setShowSignUpPopup] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  // Toast configuration for consistent, appealing notifications
-  const showToast = (type, message, options = {}) => {
-    const defaultOptions = {
-      position: "bottom-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      icon: true
-    };
-    
-    const mergedOptions = { ...defaultOptions, ...options };
-    
-    switch (type) {
-      case 'success':
-        toast.success(message, mergedOptions);
-        break;
-      case 'error':
-        toast.error(message, mergedOptions);
-        break;
-      case 'info':
-        toast.info(message, mergedOptions);
-        break;
-      case 'warning':
-        toast.warning(message, mergedOptions);
-        break;
-      default:
-        toast(message, mergedOptions);
-    }
-  };
+  // Check if user is an admin
+  const isAdmin = useMemo(() => {
+    if (!user) return false;
+    return user.roles?.includes('admin') || user.isAdmin || user.role === 'admin' || 
+           user.email?.endsWith('@aiwaverider.com') || user.uid === '0pYyiwNXvSZdoRa1Smgj3sWWYsg1';
+  }, [user]);
   
-  // Optimize the useEffect in CommentSection that sets up the Firebase listener
+  // Process reviews and avoid redundant API calls
   useEffect(() => {
-    // Load comments without Firebase listeners to reduce quota usage
-    const loadComments = async () => {
-      setIsLoadingComments(true);
+    const processReviews = async () => {
       try {
-        console.log(`Loading reviews for agent ${agentId}`);
-        const response = await getAgentReviews(agentId);
-        console.log('Received reviews:', response);
-        if (response && Array.isArray(response)) {
-          setComments(response);
+        setIsLoadingComments(true);
+        
+        // First check if we already have reviews from the parent component
+        if (existingReviews && Array.isArray(existingReviews) && existingReviews.length > 0) {
+          console.log('Using existing reviews from agent data:', existingReviews.length);
+          
+          // Sort by date descending
+          const sortedReviews = [...existingReviews].sort((a, b) => {
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+          });
+          
+          setComments(sortedReviews);
           
           // Notify parent component about review count
           if (onReviewsLoaded) {
-            console.log('Setting initial review count to:', response.length);
-            onReviewsLoaded(response.length);
+            console.log('Setting initial review count to:', sortedReviews.length);
+            onReviewsLoaded(sortedReviews.length);
           }
           
           // Check if current user has already reviewed (only if authenticated)
           if (user) {
-            const userReview = response.find(review => review.userId === user.uid);
+            const userReview = sortedReviews.find(review => review.userId === user.uid);
             setHasUserReviewed(!!userReview);
+          }
+        } else if (!skipExternalFetch) {
+          // Only fetch reviews if we don't have them already and we're not skipping external fetch
+          console.log(`No existing reviews, loading reviews for agent ${agentId}`);
+          try {
+            // Always request fresh reviews by setting skipCache to true
+            const response = await getAgentReviews(agentId, { 
+              skipCache: true, 
+              timestamp: Date.now() 
+            });
+            console.log('Received FRESH reviews from API:', response);
+            
+            if (response && Array.isArray(response)) {
+              // Sort by date descending
+              const sortedReviews = response.sort((a, b) => {
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+              });
+              
+              // Update the local state
+              setComments(sortedReviews);
+              
+              // IMPORTANT: Update the Zustand store to keep everything in sync
+              const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
+              updateStoreReviews(agentId, sortedReviews);
+              
+              // Notify parent component about review count
+              if (onReviewsLoaded) {
+                console.log('Setting initial review count to:', sortedReviews.length);
+                onReviewsLoaded(sortedReviews.length);
+              }
+              
+              // Check if current user has already reviewed (only if authenticated)
+              if (user) {
+                const userReview = sortedReviews.find(review => review.userId === user.uid);
+                setHasUserReviewed(!!userReview);
+              }
+            }
+          } catch (apiError) {
+            console.error('Error fetching reviews from API:', apiError);
+            // Fall back to empty array
+            setComments([]);
+            if (onReviewsLoaded) {
+              onReviewsLoaded(0);
+            }
+          }
+        } else {
+          // We're skipping external fetch and we don't have existing reviews
+          console.log('Skipping external fetch for reviews as requested');
+          setComments([]);
+          if (onReviewsLoaded) {
+            onReviewsLoaded(0);
           }
         }
       } catch (err) {
-        console.error('Error loading comments:', err);
+        console.error('Error processing comments:', err);
         setError('Failed to load comments');
       } finally {
         setIsLoadingComments(false);
       }
     };
     
-    // Load comments only once when component mounts, not on every render
-    loadComments();
+    // Process reviews only once when component mounts or when dependencies change
+    processReviews();
     
     // Avoid setting up Firebase realtime listener to save quota
     return () => {};
-  }, [agentId, user]); // Remove onReviewsLoaded from dependencies as it causes infinite rerendering
+  }, [agentId, user, existingReviews, onReviewsLoaded]);
   
   const handleOpenSignInPopup = () => {
     setShowSignInPopup(true);
@@ -427,7 +497,7 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
     setShowSignUpPopup(false);
   };
   
-  // Add useEffect to check if user can review
+  // Add useEffect to check if user can review with caching
   useEffect(() => {
     if (!user) {
       setCanReview(false);
@@ -438,9 +508,47 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
     
     const checkEligibility = async () => {
       try {
-        // Use the new API to check if user can review
-        const eligibilityResult = await checkCanReviewAgent(agentId);
+        // First check if we already have eligibility info in local storage
+        const cacheKey = `review_eligibility_${agentId}_${user.uid}`;
+        let eligibilityResult = null;
         
+        try {
+          const cachedEligibility = localStorage.getItem(cacheKey);
+          if (cachedEligibility) {
+            const parsedEligibility = JSON.parse(cachedEligibility);
+            const cacheTime = parsedEligibility._cacheTime || 0;
+            const now = Date.now();
+            
+            // Use cache if it's less than 30 minutes old
+            if (now - cacheTime < 30 * 60 * 1000) {
+              console.log(`Using cached review eligibility for agent ${agentId}`);
+              eligibilityResult = parsedEligibility;
+            } else {
+              console.log(`Review eligibility cache expired for agent ${agentId}`);
+            }
+          }
+        } catch (cacheError) {
+          console.warn('Error reading review eligibility from cache:', cacheError);
+        }
+        
+        // If we don't have valid cached data, make the API call
+        if (!eligibilityResult) {
+          console.log(`Checking review eligibility via API for agent ${agentId}`);
+          eligibilityResult = await checkCanReviewAgent(agentId);
+          
+          // Cache the result with timestamp
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify({
+              ...eligibilityResult,
+              _cacheTime: Date.now()
+            }));
+          } catch (e) {
+            // Ignore storage errors
+            console.warn('Failed to cache review eligibility:', e);
+          }
+        }
+        
+        // Update state with result (whether from cache or API)
         setCanReview(eligibilityResult.canReview);
         setReviewEligibilityReason(eligibilityResult.reason);
         setReviewEligibilityChecked(true);
@@ -457,26 +565,37 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
     checkEligibility();
   }, [user, agentId]);
   
-  // Update the handleCommentSubmit function to check eligibility
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     
     if (!user) {
-      showToast('info', '👋 Please sign in to leave a review', {
+      toast.info('Please sign in to leave a review', {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
         icon: "👋"
       });
       return;
     }
     
     if (hasUserReviewed) {
-      showToast('warning', '⚠️ You have already reviewed this agent', {
+      toast.warning('You have already reviewed this agent', {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
         icon: "⚠️"
       });
       return;
     }
     
     if (!canReview) {
-      showToast('warning', `⚠️ ${reviewEligibilityReason}`, {
+      toast.warning(reviewEligibilityReason, {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
         icon: "⚠️"
       });
       return;
@@ -504,7 +623,10 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
       console.log('Review submission response:', response);
       
       if (response.success) {
-        // Add the new comment to the list
+        // Get the Zustand store's addReviewToAgent function
+        const addReviewToStore = useAgentStore.getState().addReviewToAgent;
+        
+        // Create the new comment object with the response ID
         const newCommentObj = {
           id: response.reviewId || `temp-${Date.now()}`,
           content: newComment,
@@ -525,16 +647,57 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
         // Update the local comments state
         setComments(prevComments => [...prevComments, newCommentObj]);
         
+        // IMPORTANT: Update the Zustand store with the new review
+        // This ensures the new review appears everywhere in the UI
+        addReviewToStore(agentId, newCommentObj);
+        
         setNewComment('');
         setRating(5);
         setHasUserReviewed(true);
-        showToast('success', '✅ Your review has been added. Thank you for your feedback!', {
-          icon: "✅",
-          autoClose: 4000
+        
+        // Show success toast
+        toast.success('Your review has been added. Thank you for your feedback!', {
+          position: "bottom-right",
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          icon: "✅"
         });
+        
+        // Force refresh of reviews by invalidating the cache
+        localStorage.removeItem(`last_reviews_fetch_${agentId}`);
+        
+        // Fetch fresh reviews to update the UI
+        setTimeout(async () => {
+          try {
+            const freshReviews = await getAgentReviews(agentId, { 
+              skipCache: true, 
+              timestamp: Date.now() 
+            });
+            
+            if (freshReviews && Array.isArray(freshReviews)) {
+              console.log(`Fetched ${freshReviews.length} fresh reviews after adding new review`);
+              setComments(freshReviews);
+              
+              // Also update the Zustand store with the complete set of reviews
+              const updateAgentReviews = useAgentStore.getState().updateAgentReviews;
+              updateAgentReviews(agentId, freshReviews);
+            }
+          } catch (refreshErr) {
+            console.error('Error refreshing reviews after submission:', refreshErr);
+          }
+        }, 500);
       } else {
         setError(response.error || 'Failed to add comment');
-        showToast('error', response.error || '❌ Failed to add your review', {
+        toast.error(response.error || 'Failed to add your review', {
+          position: "bottom-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
           icon: "❌"
         });
       }
@@ -560,6 +723,136 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
     } catch (e) {
       console.error('Error formatting date:', e);
       return 'Invalid date';
+    }
+  };
+  
+  // Function to handle deleting a review (admin only)
+  const handleDeleteReview = async (reviewId) => {
+    // Get the Zustand store's removeReviewFromAgent function
+    const removeReviewFromStore = useAgentStore.getState().removeReviewFromAgent;
+    
+    if (!isAdmin) {
+      toast.error('Only admins can delete reviews', {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        icon: "⛔"
+      });
+      return;
+    }
+    
+    if (window.confirm('Are you sure you want to delete this review?')) {
+      setIsDeleting(true);
+      try {
+        // Delete the review on the backend
+        const response = await deleteAgentReview(agentId, reviewId);
+        
+        if (response.success) {
+          // 1. CRITICAL: Force a complete refresh of reviews from the backend
+          console.log('Review deleted, forcing a complete refresh of all reviews from backend');
+          
+          // Clear any cached data that might prevent fresh data
+          localStorage.removeItem(`reviews_cache_${agentId}`);
+          localStorage.removeItem(`last_reviews_fetch_${agentId}`);
+          
+          // Get completely fresh reviews from the backend with cache busting
+          const freshReviews = await getAgentReviews(agentId, { 
+            skipCache: true,
+            timestamp: Date.now() + Math.random() // Add randomness to avoid any caching
+          });
+          
+          console.log(`Received ${freshReviews.length} fresh reviews after deletion`);
+          
+          // Sort by date descending
+          const sortedReviews = freshReviews.sort((a, b) => {
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+          });
+          
+          // 2. Update the UI with the fresh data
+          setComments(sortedReviews);
+          
+          // 3. Update the review count through the callback
+          if (onReviewsLoaded) {
+            onReviewsLoaded(sortedReviews.length);
+          }
+          
+          // 4. Calculate the new average rating
+          let newRatingValue = 0;
+          if (sortedReviews.length > 0) {
+            const sum = sortedReviews.reduce((acc, comment) => acc + (parseFloat(comment.rating) || 0), 0);
+            newRatingValue = sum / sortedReviews.length;
+          }
+          
+          // 5. IMPORTANT: Update the Zustand store with the fresh reviews
+          // This ensures all components see the exact same data
+          const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
+          updateStoreReviews(agentId, sortedReviews);
+          
+          // 5. Show success toast notification
+          toast.success(response.message || 'Review deleted successfully', {
+            position: "bottom-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            icon: "✅"
+          });
+          
+          // 6. Force an immediate refresh of reviews from Firebase
+          console.log('Forcing immediate refresh of reviews from Firebase after deletion');
+          localStorage.removeItem(`last_reviews_fetch_${agentId}`);
+          
+          // 7. Fetch fresh reviews to update everything
+          const fetchFreshReviews = async () => {
+            try {
+              // Use explicit skipCache: true to bypass any caching
+              const freshReviews = await getAgentReviews(agentId, { 
+                skipCache: true, 
+                timestamp: Date.now() 
+              });
+              
+              if (freshReviews && Array.isArray(freshReviews)) {
+                console.log(`Fetched ${freshReviews.length} fresh reviews from Firebase after deletion`);
+                
+                // Update the comments state with fresh data
+                setComments(freshReviews);
+                
+                // Update the review count through the callback
+                if (onReviewsLoaded) {
+                  onReviewsLoaded(freshReviews.length);
+                }
+                
+                // If the deleted review belonged to the current user
+                // mark that they haven't reviewed to allow them to review again
+                if (user && user.uid) {
+                  const userHasReview = freshReviews.some(review => review.userId === user.uid);
+                  setHasUserReviewed(userHasReview);
+                }
+              }
+            } catch (err) {
+              console.error('Error fetching fresh reviews after deletion:', err);
+            }
+          };
+          
+          // Execute the fetch
+          fetchFreshReviews();
+        } else {
+          throw new Error(response.message || 'Failed to delete review');
+        }
+      } catch (err) {
+        console.error('Error deleting review:', err);
+        toast.error(`Error deleting review: ${err.message || 'Unknown error'}`, {
+          position: "bottom-right",
+          autoClose: 3000,
+          icon: "❌"
+        });
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
   
@@ -667,8 +960,22 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded }) => {
                 <div className="comment-user">
                   <span className={`user-name ${darkMode ? 'text-gray-200' : ''}`}>{comment.userName || 'Anonymous'}</span>
                   <span className={`comment-date ${darkMode ? 'text-gray-400' : ''}`}>{formatDate(comment.createdAt)}</span>
+
                 </div>
-                <StarRating rating={comment.rating} size="small" />
+                <div className="rating-actions">
+                  <StarRating rating={comment.rating} size="small" />
+                  {/* Show delete button if user is admin */}
+                  {isAdmin && (
+                    <button 
+                      className="delete-review-btn"
+                      onClick={() => handleDeleteReview(comment.id)}
+                      disabled={isDeleting}
+                      title="Delete review"
+                    >
+                      <FaTrash className="delete-icon" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className={`comment-content ${darkMode ? 'text-gray-300' : ''}`}>{comment.content}</div>
             </div>
@@ -793,6 +1100,8 @@ const AgentDetail = () => {
     return agent.title || agent.name || 'Unnamed Agent';
   }, [agent]);
   
+  // Removed duplicate agentRatingValue declaration - using the one below
+  
   const agentDescription = useMemo(() => {
     if (!agent) return '';
     return agent.description || 'No description available for this agent.';
@@ -835,10 +1144,20 @@ const AgentDetail = () => {
   const agentRatingValue = useMemo(() => {
     if (!agent) return 0;
     
+    // First check if we have rating data in the agent object
     if (agent.rating && agent.rating.average) {
       return typeof agent.rating.average === 'number' ? 
         agent.rating.average : 
         parseFloat(agent.rating.average) || 0;
+    }
+    
+    // If rating.average is not available, calculate from reviews
+    if (agent.reviews && Array.isArray(agent.reviews) && agent.reviews.length > 0) {
+      const totalRating = agent.reviews.reduce((sum, review) => {
+        const reviewRating = parseFloat(review.rating) || 0;
+        return sum + reviewRating;
+      }, 0);
+      return totalRating / agent.reviews.length;
     }
     
     return 0;
@@ -884,6 +1203,13 @@ const AgentDetail = () => {
   // Track loading attempts to prevent infinite loops
   const MAX_LOAD_ATTEMPTS = 2;
   
+  // Function to set up periodic updates for agent data
+  const setupRealtimeUpdates = (agentId, setAgentFn, setLikesFn, setDownloadFn) => {
+    console.log('Setting up periodic updates for agent:', agentId);
+    // This function will be called by loadAgent to initialize the polling
+    // The actual polling logic is handled in the useEffect below
+  };
+  
   // Track whether we've already started loading to prevent duplicate requests
   const isLoadingRef = useRef(false);
   
@@ -898,12 +1224,21 @@ const AgentDetail = () => {
     isLoadingRef.current = true;
     console.log(`Starting to load agent ${agentId}, attempt ${loadAttempt.current + 1}`);
     
-    // First ensure the store is loaded with initial data
+    // First ensure the store is loaded with initial data, but only if we need it
+    // This prevents the redundant 'agents?' API call when we only need a single agent
     if (allAgents.length === 0 && !isStoreLoading) {
-      console.log('Store is empty, loading initial data first');
-      loadInitialData(false).catch(err => {
-        console.error('Failed to load initial store data:', err);
-      });
+      // Only load all agents if we're not directly accessing a specific agent
+      // or if we've already tried to load this agent directly and failed
+      const shouldLoadAllAgents = loadAttempt.current > 0 || !agentId;
+      
+      if (shouldLoadAllAgents) {
+        console.log('Store is empty, loading initial data first');
+        loadInitialData(false).catch(err => {
+          console.error('Failed to load initial store data:', err);
+        });
+      } else {
+        console.log('Skipping full agent store load since we only need a single agent');
+      }
     }
     
     // Define a single global timeoutId reference for cleanup
@@ -932,6 +1267,12 @@ const AgentDetail = () => {
           const storeAgent = allAgents.find(a => a.id === agentId || a._id === agentId);
           if (storeAgent && !loadAttempt.current) {
             console.log('Using agent data from store:', storeAgent);
+            
+            // Check if store agent has reviews to avoid redundant API calls
+            const hasReviews = storeAgent.reviews && Array.isArray(storeAgent.reviews) && storeAgent.reviews.length > 0;
+            console.log('Agent from store has reviews:', hasReviews ? storeAgent.reviews.length : 0);
+            
+            // Set the agent data
             setAgent(storeAgent);
             
             // Set initial likes count
@@ -941,6 +1282,13 @@ const AgentDetail = () => {
               } else if (typeof storeAgent.likes === 'number') {
                 setLikesCount(storeAgent.likes);
               }
+            }
+            
+            // Set review count if available
+            if (hasReviews) {
+              setReviewCount(storeAgent.reviews.length);
+              // Mark reviews as fetched to prevent redundant API calls
+              reviewsFetchedRef.current = true;
             }
             
             // Set download count
@@ -999,12 +1347,34 @@ const AgentDetail = () => {
           apiCallInProgressRef.current = true;
           console.log(`Making API call for agent ${agentId}`);
           
-          // Add a unique timestamp to prevent caching issues on refresh
+          // Check if we should force skip cache
+          const forceRefresh = window.location.search.includes('refresh=true');
+          
+          // Always force a fresh fetch for the agent data to ensure we have the latest reviews
+          // This is critical to fix the issue where reviews aren't up-to-date
           data = await fetchAgentById(agentId, { 
             signal: abortController.signal,
-            skipCache: false, // Always try to use cache first
-            timestamp: Date.now() // Add timestamp to prevent caching issues
+            skipCache: true, // Always skip cache to get fresh data from the database
+            includeReviews: true, // Always include reviews to avoid duplicate API calls
+            timestamp: Date.now() // Add timestamp to prevent browser caching issues
           });
+          
+          // IMPORTANT: Update the Zustand store with the fresh data
+          // This ensures all components that use the store have the latest reviews
+          if (data) {
+            // Use the Zustand store's updateAgentReviews function
+            const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
+            
+            // Mark reviews as fetched to prevent redundant API calls
+            if (data.reviews && Array.isArray(data.reviews)) {
+              console.log(`Received ${data.reviews.length} fresh reviews with agent data, syncing with store`);
+              updateStoreReviews(agentId, data.reviews);
+              reviewsFetchedRef.current = true;
+              
+              // Set the cache timestamp to prevent immediate refetching
+              localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
+            }
+          }
           
           apiCallInProgressRef.current = false;
           
@@ -1013,6 +1383,7 @@ const AgentDetail = () => {
         } catch (error) {
           console.error('Error fetching agent data:', error);
           clearTimeout(timeoutId);
+          apiCallInProgressRef.current = false;
           
           // Check if this was an abort error (timeout)
           if (error.name === 'AbortError') {
@@ -1237,53 +1608,16 @@ const AgentDetail = () => {
       console.log('Tracking product view for recommendations:', agentId);
       // Mark as tracked immediately to prevent duplicate tracking attempts
       setViewTracked(true);
-      
-      // Use a separate timeout to not block the main loading flow
-      setTimeout(() => {
-        trackProductView(agentId)
-          .then(() => {
-            console.log('Successfully tracked product view');
-          })
-          .catch(err => {
-            console.warn('Failed to track product view:', err);
-            // Don't show error to user, this is a background tracking feature
-          });
-      }, 2000); // Delay tracking to prioritize main content loading
     }
-
-    // Update the URL if needed (redirect /product/ to /agents/)
-    if (window.location.pathname.includes('/product/') && !loading) {
-      const correctPath = window.location.pathname.replace('/product/', '/agents/');
-      console.log(`Redirecting to correct agent path: ${correctPath}`);
-      navigate(correctPath, { replace: true });
-    }
-    
-    // Clean up timeouts and periodic updates on unmount
-    return () => {
-      // Cleanup any timeouts or polling intervals
-      const timeoutRef = timeoutId;
-      if (typeof timeoutRef !== 'undefined') {
-        clearTimeout(timeoutRef);
-      }
-      // Reset flags on unmount
-      isLoadingRef.current = false;
-      apiCallInProgressRef.current = false;
-    };
-  }, [agentId, viewTracked, navigate, allAgents, isStoreLoading, dataLoaded]);
+  }, [agentId, viewTracked]);
   
-  // Set up periodic updates instead of real-time updates with Firebase - optimize this function
-  const setupRealtimeUpdates = (id, setAgent, setLikesCount, setDownloadCount) => {
-    console.log('Setting up periodic updates for agent', id);
-    
-    // Reference to the polling interval for cleanup
-    let intervalId = null;
-    
-    // Track whether polling is active
-    let isPollingActive = true;
-    
+  // Setup realtime updates
+  useEffect(() => {
     // Keep track of consecutive errors
     let consecutiveErrors = 0;
     const MAX_CONSECUTIVE_ERRORS = 3; // After this many errors, stop polling
+    let intervalId = null; // Declare intervalId for this scope
+    let isPollingActive = true; // Declare and initialize isPollingActive for this scope
     
     // Setup visibility change listener to pause/resume polling when tab is not active
     const handleVisibilityChange = () => {
@@ -1316,6 +1650,16 @@ const AgentDetail = () => {
         return;
       }
       
+      // Check if backend is having issues
+      const backendErrorKey = 'backend_error_until';
+      const backendErrorUntil = parseInt(localStorage.getItem(backendErrorKey) || '0');
+      const now = Date.now();
+      
+      if (backendErrorUntil > now) {
+        console.log(`Skipping poll because backend had errors. Will retry after ${new Date(backendErrorUntil).toLocaleTimeString()}`);
+        return;
+      }
+      
       try {
         console.log('Manual polling for agent updates');
         
@@ -1330,9 +1674,19 @@ const AgentDetail = () => {
             abortController.abort('Timeout');
           }, 15000); // 15 second timeout
           
-          // Use the fetchAgentById function from the API with the abort signal
-          const agentData = await fetchAgentById(id, { 
-            skipCache: true,
+          // Only skip cache once every hour to avoid excessive API calls
+          const lastPollTime = parseInt(localStorage.getItem(`last_poll_${agentId}`)) || 0;
+          const shouldSkipCache = (now - lastPollTime) > 60 * 60 * 1000; // 1 hour
+          
+          if (shouldSkipCache) {
+            localStorage.setItem(`last_poll_${agentId}`, now.toString());
+            console.log('Polling with fresh data (skipping cache)');
+          } else {
+            console.log('Polling with cached data if available');
+          }
+          
+          const agentData = await fetchAgentById(agentId, { 
+            skipCache: shouldSkipCache,
             signal: abortController.signal
           });
           
@@ -1400,6 +1754,10 @@ const AgentDetail = () => {
           if (intervalId) {
             clearInterval(intervalId);
           }
+        } else if (error.response && error.response.status === 500) {
+          console.error('Server error (500) during agent poll - pausing polls temporarily');
+          // Set a backoff period of 10 minutes before trying again
+          localStorage.setItem(backendErrorKey, (now + 10 * 60 * 1000).toString());
         } else {
           console.error('Error polling agent data:', error);
         }
@@ -1420,42 +1778,90 @@ const AgentDetail = () => {
         clearInterval(intervalId);
       }
     };
-  };
-
-  // Also modify the second useEffect to avoid duplicate fetching
+  }, [agentId]); // Added dependency array [agentId]
+  
+  // Modified useEffect to ensure reviews are always updated from the database
   useEffect(() => {
-    // Skip if we don't have an agent ID or if already loading or if reviews are already loaded
-    if (!agentId || loading || (agent && agent.reviews && agent.reviews.length > 0)) return;
+    // Skip if we don't have an agent ID or if we're still loading
+    if (!agentId || loading) {
+      return;
+    }
     
-    // Use the ref from the component level to ensure this effect only runs once per agent ID
-    if (reviewsFetchedRef.current) return;
-    reviewsFetchedRef.current = true;
+    console.log('Checking if reviews need to be fetched or refreshed');
     
-    // Fetch reviews directly on page load
+    // Get access to the Zustand store for syncing
+    const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
+    
     const fetchReviews = async () => {
       try {
-        console.log('Proactively fetching reviews on page load');
-        const reviews = await getAgentReviews(agentId);
-        if (reviews && Array.isArray(reviews)) {
-          // Update the review count immediately
-          setReviewCount(reviews.length);
-          
-          // Update the agent object with the reviews
-          setAgent(prev => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              reviews: reviews
-            };
-          });
+        console.log('Checking if reviews need to be fetched or refreshed');
+        
+        // Mark as fetched to prevent immediate duplicate calls
+        reviewsFetchedRef.current = true;
+        
+        // Track tab changes
+        const tabChanged = sessionStorage.getItem(`last_active_tab_${agentId}`) !== activeTab;
+        if (tabChanged && activeTab === 'reviews') {
+          console.log('Tab changed to reviews');
+          sessionStorage.setItem(`last_active_tab_${agentId}`, activeTab);
         }
-    } catch (err) {
-        console.error('Error fetching reviews on page load:', err);
+        
+        // Use the reviews that are already in the agent data
+        if (agent && agent.reviews && Array.isArray(agent.reviews)) {
+          console.log(`Using ${agent.reviews.length} reviews already included in agent data`);
+          
+          // Update the review count immediately
+          setReviewCount(agent.reviews.length);
+          
+          // No need to make a separate API call for reviews
+          // since they're already included in the agent data
+          
+          // Set the cache timestamp to prevent immediate refetches
+          localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
+        } else if (agent) {
+          // If the agent has no reviews array or it's empty, set the count to 0
+          console.log('No reviews found in agent data');
+          setReviewCount(0);
+          
+          // Update the agent object with an empty reviews array if it doesn't exist
+          if (!agent.reviews) {
+            setAgent(prev => {
+              if (!prev) return prev;
+              
+              return {
+                ...prev,
+                reviews: [],
+                rating: { average: 0, count: 0 }
+              };
+            });
+          }
+          
+          // Set the cache timestamp
+          localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
+        } else {
+          console.log('No agent data available');
+        }
+      } catch (err) {
+        console.error('Error processing reviews:', err);
       }
     };
     
+    // This function should be removed or replaced with a comment
+    // since it's no longer needed - reviews are included in agent data
+    // const getAgentReviews = async () => {
+    //   // DEPRECATED: Reviews are now included in the agent data
+    //   console.log('This function is deprecated');
+    //   return [];
+    // };
+    
+    // Initial fetch - execute immediately
     fetchReviews();
-  }, [agentId, loading, agent?.reviews?.length]); // Replace agent with agent?.reviews?.length
+    
+    // NO polling interval - this reduces unnecessary API calls
+    // The user can refresh by switching tabs or taking actions
+    
+    // Nothing to clean up since we're not setting up an interval
+  }, [agentId, loading, activeTab, user]); // Dependencies include user and activeTab for proper refreshing
 
   const handleWishlistToggle = async () => {
     if (!user) {
@@ -1777,13 +2183,52 @@ const AgentDetail = () => {
       const downloadResult = await downloadFreeAgent(agentId);
       
       if (downloadResult.success) {
-        // Increment download count in UI
-        setDownloadCount(prev => prev + 1);
+        // If the response includes the updated agent data, use it
+        if (downloadResult.agent) {
+          console.log('Using agent data from download response to update UI');
+          
+          // Update the agent state with the fresh data
+          setAgent(prev => ({
+            ...prev,
+            ...downloadResult.agent,
+            // Preserve any UI-specific properties not in the API response
+            images: prev.images || [],
+            imageUrl: downloadResult.agent.imageUrl || prev.imageUrl,
+            // If download count is in the response, use it directly
+            downloadCount: downloadResult.agent.downloadCount || (prev.downloadCount + 1)
+          }));
+          
+          // Update download count from the response
+          if (downloadResult.agent.downloadCount) {
+            setDownloadCount(downloadResult.agent.downloadCount);
+          } else {
+            // Fallback to incrementing locally if not in response
+            setDownloadCount(prev => prev + 1);
+          }
+          
+          // Update likes if they're in the response
+          if (downloadResult.agent.likes) {
+            if (Array.isArray(downloadResult.agent.likes)) {
+              setLikesCount(downloadResult.agent.likes.length);
+            } else if (typeof downloadResult.agent.likes === 'number') {
+              setLikesCount(downloadResult.agent.likes);
+            }
+          }
+        } else {
+          // Fallback to just incrementing the download count locally
+          console.log('No agent data in download response, incrementing download count locally');
+          setDownloadCount(prev => prev + 1);
+        }
         
         // Show success message
-        showToast('success', '✅ Download successful!', {
-          icon: "✅",
-          autoClose: 3000
+        toast.success('✅ Download successful!', {
+          position: "bottom-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          icon: "✅"
         });
         
         // If we have a download URL, download it
@@ -1956,45 +2401,21 @@ const AgentDetail = () => {
       </div>
 
       <div className="agent-detail-content">
-        {/* Image Slider Section */}
+        {/* Agent Image Section */}
         <div className="image-slider-section">
           <div className="image-slider" ref={sliderRef}>
             <div className="slider-container">
-              {imageUrls.length > 1 && (
-                <button className="slider-arrow left-arrow" onClick={prevSlide}>
-                  <FaArrowLeft />
-                </button>
-              )}
-              
               <div className="slide">
                 <img 
                   ref={imageRef}
-                  src={imageUrls[currentSlide] || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"%3E%3Crect width="300" height="200" fill="%234a4de7"/%3E%3Ctext x="150" y="100" font-family="Arial" font-size="24" text-anchor="middle" fill="white"%3EAgent%3C/text%3E%3C/svg%3E'} 
-                  alt={`${agent.title} - slide ${currentSlide + 1}`} 
+                  src={imageUrls[0] || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"%3E%3Crect width="300" height="200" fill="%234a4de7"/%3E%3Ctext x="150" y="100" font-family="Arial" font-size="24" text-anchor="middle" fill="white"%3EAgent%3C/text%3E%3C/svg%3E'} 
+                  alt={agent.title} 
                   className="slide-image" 
                   onLoad={handleImageLoad}
                   data-aspect={imageAspectRatio}
                 />
               </div>
-              
-              {imageUrls.length > 1 && (
-                <button className="slider-arrow right-arrow" onClick={nextSlide}>
-                  <FaArrowRight />
-                </button>
-              )}
             </div>
-            
-            {imageUrls.length > 1 && (
-              <div className="slide-indicators">
-                {imageUrls.map((_, index) => (
-                  <button 
-                    key={index} 
-                    className={`indicator ${index === currentSlide ? 'active' : ''}`}
-                    onClick={() => showSlide(index)}
-                  ></button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
@@ -2193,6 +2614,7 @@ const AgentDetail = () => {
               agentId={agentId} 
               existingReviews={agent.reviews || []} 
               onReviewsLoaded={(count) => setReviewCount(count)}
+              skipExternalFetch={true} /* Add this prop to prevent external fetching */
             />
           </div>
         )}
@@ -2239,4 +2661,4 @@ const AgentDetail = () => {
   );
 };
 
-export default AgentDetail; 
+export default AgentDetail;

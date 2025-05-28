@@ -97,7 +97,7 @@ const LatestTech = () => {
           <HashLoader color="#4FD1C5" size={70} speedMultiplier={0.8} />
         </div>
         <div className="text-white text-xl font-semibold mt-4">
-          Loading Latest Tech News
+          Loading Latest News & Tutorials
         </div>
         <div className="text-blue-300 text-sm mt-2">
           Fetching the latest articles for you...

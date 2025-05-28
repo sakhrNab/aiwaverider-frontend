@@ -143,17 +143,16 @@
 /* Featured agent card */
 .featured-card {
   position: relative;
-  height: 360px;
+  height: 420px; /* Match marketplace card height */
   display: flex;
   flex-direction: column;
   overflow: hidden;
   margin: 0.625rem;
-  border-radius: 0.5rem;
-  /* background: transparent; */
-  /* backdrop-filter: blur(8px); */
+  border-radius: 0.75rem; /* Match marketplace card border radius */
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--card-shadow); /* Use consistent shadow variable */
   border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--agent-card-bg); /* Use consistent background */
 }
 
 .featured-card:hover {
@@ -247,10 +246,12 @@
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2; /* Standard property for compatibility */
   -webkit-box-orient: vertical;
   opacity: 0.9;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.9);
+  height: 2.8em; /* Fixed height for 2 lines */
 }
 
 .featured-card__creator {
@@ -460,6 +461,8 @@
   
   .featured-card__description {
     -webkit-line-clamp: 1;
+    line-clamp: 1; /* Standard property for compatibility */
+    height: 1.4em; /* Fixed height for 1 line */
   }
   
   .featured-card__content {
