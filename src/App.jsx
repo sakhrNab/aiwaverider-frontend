@@ -53,6 +53,13 @@ const App = () => {
   const initRef = useRef(false);
 
   useEffect(() => {
+
+    const redirectPath = sessionStorage.redirect;
+    if (redirectPath) {
+      sessionStorage.removeItem("redirect");
+      window.history.replaceState(null, "", redirectPath);
+    }
+    
     // Only initialize once across all renders
     if (initRef.current || appInitialized) return;
     initRef.current = true;
