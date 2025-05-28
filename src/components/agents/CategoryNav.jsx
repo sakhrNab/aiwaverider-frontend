@@ -2,20 +2,37 @@ import React, { useRef } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import './CategoryNav.css';
 
-// Agent-specific categories
+// Simplified agent categories
 const AGENT_CATEGORIES = [
   'All',
   'Design',
-  'Drawing & Painting',
-  '3D',
-  'Self Improvement',
-  'Music & Sound Design',
-  'Software Development',
+  'Creative',
+  'Productivity',
+  'Development',
   'Business'
 ];
 
 const CategoryNav = ({ selectedCategory, onCategoryChange }) => {
   const scrollContainerRef = useRef(null);
+  const [showScrollButtons, setShowScrollButtons] = React.useState(false);
+  
+  // Check if scrolling is needed when component mounts or window resizes
+  React.useEffect(() => {
+    const checkForScrolling = () => {
+      if (scrollContainerRef.current) {
+        const { scrollWidth, clientWidth } = scrollContainerRef.current;
+        // Only show scroll buttons if content width exceeds container width
+        setShowScrollButtons(scrollWidth > clientWidth);
+      }
+    };
+    
+    // Initial check
+    checkForScrolling();
+    
+    // Check on window resize
+    window.addEventListener('resize', checkForScrolling);
+    return () => window.removeEventListener('resize', checkForScrolling);
+  }, []);
   
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -31,13 +48,15 @@ const CategoryNav = ({ selectedCategory, onCategoryChange }) => {
 
   return (
     <div className="category-nav-container">
-      <button 
-        className="scroll-button scroll-left"
-        onClick={scrollLeft}
-        aria-label="Scroll left"
-      >
-        <FaChevronLeft />
-      </button>
+      {showScrollButtons && (
+        <button 
+          className="scroll-button scroll-left"
+          onClick={scrollLeft}
+          aria-label="Scroll left"
+        >
+          <FaChevronLeft />
+        </button>
+      )}
       
       <div className="category-nav" ref={scrollContainerRef}>
         <div className="category-scroll">
@@ -53,13 +72,15 @@ const CategoryNav = ({ selectedCategory, onCategoryChange }) => {
         </div>
       </div>
       
-      <button 
-        className="scroll-button scroll-right"
-        onClick={scrollRight}
-        aria-label="Scroll right"
-      >
-        <FaChevronRight />
-      </button>
+      {showScrollButtons && (
+        <button 
+          className="scroll-button scroll-right"
+          onClick={scrollRight}
+          aria-label="Scroll right"
+        >
+          <FaChevronRight />
+        </button>
+      )}
     </div>
   );
 };

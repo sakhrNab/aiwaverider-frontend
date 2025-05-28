@@ -178,10 +178,10 @@ const Header = ({ openSignUpModal }) => {
               <Link 
                 to="/latest-tech" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="Latest Tech"
+                aria-label="Latest News & Tutorials"
               >
                 <FaMicrochip className="mr-1.5" /> 
-                <span>Latest Tech</span>
+                <span>Latest News & Tutorials</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />

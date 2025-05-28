@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './FilterSidebar.css';
-import { FaCheck } from 'react-icons/fa';
+import { FaCheck, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 const FilterSidebar = ({ 
   selectedTags = [], 
@@ -42,8 +42,20 @@ const FilterSidebar = ({
         count
       }));
       
-      // Sort alphabetically by name
-      dynamicTags.sort((a, b) => a.name.localeCompare(b.name));
+      // Sort alphabetically by name, but put "Others" at the end
+      dynamicTags.sort((a, b) => {
+        // Handle empty names as "Others"
+        const nameA = a.name && a.name.trim() ? a.name : 'Others';
+        const nameB = b.name && b.name.trim() ? b.name : 'Others';
+        
+        // Always put "Others" at the end
+        if (nameA === 'Others' && nameB !== 'Others') return 1;
+        if (nameA !== 'Others' && nameB === 'Others') return -1;
+        
+        // Standard alphabetical sort for everything else
+        return nameA.localeCompare(nameB);
+      });
+      
       setTagOptions(dynamicTags);
     } else {
       setTagOptions([]);
@@ -59,8 +71,20 @@ const FilterSidebar = ({
         count
       }));
       
-      // Sort alphabetically by name
-      dynamicFeatures.sort((a, b) => a.name.localeCompare(b.name));
+      // Sort alphabetically by name, but put "Others" at the end
+      dynamicFeatures.sort((a, b) => {
+        // Handle empty names as "Others"
+        const nameA = a.name && a.name.trim() ? a.name : 'Others';
+        const nameB = b.name && b.name.trim() ? b.name : 'Others';
+        
+        // Always put "Others" at the end
+        if (nameA === 'Others' && nameB !== 'Others') return 1;
+        if (nameA !== 'Others' && nameB === 'Others') return -1;
+        
+        // Standard alphabetical sort for everything else
+        return nameA.localeCompare(nameB);
+      });
+      
       setFeatureOptions(dynamicFeatures);
     } else {
       setFeatureOptions([]);
@@ -116,10 +140,8 @@ const FilterSidebar = ({
   };
   
   const handleRatingSelect = (rating) => {
-    console.log('Rating selected:', rating, 'Previous rating:', selectedRating);
     if (onRatingChange) {
       onRatingChange(rating);
-      console.log('Called onRatingChange with rating:', rating);
     }
   };
 
@@ -131,38 +153,29 @@ const FilterSidebar = ({
       
       <div className="filter-section">
         <div className="filter-header" onClick={() => {}}>
-          <h3>Price</h3>
+          <h3>Price Range</h3>
         </div>
         <div className="filter-content">
-          <div className="price-inputs">
-            <div className="price-input-group">
-              <label htmlFor="min-price">Min</label>
-              <div className="price-input-wrapper">
-                <span className="price-symbol">$</span>
-                <input
-                  id="min-price"
-                  type="number"
-                  name="min"
-                  value={price.min}
-                  onChange={handlePriceChange}
-                  min="0"
-                />
-              </div>
-            </div>
-            <div className="price-input-group">
-              <label htmlFor="max-price">Max</label>
-              <div className="price-input-wrapper">
-                <span className="price-symbol">$</span>
-                <input
-                  id="max-price"
-                  type="number"
-                  name="max"
-                  value={price.max}
-                  onChange={handlePriceChange}
-                  min="0"
-                />
-              </div>
-            </div>
+          <div className="price-range-selector">
+            <select 
+              className="price-range-dropdown"
+              value={`${price.min}-${price.max}`}
+              onChange={(e) => {
+                const [min, max] = e.target.value.split('-').map(Number);
+                const newPrice = { min, max };
+                setPrice(newPrice);
+                if (onPriceChange) {
+                  onPriceChange(newPrice);
+                }
+              }}
+            >
+              <option value="0-1000">All Prices</option>
+              <option value="0-0">Free</option>
+              <option value="1-10">$1 - $10</option>
+              <option value="10-50">$10 - $50</option>
+              <option value="50-100">$50 - $100</option>
+              <option value="100-1000">$100+</option>
+            </select>
           </div>
         </div>
       </div>
@@ -172,69 +185,88 @@ const FilterSidebar = ({
           <h3>Rating</h3>
         </div>
         <div className="filter-content">
-          {[4, 3, 2, 1].map((rating) => (
-            <div 
-              key={rating} 
-              className={`filter-option ${selectedRating === rating ? 'selected' : ''}`}
-              onClick={() => handleRatingSelect(rating)}
+          <div className="rating-selector">
+            <select 
+              className="rating-dropdown"
+              value={selectedRating}
+              onChange={(e) => handleRatingSelect(Number(e.target.value))}
             >
-              <div className={`checkbox ${selectedRating === rating ? 'checked' : ''}`}>
-                {selectedRating === rating && <FaCheck className="checkmark" size={10} />}
-              </div>
-              <div className="stars">{renderStars(rating)}</div>
-              <span className="filter-label">&amp; Up</span>
-            </div>
-          ))}
+              <option value="0">Any Rating</option>
+              <option value="4">★★★★☆ & Up</option>
+              <option value="3">★★★☆☆ & Up</option>
+              <option value="2">★★☆☆☆ & Up</option>
+              <option value="1">★☆☆☆☆ & Up</option>
+            </select>
+          </div>
         </div>
       </div>
       
       <div className="filter-section">
         <div className="filter-header" onClick={() => {}}>
-          <h3>Tags</h3>
+          <h3>Popular Tags</h3>
         </div>
         <div className="filter-content">
-          {getVisibleTags().map((tag) => (
-            <div 
-              key={tag.name} 
-              className={`filter-option ${selectedTags.includes(tag.name) ? 'selected' : ''}`}
-              onClick={() => handleTagSelect(tag.name)}
-            >
-              <div className={`checkbox ${selectedTags.includes(tag.name) ? 'checked' : ''}`}>
-                {selectedTags.includes(tag.name) && <FaCheck className="checkmark" size={10} />}
-              </div>
-              <span className="filter-label">{tag.name}</span>
-              <span className="filter-count">{tag.count}</span>
-            </div>
-          ))}
-          {tagOptions.length > 5 && (
-            <div className="load-more" onClick={() => setShowAllTags(!showAllTags)}>
-              {showAllTags ? "− Show less" : "+ Show more"}
-            </div>
-          )}
+          <div className="tag-cloud">
+            {tagOptions.slice(0, 8).map((tag) => (
+              <button 
+                key={tag.name} 
+                className={`tag-button ${selectedTags.includes(tag.name) ? 'selected' : ''}`}
+                onClick={() => handleTagSelect(tag.name)}
+              >
+                {tag.name && tag.name.trim() ? tag.name : 'Others'}
+              </button>
+            ))}
+            {tagOptions.length > 8 && (
+              <button 
+                className="tag-button more-button"
+                onClick={() => setShowAllTags(!showAllTags)}
+              >
+                {showAllTags ? 'Show Less' : 'More...'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
       
       <div className="filter-section">
         <div className="filter-header" onClick={() => {}}>
-          <h3>Contains</h3>
+          <h3>Features</h3>
         </div>
         <div className="filter-content">
-          {getVisibleFeatures().map((feature) => (
-            <div 
-              key={feature.name} 
-              className={`filter-option ${selectedFeatures.includes(feature.name) ? 'selected' : ''}`}
-              onClick={() => handleFeatureSelect(feature.name)}
+          <div className="feature-selector">
+            <select 
+              className="feature-dropdown"
+              value=""
+              onChange={(e) => {
+                const selectedValue = e.target.value;
+                // Special handling for "Others" - ensure it can be selected
+                if (selectedValue) {
+                  handleFeatureSelect(selectedValue);
+                }
+              }}
             >
-              <div className={`checkbox ${selectedFeatures.includes(feature.name) ? 'checked' : ''}`}>
-                {selectedFeatures.includes(feature.name) && <FaCheck className="checkmark" size={10} />}
-              </div>
-              <span className="filter-label">{feature.name}</span>
-              <span className="filter-count">{feature.count}</span>
-            </div>
-          ))}
-          {featureOptions.length > 5 && (
-            <div className="load-more" onClick={() => setShowAllFeatures(!showAllFeatures)}>
-              {showAllFeatures ? "− Show less" : "+ Show more"}
+              <option value="">Select a feature</option>
+              {featureOptions.map((feature) => {
+                // Handle empty feature names as "Others"
+                const displayName = feature.name && feature.name.trim() ? feature.name : 'Others';
+                const valueToUse = feature.name && feature.name.trim() ? feature.name : 'Others';
+                return (
+                  <option key={valueToUse} value={valueToUse}>
+                    {displayName}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          
+          {selectedFeatures.length > 0 && (
+            <div className="selected-features">
+              {selectedFeatures.map((feature) => (
+                <div key={feature} className="selected-feature">
+                  <span>{feature}</span>
+                  <button onClick={() => handleFeatureSelect(feature)}>×</button>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -243,4 +275,4 @@ const FilterSidebar = ({
   );
 };
 
-export default FilterSidebar; 
+export default FilterSidebar;
