@@ -542,11 +542,11 @@ const Header = ({ openSignUpModal }) => {
                       {/* Sign In Link - Clean, Aligned Design */}
                       <Link
                         to="/sign-in"
-                        className="w-full py-3 px-4 rounded-md bg-white border border-blue-100 text-blue-700 hover:bg-blue-50 transition-colors duration-200 flex items-center shadow-smw-full py-3 px-4 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white transition-colors duration-200 flex items-center justify-center shadow-md"
+                        className="w-full py-3 px-4 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white transition-colors duration-200 flex items-center justify-center shadow-md"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <div className="mr-3">
-                          <FaUserPlus className="text-white" size={18} />
+                          <FaUser className="text-white" size={18} />
                         </div>
                         <div>
                           <span className="font-bold text-lg">Sign In</span>
@@ -556,7 +556,7 @@ const Header = ({ openSignUpModal }) => {
                       
                       {/* Create Account Button - Clean, Aligned Design */}
                       <button
-                        className="w-full py-3 px-4 rounded-md bg-white border border-blue-100 text-blue-700 hover:bg-blue-50 transition-colors duration-200 flex items-center shadow-smw-full py-3 px-4 rounded-md bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white transition-colors duration-200 flex items-center justify-center shadow-md"
+                        className="w-full py-3 px-4 rounded-md bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white transition-colors duration-200 flex items-center justify-center shadow-md"
                         onClick={() => {
                           setIsMenuOpen(false);
                           handleSignUp();
