@@ -1,4 +1,4 @@
-// src/components/layout/Header.jsx
+// src/components/Header.jsx
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../assets/v6.webp';
@@ -13,11 +13,13 @@ import {
   FaHome, 
   FaRobot, 
   FaTools, 
+  FaChartLine, 
   FaMicrochip,
   FaUser,
   FaTimes,
   FaBars,
   FaCircle,
+  FaAngleRight,
   FaInfoCircle
 } from 'react-icons/fa';
 import './Header.css'; // Import custom Header CSS
@@ -62,6 +64,7 @@ const Header = ({ openSignUpModal }) => {
       body.classList.remove('admin-page');
     }
     
+    // Cleanup function
     return () => {
       body.classList.remove('admin-page');
     };
@@ -69,17 +72,17 @@ const Header = ({ openSignUpModal }) => {
 
   // Close menu when clicking outside
   useEffect(() => {
-    function handleClickOutside(event) {
+    const handleClickOutside = (event) => {
       if (
-        isMenuOpen &&
-        mobileMenuRef.current &&
+        isMenuOpen && 
+        mobileMenuRef.current && 
         !mobileMenuRef.current.contains(event.target) &&
-        toggleButtonRef.current &&
+        toggleButtonRef.current && 
         !toggleButtonRef.current.contains(event.target)
       ) {
         setIsMenuOpen(false);
       }
-    }
+    };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
@@ -87,19 +90,38 @@ const Header = ({ openSignUpModal }) => {
     };
   }, [isMenuOpen]);
 
-  // Close menu on window resize (if open)
+  // Close mobile menu on window resize and handle iPad Air specifically
   useEffect(() => {
-    function handleResize() {
-      if (isMenuOpen && window.innerWidth >= 768) {
+    const handleResize = () => {
+      // Special case for iPad Air portrait (820x1180)
+      const isIpadAirPortrait = window.innerWidth === 820 && window.innerHeight > 1000;
+      
+      if ((window.innerWidth > 1024 && !isIpadAirPortrait) && isMenuOpen) {
         setIsMenuOpen(false);
       }
-    }
+    };
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isMenuOpen]);
+  
+  // Check if we're on iPad Air portrait mode
+  useEffect(() => {
+    const checkIpadAir = () => {
+      const isIpadAirPortrait = window.innerWidth === 820 && window.innerHeight > 1000;
+      if (isIpadAirPortrait) {
+        document.documentElement.classList.add('ipad-air-portrait');
+      } else {
+        document.documentElement.classList.remove('ipad-air-portrait');
+      }
+    };
+    
+    checkIpadAir();
+    window.addEventListener('resize', checkIpadAir);
+    return () => window.removeEventListener('resize', checkIpadAir);
+  }, []);
 
-  // Handle sign up button click
+  // If we're already on /sign-in, going to sign up should push /sign-up
   const handleSignUp = () => {
     if (typeof openSignUpModal === 'function') {
       openSignUpModal();
@@ -108,19 +130,25 @@ const Header = ({ openSignUpModal }) => {
     }
   };
 
-  // Handle sign out
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast.success("You've been signed out successfully");
+      toast.success('Successfully signed out');
       navigate('/');
     } catch (error) {
+      console.error('Error signing out:', error);
       toast.error('Failed to sign out. Please try again.');
     }
   };
 
   // Toggle mobile menu
   const toggleMobileMenu = () => {
+    // Force mobile menu to be visible on iPad Air
+    const isIpadAirPortrait = window.innerWidth === 820 && window.innerHeight > 1000;
+    if (isIpadAirPortrait) {
+      document.documentElement.classList.add('ipad-air-portrait');
+    }
+    
     setIsMenuOpen(prevState => !prevState);
   };
 
@@ -181,11 +209,11 @@ const Header = ({ openSignUpModal }) => {
             >
               AIWaverider
             </motion.span>
-          </Link>
+        </Link>
         </motion.div>
         
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center justify-center flex-grow">
+        {/* Desktop Navigation - hidden at 1024px and below */}
+        <nav className="hidden 2xl:flex items-center justify-center flex-grow">
           <ul className="flex nav-links items-center">
             <li className="nav-item flex items-center">
               <Link 
@@ -251,16 +279,16 @@ const Header = ({ openSignUpModal }) => {
             </li>
           </ul>
         </nav>
-
-        {/* Desktop Right Side */}
-        <div className="hidden md:flex items-center space-x-2">
+        
+        {/* Desktop Right Side - hidden at 1024px and below */}
+        <div className="hidden 2xl:flex items-center space-x-2">
           {/* Dark Mode Toggle */}
           <button 
             onClick={toggleDarkMode}
             aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             className="p-2 rounded-full hover:bg-gray-100/10 transition-colors text-white"
           >
-            {darkMode ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-gray-200" />}
+            {darkMode ? <FaSun className="text-white" /> : <FaMoon className="text-white" />}
           </button>
           
           {/* Cart Button */}
@@ -270,32 +298,32 @@ const Header = ({ openSignUpModal }) => {
             aria-label="Cart"
           >
             <FaShoppingCart />
-            {itemCount > 0 && (
+              {itemCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                {itemCount}
-              </span>
-            )}
-          </Link>
+                  {itemCount}
+                </span>
+              )}
+            </Link>
           
-          {/* Auth Buttons */}
-          {!user && (
-            <>
-              <Link 
-                to="/sign-in"
+          {/* Auth Buttons - Hidden on Mobile */}
+            {!user && (
+              <>
+                <Link 
+                  to="/sign-in" 
                 className="auth-button px-3 py-1 text-white/90 hover:text-white transition"
-              >
-                Sign In
-              </Link>
-              <button
-                onClick={handleSignUp}
+                >
+                  Sign In
+                </Link>
+                <button
+                  onClick={handleSignUp}
                 className="auth-button-primary px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-md transition"
-              >
-                Sign Up
-              </button>
-            </>
-          )}
-          
-          {user && (
+                >
+                  Sign Up
+                </button>
+              </>
+            )}
+
+            {user && (
             <div className="relative group">
               <button className="flex items-center space-x-1 bg-blue-600/30 hover:bg-blue-600/40 px-2 py-1 rounded-md">
                 <div className="w-7 h-7 rounded-full overflow-hidden border border-blue-300 flex items-center justify-center">
@@ -324,185 +352,180 @@ const Header = ({ openSignUpModal }) => {
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Admin Dashboard
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleSignOut}
+                  </Link>
+                )}
+                <button
+                  onClick={handleSignOut}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                  >
-                    Sign Out
-                  </button>
+                >
+                  Sign Out
+                </button>
                 </div>
               </div>
             </div>
-          )}
-        </div>
-        
-        {/* Mobile menu button */}
-        <div className="md:hidden flex items-center">
-          <button
-            ref={toggleButtonRef}
-            onClick={toggleMobileMenu}
-            className="mobile-menu-button text-white focus:outline-none"
-            aria-label={isMenuOpen ? "Close Menu" : "Open Menu"}
-          >
-            {isMenuOpen ? (
-              <FaTimes className="text-xl" />
-            ) : (
-              <FaBars className="text-xl" />
             )}
+          </div>
+
+        {/* Mobile menu button - visible at 1024px and below */}
+        <div className="2xl:hidden flex items-center">
+          <button 
+            ref={toggleButtonRef}
+            className="2xl:hidden text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0 rounded-md"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle mobile menu"
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
           </button>
         </div>
       </div>
       
-      {/* Mobile Navigation */}
+      {/* Mobile Menu - Enhanced for better accessibility and UX */}
       {isMenuOpen && (
         <div 
           ref={mobileMenuRef}
-          className="md:hidden fixed inset-0 z-50 bg-gray-900 bg-opacity-95 overflow-y-auto"
+          className="2xl:hidden mobile-menu"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile navigation menu"
         >
-          {/* Close button at top right */}
-          <div className="absolute top-4 right-4">
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="p-2 text-white hover:text-teal-400 focus:outline-none"
+          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+            <div className="flex items-center">
+              <img src={logo} alt="AI Waverider" className="w-10 h-10 mr-2" />
+              <span className="font-bold text-xl text-indigo-600">AIWaverider</span>
+            </div>
+            <button 
+              onClick={toggleMobileMenu}
+              className="p-2 text-gray-600 hover:text-indigo-600 rounded-md border border-purple-200 bg-white"
               aria-label="Close menu"
             >
-              <FaTimes className="w-8 h-8" />
+              <FaTimes className="text-xl" />
             </button>
           </div>
-          
-          {/* Logo at top left */}
-          <div className="pt-6 pb-6 flex justify-center">
-            <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center">
-              <img src={logo} alt="AI Waverider" className="h-12 w-auto" />
-            </Link>
-          </div>
-          
-          <nav className="px-6 py-2">
-            <ul className="flex flex-col items-start w-full space-y-4">
-              <li>
+          <nav className="container mx-auto px-4 py-3">
+            <ul className="space-y-1">
+              <li className="mobile-nav-item">
                 <Link
                   to="/"
-                  className="flex items-center py-3 text-white hover:text-teal-400"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaHome className="mr-3 text-lg" /> Home
+                  <FaHome className="mr-3" /> Home
                 </Link>
               </li>
-              <li>
+              <li className="mobile-nav-item">
                 <Link
                   to="/agents"
-                  className="flex items-center py-3 text-white hover:text-teal-400"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaRobot className="mr-3 text-lg" /> Agents
+                  <FaRobot className="mr-3" /> Agents
                 </Link>
               </li>
-              <li>
+              <li className="mobile-nav-item">
                 <Link
                   to="/ai-tools"
-                  className="flex items-center py-3 text-white hover:text-teal-400"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaTools className="mr-3 text-lg" /> AI Tools
+                  <FaTools className="mr-3" /> AI Tools
                 </Link>
               </li>
-              <li>
+              <li className="mobile-nav-item">
                 <Link
                   to="/latest-tech"
-                  className="flex items-center py-3 text-white hover:text-teal-400"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaMicrochip className="mr-3 text-lg" /> Latest Tech
+                  <FaMicrochip className="mr-3" /> Latest Tech
                 </Link>
               </li>
-              <li>
+              <li className="mobile-nav-item">
                 <Link
                   to="/about"
-                  className="flex items-center py-3 text-white hover:text-teal-400"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaInfoCircle className="mr-3 text-lg" /> About
+                  <FaInfoCircle className="mr-3" /> About
                 </Link>
               </li>
-              <li>
+              <li className="mobile-nav-item">
                 <Link
                   to="/checkout"
-                  className="flex items-center py-3 text-white hover:text-teal-400"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaShoppingCart className="mr-3 text-lg" /> Cart {itemCount > 0 ? `(${itemCount})` : ''}
+                  <FaShoppingCart className="mr-3" /> Cart {itemCount > 0 ? `(${itemCount})` : ''}
                 </Link>
               </li>
               
               {/* Dark/Light mode toggle on mobile */}
-              <li className="pt-3 mt-3 border-t border-gray-700">
+              <li className="mobile-nav-item">
                 <button
                   onClick={() => {
                     toggleDarkMode();
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center py-3 text-white hover:text-teal-400 w-full"
-                  aria-label={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center w-full"
                 >
-                  {darkMode ? (
-                    <>
-                      <FaSun className="mr-3 text-lg" /> Switch to Light Mode
-                    </>
-                  ) : (
-                    <>
-                      <FaMoon className="mr-3 text-lg" /> Switch to Dark Mode
-                    </>
-                  )}
+                  {darkMode ? <FaSun className="mr-3" /> : <FaMoon className="mr-3" />}
+                  {darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                 </button>
               </li>
               
-              {/* Profile or sign up */}
-              {user ? (
-                <>
-                  <li className="pt-3 mt-3 border-t border-gray-700">
+              {/* Mobile-only auth options */}
+              <li className="pt-2 mt-2 border-t border-gray-200">
+                {!user && (
+                  <div className="flex flex-col space-y-1">
                     <Link
-                      to="/profile"
-                      className="flex items-center py-3 text-white hover:text-teal-400"
+                      to="/sign-in"
+                      className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <FaUser className="mr-3 text-lg" /> Profile
+                      Sign In
                     </Link>
-                  </li>
-                  {user.role === 'admin' && (
-                    <li>
+                    <button
+                      className="mx-4 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-center"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        handleSignUp();
+                      }}
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                )}
+                
+                {user && (
+                  <div className="flex flex-col space-y-1">
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <FaUser className="mr-3" /> Profile
+                    </Link>
+                    {user.role === 'admin' && (
                       <Link
-                        to="/admin/dashboard"
-                        className="flex items-center py-3 text-white hover:text-teal-400"
+                        to="/admin/agents"
+                        className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Admin Dashboard
                       </Link>
-                    </li>
-                  )}
-                  <li>
+                    )}
                     <button
-                      onClick={handleSignOut}
-                      className="flex items-center py-3 text-red-400 hover:text-red-300 w-full text-left"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        handleSignOut();
+                      }}
+                      className="mx-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-center mt-2"
                     >
                       Sign Out
                     </button>
-                  </li>
-                </>
-              ) : (
-                <li className="pt-3 mt-3 border-t border-gray-700">
-                  <button
-                    onClick={() => {
-                      handleSignUp();
-                      setIsMenuOpen(false);
-                    }}
-                    className="flex items-center py-3 text-white hover:text-teal-400 w-full text-left"
-                  >
-                    Sign Up / Sign In
-                  </button>
-                </li>
-              )}
+                  </div>
+                )}
+              </li>
             </ul>
           </nav>
         </div>
