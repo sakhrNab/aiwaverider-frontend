@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -15,6 +15,11 @@ import {
 
 const AIObstacleSolutionsPage = () => {
   const { darkMode } = useTheme();
+  
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   
   // Animation variants
   const containerVariants = {

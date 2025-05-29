@@ -3,6 +3,7 @@ import { HashLoader } from 'react-spinners';
 import { FaRobot, FaTools, FaLightbulb, FaCalendarAlt, FaArrowRight, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import '../styles/animations.css'; // Import animations
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
 import tazProfileImg from '../assets/taz-profile.jpg';
 import simpleToSellImg from '../assets/simple-to-sell.png';
@@ -75,24 +76,51 @@ const HomePage = () => {
   
   return (
     <div className={`${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
-      {/* Custom booking header that matches the screenshot */}
-      <div className="bg-indigo-900 py-6 px-6">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-bold text-white">AI Waverider</h2>
-            <p className="text-yellow-500 font-medium">Your Gateway to AI Mastery</p>
-          </div>
-          <div className="mt-4 md:mt-0">
-            <a 
-              href="https://calendly.com/aiwaverider8/30min" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse"
-            >
-              <FaCalendarAlt className="mr-2" />
-              Book a Training Session
-              <FaArrowRight className="ml-2" />
-            </a>
+      {/* Ultra-modern AI header with 3D effects and dynamic animations */}
+      <div className="relative overflow-hidden">
+        {/* Animated background gradient with enhanced colors - different for dark/light modes */}
+        <div className={`absolute inset-0 animate-gradient-x ${darkMode 
+          ? 'bg-gradient-to-r from-indigo-900 via-purple-800 to-blue-900' 
+          : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600'}`}></div>
+        
+        {/* Advanced grid pattern that gives a tech/AI feel */}
+        <div className="absolute inset-0 bg-grid-white/[0.15] bg-[length:15px_15px] opacity-70">
+          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[length:50px_50px] rotate-45"></div>
+        </div>
+        
+        {/* Parallax floating elements - small geometric shapes */}
+        <div className="absolute top-20 right-1/4 w-16 h-16 border-2 border-blue-400/30 rotate-45 animate-float-slow"></div>
+        <div className="absolute bottom-10 left-1/3 w-12 h-12 border-2 border-purple-400/20 rounded-full animate-float"></div>
+        <div className="absolute top-1/3 left-1/5 w-8 h-8 border-2 border-teal-400/20 rotate-12 animate-spin-slow"></div>
+        
+        {/* Advanced glowing orbs with dynamic animations */}
+        <div className="absolute -top-20 right-1/4 w-80 h-80 bg-blue-500 rounded-full filter blur-3xl opacity-10 animate-pulse-slow"></div>
+        <div className="absolute -bottom-40 -left-20 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-10 animate-float"></div>
+        <div className="absolute top-1/2 left-2/3 w-40 h-40 bg-teal-500 rounded-full filter blur-3xl opacity-5 animate-pulse"></div>
+        
+        {/* Header content with enhanced glass effect */}
+        <div className={`relative backdrop-blur-sm py-8 px-6 border-b ${darkMode ? 'border-white/10' : 'border-indigo-500/30'} glass-effect ${darkMode ? 'bg-black/5' : 'bg-white/15'}`}>
+          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div className="relative z-10">
+              <h2 className={`text-5xl font-bold text-transparent bg-clip-text ${darkMode ? 'bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300' : 'bg-gradient-to-r from-white via-yellow-100 to-white'} mb-2 drop-shadow-lg`}>AI Waverider</h2>
+              <div className="flex items-center">
+                <div className={`w-10 h-[2px] bg-gradient-to-r ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent mr-3`}></div>
+                <p className="text-white font-medium text-lg drop-shadow-md">Your Gateway to AI Mastery</p>
+                <div className={`w-10 h-[2px] bg-gradient-to-l ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent ml-3`}></div>
+              </div>
+            </div>
+            <div className="mt-6 md:mt-0 relative z-10">
+              <a 
+                href="https://calendly.com/aiwaverider8/30min"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <FaCalendarAlt className="mr-3 text-lg" />
+                <span className="text-lg">Book a FREE Training Session</span>
+                <FaArrowRight className="ml-3 text-lg" />
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -398,10 +426,10 @@ const HomePage = () => {
               />
             </div>
             <div>
-              <h4 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h4 className={`text-2xl md:text-3xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
                 Making AI Easy
               </h4>
-              <p className={`mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-8 text-lg md:text-xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 Providing you a proven strategy and business in a box that's ready for you to generate leads and close more clients. Broken down into easy-to-understand steps, and plain language... so you can apply them and start selling AI in as little as 24 hours without being a tech wizard.
               </p>
             </div>
@@ -409,10 +437,10 @@ const HomePage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center mb-20">
             <div className="order-2 md:order-1">
-              <h4 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h4 className={`text-2xl md:text-3xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
                 Saving You Time
               </h4>
-              <p className={`mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-8 text-lg md:text-xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 We know you're busy. That's why we make selling AI quick and efficient. Our process is designed to get you up and running within hours, not days or weeks. We handle the heavy lifting so you can focus on closing more clients on AI.
               </p>
             </div>
@@ -436,10 +464,10 @@ const HomePage = () => {
               />
             </div>
             <div>
-              <h4 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h4 className={`text-3xl md:text-4xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
                 Simple To Sell
               </h4>
-              <p className={`mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-8 text-xl md:text-2xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 No more confusion and overwhelm. We provide you with your pre-designed business in a box and AI tools all in one place. Simply plug and play for your own business while getting paid to set these AI tools up for business owners. It doesn't stop there... we also show you how to leverage other name brand AI tools that we feel are leading the way in the world.
               </p>
             </div>

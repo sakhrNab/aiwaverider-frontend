@@ -21,8 +21,8 @@ import {
   FaInfoCircle
 } from 'react-icons/fa';
 import './Header.css'; // Import custom Header CSS
-// import { toggleDarkMode, isDarkMode } from '../utils/theme';
-// import { handleGoogleProfileImage } from '../utils/imageUtils';
+import '../../styles/animations.css'; // Import animations
+import { motion } from 'framer-motion'; // For subtle animations
 
 const Header = ({ openSignUpModal }) => {
   const { user, signOut } = useContext(AuthContext);
@@ -62,7 +62,6 @@ const Header = ({ openSignUpModal }) => {
       body.classList.remove('admin-page');
     }
     
-    // Cleanup function
     return () => {
       body.classList.remove('admin-page');
     };
@@ -70,17 +69,17 @@ const Header = ({ openSignUpModal }) => {
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    function handleClickOutside(event) {
       if (
-        isMenuOpen && 
-        mobileMenuRef.current && 
+        isMenuOpen &&
+        mobileMenuRef.current &&
         !mobileMenuRef.current.contains(event.target) &&
-        toggleButtonRef.current && 
+        toggleButtonRef.current &&
         !toggleButtonRef.current.contains(event.target)
       ) {
         setIsMenuOpen(false);
       }
-    };
+    }
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
@@ -88,34 +87,34 @@ const Header = ({ openSignUpModal }) => {
     };
   }, [isMenuOpen]);
 
-  // Close mobile menu on window resize
+  // Close menu on window resize (if open)
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 768 && isMenuOpen) {
+    function handleResize() {
+      if (isMenuOpen && window.innerWidth >= 768) {
         setIsMenuOpen(false);
       }
-    };
+    }
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isMenuOpen]);
 
-  // If we're already on /sign-in, going to sign up should push /sign-up
+  // Handle sign up button click
   const handleSignUp = () => {
-    if (location.pathname === '/sign-in') {
-      navigate('/sign-up');
-    } else {
+    if (typeof openSignUpModal === 'function') {
       openSignUpModal();
+    } else {
+      document.dispatchEvent(new CustomEvent('open-signup-modal'));
     }
   };
 
+  // Handle sign out
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast.success('Successfully signed out');
+      toast.success("You've been signed out successfully");
       navigate('/');
     } catch (error) {
-      console.error('Error signing out:', error);
       toast.error('Failed to sign out. Please try again.');
     }
   };
@@ -126,11 +125,64 @@ const Header = ({ openSignUpModal }) => {
   };
 
   return (
-    <header className="main-header shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
-        <Link to="/" className="flex-shrink-0 flex items-center mr-4">
-          <img src={logo} alt="AI Waverider" className="min-w-[40px] w-10 md:w-12 h-auto site-logo" />
-        </Link>
+    <header className={`main-header sticky top-0 z-50 backdrop-blur-xl ${
+      darkMode 
+        ? 'bg-gradient-to-r from-gray-900/90 via-indigo-950/80 to-gray-900/90 border-b border-indigo-700/30 shadow-lg shadow-indigo-900/20' 
+        : 'bg-gradient-to-r from-blue-600/90 via-indigo-500/80 to-purple-500/90 border-b border-indigo-300 shadow-lg shadow-indigo-500/20'
+    } transition-all duration-300`}>
+      {/* Animated glow effect */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ 
+            repeat: Infinity,
+            duration: 8,
+            ease: "easeInOut" 
+          }}
+          className={`absolute -top-24 -right-24 w-48 h-48 rounded-full ${darkMode ? 'bg-indigo-600' : 'bg-blue-400'} blur-3xl`}
+        />
+        <motion.div 
+          animate={{ 
+            y: [-10, 10, -10],
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ 
+            repeat: Infinity,
+            duration: 10,
+            ease: "easeInOut" 
+          }}
+          className={`absolute -bottom-24 -left-24 w-48 h-48 rounded-full ${darkMode ? 'bg-purple-600' : 'bg-indigo-400'} blur-3xl`}
+        />
+      </div>
+      
+      <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center relative">
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          className="flex-shrink-0 flex items-center mr-4"
+        >
+          <Link to="/" className="flex items-center">
+            <motion.img 
+              whileHover={{ rotate: 10 }}
+              src={logo} 
+              alt="AI Waverider" 
+              className="min-w-[40px] w-10 md:w-12 h-auto site-logo" 
+            />
+            <motion.span 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className={`ml-2 font-bold text-lg md:text-xl text-transparent bg-clip-text ${darkMode 
+                ? 'bg-gradient-to-r from-blue-300 to-purple-300' 
+                : 'bg-gradient-to-r from-yellow-300 via-orange-200 to-yellow-100 drop-shadow-lg'}`}
+            >
+              AIWaverider
+            </motion.span>
+          </Link>
+        </motion.div>
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center justify-center flex-grow">
@@ -165,10 +217,10 @@ const Header = ({ openSignUpModal }) => {
               <Link 
                 to="/ai-tools" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="AI Tools & Prompts"
+                aria-label="AI Tools"
               >
                 <FaTools className="mr-1.5" /> 
-                <span>AI Tools & Prompts</span>
+                <span>AI Tools</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -178,10 +230,10 @@ const Header = ({ openSignUpModal }) => {
               <Link 
                 to="/latest-tech" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="Latest News & Tutorials"
+                aria-label="Latest Tech"
               >
                 <FaMicrochip className="mr-1.5" /> 
-                <span>Latest Tech News & Tutorials</span>
+                <span>Latest Tech</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -194,112 +246,126 @@ const Header = ({ openSignUpModal }) => {
                 aria-label="About"
               >
                 <FaInfoCircle className="mr-1.5" /> 
-                <span>About Us</span>
+                <span>About</span>
               </Link>
+              <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
+                <FaCircle />
+              </span>
             </li>
           </ul>
         </nav>
-        
-        {/* Right Section with Theme, Cart, Auth, and Mobile Menu Toggle */}
-        <div className="flex items-center space-x-3 md:space-x-4">
-          {/* Theme Toggle Button */}
+
+        {/* Desktop Right Side */}
+        <div className="hidden md:flex items-center space-x-2">
+          {/* Dark Mode Toggle */}
           <button 
             onClick={toggleDarkMode}
-            className="theme-toggle-button tooltip-container flex-shrink-0"
-            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            className="p-2 rounded-full hover:bg-gray-100/10 transition-colors text-white"
           >
-            {darkMode ? <FaSun className="text-white" /> : <FaMoon className="text-white" />}
+            {darkMode ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-gray-200" />}
           </button>
           
-          {/* Cart Icon - Visible on all screens */}
-          <div className="cart-icon-container relative flex-shrink-0">
-            <Link to="/checkout" className="text-white hover:text-[#00bcd4] block p-2" aria-label="Shopping Cart">
-              <FaShoppingCart className="text-xl" />
-              {itemCount > 0 && (
-                <span className="cart-badge absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
-          </div>
-          
-          {/* Auth Buttons - Hidden on Mobile */}
-          <div className="hidden md:flex items-center space-x-3">
-            {!user && (
-              <>
-                <Link 
-                  to="/sign-in" 
-                  className="auth-button bg-[#16213e] hover:bg-[#00bcd4] text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap"
-                >
-                  Sign In
-                </Link>
-                <button
-                  onClick={handleSignUp}
-                  className="auth-button bg-[#16213e] hover:bg-[#00bcd4] text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap"
-                >
-                  Sign Up
-                </button>
-              </>
-            )}
-
-            {user && (
-              <>
-                {user.role === 'admin' && (
-                  <Link to="/admin/agents" className="auth-button bg-[#16213e] hover:bg-[#00bcd4] text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap">
-                    Admin
-                  </Link>
-                )}
-                <button
-                  onClick={handleSignOut}
-                  className="auth-button signout-button bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap"
-                >
-                  Sign Out
-                </button>
-                <Link
-                  to="/profile"
-                  className="profile-avatar w-10 h-10 overflow-hidden rounded-full border-2 border-[#00bcd4] bg-white flex-shrink-0"
-                >
-                  <img
-                    src={user?.photoURL || '/default-avatar.png'}
-                    alt={`${user?.displayName || 'User'}'s Profile`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      if (e.target.src.indexOf('default-avatar.png') === -1) {
-                        e.target.src = '/default-avatar.png';
-                      }
-                      e.target.onerror = null;
-                    }}
-                  />
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Mobile Menu Toggle Button */}
-          <button 
-            ref={toggleButtonRef}
-            className="md:hidden text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0"
-            onClick={toggleMobileMenu}
-            aria-label="Toggle mobile menu"
-            aria-expanded={isMenuOpen}
+          {/* Cart Button */}
+          <Link 
+            to="/checkout" 
+            className="p-2 rounded-full hover:bg-gray-100/10 transition-colors relative text-white"
+            aria-label="Cart"
           >
-            {isMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+            <FaShoppingCart />
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
+          </Link>
+          
+          {/* Auth Buttons */}
+          {!user && (
+            <>
+              <Link 
+                to="/sign-in"
+                className="auth-button px-3 py-1 text-white/90 hover:text-white transition"
+              >
+                Sign In
+              </Link>
+              <button
+                onClick={handleSignUp}
+                className="auth-button-primary px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-md transition"
+              >
+                Sign Up
+              </button>
+            </>
+          )}
+          
+          {user && (
+            <div className="relative group">
+              <button className="flex items-center space-x-1 bg-blue-600/30 hover:bg-blue-600/40 px-2 py-1 rounded-md">
+                <div className="w-7 h-7 rounded-full overflow-hidden border border-blue-300 flex items-center justify-center">
+                  {user.photoURL ? (
+                    <img src={user.photoURL || '/default-avatar.png'} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-blue-500 flex items-center justify-center text-xs text-white font-medium">
+                      {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                    </div>
+                  )}
+                </div>
+                <span className="text-white text-sm hidden md:inline">{user.displayName || user.email?.split('@')[0] || 'User'}</span>
+              </button>
+              
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg overflow-hidden z-20 opacity-0 scale-95 invisible group-hover:opacity-100 group-hover:scale-100 group-hover:visible transition-all duration-200 origin-top-right">
+                <div className="py-1">
+                  <Link 
+                    to="/profile" 
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Profile
+                  </Link>
+                  {user.role === 'admin' && (
+                    <Link 
+                      to="/admin/dashboard" 
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Mobile menu button */}
+        <div className="md:hidden flex items-center">
+          <button
+            ref={toggleButtonRef}
+            onClick={toggleMobileMenu}
+            className="mobile-menu-button text-white focus:outline-none"
+            aria-label={isMenuOpen ? "Close Menu" : "Open Menu"}
+          >
+            {isMenuOpen ? (
+              <FaTimes className="text-xl" />
+            ) : (
+              <FaBars className="text-xl" />
+            )}
           </button>
         </div>
       </div>
       
-      {/* Mobile Menu - Enhanced for better accessibility and UX */}
+      {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div 
+        <div
           ref={mobileMenuRef}
-          className="md:hidden mobile-menu"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Mobile navigation menu"
+          className={`md:hidden fixed inset-0 z-40 ${darkMode ? 'bg-gray-900' : 'bg-white'} overflow-y-auto pt-16`}
         >
-          <nav className="container mx-auto px-4 py-3">
-            <ul className="space-y-1">
+          <nav className="px-4 py-4">
+            <ul className="space-y-2">
               <li className="mobile-nav-item">
                 <Link
                   to="/"
@@ -324,7 +390,7 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaTools className="mr-3" /> AI Tools & Prompts
+                  <FaTools className="mr-3" /> AI Tools
                 </Link>
               </li>
               <li className="mobile-nav-item">
@@ -333,7 +399,7 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaMicrochip className="mr-3" /> Latest Tech News & Tutorials
+                  <FaMicrochip className="mr-3" /> Latest Tech
                 </Link>
               </li>
               <li className="mobile-nav-item">
