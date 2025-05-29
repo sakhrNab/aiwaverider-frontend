@@ -55,7 +55,6 @@ const withSuspense = (Component) => (
 
 const AppRoutes = () => {
   const location = useLocation();
-  console.log('[AppContent render] React Router location.pathname:', location.pathname);
 
   return (
     <Routes>

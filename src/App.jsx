@@ -52,31 +52,17 @@ const App = () => {
 
   useEffect(() => {
     // --- 1. Redirect Logic (handles deep links after 404 redirect) ---
-    console.log('[App.jsx useEffect] Effect runs. Current window.location.href:', window.location.href);
-    console.log('[App.jsx useEffect] sessionStorage.redirect at start:', sessionStorage.getItem('redirect'));
-
     const redirectPath = sessionStorage.getItem('redirect');
     if (redirectPath) {
-      console.log('[App.jsx useEffect] redirectPath FOUND:', redirectPath);
       sessionStorage.removeItem('redirect');
-      console.log('[App.jsx useEffect] sessionStorage.redirect AFTER removal:', sessionStorage.getItem('redirect'));
-
-      console.log('[App.jsx useEffect] Calling window.history.replaceState with path:', redirectPath);
       window.history.replaceState(null, '', redirectPath); // Update browser bar URL
-      console.log('[App.jsx useEffect] window.location.href AFTER replaceState:', window.location.href);
 
-      console.log('[App.jsx useEffect] Calling navigate(redirectPath, { replace: true }) to sync React Router.');
       navigate(redirectPath, { replace: true }); // Sync React Router's internal state
-    } else {
-      console.log('[App.jsx useEffect] No redirectPath found in sessionStorage.');
     }
 
     // --- 2. Initialization Logic ---
     // This guard ensures the main initialization steps run only once per mount.
     if (effectRanThisMount.current) {
-      console.log('[App.jsx useEffect] Initialization logic already run for this mount. Skipping.');
-      // If UI is somehow not visible but effect ran, ensure it becomes visible.
-      // This could happen if navigate changes identity and causes effect to re-run.
       if (!isUIVisible) setIsUIVisible(true);
       return;
     }
@@ -85,27 +71,16 @@ const App = () => {
     const initializeApp = async () => {
       try {
         if (!globalAppSetupDone) {
-          console.log('[App.jsx initializeApp] Performing global, one-time app setup...');
-          // Place any truly global, one-time setup logic here (e.g., API keys, global listeners)
-          // Example: await someAnalyticsService.init();
           if (process.env.NODE_ENV === 'development') {
             console.log('[App.jsx initializeApp] Development-specific global setup done.');
           }
           globalAppSetupDone = true; // Mark global setup as done
-        } else {
-          console.log('[App.jsx initializeApp] Global app setup was already done.');
         }
-
-        // This part can run on initial load (after global setup) or if needed on subsequent "soft" inits.
-        // For this app, it primarily makes the UI visible.
-        console.log('[App.jsx initializeApp] Preparing UI and any per-load specifics...');
-        // Example: const user = await authService.checkSession(); if (user) setUserContext(user);
 
       } catch (error) {
         console.error('[App.jsx initializeApp] Error during app initialization:', error);
       } finally {
         if (!isUIVisible) { // Only set state if it needs changing, to avoid unnecessary re-renders
-            console.log('[App.jsx initializeApp] Setting isUIVisible to true.');
             setIsUIVisible(true); // Make AppContent visible
         }
       }
