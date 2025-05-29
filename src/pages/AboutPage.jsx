@@ -28,7 +28,7 @@ const About = () => {
       </section>
 
       {/* Mission Section */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
             <h2 className={`text-3xl font-bold mb-8 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Our Mission</h2>
@@ -79,7 +79,7 @@ const About = () => {
       </section>
 
       {/* Founders Section */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <h2 className={`text-3xl font-bold mb-12 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Meet the Founders</h2>
           
@@ -221,7 +221,7 @@ const About = () => {
       </section>
 
       {/* Contact Section */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className={`text-3xl font-bold mb-8 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Get in Touch</h2>

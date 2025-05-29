@@ -12,15 +12,14 @@ import {
   FaMoon, 
   FaHome, 
   FaRobot, 
-  FaTools, 
-  FaChartLine, 
+  FaTools,  
   FaMicrochip,
   FaUser,
-  FaTimes,
+  FaUserPlus,
   FaBars,
   FaCircle,
-  FaAngleRight,
-  FaInfoCircle
+  FaInfoCircle,
+  FaTimes as FaX
 } from 'react-icons/fa';
 import './Header.css'; // Import custom Header CSS
 import '../../styles/animations.css'; // Import animations
@@ -43,6 +42,21 @@ const Header = ({ openSignUpModal }) => {
   
   // Toggle body class when menu opens/closes
   useEffect(() => {
+    const toggleMobileMenu = () => {
+      const newMenuState = !isMenuOpen;
+      document.body.classList.toggle('menu-open', newMenuState);
+      setIsMenuOpen(newMenuState);
+      
+      // For devices with specific dimensions, adjust position
+      const isSurfacePro = window.innerWidth === 1368 && window.innerHeight === 912;
+      const isIPad = (window.innerWidth === 768 || window.innerWidth === 820 || window.innerWidth === 1024) && 
+                    (window.innerHeight === 1024 || window.innerHeight === 1180 || window.innerHeight === 1366);
+      
+      if (isSurfacePro || isIPad) {
+        document.documentElement.classList.toggle('tablet-device', newMenuState);
+      }
+    };
+
     const body = document.querySelector('body');
     if (isMenuOpen) {
       body.classList.add('menu-open');
@@ -141,15 +155,48 @@ const Header = ({ openSignUpModal }) => {
     }
   };
 
-  // Toggle mobile menu
+  // Toggle mobile menu - direct implementation that works across all devices
   const toggleMobileMenu = () => {
-    // Force mobile menu to be visible on iPad Air
-    const isIpadAirPortrait = window.innerWidth === 820 && window.innerHeight > 1000;
-    if (isIpadAirPortrait) {
-      document.documentElement.classList.add('ipad-air-portrait');
+    // Create direct DOM manipulation to fix the issue
+    // Toggle menu state directly
+    const bodyElement = document.body;
+    const newMenuState = !bodyElement.classList.contains('menu-open');
+    
+    // Check device dimensions for specialized handling
+    const isSurfacePro = window.innerWidth === 1368 && window.innerHeight === 912;
+    const isIPad = [
+      // iPad Mini
+      window.innerWidth === 768 && window.innerHeight === 1024,
+      // iPad Air
+      window.innerWidth === 820 && window.innerHeight === 1180,
+      // iPad Pro
+      window.innerWidth === 1024 && window.innerHeight === 1366
+    ].some(condition => condition);
+    const isNestHub = [
+      // Nest Hub
+      window.innerWidth === 1024 && window.innerHeight === 600,
+      // Nest Hub Max
+      window.innerWidth === 1280 && window.innerHeight === 800
+    ].some(condition => condition);
+    
+    if (newMenuState) {
+      // Opening menu
+      bodyElement.classList.add('menu-open');
+      
+      // Add device-specific classes
+      if (isSurfacePro) document.documentElement.classList.add('surface-pro');
+      if (isIPad) document.documentElement.classList.add('ipad-device');
+      if (isNestHub) document.documentElement.classList.add('nest-hub');
+      
+    } else {
+      // Closing menu
+      bodyElement.classList.remove('menu-open');
+      
+      // Remove device-specific classes
+      document.documentElement.classList.remove('surface-pro', 'ipad-device', 'nest-hub');
     }
     
-    setIsMenuOpen(prevState => !prevState);
+    setIsMenuOpen(newMenuState);
   };
 
   return (
@@ -307,20 +354,33 @@ const Header = ({ openSignUpModal }) => {
           
           {/* Auth Buttons - Hidden on Mobile */}
             {!user && (
-              <>
-                <Link 
-                  to="/sign-in" 
-                className="auth-button px-3 py-1 text-white/90 hover:text-white transition"
-                >
-                  Sign In
-                </Link>
-                <button
-                  onClick={handleSignUp}
-                className="auth-button-primary px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-md transition"
-                >
-                  Sign Up
+              <div className="relative group">
+                <button className="account-access-button flex items-center space-x-1 bg-gradient-to-r from-blue-600/30 to-teal-500/30 hover:from-blue-600/40 hover:to-teal-500/40 px-2 py-1 rounded-md transition-all duration-300 group">
+                  <div className="avatar w-7 h-7 rounded-full overflow-hidden border border-blue-300 group-hover:border-teal-300 transition-colors duration-300 flex items-center justify-center">
+                    <div className="w-full h-full bg-gradient-to-r from-blue-500 to-teal-500 flex items-center justify-center text-xs text-white font-medium group-hover:scale-105 transition-transform duration-300">
+                      <FaUser />
+                    </div>
+                  </div>
+                  <span className="text-white text-sm hidden md:inline group-hover:text-teal-200 transition-colors duration-300">Account Access</span>
                 </button>
-              </>
+                
+                <div className="account-access-dropdown absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg overflow-hidden z-20 opacity-0 scale-95 invisible group-hover:opacity-100 group-hover:scale-100 group-hover:visible transition-all duration-200 origin-top-right">
+                  <div className="py-1">
+                    <Link 
+                      to="/sign-in" 
+                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 border-l-0 hover:border-l-4 hover:border-blue-500 hover:pl-3"
+                    >
+                      <span className="flex items-center"><FaUser className="mr-2 text-blue-400" /> Sign In</span>
+                    </Link>
+                    <button
+                      onClick={handleSignUp}
+                      className="block w-full text-left px-4 py-3 text-sm text-teal-600 hover:bg-teal-50 hover:text-teal-700 transition-colors duration-200 border-l-0 hover:border-l-4 hover:border-teal-500 hover:pl-3"
+                    >
+                      <span className="flex items-center"><FaUserPlus className="mr-2 text-teal-400" /> Sign Up</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
 
             {user && (
@@ -375,32 +435,33 @@ const Header = ({ openSignUpModal }) => {
             aria-label="Toggle mobile menu"
             aria-expanded={isMenuOpen}
           >
-            {isMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+            <FaBars className="text-xl" />
           </button>
         </div>
       </div>
       
       {/* Mobile Menu - Enhanced for better accessibility and UX */}
-      {isMenuOpen && (
-        <div 
-          ref={mobileMenuRef}
-          className="2xl:hidden mobile-menu"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Mobile navigation menu"
-        >
+      <div 
+        ref={mobileMenuRef}
+        className="mobile-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile navigation menu"
+        style={{ display: isMenuOpen ? 'block' : 'none' }}
+      >
           <div className="flex justify-between items-center p-4 border-b border-gray-200">
             <div className="flex items-center">
               <img src={logo} alt="AI Waverider" className="w-10 h-10 mr-2" />
               <span className="font-bold text-xl text-indigo-600">AIWaverider</span>
             </div>
-            <button 
-              onClick={toggleMobileMenu}
-              className="p-2 text-gray-600 hover:text-indigo-600 rounded-md border border-purple-200 bg-white"
-              aria-label="Close menu"
-            >
-              <FaTimes className="text-xl" />
-            </button>
+            {/* Mobile Menu Button - Enhanced for all device sizes */}
+          <button
+            onClick={toggleMobileMenu}
+            className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-500/20 active:bg-blue-600/30 transition-all duration-300 text-white sm:text-xl md:hidden"
+            aria-label="Toggle mobile menu"
+          >
+            {isMenuOpen ? <FaX className="text-2xl text-blue-400" /> : <FaBars className="text-2xl" />}
+          </button>
           </div>
           <nav className="container mx-auto px-4 py-3">
             <ul className="space-y-1">
@@ -476,23 +537,40 @@ const Header = ({ openSignUpModal }) => {
               {/* Mobile-only auth options */}
               <li className="pt-2 mt-2 border-t border-gray-200">
                 {!user && (
-                  <div className="flex flex-col space-y-1">
-                    <Link
-                      to="/sign-in"
-                      className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Sign In
-                    </Link>
-                    <button
-                      className="mx-4 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-center"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        handleSignUp();
-                      }}
-                    >
-                      Sign Up
-                    </button>
+                  <div className="mobile-account-options flex flex-col space-y-2">
+                    <div className="flex flex-col gap-3 px-4">
+                      {/* Sign In Link - Clean, Aligned Design */}
+                      <Link
+                        to="/sign-in"
+                        className="w-full py-3 px-4 rounded-md bg-white border border-blue-100 text-blue-700 hover:bg-blue-50 transition-colors duration-200 flex items-center shadow-smw-full py-3 px-4 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white transition-colors duration-200 flex items-center justify-center shadow-md"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <div className="mr-3">
+                          <FaUserPlus className="text-white" size={18} />
+                        </div>
+                        <div>
+                          <span className="font-bold text-lg">Sign In</span>
+                          <span className="text-sm text-white/80 block">Access your account</span>
+                        </div>
+                      </Link>
+                      
+                      {/* Create Account Button - Clean, Aligned Design */}
+                      <button
+                        className="w-full py-3 px-4 rounded-md bg-white border border-blue-100 text-blue-700 hover:bg-blue-50 transition-colors duration-200 flex items-center shadow-smw-full py-3 px-4 rounded-md bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white transition-colors duration-200 flex items-center justify-center shadow-md"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          handleSignUp();
+                        }}
+                      >
+                        <div className="mr-3">
+                          <FaUserPlus className="text-white" size={18} />
+                        </div>
+                        <div>
+                          <span className="font-bold text-lg">Create Account</span>
+                          <span className="text-sm text-white/80 block">Join the AI wave</span>
+                        </div>
+                      </button>
+                    </div>
                   </div>
                 )}
                 
@@ -529,7 +607,6 @@ const Header = ({ openSignUpModal }) => {
             </ul>
           </nav>
         </div>
-      )}
     </header>
   );
 };

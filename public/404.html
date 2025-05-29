@@ -8,14 +8,8 @@
         const search = window.location.search;
         const hash = window.location.hash;
         const redirectTo = path + search + hash;
-
-        console.log('[404.html] Intended path:', redirectTo);
         sessionStorage.redirect = redirectTo;
-        console.log('[404.html] sessionStorage.redirect set to:', sessionStorage.redirect);
-
-        // Redirect to the root of your application
         document.location.replace('/');
-        console.log('[404.html] Redirecting to /');
     </script>
 </head>
 <body>
