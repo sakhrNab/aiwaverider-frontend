@@ -1,5 +1,6 @@
 // src/App.jsx
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom'; // <<<< CORRECTED: Added useNavigate import
 import './styles/globals.css';
 import AppContent from './components/app/AppContent';
 import { AuthProvider } from './contexts/AuthContext';
@@ -12,26 +13,24 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AuthCallback from './components/auth/AuthCallback';
 import { PAYMENT } from './config/config';
-import useAgentStore from './store/agentStore'; // Import agentStore
+import useAgentStore from './store/agentStore';
 
 // PayPal initial options from config
 const paypalOptions = {
-  "client-id": PAYMENT.PAYPAL.CLIENT_ID || "test", // Use a safe fallback value
+  "client-id": PAYMENT.PAYPAL.CLIENT_ID || "test",
   currency: PAYMENT.PAYPAL.CURRENCY || "USD",
   intent: PAYMENT.PAYPAL.INTENT || "capture",
-  "disable-funding": "paylater,venmo,credit", // Optional: disable specific payment methods
+  "disable-funding": "paylater,venmo,credit",
 };
 
-// Track if app has been initialized - use module scope
-let appInitialized = false;
+// Module-scoped flag to track if global, one-time initialization has occurred.
+let globalAppSetupDone = false;
 
-// Expose agent store preloading as a global function for pages to use
+// Expose agent store preloading as a global function
 window.preloadAgentData = async (force = false) => {
   try {
     console.log('Preloading agent data (called manually)');
     const agentStore = useAgentStore.getState();
-    
-    // Only load if we have no agents or force is true
     const currentAgents = agentStore.allAgents;
     if (force || currentAgents.length === 0) {
       await agentStore.loadInitialData(force);
@@ -47,56 +46,74 @@ window.preloadAgentData = async (force = false) => {
 };
 
 const App = () => {
-  // State to track if app has initialized
-  const [isInitialized, setIsInitialized] = useState(false);
-  // Ref to prevent multiple initialization
-  const initRef = useRef(false);
+  const [isUIVisible, setIsUIVisible] = useState(false); // State to control rendering of AppContent
+  const effectRanThisMount = useRef(false); // Ref to ensure initialization logic in useEffect runs once per mount
+  const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('[App.jsx useEffect] Mount. Current window.location.href:', window.location.href);
-    console.log('[App.jsx useEffect] sessionStorage.redirect at start of effect:', sessionStorage.getItem('redirect')); // Use getItem for clarity
+    // --- 1. Redirect Logic (handles deep links after 404 redirect) ---
+    console.log('[App.jsx useEffect] Effect runs. Current window.location.href:', window.location.href);
+    console.log('[App.jsx useEffect] sessionStorage.redirect at start:', sessionStorage.getItem('redirect'));
 
-    const redirectPath = sessionStorage.getItem('redirect'); // Use getItem
+    const redirectPath = sessionStorage.getItem('redirect');
     if (redirectPath) {
-        console.log('[App.jsx useEffect] redirectPath FOUND:', redirectPath);
-        sessionStorage.removeItem('redirect');
-        console.log('[App.jsx useEffect] sessionStorage.redirect AFTER removal:', sessionStorage.getItem('redirect'));
+      console.log('[App.jsx useEffect] redirectPath FOUND:', redirectPath);
+      sessionStorage.removeItem('redirect');
+      console.log('[App.jsx useEffect] sessionStorage.redirect AFTER removal:', sessionStorage.getItem('redirect'));
 
-        console.log('[App.jsx useEffect] Calling window.history.replaceState with path:', redirectPath);
-        window.history.replaceState(null, '', redirectPath);
-        // Check URL immediately after (synchronous change in history state)
-        console.log('[App.jsx useEffect] window.location.href AFTER replaceState:', window.location.href);
+      console.log('[App.jsx useEffect] Calling window.history.replaceState with path:', redirectPath);
+      window.history.replaceState(null, '', redirectPath); // Update browser bar URL
+      console.log('[App.jsx useEffect] window.location.href AFTER replaceState:', window.location.href);
+
+      console.log('[App.jsx useEffect] Calling navigate(redirectPath, { replace: true }) to sync React Router.');
+      navigate(redirectPath, { replace: true }); // Sync React Router's internal state
     } else {
-        console.log('[App.jsx useEffect] No redirectPath found in sessionStorage.');
+      console.log('[App.jsx useEffect] No redirectPath found in sessionStorage.');
     }
 
-    // Only initialize once across all renders
-    if (initRef.current || appInitialized) return;
-    initRef.current = true;
-    
-    // Enhanced initialization with data preloading
+    // --- 2. Initialization Logic ---
+    // This guard ensures the main initialization steps run only once per mount.
+    if (effectRanThisMount.current) {
+      console.log('[App.jsx useEffect] Initialization logic already run for this mount. Skipping.');
+      // If UI is somehow not visible but effect ran, ensure it becomes visible.
+      // This could happen if navigate changes identity and causes effect to re-run.
+      if (!isUIVisible) setIsUIVisible(true);
+      return;
+    }
+    effectRanThisMount.current = true;
+
     const initializeApp = async () => {
       try {
-        console.log('[App.jsx initializeApp] Initializing application...');
-        
-        // Initialize store but don't preload data automatically
-        // This keeps the caching mechanism intact but doesn't make API calls on startup
-        
-        if (process.env.NODE_ENV === 'development' && !appInitialized) {
-          console.log('App initialized without preloaded agent data');
-          appInitialized = true;
+        if (!globalAppSetupDone) {
+          console.log('[App.jsx initializeApp] Performing global, one-time app setup...');
+          // Place any truly global, one-time setup logic here (e.g., API keys, global listeners)
+          // Example: await someAnalyticsService.init();
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[App.jsx initializeApp] Development-specific global setup done.');
+          }
+          globalAppSetupDone = true; // Mark global setup as done
+        } else {
+          console.log('[App.jsx initializeApp] Global app setup was already done.');
         }
-        console.log('[App.jsx initializeApp] App initialized without preloaded agent data');
+
+        // This part can run on initial load (after global setup) or if needed on subsequent "soft" inits.
+        // For this app, it primarily makes the UI visible.
+        console.log('[App.jsx initializeApp] Preparing UI and any per-load specifics...');
+        // Example: const user = await authService.checkSession(); if (user) setUserContext(user);
 
       } catch (error) {
-        console.error('Error during app initialization:', error);
+        console.error('[App.jsx initializeApp] Error during app initialization:', error);
       } finally {
-        setIsInitialized(true);
+        if (!isUIVisible) { // Only set state if it needs changing, to avoid unnecessary re-renders
+            console.log('[App.jsx initializeApp] Setting isUIVisible to true.');
+            setIsUIVisible(true); // Make AppContent visible
+        }
       }
     };
 
     initializeApp();
-  }, []);
+
+  }, [navigate, isUIVisible]); // Add isUIVisible because we check it before calling setIsUIVisible
 
   return (
     <ErrorBoundary>
@@ -116,11 +133,8 @@ const App = () => {
           <PostsProvider>
             <CartProvider>
               <PayPalScriptProvider options={paypalOptions}>
-              <AuthCallback> 
-                  {isInitialized ?
-                      <AppContent /> :
-                      <div>Loading application... (Current href: {typeof window !== 'undefined' && window.location.href})</div>
-                  }
+                <AuthCallback>
+                  {isUIVisible ? <AppContent /> : <div>Loading application...</div>}
                 </AuthCallback>
               </PayPalScriptProvider>
             </CartProvider>
