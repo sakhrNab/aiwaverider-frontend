@@ -53,12 +53,23 @@ const App = () => {
   const initRef = useRef(false);
 
   useEffect(() => {
+    console.log('[App.jsx useEffect] Mount. Current window.location.href:', window.location.href);
+    console.log('[App.jsx useEffect] sessionStorage.redirect at start of effect:', sessionStorage.getItem('redirect')); // Use getItem for clarity
 
-    const redirectPath = sessionStorage.redirect;
+    const redirectPath = sessionStorage.getItem('redirect'); // Use getItem
     if (redirectPath) {
-        sessionStorage.removeItem("redirect");
-        window.history.replaceState(null, "", redirectPath);
+        console.log('[App.jsx useEffect] redirectPath FOUND:', redirectPath);
+        sessionStorage.removeItem('redirect');
+        console.log('[App.jsx useEffect] sessionStorage.redirect AFTER removal:', sessionStorage.getItem('redirect'));
+
+        console.log('[App.jsx useEffect] Calling window.history.replaceState with path:', redirectPath);
+        window.history.replaceState(null, '', redirectPath);
+        // Check URL immediately after (synchronous change in history state)
+        console.log('[App.jsx useEffect] window.location.href AFTER replaceState:', window.location.href);
+    } else {
+        console.log('[App.jsx useEffect] No redirectPath found in sessionStorage.');
     }
+
     // Only initialize once across all renders
     if (initRef.current || appInitialized) return;
     initRef.current = true;
@@ -66,7 +77,7 @@ const App = () => {
     // Enhanced initialization with data preloading
     const initializeApp = async () => {
       try {
-        console.log('Initializing application...');
+        console.log('[App.jsx initializeApp] Initializing application...');
         
         // Initialize store but don't preload data automatically
         // This keeps the caching mechanism intact but doesn't make API calls on startup
@@ -75,6 +86,8 @@ const App = () => {
           console.log('App initialized without preloaded agent data');
           appInitialized = true;
         }
+        console.log('[App.jsx initializeApp] App initialized without preloaded agent data');
+
       } catch (error) {
         console.error('Error during app initialization:', error);
       } finally {
@@ -103,8 +116,11 @@ const App = () => {
           <PostsProvider>
             <CartProvider>
               <PayPalScriptProvider options={paypalOptions}>
-                <AuthCallback>
-                  {isInitialized ? <AppContent /> : <div>Loading application...</div>}
+              <AuthCallback> 
+                  {isInitialized ?
+                      <AppContent /> :
+                      <div>Loading application... (Current href: {typeof window !== 'undefined' && window.location.href})</div>
+                  }
                 </AuthCallback>
               </PayPalScriptProvider>
             </CartProvider>

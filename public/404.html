@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta http-equiv="refresh" content="0; url=/" /> <title>Redirecting...</title>
     <script type="text/javascript">
-        // Capture the current path including query parameters and hash
         const path = window.location.pathname;
         const search = window.location.search;
         const hash = window.location.hash;
+        const redirectTo = path + search + hash;
 
-        // Store the full path in sessionStorage. This will be picked up by your App.jsx
-        sessionStorage.redirect = path + search + hash;
+        console.log('[404.html] Intended path:', redirectTo);
+        sessionStorage.redirect = redirectTo;
+        console.log('[404.html] sessionStorage.redirect set to:', sessionStorage.redirect);
 
-        // Redirect to the root of your application where index.html is served.
-        // For a custom domain, this is usually "/".
-        // Using document.location.replace to avoid adding the 404 page to browser history.
+        // Redirect to the root of your application
         document.location.replace('/');
+        console.log('[404.html] Redirecting to /');
     </script>
 </head>
 <body>
