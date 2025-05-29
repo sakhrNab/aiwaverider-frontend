@@ -106,20 +106,17 @@ const HomePage = () => {
                 <Link to="/monetization-paths" className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-lg transition-all hover:shadow-lg inline-flex items-center justify-center">
                   Explore Monetization Paths <FaArrowRight className="ml-2" />
                 </Link>
-                <a href="#book-call" className="px-8 py-4 border-2 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white rounded-full font-bold text-lg transition-all inline-flex items-center justify-center">
-                  Book A Strategy Call <FaChevronRight className="ml-2" />
-                </a>
               </div>
               
-              <div className={`flex items-center space-x-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`flex items-center space-x-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
                 <FaCheck className="text-green-500" />
                 <span>No technical experience required</span>
               </div>
-              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
                 <FaCheck className="text-green-500" />
                 <span>Make $2,000-$10,000/month with our proven models</span>
             </div>
-              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
                 <FaCheck className="text-green-500" />
                 <span>Start monetizing in as little as 7 days</span>
               </div>

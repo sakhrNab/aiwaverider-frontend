@@ -152,10 +152,10 @@ const Header = ({ openSignUpModal }) => {
               <Link 
                 to="/agents" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="Agents"
+                aria-label="AI Agents"
               >
                 <FaRobot className="mr-1.5" /> 
-                <span>Agents</span>
+                <span>AI Agents</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -165,10 +165,10 @@ const Header = ({ openSignUpModal }) => {
               <Link 
                 to="/ai-tools" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="AI Tools"
+                aria-label="AI Tools & Prompts"
               >
                 <FaTools className="mr-1.5" /> 
-                <span>AI Tools</span>
+                <span>AI Tools & Prompts</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -230,7 +230,7 @@ const Header = ({ openSignUpModal }) => {
               <>
                 <Link 
                   to="/sign-in" 
-                  className="auth-link text-white hover:text-[#00bcd4] text-base whitespace-nowrap"
+                  className="auth-button bg-[#16213e] hover:bg-[#00bcd4] text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap"
                 >
                   Sign In
                 </Link>
@@ -246,7 +246,7 @@ const Header = ({ openSignUpModal }) => {
             {user && (
               <>
                 {user.role === 'admin' && (
-                  <Link to="/admin/agents" className="auth-link text-white hover:text-[#00bcd4] text-base whitespace-nowrap">
+                  <Link to="/admin/agents" className="auth-button bg-[#16213e] hover:bg-[#00bcd4] text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap">
                     Admin
                   </Link>
                 )}
