@@ -217,10 +217,10 @@ const Header = ({ openSignUpModal }) => {
               <Link 
                 to="/ai-tools" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="AI Tools"
+                aria-label="AI Tools & Prompts"
               >
                 <FaTools className="mr-1.5" /> 
-                <span>AI Tools</span>
+                <span>AI Tools & Prompts</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -230,10 +230,10 @@ const Header = ({ openSignUpModal }) => {
               <Link 
                 to="/latest-tech" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="Latest Tech"
+                aria-label="Latest News & Tutorials"
               >
                 <FaMicrochip className="mr-1.5" /> 
-                <span>Latest Tech</span>
+                <span>Latest Tech News & Tutorials</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -246,11 +246,8 @@ const Header = ({ openSignUpModal }) => {
                 aria-label="About"
               >
                 <FaInfoCircle className="mr-1.5" /> 
-                <span>About</span>
+                <span>About Us</span>
               </Link>
-              <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
-                <FaCircle />
-              </span>
             </li>
           </ul>
         </nav>
@@ -360,134 +357,152 @@ const Header = ({ openSignUpModal }) => {
       
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div
+        <div 
           ref={mobileMenuRef}
-          className={`md:hidden fixed inset-0 z-40 ${darkMode ? 'bg-gray-900' : 'bg-white'} overflow-y-auto pt-16`}
+          className="md:hidden fixed inset-0 z-50 bg-gray-900 bg-opacity-95 overflow-y-auto"
         >
-          <nav className="px-4 py-4">
-            <ul className="space-y-2">
-              <li className="mobile-nav-item">
+          {/* Close button at top right */}
+          <div className="absolute top-4 right-4">
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="p-2 text-white hover:text-teal-400 focus:outline-none"
+              aria-label="Close menu"
+            >
+              <FaTimes className="w-8 h-8" />
+            </button>
+          </div>
+          
+          {/* Logo at top left */}
+          <div className="pt-6 pb-6 flex justify-center">
+            <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center">
+              <img src={logo} alt="AI Waverider" className="h-12 w-auto" />
+            </Link>
+          </div>
+          
+          <nav className="px-6 py-2">
+            <ul className="flex flex-col items-start w-full space-y-4">
+              <li>
                 <Link
                   to="/"
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  className="flex items-center py-3 text-white hover:text-teal-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaHome className="mr-3" /> Home
+                  <FaHome className="mr-3 text-lg" /> Home
                 </Link>
               </li>
-              <li className="mobile-nav-item">
+              <li>
                 <Link
                   to="/agents"
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  className="flex items-center py-3 text-white hover:text-teal-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaRobot className="mr-3" /> AI Agents
+                  <FaRobot className="mr-3 text-lg" /> Agents
                 </Link>
               </li>
-              <li className="mobile-nav-item">
+              <li>
                 <Link
                   to="/ai-tools"
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  className="flex items-center py-3 text-white hover:text-teal-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaTools className="mr-3" /> AI Tools
+                  <FaTools className="mr-3 text-lg" /> AI Tools
                 </Link>
               </li>
-              <li className="mobile-nav-item">
+              <li>
                 <Link
                   to="/latest-tech"
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  className="flex items-center py-3 text-white hover:text-teal-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaMicrochip className="mr-3" /> Latest Tech
+                  <FaMicrochip className="mr-3 text-lg" /> Latest Tech
                 </Link>
               </li>
-              <li className="mobile-nav-item">
+              <li>
                 <Link
                   to="/about"
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  className="flex items-center py-3 text-white hover:text-teal-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaInfoCircle className="mr-3" /> About
+                  <FaInfoCircle className="mr-3 text-lg" /> About
                 </Link>
               </li>
-              <li className="mobile-nav-item">
+              <li>
                 <Link
                   to="/checkout"
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  className="flex items-center py-3 text-white hover:text-teal-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaShoppingCart className="mr-3" /> Cart {itemCount > 0 ? `(${itemCount})` : ''}
+                  <FaShoppingCart className="mr-3 text-lg" /> Cart {itemCount > 0 ? `(${itemCount})` : ''}
                 </Link>
               </li>
               
               {/* Dark/Light mode toggle on mobile */}
-              <li className="mobile-nav-item">
+              <li className="pt-3 mt-3 border-t border-gray-700">
                 <button
                   onClick={() => {
                     toggleDarkMode();
                     setIsMenuOpen(false);
                   }}
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center w-full"
+                  className="flex items-center py-3 text-white hover:text-teal-400 w-full"
+                  aria-label={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
-                  {darkMode ? <FaSun className="mr-3" /> : <FaMoon className="mr-3" />}
-                  {darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                  {darkMode ? (
+                    <>
+                      <FaSun className="mr-3 text-lg" /> Switch to Light Mode
+                    </>
+                  ) : (
+                    <>
+                      <FaMoon className="mr-3 text-lg" /> Switch to Dark Mode
+                    </>
+                  )}
                 </button>
               </li>
               
-              {/* Mobile-only auth options */}
-              <li className="pt-2 mt-2 border-t border-gray-200">
-                {!user && (
-                  <div className="flex flex-col space-y-1">
-                    <Link
-                      to="/sign-in"
-                      className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Sign In
-                    </Link>
-                    <button
-                      className="mx-4 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-center"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        handleSignUp();
-                      }}
-                    >
-                      Sign Up
-                    </button>
-                  </div>
-                )}
-                
-                {user && (
-                  <div className="flex flex-col space-y-1">
+              {/* Profile or sign up */}
+              {user ? (
+                <>
+                  <li className="pt-3 mt-3 border-t border-gray-700">
                     <Link
                       to="/profile"
-                      className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                      className="flex items-center py-3 text-white hover:text-teal-400"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <FaUser className="mr-3" /> Profile
+                      <FaUser className="mr-3 text-lg" /> Profile
                     </Link>
-                    {user.role === 'admin' && (
+                  </li>
+                  {user.role === 'admin' && (
+                    <li>
                       <Link
-                        to="/admin/agents"
-                        className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600"
+                        to="/admin/dashboard"
+                        className="flex items-center py-3 text-white hover:text-teal-400"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Admin Dashboard
                       </Link>
-                    )}
+                    </li>
+                  )}
+                  <li>
                     <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        handleSignOut();
-                      }}
-                      className="mx-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-center mt-2"
+                      onClick={handleSignOut}
+                      className="flex items-center py-3 text-red-400 hover:text-red-300 w-full text-left"
                     >
                       Sign Out
                     </button>
-                  </div>
-                )}
-              </li>
+                  </li>
+                </>
+              ) : (
+                <li className="pt-3 mt-3 border-t border-gray-700">
+                  <button
+                    onClick={() => {
+                      handleSignUp();
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center py-3 text-white hover:text-teal-400 w-full text-left"
+                  >
+                    Sign Up / Sign In
+                  </button>
+                </li>
+              )}
             </ul>
           </nav>
         </div>

@@ -40,8 +40,14 @@ export const fetchAITools = async (options = {}) => {
       // Create a new object to avoid modifying the original
       const processedTool = { ...tool };
       
-      // Only replace image if it's not already set or if it's potentially problematic
-      if (!processedTool.imageUrl || processedTool.imageUrl.includes('vecteezy') || processedTool.imageUrl.includes('placeholder')) {
+      // Determine if we should use fallback image
+      // Use fallback for any external URL (unless it's from our own domain) or if no image is set
+      const isExternalUrl = processedTool.imageUrl && (
+        processedTool.imageUrl.startsWith('http') && 
+        !processedTool.imageUrl.includes('aiwaverider.com')
+      );
+      
+      if (!processedTool.imageUrl || isExternalUrl) {
         // Generate SVG data URI for the tool
         const bgColor = getToolColor(processedTool.title);
         const displayText = processedTool.title || 'AI Tool';
