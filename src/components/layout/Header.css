@@ -15,6 +15,304 @@
   overflow: hidden !important;
 }
 
+/* COMPREHENSIVE MOBILE MENU FIX */
+/* Always ensure mobile menu is visible when body has menu-open class */
+body.menu-open .mobile-menu {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: fixed !important;
+  top: 60px;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 60px);
+  z-index: 9999 !important;
+  background-color: white;
+  overflow-y: auto;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Prevent body scrolling when menu is open */
+body.menu-open {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Ensure mobile menu elements are visible */
+body.menu-open .mobile-menu * {
+  visibility: visible !important;
+}
+
+/* Beautiful hover effects for Account Access dropdown */
+.group:hover .group-hover\:scale-105 {
+  transform: scale(1.05);
+}
+
+.group:hover .group-hover\:text-blue-500 {
+  color: #3b82f6;
+}
+
+.group:hover .group-hover\:text-teal-500 {
+  color: #14b8a6;
+}
+
+/* Responsive styles for Account Access dropdown */
+/* General style improvements */
+.account-access-button {
+  position: relative;
+  z-index: 20;
+}
+
+.account-access-dropdown {
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Device-specific styles - Matches exactly with screenshot devices */
+
+/* iPhone SE */
+@media (width: 375px) and (height: 667px) {
+  .account-access-button {
+    padding: 0.25rem 0.5rem !important;
+  }
+  
+  .account-access-button .avatar {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+  }
+  
+  .account-access-dropdown {
+    width: 210px !important;
+    right: -40px !important;
+  }
+}
+
+/* iPhone XR */
+@media (width: 414px) and (height: 896px) {
+  .account-access-dropdown {
+    width: 230px !important;
+    right: -30px !important;
+  }
+}
+
+/* iPhone 12 Pro */
+@media (width: 390px) and (height: 844px) {
+  .account-access-dropdown {
+    width: 220px !important;
+    right: -35px !important;
+  }
+}
+
+/* iPhone 14 Pro Max */
+@media (width: 428px) and (height: 926px) {
+  .account-access-dropdown {
+    width: 240px !important;
+    right: -20px !important;
+  }
+}
+
+/* Pixel 7 */
+@media (width: 412px) and (height: 915px) {
+  .account-access-dropdown {
+    width: 235px !important;
+    right: -25px !important;
+  }
+}
+
+/* Samsung Galaxy S8+ */
+@media (width: 360px) and (height: 740px) {
+  .account-access-dropdown {
+    width: 215px !important;
+    right: -45px !important;
+  }
+}
+
+/* Samsung Galaxy S20 Ultra */
+@media (width: 412px) and (height: 915px) {
+  .account-access-dropdown {
+    width: 235px !important;
+    right: -25px !important;
+  }
+}
+
+/* Foldable devices */
+/* Galaxy Z Fold 5 */
+@media (width: 280px) and (height: 653px) {
+  .account-access-button {
+    padding: 0.2rem 0.4rem !important;
+  }
+  
+  .account-access-button .avatar {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+  }
+  
+  .account-access-dropdown {
+    width: 200px !important;
+    right: -60px !important;
+  }
+}
+
+/* Surface Duo */
+@media (width: 540px) and (height: 720px) {
+  .account-access-button {
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  .account-access-dropdown {
+    width: 250px !important;
+    right: -10px !important;
+  }
+}
+
+/* Asus Zenbook Fold */
+@media (width: 393px) and (height: 873px),
+       (width: 655px) and (height: 618px) {
+  .account-access-dropdown {
+    width: 240px !important;
+    right: -20px !important;
+  }
+}
+
+/* iPad Mini */
+@media (width: 768px) and (height: 1024px) {
+  .account-access-dropdown {
+    width: 280px !important;
+    right: 0 !important;
+  }
+  
+  .account-access-button .avatar {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+  
+  html.ipad-device .account-access-dropdown {
+    position: absolute;
+    top: 70px;
+  }
+  
+  /* iPad Mobile Menu improvements */
+  .mobile-account-options {
+    margin-top: 1rem;
+  }
+  
+  .mobile-account-options .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .mobile-account-options .w-10 {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+  
+  .mobile-menu {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mobile-menu nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mobile-menu nav ul {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mobile-menu nav ul li:last-child {
+    margin-top: auto;
+  }
+}
+
+/* iPad Air */
+@media (width: 820px) and (height: 1180px) {
+  .account-access-dropdown {
+    width: 290px !important;
+    right: 0 !important;
+  }
+  
+  html.ipad-device .account-access-dropdown {
+    position: absolute;
+    top: 70px;
+  }
+}
+
+/* iPad Pro */
+@media (width: 1024px) and (height: 1366px) {
+  .account-access-dropdown {
+    width: 320px !important;
+    right: 0 !important;
+  }
+  
+  html.ipad-device .account-access-dropdown {
+    position: absolute;
+    top: 70px;
+  }
+}
+
+/* Surface Pro 7 - Matches exactly with dimensions in screenshot */
+@media (width: 1368px) and (height: 912px) {
+  .account-access-dropdown {
+    width: 320px !important;
+    right: 0 !important;
+  }
+  
+  html.surface-pro .account-access-dropdown {
+    position: absolute;
+    top: 70px;
+  }
+}
+
+/* Nest Hub */
+@media (width: 1024px) and (height: 600px) {
+  .account-access-dropdown {
+    top: 60px !important;
+    right: 0 !important;
+    width: 300px !important;
+  }
+}
+
+/* Nest Hub Max */
+@media (width: 1280px) and (height: 800px) {
+  .account-access-dropdown {
+    top: 60px !important;
+    right: 0 !important;
+    width: 320px !important;
+  }
+}
+
+/* Samsung Galaxy A51/71 */
+@media (width: 412px) and (height: 914px) {
+  .account-access-dropdown {
+    width: 235px !important;
+    right: -25px !important;
+  }
+}
+
+/* Animated border transitions */
+.hover\:border-l-4:hover {
+  border-left-width: 4px;
+  padding-left: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+/* Beautiful gradient animations */
+.bg-gradient-to-r {
+  background-size: 200% auto;
+  transition: background-position 0.5s ease;
+}
+
+.bg-gradient-to-r:hover {
+  background-position: right center;
+}
+
 .main-header .container {
   max-width: 1400px;
   margin: 0 auto;
@@ -350,9 +648,45 @@
 }
 
 /* Fixed responsive breakpoints for consistency */
-@media (min-width: 1025px) {
+@media (min-width: 1537px) {
   .mobile-menu {
     display: none !important;
+  }
+}
+
+/* Special handling for Surface Pro 7 and similar tablets */
+@media (min-width: 1025px) and (max-width: 1536px) {
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+  
+  nav.hidden.\32xl\:flex {
+    display: none !important;
+  }
+  
+  /* Critical: Ensure mobile menu is visible when toggled */
+  .mobile-menu {
+    position: fixed !important;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 60px);
+    background-color: white;
+    z-index: 9999 !important;
+    display: none;
+  }
+  
+  body.menu-open .mobile-menu {
+    display: block !important;
+  }
+  
+  /* Target specifically Surface Pro 7 dimensions */
+  @media (width: 1368px) and (height: 912px) {
+    body.menu-open .mobile-menu {
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
   }
 }
 
@@ -377,14 +711,40 @@
   }
 }
 
-/* Show mobile menu at iPad Mini (1024x768) and smaller */
-@media (max-width: 1024px) {
+/* Show mobile menu at intermediate screens and smaller */
+@media (max-width: 1536px) {
   .mobile-menu-toggle {
     display: flex;
   }
   
   nav.hidden {
     display: none !important;
+  }
+}
+
+/* CRITICAL: Specific styling for Surface Pro 7 and similar tablet dimensions */
+@media (min-width: 1200px) and (max-width: 1500px) and (min-height: 800px) and (max-height: 1000px), (width: 1368px), (width: 1368px) and (height: 912px) {
+  /* Force desktop navigation to be hidden */
+  nav.hidden.\32xl\:flex {
+    display: none !important;
+  }
+  
+  /* Force mobile menu toggle to display */
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+  
+  /* Ensure mobile menu is visible when toggled */
+  body.menu-open .mobile-menu {
+    display: block !important;
+    position: fixed !important;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 60px);
+    background-color: white;
+    z-index: 9999;
+    overflow-y: auto;
   }
 }
 
@@ -484,7 +844,135 @@
     overflow-y: auto;
     padding-bottom: 0.5rem;
   }
-  
+
+  /* Mobile account options styling */
+  .mobile-account-options {
+    margin-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .mobile-account-options .grid {
+    max-width: 100%;
+  }
+
+  /* Mobile menu responsive adjustments for different devices */
+
+  /* Small phones (iPhone SE, etc.) */
+  @media (max-width: 375px) {
+    .mobile-menu {
+      top: 50px;
+      height: calc(100vh - 50px);
+    }
+    
+    .mobile-menu .px-4 {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    
+    .mobile-account-options .w-10 {
+      width: 2rem !important;
+      height: 2rem !important;
+      min-width: 2rem !important;
+    }
+  }
+
+  /* Galaxy Z Fold and other foldable devices when folded */
+  @media (max-width: 280px) {
+    .mobile-menu {
+      top: 45px;
+      height: calc(100vh - 45px);
+    }
+    
+    .mobile-menu .py-3 {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    
+    .mobile-account-options .w-10 {
+      width: 1.75rem !important;
+      height: 1.75rem !important;
+      min-width: 1.75rem !important;
+      margin-right: 0.5rem !important;
+    }
+    
+    .mobile-account-options .grid {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    
+    .mobile-account-options .px-4 {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+  }
+
+  /* iPhone XR/12 Pro specific styles */
+  @media (width: 414px), (width: 390px) {
+    .mobile-menu {
+      max-height: 90vh;
+    }
+  }
+
+  /* iPhone 14 Pro Max / Galaxy S20 Ultra */
+  @media (width: 428px), (width: 412px) {
+    .mobile-menu {
+      max-height: 92vh;
+    }
+  }
+
+  /* iPad Mini */
+  @media (width: 768px) and (height: 1024px) {
+    .mobile-menu {
+      max-width: 350px;
+      right: 0;
+      left: auto;
+      border-left: 1px solid #e5e7eb;
+    }
+  }
+
+  /* iPad Air / iPad Pro */
+  @media (width: 820px), (width: 834px), (width: 1024px) and (height: 1366px) {
+    .mobile-menu {
+      max-width: 380px;
+      right: 0;
+      left: auto;
+      border-left: 1px solid #e5e7eb;
+    }
+  }
+
+  /* Surface Pro 7 and similar tablets */
+  @media (width: 1368px) and (height: 912px) {
+    .mobile-menu {
+      max-width: 400px;
+      right: 0;
+      left: auto;
+      border-left: 1px solid #e5e7eb;
+      border-top-left-radius: 0.5rem;
+    }
+    
+    .mobile-account-options {
+      margin-top: 1rem;
+    }
+    
+    .mobile-account-options .grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .mobile-account-options .w-10 {
+      width: 2.5rem !important;
+      height: 2.5rem !important;
+    }
+  }
+
+  /* Nest Hub devices */
+  @media (min-width: 1024px) and (max-height: 600px) {
+    .mobile-menu {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+  }
+
   .mobile-menu nav {
     padding-top: 1rem;
   }
