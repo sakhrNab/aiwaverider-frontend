@@ -15,16 +15,16 @@ const Footer = () => {
 
       {/* Social Media Links */}
       <div className="mt-4 flex justify-center space-x-4">
-        <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-blue-600">
+        <a href="https://www.facebook.com/profile.php?id=61576823491758" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-blue-600">
           <FontAwesomeIcon icon={faFacebook} />
         </a>
-        <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-pink-600">
+        <a href="https://www.instagram.com/ai.waverider/" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-pink-600">
           <FontAwesomeIcon icon={faInstagram} />
         </a>
-        <a href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-black">
+        <a href="https://www.tiktok.com/@ai.wave.rider" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-black">
           <FontAwesomeIcon icon={faTiktok} />
         </a>
-        <a href="https://www.youtube.com/shorts" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-red-600">
+        <a href="https://www.youtube.com/@AIWaverider1" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-red-600">
           <FontAwesomeIcon icon={faYoutube} />
         </a>
       </div>

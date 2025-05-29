@@ -181,7 +181,7 @@ const Header = ({ openSignUpModal }) => {
                 aria-label="Latest News & Tutorials"
               >
                 <FaMicrochip className="mr-1.5" /> 
-                <span>Latest News & Tutorials</span>
+                <span>Latest Tech News & Tutorials</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -315,7 +315,7 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaRobot className="mr-3" /> Agents
+                  <FaRobot className="mr-3" /> AI Agents
                 </Link>
               </li>
               <li className="mobile-nav-item">
@@ -324,7 +324,7 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaTools className="mr-3" /> AI Tools
+                  <FaTools className="mr-3" /> AI Tools & Prompts
                 </Link>
               </li>
               <li className="mobile-nav-item">
@@ -333,7 +333,7 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaMicrochip className="mr-3" /> Latest Tech
+                  <FaMicrochip className="mr-3" /> Latest Tech News & Tutorials
                 </Link>
               </li>
               <li className="mobile-nav-item">

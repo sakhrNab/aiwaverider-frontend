@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { HashLoader } from 'react-spinners';
 import { FaRobot, FaTools, FaLightbulb, FaCalendarAlt, FaArrowRight, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
@@ -11,8 +11,15 @@ import makingAiEasyImg from '../assets/making-ai-easy.png';
 
 const HomePage = () => {
   const [loading, setLoading] = useState(true);
+  const monetizationPathsRef = useRef(null);
   const { darkMode } = useTheme();
-  
+  const calendlyLink = "https://calendly.com/aiwaverider8/30min";
+  // Function to scroll to the monetization paths section
+  const scrollToMonetizationPaths = (e) => {
+    e.preventDefault();
+    monetizationPathsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   // Simulate loading state for demonstration
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -103,9 +110,9 @@ const HomePage = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Link to="/monetization-paths" className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-lg transition-all hover:shadow-lg inline-flex items-center justify-center">
+                <a href="#monetization-paths" onClick={scrollToMonetizationPaths} className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-lg transition-all hover:shadow-lg inline-flex items-center justify-center">
                   Explore Monetization Paths <FaArrowRight className="ml-2" />
-                </Link>
+                </a>
               </div>
               
               <div className={`flex items-center space-x-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
@@ -134,7 +141,7 @@ const HomePage = () => {
       </section>
 
       {/* Monetization Paths */}
-      <section className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      <section ref={monetizationPathsRef} id="monetization-paths" className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -260,7 +267,7 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-            <Link to="/monetization-paths" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}>
+            <Link to="/monetization-paths" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'} hover:shadow-lg`}>
               Explore All Monetization Paths <FaChevronRight className="ml-2" />
             </Link>
           </div>
@@ -360,7 +367,7 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-            <Link to="/obstacles" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}>
+            <Link to="/ai-obstacle-solutions" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'} hover:shadow-lg`}>
               Learn How We Solve These Obstacles <FaChevronRight className="ml-2" />
             </Link>
           </div>
@@ -439,12 +446,12 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-            <button 
-              onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+          <Link to={calendlyLink}              
+          // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
               className="px-10 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-bold text-lg transition-all inline-flex items-center"
             >
-              START FREE TRIAL
-            </button>
+              START FREE Consultation Call
+            </Link>
           </div>
         </div>
       </section>
@@ -531,7 +538,7 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h4 className="text-xl font-bold text-white">SAKHR NABIL</h4>
-                    <p className="text-lg text-white">CHIEF AI WAVERIDER INSTRUCTOR</p>
+                    <p className="text-lg text-white">Co-founder, CEO & CTO</p>
                   </div>
                 </div>
               </div>
@@ -605,7 +612,7 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h4 className="text-xl font-bold text-white">TAZ AWN</h4>
-                    <p className="text-lg text-white">EXECUTIVE WAVE STRATEGIST</p>
+                    <p className="text-lg text-white">Co-founder & CEO</p>
                   </div>
                 </div>
               </div>
@@ -748,12 +755,12 @@ const HomePage = () => {
 
           {/* CTA Button */}
           <div className="text-center">
-            <button 
-              onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+          <Link to={calendlyLink}              
+          // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
               className="px-16 py-6 bg-blue-400 hover:bg-blue-500 text-white rounded-xl font-bold text-3xl transition-all inline-flex items-center"
             >
-              START FREE TRIAL
-            </button>
+              START FREE Consultation Call
+            </Link>
           </div>
         </div>
       </section>
@@ -1149,12 +1156,12 @@ const HomePage = () => {
 
           <div className="text-center mt-16">
             <div className="bg-blue-400 hover:bg-blue-500 inline-block transition-all rounded-xl shadow-lg overflow-hidden">
-              <button 
-                onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+              <Link to={calendlyLink}
+                // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
                 className="px-16 py-6 font-bold text-2xl text-white"
               >
-                START FREE TRIAL
-              </button>
+                START FREE Consultation Call
+              </Link>
               <div className="bg-blue-500 text-white text-sm py-2">
                 Bonuses Included
               </div>
