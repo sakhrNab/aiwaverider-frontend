@@ -1817,7 +1817,7 @@
   /* Add a subtle animation when scrolling */
   animation: fadeInSticky 0.3s ease-in-out;
   will-change: transform; /* Optimize for animations */
-  background: rgba(30, 30, 30, 0.95); /* More opaque background for better visibility */
+ /* background: rgba(30, 30, 30, 0.95);  More opaque background for better visibility */
   border: 1px solid rgba(139, 92, 246, 0.5); /* Stronger purple border */
 }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaTimes, FaPaperPlane, FaRedo, FaCommentAlt } from 'react-icons/fa';
+import { FaTimes, FaPaperPlane, FaRedo } from 'react-icons/fa';
 import chatIcon from '../../assets/chat-icon.jpg';
+import chatApi from '../../api/chat/chatApi';
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,12 +46,17 @@ const ChatBot = () => {
     if (lastUserMessageIndex !== -1) {
       const lastUserMessage = messages[messages.length - 1 - lastUserMessageIndex];
       // Remove the error message
-      setMessages(prevMessages => prevMessages.filter((_, index) => index !== prevMessages.length - 1));
+      setMessages(prevMessages => {
+        // Filter out the error message
+        const updatedMessages = prevMessages.filter(msg => msg.role !== 'error');
+        return updatedMessages;
+      });
       // Set loading state
       setIsLoading(true);
       setHasError(false);
       // Send the message again
-      sendMessageToAPI(lastUserMessage.content, messages.filter((_, index) => index !== prevMessages.length - 1));
+      const filteredMessages = messages.filter(msg => msg.role !== 'error');
+      sendMessageToAPI(lastUserMessage.content, filteredMessages);
     }
   };
 
@@ -58,31 +64,19 @@ const ChatBot = () => {
     try {
       console.log('Sending chat message to API...');
       
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: currentMessages.filter(msg => msg.role !== 'error'),
-        }),
-      });
+      // Use the chatApi service instead of direct fetch
+      const response = await chatApi.sendMessage(currentMessages.filter(msg => msg.role !== 'error'));
       
-      console.log('API Response Status:', response.status);
+      console.log('API Response:', response);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to get response from chat API');
       }
-      
-      const data = await response.json();
-      console.log('API Response Data:', data);
       
       // Add assistant response to chat
       setMessages(prevMessages => [...prevMessages, { 
         role: 'assistant', 
-        content: data.success ? data.message : 'Sorry, I encountered an error. Please try again.'
+        content: response.message || 'I\'m not sure how to respond to that.'
       }]);
       setHasError(false);
     } catch (error) {
@@ -111,8 +105,13 @@ const ChatBot = () => {
     setIsLoading(true);
     setHasError(false);
     
-    // Call the API
-    await sendMessageToAPI(inputMessage, [...messages, userMessage]);
+    try {
+      // Call the API with the updated messages array including the new user message
+      await sendMessageToAPI(inputMessage, [...messages, userMessage]);
+    } catch (error) {
+      console.error('Error in sendMessage:', error);
+      // If there's an error, we'll handle it in sendMessageToAPI
+    }
   };
 
   return (
