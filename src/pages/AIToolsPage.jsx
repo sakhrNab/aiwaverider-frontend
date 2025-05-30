@@ -325,11 +325,13 @@ const AITools = () => {
   const filteredTools = tools.filter((tool) => {
     const titleMatch = tool.title.toLowerCase().includes(searchTerm.toLowerCase());
     const descriptionMatch = tool.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    // Add keyword search functionality
+    const keywordMatch = tool.keyword?.toLowerCase().includes(searchTerm.toLowerCase());
     const tagMatch = selectedTag === '' || selectedTag === 'All' || 
                     tool.category === selectedTag || 
                     (tool.tags && tool.tags.includes(selectedTag));
     
-    return (titleMatch || descriptionMatch) && tagMatch;
+    return (titleMatch || descriptionMatch || keywordMatch) && tagMatch;
   });
 
   // Helper function to get the appropriate image for a tool
