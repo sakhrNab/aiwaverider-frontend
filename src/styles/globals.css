@@ -111,7 +111,7 @@ div[class^="min-h-screen"] {
 
 /* Header styling for dark mode */
 [data-theme="dark"] .main-header {
-  background-color: var(--nav-bg) !important;
+  background-color: rgb(195 0 255 / 99%) !important;
   border-bottom: 1px solid var(--nav-border);
 }
 
