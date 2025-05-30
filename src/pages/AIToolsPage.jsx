@@ -313,10 +313,23 @@ const AITools = () => {
     }
   }, [tools, extractTags]);
 
+  // Get tools from Zustand store with pagination support
+  const paginatedTools = useAIToolsStore(state => state.getPaginatedTools());
+  
+  // Get pagination info
+  const pagination = useAIToolsStore(state => state.pagination);
+  const setPage = useAIToolsStore(state => state.setPage);
+  const setPageSize = useAIToolsStore(state => state.setPageSize);
+  
+  // Apply filters first (search and tags)
   const filteredTools = tools.filter((tool) => {
     const titleMatch = tool.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const tagMatch = selectedTag === '' || selectedTag === 'All' || (tool.tags && tool.tags.includes(selectedTag));
-    return titleMatch && tagMatch;
+    const descriptionMatch = tool.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const tagMatch = selectedTag === '' || selectedTag === 'All' || 
+                    tool.category === selectedTag || 
+                    (tool.tags && tool.tags.includes(selectedTag));
+    
+    return (titleMatch || descriptionMatch) && tagMatch;
   });
 
   // Helper function to get the appropriate image for a tool
@@ -524,7 +537,8 @@ const AITools = () => {
                         <p className="text-white/70">No tools match your search criteria. Try adjusting your filters.</p>
                       </div>
                     ) : (
-                      filteredTools.map((tool, index) => {
+                      // Display paginated data when no filters are applied, otherwise show filtered data
+                      (searchTerm || selectedTag && selectedTag !== 'All' ? filteredTools : paginatedTools).map((tool, index) => {
                         // Get valid image URL or fallback
                         const toolImageSrc = getToolImage(tool);
                         
@@ -572,6 +586,70 @@ const AITools = () => {
                       })
                     )}
                   </div>
+                  
+                  {/* Pagination Controls - Only show when no filters are applied */}
+                  {(!searchTerm && (!selectedTag || selectedTag === 'All')) && filteredTools.length > pagination.pageSize && (
+                    <div className="flex justify-center items-center mt-8 pagination-controls">
+                      <button
+                        onClick={() => setPage(1)}
+                        disabled={pagination.currentPage === 1}
+                        className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        First
+                      </button>
+                      
+                      <button
+                        onClick={() => setPage(pagination.currentPage - 1)}
+                        disabled={pagination.currentPage === 1}
+                        className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        &laquo; Prev
+                      </button>
+                      
+                      <div className="flex items-center mx-4">
+                        <span className="text-white/80">Page</span>
+                        <span className="mx-2 px-3 py-1 bg-white/20 rounded-md text-white font-medium">{pagination.currentPage}</span>
+                        <span className="text-white/80">of {pagination.totalPages}</span>
+                      </div>
+                      
+                      <button
+                        onClick={() => setPage(pagination.currentPage + 1)}
+                        disabled={pagination.currentPage === pagination.totalPages}
+                        className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next &raquo;
+                      </button>
+                      
+                      <button
+                        onClick={() => setPage(pagination.totalPages)}
+                        disabled={pagination.currentPage === pagination.totalPages}
+                        className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Last
+                      </button>
+                      
+                      {/* Page size selector */}
+                      <div className="ml-4 flex items-center">
+                        <span className="text-white/80 mr-2">Show:</span>
+                        <select
+                          value={pagination.pageSize}
+                          onChange={(e) => setPageSize(Number(e.target.value))}
+                          className="px-2 py-1 rounded-md bg-white/10 backdrop-blur-md text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 [&>option]:bg-gray-800 [&>option]:text-white"
+                        >
+                          <option value="12">12</option>
+                          <option value="24">24</option>
+                          <option value="48">48</option>
+                      </select>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Offline indicator */}
+                  {!navigator.onLine && (
+                    <div className="mt-4 p-2 bg-amber-500/20 text-amber-200 rounded-lg text-center">
+                      <p className="text-sm font-medium">You are currently offline. Viewing cached data.</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-12">

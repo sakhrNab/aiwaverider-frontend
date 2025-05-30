@@ -17,6 +17,15 @@ const useAIToolsStore = create((set, get) => ({
   error: null,
   unsubscribe: null,
   lastRefreshed: null,
+  
+  // Pagination state
+  pagination: {
+    currentPage: 1,
+    pageSize: 12, // Default number of items per page
+    totalItems: 0,
+    totalPages: 1,
+    hasMore: false
+  },
 
   // Start polling for updates (simulating real-time behavior)
   startListening: () => {
@@ -125,9 +134,44 @@ const useAIToolsStore = create((set, get) => ({
         }
       }
 
-      // Use aiToolsService to fetch tools
-      // The forceRefresh parameter will be true when skipCache is true
-      const toolsData = await getAllAITools(skipCache);
+      // Check network status
+      const isOnline = navigator.onLine;
+      let toolsData = [];
+      
+      if (isOnline) {
+        try {
+          // Use aiToolsService to fetch tools when online
+          // The forceRefresh parameter will be true when skipCache is true
+          toolsData = await getAllAITools(skipCache);
+          console.log('Fetched AI tools from API (online)');
+        } catch (error) {
+          console.error('Error fetching from API, falling back to offline data:', error);
+          // If API fetch fails, try to load from IndexedDB
+          const offlineData = await get().loadFromIndexedDB();
+          if (offlineData && offlineData.length > 0) {
+            toolsData = offlineData;
+            console.log('Loaded from IndexedDB after API failure');
+          }
+        }
+      } else {
+        // When offline, load from IndexedDB
+        console.log('Device is offline, using IndexedDB data');
+        const offlineData = await get().loadFromIndexedDB();
+        if (offlineData && offlineData.length > 0) {
+          toolsData = offlineData;
+          set({ error: 'Currently in offline mode. Data may not be up to date.' });
+        }
+      }
+
+      // If we couldn't get data from either source
+      if (!toolsData || toolsData.length === 0) {
+        console.log('No data available from any source, showing empty state');
+        set({
+          isLoading: false,
+          error: isOnline ? 'Failed to load AI tools data' : 'No offline data available'
+        });
+        return [];
+      }
       
       // Sort tools by date (newest first) if not already sorted
       toolsData.sort((a, b) => {
@@ -137,12 +181,26 @@ const useAIToolsStore = create((set, get) => ({
         return dateB - dateA;
       });
 
+      // Calculate pagination information
+      const totalItems = toolsData.length;
+      const { pageSize } = get().pagination;
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+      const currentPage = Math.min(get().pagination.currentPage, totalPages);
+      const hasMore = currentPage < totalPages;
+      
       set({
         tools: toolsData,
         isLoaded: true,
         isLoading: false,
         lastRefreshed: Date.now(),
-        error: null
+        error: null,
+        pagination: {
+          pageSize,
+          totalItems,
+          totalPages,
+          currentPage,
+          hasMore
+        }
       });
 
       // Update the cache
@@ -161,6 +219,7 @@ const useAIToolsStore = create((set, get) => ({
   },
 
   // Save to cache with optimization to prevent excessive storage operations
+  // and support for offline access via IndexedDB
   saveToCache: (tools) => {
     try {
       // Don't update cache if tools array is empty
@@ -184,12 +243,134 @@ const useAIToolsStore = create((set, get) => ({
         }
       }
       
+      // Save to localStorage for quick access
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
       localStorage.setItem(CACHE_TIMESTAMP_KEY, timestamp.toString());
+      
+      // Also save to IndexedDB for offline support
+      get().saveToIndexedDB(tools);
+      
       console.log(`Updated cache with ${tools.length} tools`);
     } catch (error) {
       console.error('Error saving AI tools to cache:', error);
     }
+  },
+  
+  // Save data to IndexedDB for offline support
+  saveToIndexedDB: (tools) => {
+    try {
+      // Check if IndexedDB is supported
+      if (!window.indexedDB) {
+        console.log('IndexedDB not supported - offline functionality limited');
+        return;
+      }
+      
+      // Open or create the database
+      const request = window.indexedDB.open('AIWaveriderOfflineDB', 1);
+      
+      // Handle database upgrades/creation
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        
+        // Create object store for AI tools if it doesn't exist
+        if (!db.objectStoreNames.contains('aiTools')) {
+          const store = db.createObjectStore('aiTools', { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
+        }
+      };
+      
+      // Handle success
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['aiTools'], 'readwrite');
+        const store = transaction.objectStore('aiTools');
+        
+        // Clear existing data
+        store.clear();
+        
+        // Add each tool to the store
+        tools.forEach(tool => {
+          store.add(tool);
+        });
+        
+        // Handle transaction completion
+        transaction.oncomplete = () => {
+          console.log(`Saved ${tools.length} tools to IndexedDB for offline use`);
+        };
+        
+        // Handle transaction errors
+        transaction.onerror = (error) => {
+          console.error('IndexedDB transaction error:', error);
+        };
+      };
+      
+      // Handle errors
+      request.onerror = (error) => {
+        console.error('Error opening IndexedDB:', error);
+      };
+    } catch (error) {
+      console.error('Error saving to IndexedDB:', error);
+    }
+  },
+  
+  // Load from IndexedDB when offline
+  loadFromIndexedDB: () => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Check if IndexedDB is supported
+        if (!window.indexedDB) {
+          console.log('IndexedDB not supported - offline functionality limited');
+          resolve(null);
+          return;
+        }
+        
+        const request = window.indexedDB.open('AIWaveriderOfflineDB', 1);
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('aiTools')) {
+            db.createObjectStore('aiTools', { keyPath: 'id' });
+          }
+        };
+        
+        request.onsuccess = (event) => {
+          const db = event.target.result;
+          
+          // Check if the store exists
+          if (!db.objectStoreNames.contains('aiTools')) {
+            resolve(null);
+            return;
+          }
+          
+          const transaction = db.transaction(['aiTools'], 'readonly');
+          const store = transaction.objectStore('aiTools');
+          const getAllRequest = store.getAll();
+          
+          getAllRequest.onsuccess = () => {
+            const tools = getAllRequest.result;
+            if (tools && tools.length > 0) {
+              console.log(`Loaded ${tools.length} tools from IndexedDB (offline)`);
+              resolve(tools);
+            } else {
+              resolve(null);
+            }
+          };
+          
+          getAllRequest.onerror = (error) => {
+            console.error('Error loading from IndexedDB:', error);
+            resolve(null);
+          };
+        };
+        
+        request.onerror = (error) => {
+          console.error('Error opening IndexedDB:', error);
+          resolve(null);
+        };
+      } catch (error) {
+        console.error('Error in loadFromIndexedDB:', error);
+        resolve(null);
+      }
+    });
   },
 
   loadFromCache: () => {
@@ -226,12 +407,79 @@ const useAIToolsStore = create((set, get) => ({
     console.log('Force refreshing AI tools...');
     get().clearCache();
     
+    // Reset pagination to page 1
+    set(state => ({
+      pagination: {
+        ...state.pagination,
+        currentPage: 1
+      }
+    }));
+    
     // Always show loading state for manual refresh
     set({ isLoading: true });
     await get().fetchToolsOnce(true, true);
     set({ isLoading: false });
     
     console.log('AI tools refreshed successfully');
+  },
+  
+  // Change page - for pagination
+  setPage: (pageNumber) => {
+    const { pagination } = get();
+    
+    // Don't do anything if requesting current page or invalid page
+    if (pageNumber === pagination.currentPage || 
+        pageNumber < 1 || 
+        pageNumber > pagination.totalPages) {
+      return;
+    }
+    
+    // Update current page
+    set(state => ({
+      pagination: {
+        ...state.pagination,
+        currentPage: pageNumber
+      }
+    }));
+  },
+  
+  // Change page size
+  setPageSize: (newSize) => {
+    if (newSize < 4 || newSize > 100) return; // Validate size is reasonable
+    
+    set(state => {
+      // Calculate new total pages based on new size
+      const totalPages = Math.max(1, Math.ceil(state.pagination.totalItems / newSize));
+      
+      // Adjust current page if it would exceed the new total
+      const currentPage = Math.min(state.pagination.currentPage, totalPages);
+      
+      return {
+        pagination: {
+          ...state.pagination,
+          pageSize: newSize,
+          totalPages,
+          currentPage,
+          hasMore: currentPage < totalPages
+        }
+      };
+    });
+  },
+  
+  // Get current page of items
+  getPaginatedTools: () => {
+    const { tools, pagination } = get();
+    
+    if (!tools || tools.length === 0) {
+      return [];
+    }
+    
+    // Calculate slice indices
+    const startIndex = (pagination.currentPage - 1) * pagination.pageSize;
+    const endIndex = startIndex + pagination.pageSize;
+    
+    // Return sliced array for current page
+    return tools.slice(startIndex, endIndex);
   }
 }));
 
