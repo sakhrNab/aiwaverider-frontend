@@ -12,6 +12,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext.jsx';
 
+// Mock servers removed - using real backend API
+
 // Initialize error monitoring in production
 if (ENV.PROD) {
   initializeErrorMonitoring()

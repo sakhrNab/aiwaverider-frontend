@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaExternalLinkAlt, FaSearch, FaCalendarAlt, FaArrowRight, FaTimes, FaSync } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaSearch, FaCalendarAlt, FaArrowRight, FaTimes, FaSync, FaLightbulb } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
 import './AIToolsPage.css';
 import { useTheme } from '../contexts/ThemeContext';
 import { HashLoader } from 'react-spinners';
@@ -56,6 +57,7 @@ const imageCache = new Map();
 
 const AITools = () => {
   const { darkMode } = useTheme();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [tags, setTags] = useState(['All']);
@@ -484,7 +486,15 @@ const AITools = () => {
                     />
                     <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70" />
                   </div>
-
+                  <button
+                    onClick={handleRefresh}
+                    className="p-3 rounded-xl bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 flex items-center justify-center tooltip-container"
+                    aria-label="Refresh data"
+                    title={lastRefreshed ? `Last updated: ${new Date(lastRefreshed).toLocaleTimeString()}` : 'Refresh data'}
+                  >
+                    <FaSync className={loading ? 'animate-spin' : 'animate-spin-on-hover'} />
+                    <span className="tooltip">Refresh</span>
+                  </button>
                 </div>
                 {searchTerm && (
                   <button 
@@ -557,15 +567,40 @@ const AITools = () => {
                           });
                         }
                         
+                        // Check if the tool has 'prompt' in its keyword
+                        const isPromptTool = tool.keyword?.toLowerCase().includes('prompt');
+                        
+                        // Create a card wrapper based on the tool type
+                        const CardWrapper = ({ children }) => {
+                          if (isPromptTool) {
+                            return (
+                              <div 
+                                key={tool.id || `tool-${index}`}
+                                onClick={() => navigate(`/prompts/${tool.id}`)}
+                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect cursor-pointer"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                              >
+                                {children}
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <a
+                                key={tool.id || `tool-${index}`}
+                                href={formatLink(tool.url || tool.link)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                              >
+                                {children}
+                              </a>
+                            );
+                          }
+                        };
+                        
                         return (
-                          <a
-                            key={tool.id || `tool-${index}`}
-                            href={formatLink(tool.url || tool.link)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ai-tool-card glass-effect animate-fade-in shimmer-effect"
-                            style={{ animationDelay: `${index * 100}ms` }}
-                          >
+                          <CardWrapper key={tool.id || `tool-${index}`}>
                             <div className="tool-icon-container">
                               <img 
                                 src={toolImageSrc}
@@ -579,7 +614,11 @@ const AITools = () => {
                             <div className="ai-tool-content">
                               <div className="flex justify-between items-center">
                                 <h3 className="ai-tool-title">{tool.title}</h3>
-                                <FaExternalLinkAlt className="external-link-icon" />
+                                {isPromptTool ? (
+                                  <FaLightbulb className="text-yellow-400 text-lg" />
+                                ) : (
+                                  <FaExternalLinkAlt className="external-link-icon" />
+                                )}
                               </div>
                               <p className="ai-tool-description">{tool.description}</p>
                               <div className="ai-tool-tags">
@@ -596,7 +635,7 @@ const AITools = () => {
                                 ))}
                               </div>
                             </div>
-                          </a>
+                          </CardWrapper>
                         );
                       })
                     )}

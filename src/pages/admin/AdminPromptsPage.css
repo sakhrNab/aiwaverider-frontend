@@ -1,0 +1,80 @@
+.admin-prompts-page .prompt-card {
+  transition: all 0.3s ease;
+}
+
+.admin-prompts-page .prompt-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Category badges */
+.admin-prompts-page .prompt-card .category-badge {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: rgb(59, 130, 246);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  display: inline-block;
+  margin-bottom: 0.75rem;
+}
+
+/* Line clamping for text overflow */
+.admin-prompts-page .line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.admin-prompts-page .line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Animation for cards */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-prompts-page .prompt-card {
+  animation: fadeIn 0.3s ease-out;
+  animation-fill-mode: both;
+}
+
+.admin-prompts-page .prompt-card:nth-child(1) { animation-delay: 0.05s; }
+.admin-prompts-page .prompt-card:nth-child(2) { animation-delay: 0.1s; }
+.admin-prompts-page .prompt-card:nth-child(3) { animation-delay: 0.15s; }
+.admin-prompts-page .prompt-card:nth-child(4) { animation-delay: 0.2s; }
+.admin-prompts-page .prompt-card:nth-child(5) { animation-delay: 0.25s; }
+.admin-prompts-page .prompt-card:nth-child(6) { animation-delay: 0.3s; }
+.admin-prompts-page .prompt-card:nth-child(7) { animation-delay: 0.35s; }
+.admin-prompts-page .prompt-card:nth-child(8) { animation-delay: 0.4s; }
+.admin-prompts-page .prompt-card:nth-child(9) { animation-delay: 0.45s; }
+.admin-prompts-page .prompt-card:nth-child(10) { animation-delay: 0.5s; }
+
+/* Modal animation */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-prompts-page .modal-content {
+  animation: modalFadeIn 0.3s ease-out;
+}
