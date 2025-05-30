@@ -381,6 +381,7 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
   const [showSignInPopup, setShowSignInPopup] = useState(false);
   const [showSignUpPopup, setShowSignUpPopup] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [prevAuthState, setPrevAuthState] = useState(false);
   
   // Check if user is an admin
   const isAdmin = useMemo(() => {
@@ -497,6 +498,16 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
     setShowSignUpPopup(false);
   };
   
+  // Effect to close auth popups after successful authentication
+  useEffect(() => {
+    // If user wasn't logged in before but is now, close the auth popups
+    if (!prevAuthState && user) {
+      handleClosePopups();
+    }
+    // Update previous auth state
+    setPrevAuthState(!!user);
+  }, [user, prevAuthState]);
+
   // Add useEffect to check if user can review with caching
   useEffect(() => {
     if (!user) {

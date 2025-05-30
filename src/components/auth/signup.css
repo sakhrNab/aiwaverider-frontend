@@ -29,8 +29,12 @@
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
+  color: #4fc3f7;
+  letter-spacing: 0.7px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid #394867;
+  padding-bottom: 10px;
   text-align: center;
-  color: #1f2937;
 }
 
 /* Form styles */

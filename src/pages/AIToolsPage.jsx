@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaExternalLinkAlt, FaSearch, FaCalendarAlt, FaArrowRight, FaTimes } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaSearch, FaCalendarAlt, FaArrowRight, FaTimes, FaSync } from 'react-icons/fa';
 import './AIToolsPage.css';
-import * as aiToolsService from '../services/aiToolsService';
 import { useTheme } from '../contexts/ThemeContext';
 import { HashLoader } from 'react-spinners';
 import { createSvgDataUri } from '../utils/imageUtils';
 import { getToolColor } from '../api/marketplace/aiToolsApi';
 import '../styles/animations.css'; // Import animations
+import useAIToolsStore from '../store/useAIToolsStore';
 
 // Import icons
 import promptIcon from '../assets/ai-tools/prompt-icon.svg';
@@ -58,12 +58,29 @@ const AITools = () => {
   const { darkMode } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [tools, setTools] = useState([]);
   const [tags, setTags] = useState(['All']);
-  const [retryCount, setRetryCount] = useState(0);
   const [imageCacheTimestamp, setImageCacheTimestamp] = useState(Date.now());
+  
+  // Use the Zustand store for tools data and loading state
+  const {
+    tools,
+    isLoading: loading,
+    error,
+    isLoaded,
+    startListening,
+    stopListening,
+    forceRefresh,
+    lastRefreshed
+  } = useAIToolsStore(state => ({
+    tools: state.tools,
+    isLoading: state.isLoading,
+    error: state.error,
+    isLoaded: state.isLoaded,
+    startListening: state.startListening,
+    stopListening: state.stopListening,
+    forceRefresh: state.forceRefresh,
+    lastRefreshed: state.lastRefreshed
+  }));
 
   // Helper function to ensure links have proper format
   const formatLink = (link) => {
@@ -109,6 +126,11 @@ const AITools = () => {
         loaded: true
       });
     }
+  };
+  
+  // Handle manual refresh
+  const handleRefresh = () => {
+    forceRefresh();
   };
 
   // Handle image error with better fallback strategy
@@ -194,6 +216,32 @@ const AITools = () => {
     return imageUrl;
   }, []);
 
+  // Extract unique tags from tools
+  const extractTags = useCallback((toolsData) => {
+    if (!toolsData || toolsData.length === 0) {
+      return defaultAvailableTags;
+    }
+    
+    const allTags = ['All'];
+    const tagSet = new Set();
+    
+    toolsData.forEach(tool => {
+      // Add category as tag if exists
+      if (tool.category) {
+        tagSet.add(tool.category);
+      }
+      
+      // Add all tags from tool.tags array if it exists
+      if (Array.isArray(tool.tags)) {
+        tool.tags.forEach(tag => tag && tagSet.add(tag));
+      }
+    });
+    
+    // Convert Set to Array and prepend 'All'
+    const uniqueTags = [...tagSet];
+    return [...allTags, ...uniqueTags];
+  }, []);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -210,8 +258,8 @@ const AITools = () => {
         setTools(fetchedTools);
         
         // Extract unique tags from the tools
-        const toolTags = [...new Set(fetchedTools.flatMap(tool => tool.tags || []))];
-        setTags(['All', ...toolTags]);
+        const toolTags = extractTags(fetchedTools);
+        setTags(toolTags);
       } else {
         setTools([]);
         // Set default tags if no tools are available
@@ -228,7 +276,8 @@ const AITools = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    // Start the Firestore listener when component mounts
+    startListening();
     
     // Clear image cache every hour
     const cacheInterval = setInterval(() => {
@@ -242,12 +291,27 @@ const AITools = () => {
       setImageCacheTimestamp(now);
     }, 3600000); // Check every hour
     
-    return () => clearInterval(cacheInterval);
-  }, [retryCount]);
+    // Clean up listener and interval when component unmounts
+    return () => {
+      clearInterval(cacheInterval);
+      stopListening();
+    };
+  }, []);
 
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
+    // Use the forceRefresh function from the Zustand store
+    forceRefresh();
   };
+
+  // Update tags whenever tools change
+  useEffect(() => {
+    if (tools && tools.length > 0) {
+      const extractedTags = extractTags(tools);
+      setTags(extractedTags);
+    } else {
+      setTags(defaultAvailableTags);
+    }
+  }, [tools, extractTags]);
 
   const filteredTools = tools.filter((tool) => {
     const titleMatch = tool.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -393,29 +457,38 @@ const AITools = () => {
           ) : (
             <>
               {/* Search input with better positioning - using class-based approach */}
-              <div className="mb-8">
-                <div className="relative mx-auto max-w-3xl search-container" id="ai-tools-search">
-                  <div className="search-icon-wrapper">
-                    <FaSearch className="search-icon" />
+              <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <div className="flex w-full md:w-auto gap-3">
+                  <div className="relative flex-1 md:flex-auto">
+                    <input
+                      type="text"
+                      placeholder="Search AI tools..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full md:w-72 px-4 py-3 pr-10 rounded-xl bg-white/10 backdrop-blur-md text-white shadow-lg"
+                    />
+                    <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70" />
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="Search AI tools..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="search-input"
-                  />
-                  {searchTerm && (
-                    <button 
-                      type="button" 
-                      className="search-clear-button" 
-                      onClick={() => setSearchTerm('')}
-                      aria-label="Clear search"
-                    >
-                      <FaTimes />
-                    </button>
-                  )}
+                  <button
+                    onClick={handleRefresh}
+                    className="p-3 rounded-xl bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 flex items-center justify-center tooltip-container"
+                    aria-label="Refresh data"
+                    title={lastRefreshed ? `Last updated: ${new Date(lastRefreshed).toLocaleTimeString()}` : 'Refresh data'}
+                  >
+                    <FaSync className={loading ? 'animate-spin' : 'animate-spin-on-hover'} />
+                    <span className="tooltip">Refresh</span>
+                  </button>
                 </div>
+                {searchTerm && (
+                  <button 
+                    type="button" 
+                    className="search-clear-button" 
+                    onClick={() => setSearchTerm('')}
+                    aria-label="Clear search"
+                  >
+                    <FaTimes />
+                  </button>
+                )}
               </div>
 
               {/* Tags filter - using global filter-tags-container */}

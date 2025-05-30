@@ -564,9 +564,9 @@ const SignUp = ({ isOpen, onClose }) => {
 
   // ----- NORMAL PAGE VIEW LAYOUT ("/sign-up") -----
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white shadow-lg p-8 rounded-lg w-full max-w-md">
-        <h2 className="text-3xl font-semibold mb-6 text-center">Sign Up</h2>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="bg-white dark:bg-gray-800 shadow-lg p-8 rounded-lg w-full max-w-md">
+        <h2 className="modal-title text-center">Sign Up</h2>
         {errorDisplay}
         <form onSubmit={handleSubmit} className="signup-form">
             {/* Username */}

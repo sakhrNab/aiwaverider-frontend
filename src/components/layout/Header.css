@@ -532,6 +532,7 @@ body.menu-open .mobile-menu * {
   min-width: 40px;
   object-fit: contain;
   max-width: 100%;
+  border-radius: 100%;
 }
 
 /* Mobile navigation */
@@ -1020,6 +1021,7 @@ body.menu-open .mobile-menu * {
     .site-logo {
       min-width: 30px;
       width: 30px;
+      border-radius: 100%;
     }
     
     .theme-toggle-button,
