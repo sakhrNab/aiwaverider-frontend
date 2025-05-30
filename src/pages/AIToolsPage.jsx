@@ -368,7 +368,7 @@ const AITools = () => {
       textColor,
       fontSize: 24
     });
-  }, [getImageUrl]);
+  }, []); // getToolColor, createSvgDataUri are stable imports; iconMap is a stable module constant
 
   // Use the new loader component
   if (loading) {
@@ -482,15 +482,7 @@ const AITools = () => {
                     />
                     <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70" />
                   </div>
-                  <button
-                    onClick={handleRefresh}
-                    className="p-3 rounded-xl bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 flex items-center justify-center tooltip-container"
-                    aria-label="Refresh data"
-                    title={lastRefreshed ? `Last updated: ${new Date(lastRefreshed).toLocaleTimeString()}` : 'Refresh data'}
-                  >
-                    <FaSync className={loading ? 'animate-spin' : 'animate-spin-on-hover'} />
-                    <span className="tooltip">Refresh</span>
-                  </button>
+
                 </div>
                 {searchTerm && (
                   <button 
@@ -540,7 +532,28 @@ const AITools = () => {
                       // Display paginated data when no filters are applied, otherwise show filtered data
                       (searchTerm || selectedTag && selectedTag !== 'All' ? filteredTools : paginatedTools).map((tool, index) => {
                         // Get valid image URL or fallback
-                        const toolImageSrc = getToolImage(tool);
+                        // Inlined logic to determine toolImageSrc, preferring iconMap then SVG fallback
+                        let toolImageSrc;
+                        const toolName = tool.title?.split(' ')[0];
+                        if (iconMap[toolName]) {
+                          toolImageSrc = iconMap[toolName];
+                        } else if (tool.keyword && iconMap[tool.keyword]) {
+                          toolImageSrc = iconMap[tool.keyword];
+                        } else {
+                          const bgColor = getToolColor(tool.title);
+                          const textColor = 'ffffff';
+                          const displayText = tool.title ? 
+                            (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) :
+                            'AI Tool';
+                          toolImageSrc = createSvgDataUri({
+                            text: displayText,
+                            width: 300,
+                            height: 200,
+                            bgColor,
+                            textColor,
+                            fontSize: 24
+                          });
+                        }
                         
                         return (
                           <a
