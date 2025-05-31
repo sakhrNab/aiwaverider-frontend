@@ -405,12 +405,15 @@
 
 /* Eligibility prompt styles */
 .eligibility-prompt.dark-mode {
-  border: 1px solid #2d3748;
-  background-color: #1a202c;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
 }
 
 .eligibility-prompt-content.dark-bg {
-  background-color: #2d3748;
+  padding: 22px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: rgba(60, 50, 90, 0.4);
 }
 
 /* Dark mode input styles */

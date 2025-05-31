@@ -1,0 +1,88 @@
+.admin-prompt-edit .editor-wrapper {
+  min-height: 300px;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.admin-prompt-edit .editor-container {
+  height: 100%;
+}
+
+.admin-prompt-edit .editor-toolbar {
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f7fafc;
+}
+
+.admin-prompt-edit .public-DraftEditor-content {
+  min-height: 250px;
+  padding: 1rem;
+}
+
+/* Styling for image upload preview */
+.admin-prompt-edit .image-preview {
+  position: relative;
+  margin-top: 1rem;
+  display: inline-block;
+}
+
+.admin-prompt-edit .image-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.admin-prompt-edit .image-preview .remove-button {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  background-color: #ef4444;
+  color: white;
+  border-radius: 9999px;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.admin-prompt-edit .image-preview .remove-button:hover {
+  background-color: #dc2626;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.admin-prompt-edit form {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Form elements focus styles */
+.admin-prompt-edit input:focus,
+.admin-prompt-edit textarea:focus,
+.admin-prompt-edit select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Success save animation */
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.admin-prompt-edit .save-success {
+  animation: successPulse 0.5s ease-in-out;
+}

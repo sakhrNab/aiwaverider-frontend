@@ -27,6 +27,16 @@ export const STATUS = {
  * @returns {Promise<Object>} Health check result
  */
 export const checkApiHealth = async () => {
+  // Skip API health check in development mode
+  if (!ENV.PROD) {
+    return {
+      name: 'API',
+      status: STATUS.OK,
+      message: 'API health check skipped in development mode',
+      timestamp: new Date().toISOString()
+    };
+  }
+  
   try {
     const result = await apiClient.checkApiConnectivity();
     

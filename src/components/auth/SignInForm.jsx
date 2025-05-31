@@ -359,7 +359,7 @@ const SignIn = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-[90%] sm:max-w-md mx-auto p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+      <div className="w-full max-w-[90%] sm:max-w-md mx-auto p-4 sm:p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md">
         <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center text-gray-800 dark:text-white">Sign In</h2>
         
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
@@ -419,7 +419,7 @@ const SignIn = () => {
               <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
             </div>
             <div className="relative flex justify-center text-xs sm:text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+              <span className="px-2 bg-gray-100 font-bold dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                 Or continue with
               </span>
             </div>
@@ -454,7 +454,7 @@ const SignIn = () => {
           </div>
 
           {!isLocked && (
-            <p className="mt-4 text-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-4 font-bold text-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
               <a href="/sign-up" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
                 Sign Up

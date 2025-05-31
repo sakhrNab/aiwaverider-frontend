@@ -22,6 +22,8 @@ const AIObstacleSolutions = lazy(() => import('../pages/AIObstacleSolutionsPage'
 const CheckoutSuccess = lazy(() => import('../components/checkout/CheckoutSuccessDisplay'));
 const PostDetail = lazy(() => import('../components/posts/PostDetail'));
 const CreatePost = lazy(() => import('../components/posts/CreatePost'));
+const PromptPage = lazy(() => import('../pages/PromptPage'));
+const ApiTestPage = lazy(() => import('../pages/ApiTestPage'));
 
 // Admin pages
 const Dashboard = lazy(() => import('../pages/admin/AdminDashboardPage'));
@@ -33,6 +35,8 @@ const Pricing = lazy(() => import('../pages/admin/AdminPricingPage'));
 const AIToolsManager = lazy(() => import('../components/admin/ai-tools/AIToolsManager'));
 const EmailManagement = lazy(() => import('../pages/admin/AdminEmailManagementPage'));
 const EmailComposer = lazy(() => import('../pages/admin/AdminEmailComposerPage'));
+const AdminPromptsPage = lazy(() => import('../pages/admin/AdminPromptsPage'));
+const AdminPromptEditPage = lazy(() => import('../pages/admin/AdminPromptEditPage'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -74,6 +78,12 @@ const AppRoutes = () => {
       <Route path="/checkout" element={withSuspense(<Checkout />)} />
       <Route path="/thankyou" element={withSuspense(<ThankYou />)} />
       <Route path="/checkout/success" element={withSuspense(<CheckoutSuccess />)} />
+      
+      {/* Prompt Pages */}
+      <Route path="/prompts/:id" element={withSuspense(<PromptPage />)} />
+      
+      {/* API Test Page - Development tool */}
+      <Route path="/api-test" element={withSuspense(<ApiTestPage />)} />
 
       {/* Protected: Admin only */}
       <Route
@@ -172,6 +182,24 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute roles={['admin']}>
             {withSuspense(<EmailComposer />)}
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/prompts"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            {withSuspense(<AdminPromptsPage />)}
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/prompts/:id"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            {withSuspense(<AdminPromptEditPage />)}
           </ProtectedRoute>
         }
       />

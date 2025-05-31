@@ -381,6 +381,7 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
   const [showSignInPopup, setShowSignInPopup] = useState(false);
   const [showSignUpPopup, setShowSignUpPopup] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [prevAuthState, setPrevAuthState] = useState(false);
   
   // Check if user is an admin
   const isAdmin = useMemo(() => {
@@ -497,6 +498,16 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
     setShowSignUpPopup(false);
   };
   
+  // Effect to close auth popups after successful authentication
+  useEffect(() => {
+    // If user wasn't logged in before but is now, close the auth popups
+    if (!prevAuthState && user) {
+      handleClosePopups();
+    }
+    // Update previous auth state
+    setPrevAuthState(!!user);
+  }, [user, prevAuthState]);
+
   // Add useEffect to check if user can review with caching
   useEffect(() => {
     if (!user) {
@@ -512,6 +523,30 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
         const cacheKey = `review_eligibility_${agentId}_${user.uid}`;
         let eligibilityResult = null;
         
+        // Check for recent download record in localStorage that would make user eligible to review
+        try {
+          const downloadKey = `agent_download_${agentId}_${user.uid}`;
+          const downloadRecord = localStorage.getItem(downloadKey);
+          
+          if (downloadRecord) {
+            // User has downloaded this agent, which makes them eligible to review
+            eligibilityResult = {
+              canReview: true,
+              reason: 'You have downloaded this agent'
+            };
+            
+            // Skip further eligibility checks
+            setCanReview(true);
+            setReviewEligibilityReason('You have downloaded this agent');
+            setReviewEligibilityChecked(true);
+            console.log('User is eligible to review based on download record');
+            return;
+          }
+        } catch (downloadCheckError) {
+          console.warn('Error checking download record:', downloadCheckError);
+        }
+        
+        // Check for cached eligibility
         try {
           const cachedEligibility = localStorage.getItem(cacheKey);
           if (cachedEligibility) {
