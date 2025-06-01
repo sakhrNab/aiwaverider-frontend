@@ -1,0 +1,13 @@
+/* ./FloatingNav.css */
+.floating-nav-button {
+    /* Ensures icons and text are aligned vertically if they have different heights by default */
+    display: flex;
+    align-items: center;
+    /* Tailwind handles transitions on hover for background/color, but this is harmless if duplicated */
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  }
+  
+  /*
+    Ideally, no other styles are needed here if Tailwind is handling everything else.
+    Avoid adding margins, paddings, or positioning here that might conflict with Tailwind.
+  */
