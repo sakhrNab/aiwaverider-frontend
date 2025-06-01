@@ -19,11 +19,15 @@ import {
   FaBars,
   FaCircle,
   FaInfoCircle,
-  FaTimes as FaX
+  FaTimes as FaX,
+  FaSignOutAlt,
+  FaUserCog,
+  FaUserShield,
+  FaChevronDown
 } from 'react-icons/fa';
 import './Header.css'; // Import custom Header CSS
 import '../../styles/animations.css'; // Import animations
-import { motion } from 'framer-motion'; // For subtle animations
+import { motion, AnimatePresence } from 'framer-motion'; // For subtle animations
 
 const Header = ({ openSignUpModal }) => {
   const { user, signOut } = useContext(AuthContext);
@@ -110,7 +114,8 @@ const Header = ({ openSignUpModal }) => {
       // Special case for iPad Air portrait (820x1180)
       const isIpadAirPortrait = window.innerWidth === 820 && window.innerHeight > 1000;
       
-      if ((window.innerWidth > 1024 && !isIpadAirPortrait) && isMenuOpen) {
+      // Close mobile menu when screen size is 1333px or larger
+      if ((window.innerWidth >= 1333 && !isIpadAirPortrait) && isMenuOpen) {
         setIsMenuOpen(false);
       }
     };
@@ -199,6 +204,29 @@ const Header = ({ openSignUpModal }) => {
     setIsMenuOpen(newMenuState);
   };
 
+  // State for profile dropdown
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+  
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Toggle profile dropdown
+  const toggleProfileDropdown = () => {
+    setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
   return (
     <header className={`main-header sticky top-0 z-50 backdrop-blur-xl ${
       darkMode 
@@ -260,7 +288,7 @@ const Header = ({ openSignUpModal }) => {
         </motion.div>
         
         {/* Desktop Navigation - hidden at 1024px and below */}
-        <nav className="hidden 2xl:flex items-center justify-center flex-grow">
+        <nav className="hidden xl:flex custom-1333:flex items-center justify-center flex-grow">
           <ul className="flex nav-links items-center">
             <li className="nav-item flex items-center">
               <Link 
@@ -327,110 +355,131 @@ const Header = ({ openSignUpModal }) => {
           </ul>
         </nav>
         
-        {/* Desktop Right Side - hidden at 1024px and below */}
-        <div className="hidden 2xl:flex items-center space-x-2">
-          {/* Dark Mode Toggle */}
+        {/* Universal Right Side - visible at all screen sizes - contains theme toggle, cart, and profile */}
+        <div className="flex items-center space-x-3">
+          {/* Dark Mode Toggle - Always visible */}
           <button 
             onClick={toggleDarkMode}
             aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            className="p-2 rounded-full hover:bg-gray-100/10 transition-colors text-white"
+            className="theme-toggle-btn p-2 rounded-full hover:bg-gray-100/10 transition-colors text-white"
           >
-            {darkMode ? <FaSun className="text-white" /> : <FaMoon className="text-white" />}
+            {darkMode ? <FaSun className="text-yellow-300" /> : <FaMoon className="text-white" />}
           </button>
           
-          {/* Cart Button */}
+          {/* Cart Button - Always visible */}
           <Link 
             to="/checkout" 
-            className="p-2 rounded-full hover:bg-gray-100/10 transition-colors relative text-white"
+            className="cart-btn p-2 rounded-full hover:bg-gray-100/10 transition-colors relative text-white"
             aria-label="Cart"
           >
             <FaShoppingCart />
-              {itemCount > 0 && (
+            {itemCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
-          
-          {/* Auth Buttons - Hidden on Mobile */}
-            {!user && (
-              <div className="relative group">
-                <button className="account-access-button flex items-center space-x-1 bg-gradient-to-r from-blue-600/30 to-teal-500/30 hover:from-blue-600/40 hover:to-teal-500/40 px-2 py-1 rounded-md transition-all duration-300 group">
-                  <div className="avatar w-7 h-7 rounded-full overflow-hidden border border-blue-300 group-hover:border-teal-300 transition-colors duration-300 flex items-center justify-center">
-                    <div className="w-full h-full bg-gradient-to-r from-blue-500 to-teal-500 flex items-center justify-center text-xs text-white font-medium group-hover:scale-105 transition-transform duration-300">
-                      <FaUser />
-                    </div>
-                  </div>
-                  <span className="text-white text-sm hidden md:inline group-hover:text-teal-200 transition-colors duration-300">Account Access</span>
-                </button>
-                
-                <div className="account-access-dropdown absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg overflow-hidden z-20 opacity-0 scale-95 invisible group-hover:opacity-100 group-hover:scale-100 group-hover:visible transition-all duration-200 origin-top-right">
-                  <div className="py-1">
-                    <Link 
-                      to="/sign-in" 
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 border-l-0 hover:border-l-4 hover:border-blue-500 hover:pl-3"
-                    >
-                      <span className="flex items-center"><FaUser className="mr-2 text-blue-400" /> Sign In</span>
-                    </Link>
-                    <button
-                      onClick={handleSignUp}
-                      className="block w-full text-left px-4 py-3 text-sm text-teal-600 hover:bg-teal-50 hover:text-teal-700 transition-colors duration-200 border-l-0 hover:border-l-4 hover:border-teal-500 hover:pl-3"
-                    >
-                      <span className="flex items-center"><FaUserPlus className="mr-2 text-teal-400" /> Sign Up</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+                {itemCount}
+              </span>
             )}
-
-            {user && (
-            <div className="relative group">
-              <button className="flex items-center space-x-1 bg-blue-600/30 hover:bg-blue-600/40 px-2 py-1 rounded-md">
-                <div className="w-7 h-7 rounded-full overflow-hidden border border-blue-300 flex items-center justify-center">
-                  {user.photoURL ? (
-                    <img src={user.photoURL || '/default-avatar.png'} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+          </Link>
+          
+          {/* Profile Button with Dropdown - Always visible */}
+          <div className="relative" ref={profileDropdownRef}>
+            <button 
+              onClick={toggleProfileDropdown} 
+              className="profile-btn flex items-center space-x-1 hover:bg-gray-100/10 rounded-full transition-all duration-200"
+              aria-label="Profile options"
+              aria-expanded={profileDropdownOpen}
+            >
+              {/* Profile Image/Avatar */}
+              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-indigo-300/50 hover:border-indigo-300 transition-colors duration-200 flex items-center justify-center">
+                {user && user.photoURL ? (
+                  <img src={user.photoURL || '/default-avatar.png'} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-xs text-white font-medium">
+                    {user ? (user.displayName?.charAt(0) || user.email?.charAt(0) || 'U') : <FaUser />}
+                  </div>
+                )}
+              </div>
+            </button>
+            
+            {/* Dropdown Menu with Animation */}
+            <AnimatePresence>
+              {profileDropdownOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="profile-dropdown absolute right-0 mt-2 w-56 glass-effect-dark dark:glass-effect rounded-lg shadow-xl overflow-hidden z-20 origin-top-right"
+                >
+                  {user ? (
+                    <div className="profile-dropdown-content">
+                      {/* User Info */}
+                      <div className="px-4 py-3 border-b border-gray-200/10 text-center">
+                        <div className="font-medium text-white truncate">
+                          {user.displayName || user.email?.split('@')[0] || 'User'}
+                        </div>
+                        <div className="text-xs text-gray-300 truncate">{user.email}</div>
+                      </div>
+                      
+                      {/* Menu Options */}
+                      <div className="py-1">
+                        <Link 
+                          to="/profile" 
+                          className="block px-4 py-2 text-sm text-gray-200 hover:bg-indigo-500/20 flex items-center"
+                          onClick={() => setProfileDropdownOpen(false)}
+                        >
+                          <FaUser className="mr-2 text-indigo-300" /> Profile
+                        </Link>
+                        
+                        {user.role === 'admin' && (
+                          <Link 
+                            to="/admin/dashboard" 
+                            className="block px-4 py-2 text-sm text-gray-200 hover:bg-indigo-500/20 flex items-center"
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <FaUserShield className="mr-2 text-indigo-300" /> Admin Dashboard
+                          </Link>
+                        )}
+                        
+                        <button
+                          onClick={() => {
+                            setProfileDropdownOpen(false);
+                            handleSignOut();
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-red-500/20 flex items-center"
+                        >
+                          <FaSignOutAlt className="mr-2 text-red-400" /> Sign Out
+                        </button>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="w-full h-full bg-blue-500 flex items-center justify-center text-xs text-white font-medium">
-                      {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                    <div className="py-1">
+                      <Link 
+                        to="/sign-in" 
+                        className="block px-4 py-2 text-sm text-gray-200 hover:bg-indigo-500/20 flex items-center"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        <FaUser className="mr-2 text-indigo-300" /> Sign In
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setProfileDropdownOpen(false);
+                          handleSignUp();
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-indigo-500/20 flex items-center"
+                      >
+                        <FaUserPlus className="mr-2 text-indigo-300" /> Sign Up
+                      </button>
                     </div>
                   )}
-                </div>
-                <span className="text-white text-sm hidden md:inline">{user.displayName || user.email?.split('@')[0] || 'User'}</span>
-              </button>
-              
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg overflow-hidden z-20 opacity-0 scale-95 invisible group-hover:opacity-100 group-hover:scale-100 group-hover:visible transition-all duration-200 origin-top-right">
-                <div className="py-1">
-                  <Link 
-                    to="/profile" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Profile
-                  </Link>
-                  {user.role === 'admin' && (
-                    <Link 
-                      to="/admin/dashboard" 
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Admin Dashboard
-                  </Link>
-                )}
-                <button
-                  onClick={handleSignOut}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                >
-                  Sign Out
-                </button>
-                </div>
-              </div>
-            </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-
-        {/* Mobile menu button - visible at 1024px and below */}
-        <div className="2xl:hidden flex items-center">
+          
+          {/* Mobile menu button - Hamburger icon - visible only on smaller screens */}
           <button 
             ref={toggleButtonRef}
-            className="2xl:hidden text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0 rounded-md"
+            className="mobile-menu-btn xl:hidden custom-1333:hidden text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0 rounded-md"
             onClick={toggleMobileMenu}
             aria-label="Toggle mobile menu"
             aria-expanded={isMenuOpen}
@@ -438,6 +487,8 @@ const Header = ({ openSignUpModal }) => {
             <FaBars className="text-xl" />
           </button>
         </div>
+
+        {/* Removed mobile menu button from here as it's now part of the right-side elements group */}
       </div>
       
       {/* Mobile Menu - Enhanced for better accessibility and UX */}
@@ -510,7 +561,7 @@ const Header = ({ openSignUpModal }) => {
                   <FaInfoCircle className="mr-3" /> About
                 </Link>
               </li>
-              <li className="mobile-nav-item">
+              {/* <li className="mobile-nav-item">
                 <Link
                   to="/checkout"
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
@@ -518,92 +569,12 @@ const Header = ({ openSignUpModal }) => {
                 >
                   <FaShoppingCart className="mr-3" /> Cart {itemCount > 0 ? `(${itemCount})` : ''}
                 </Link>
-              </li>
+              </li> */}
               
-              {/* Dark/Light mode toggle on mobile */}
-              <li className="mobile-nav-item">
-                <button
-                  onClick={() => {
-                    toggleDarkMode();
-                    setIsMenuOpen(false);
-                  }}
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center w-full"
-                >
-                  {darkMode ? <FaSun className="mr-3" /> : <FaMoon className="mr-3" />}
-                  {darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                </button>
-              </li>
+              {/* Removed Dark/Light mode toggle from mobile menu as it's now always visible in header */}
               
               {/* Mobile-only auth options */}
-              <li className="pt-2 mt-2 border-t border-gray-200">
-                {!user && (
-                  <div className="mobile-account-options flex flex-col space-y-2">
-                    <div className="flex flex-col gap-3 px-4">
-                      {/* Sign In Link - Clean, Aligned Design */}
-                      <Link
-                        to="/sign-in"
-                        className="w-full py-3 px-4 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white transition-colors duration-200 flex items-center justify-center shadow-md"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <div className="mr-3">
-                          <FaUser className="text-white" size={18} />
-                        </div>
-                        <div>
-                          <span className="font-bold text-lg">Sign In</span>
-                          <span className="text-sm text-white/80 block">Access your account</span>
-                        </div>
-                      </Link>
-                      
-                      {/* Create Account Button - Clean, Aligned Design */}
-                      <button
-                        className="w-full py-3 px-4 rounded-md bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white transition-colors duration-200 flex items-center justify-center shadow-md"
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          handleSignUp();
-                        }}
-                      >
-                        <div className="mr-3">
-                          <FaUserPlus className="text-white" size={18} />
-                        </div>
-                        <div>
-                          <span className="font-bold text-lg">Create Account</span>
-                          <span className="text-sm text-white/80 block">Join the AI wave</span>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                )}
-                
-                {user && (
-                  <div className="flex flex-col space-y-1">
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <FaUser className="mr-3" /> Profile
-                    </Link>
-                    {user.role === 'admin' && (
-                      <Link
-                        to="/admin/agents"
-                        className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Admin Dashboard
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        handleSignOut();
-                      }}
-                      className="mx-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-center mt-2"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </li>
+
             </ul>
           </nav>
         </div>

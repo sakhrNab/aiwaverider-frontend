@@ -1,0 +1,108 @@
+/* ./FloatingNav.css */
+
+/* Base styles for floating nav */
+.floating-nav-container {
+  transition: all 0.3s ease-in-out;
+}
+
+.floating-nav-button {
+  /* Core button styling */
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Device specific adjustments */
+
+/* Small phones - iPhone SE, etc */
+@media (max-width: 375px) {
+  .floating-nav-button {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .floating-nav-button span {
+    max-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Medium phones - iPhone XR, 12 Pro, etc */
+@media (min-width: 376px) and (max-width: 428px) {
+  .floating-nav-button {
+    font-size: 0.8rem;
+  }
+}
+
+/* Large phones - iPhone 14 Pro Max, Galaxy S20 Ultra */
+@media (min-width: 429px) and (max-width: 512px) {
+  .floating-nav-container {
+    max-width: 92vw;
+  }
+}
+
+/* Tablets - iPad Mini, iPad Air, iPad Pro */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .floating-nav-button {
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Foldable devices - Galaxy Z Fold, Surface Duo */
+@media (min-width: 540px) and (max-width: 767px) {
+  .floating-nav-button {
+    font-size: 0.85rem;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 450px) {
+  .floating-nav-container {
+    bottom: 1rem !important;
+  }
+  
+  .floating-nav-button {
+    padding: 0.25rem 0.75rem;
+  }
+}
+
+/* Large screens - Desktop, Nest Hub Max */
+@media (min-width: 1200px) {
+  .floating-nav-container {
+    max-width: 80vw;
+  }
+  
+  .floating-nav-button {
+    font-size: 0.9rem;
+    padding: 0.5rem 1.25rem;
+  }
+}
+
+/* Handle safe areas for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .floating-nav-container {
+    padding-bottom: env(safe-area-inset-bottom);
+    bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Handle hover states only on devices that support hover */
+@media (hover: hover) {
+  .floating-nav-button:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Animations and transitions */
+.floating-nav-button {
+  transform: translateY(0);
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Focus states for accessibility */
+.floating-nav-button:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}

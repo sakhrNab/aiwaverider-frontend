@@ -4,6 +4,8 @@ import { FaRobot, FaTools, FaLightbulb, FaCalendarAlt, FaArrowRight, FaUserGradu
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import '../styles/animations.css'; // Import animations
+import FloatingNav from '../components/navigation/FloatingNav';
+// import YouAreYouWant from '../components/sections/YouAreYouWant';
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
 import tazProfileImg from '../assets/taz-profile.jpg';
 import simpleToSellImg from '../assets/simple-to-sell.png';
@@ -12,13 +14,33 @@ import makingAiEasyImg from '../assets/making-ai-easy.png';
 
 const HomePage = () => {
   const [loading, setLoading] = useState(true);
+  
+  // Create refs for all sections we want to navigate to
+  const topRef = useRef(null);
+  const obstaclesRef = useRef(null);
+  const whoItsForRef = useRef(null);
+  const faqRef = useRef(null);
   const monetizationPathsRef = useRef(null);
+  
   const { darkMode } = useTheme();
   const calendlyLink = "https://calendly.com/aiwaverider8/30min";
+  
+  // Refs object for the FloatingNav component
+  const scrollRefs = {
+    top: topRef,
+    obstacles: obstaclesRef,
+    whoItsFor: whoItsForRef,
+    faq: faqRef
+  };
   // Function to scroll to the monetization paths section
   const scrollToMonetizationPaths = (e) => {
     e.preventDefault();
     monetizationPathsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+  
+  // Function to open Calendly for consultation calls
+  const openCalendlyConsultation = () => {
+    window.open(calendlyLink, '_blank');
   };
 
   // Simulate loading state for demonstration
@@ -75,7 +97,9 @@ const HomePage = () => {
   ];
   
   return (
-    <div className={`${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+    <div className={`${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`} ref={topRef}>
+      {/* Floating navigation that appears when scrolling */}
+      <FloatingNav scrollRefs={scrollRefs} />
       {/* Ultra-modern AI header with 3D effects and dynamic animations */}
       <div className="relative overflow-hidden">
         {/* Animated background gradient with enhanced colors - different for dark/light modes */}
@@ -167,6 +191,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* YouAreYouWant section with arrow diagrams */}
+      {/* <YouAreYouWant /> */}
 
       {/* Monetization Paths */}
       <section ref={monetizationPathsRef} id="monetization-paths" className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
@@ -303,7 +330,7 @@ const HomePage = () => {
       </section>
 
       {/* Obstacles Section */}
-      <section className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+      <section ref={obstaclesRef} className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -314,7 +341,7 @@ const HomePage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
             {/* Obstacle 1 */}
             <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white shadow-md'}`}>
               <div className="flex items-center mb-6">
@@ -403,7 +430,7 @@ const HomePage = () => {
       </section>
 
       {/* Solution Section */}
-      <section className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      <section ref={whoItsForRef} className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -745,7 +772,7 @@ const HomePage = () => {
               <div className="flex items-center mb-8">
                 <span className="text-pink-300 mr-4">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-                    <path fillRule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM12.75 20.636A8.214 8.214 0 0118 18.75c.966 0 1.89.166 2.75.47a.75.75 0 001-.708V4.262a.75.75 0 00-.5-.707A9.735 9.735 0 0018 3a9.707 9.707 0 00-5.25 1.533v16.103z" />
                   </svg>
                 </span>
                 <h3 className="text-3xl font-bold text-white uppercase">GROWTH</h3>
@@ -783,12 +810,12 @@ const HomePage = () => {
 
           {/* CTA Button */}
           <div className="text-center">
-          <Link to={calendlyLink}              
-          // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-              className="px-16 py-6 bg-blue-400 hover:bg-blue-500 text-white rounded-xl font-bold text-3xl transition-all inline-flex items-center"
-            >
-              START FREE Consultation Call
-            </Link>
+            <Link to={calendlyLink}              
+            // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+                className="px-16 py-6 bg-blue-400 hover:bg-blue-500 text-white rounded-xl font-bold text-3xl transition-all inline-flex items-center"
+              >
+                START FREE Consultation Call
+              </Link>
           </div>
         </div>
       </section>
@@ -1183,16 +1210,45 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-            <div className="bg-blue-400 hover:bg-blue-500 inline-block transition-all rounded-xl shadow-lg overflow-hidden">
-              <Link to={calendlyLink}
-                // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-                className="px-16 py-6 font-bold text-2xl text-white"
-              >
-                START FREE Consultation Call
-              </Link>
+            <div className="bg-blue-400 hover:bg-blue-500 inline-block transition-all rounded-xl shadow-lg overflow-hidden cursor-pointer" onClick={openCalendlyConsultation}>
+              <div className="px-16 py-6 font-bold text-2xl text-white flex items-center justify-center gap-3">
+                <FaCalendarAlt /> START FREE Consultation Call
+              </div>
               <div className="bg-blue-500 text-white text-sm py-2">
                 Bonuses Included
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dedicated Consultation Call Section */}
+      <section className={`py-16 ${darkMode ? 'bg-indigo-900' : 'bg-indigo-50'}`}>
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2
+              className={`text-3xl md:text-4xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-800'}`}
+            >
+              Ready to Start Monetizing Your Expertise with AI?
+            </h2>
+            
+            <p 
+              className={`text-xl mb-10 ${darkMode ? 'text-indigo-100' : 'text-gray-600'}`}
+            >
+              Book a free 30-minute consultation call with our AI experts to discuss how you can leverage AI to create new revenue streams
+            </p>
+            
+            <div className="mb-10">
+              <button
+                onClick={openCalendlyConsultation}
+                className="px-10 py-5 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-2xl transition-all hover:shadow-xl inline-flex items-center gap-3"
+              >
+                <FaCalendarAlt /> Schedule Your Free Call Now
+              </button>
+            </div>
+            
+            <div className={`${darkMode ? 'text-indigo-200' : 'text-gray-600'}`}>
+              <p className="text-lg">No obligation, no pressure—just a friendly chat about your goals</p>
             </div>
           </div>
         </div>
