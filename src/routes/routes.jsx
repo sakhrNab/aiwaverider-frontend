@@ -19,6 +19,7 @@ const Checkout = lazy(() => import('../pages/CheckoutPage'));
 const ThankYou = lazy(() => import('../pages/ThankYouPage'));
 const MonetizationPaths = lazy(() => import('../pages/MonetizationPathsPage'));
 const AIObstacleSolutions = lazy(() => import('../pages/AIObstacleSolutionsPage'));
+const VideoGallery = lazy(() => import('../pages/VideoGalleryPage'));
 const CheckoutSuccess = lazy(() => import('../components/checkout/CheckoutSuccessDisplay'));
 const PostDetail = lazy(() => import('../components/posts/PostDetail'));
 const CreatePost = lazy(() => import('../components/posts/CreatePost'));
@@ -73,6 +74,7 @@ const AppRoutes = () => {
       <Route path="/about" element={withSuspense(<About />)} />
       <Route path="/monetization-paths" element={withSuspense(<MonetizationPaths />)} />
       <Route path="/ai-obstacle-solutions" element={withSuspense(<AIObstacleSolutions />)} />
+      <Route path="/video-gallery" element={withSuspense(<VideoGallery />)} />
       <Route path="/agents/:agentId" element={withSuspense(<AgentDetail />)} />
       <Route path="/product/:agentId" element={withSuspense(<AgentDetail />)} />
       <Route path="/checkout" element={withSuspense(<Checkout />)} />

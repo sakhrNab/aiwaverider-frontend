@@ -8,6 +8,41 @@
   z-index: 100;
 }
 
+/* Two-line navigation styles */
+.nav-item .flex-col span {
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.nav-item .text-blue-200,
+.mobile-nav-item .text-gray-500 {
+  opacity: 0.85;
+  font-weight: 400;
+}
+
+/* Video gallery nav link highlight */
+.nav-item a[href="/video-gallery"],
+.mobile-nav-item a[href="/video-gallery"] {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item a[href="/video-gallery"]::after {
+  content: "NEW";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 8px;
+  background: linear-gradient(to right, #ff4d4d, #f9cb28);
+  color: white;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: bold;
+  opacity: 0.9;
+  transform: rotate(3deg);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
 /* Theme toggle, cart, and profile buttons styling */
 .theme-toggle-btn,
 .cart-btn,

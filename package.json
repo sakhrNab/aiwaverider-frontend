@@ -93,6 +93,7 @@
     "react-spinners": "^0.15.0",
     "react-toastify": "^11.0.3",
     "react-window": "^1.8.11",
+    "react-xarrows": "^2.0.2",
     "react-youtube": "^10.1.0",
     "slick-carousel": "^1.8.1",
     "stripe": "^14.12.0",

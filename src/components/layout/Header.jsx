@@ -23,8 +23,10 @@ import {
   FaSignOutAlt,
   FaUserCog,
   FaUserShield,
-  FaChevronDown
+  FaChevronDown,
+  FaVideo
 } from 'react-icons/fa';
+import { MdKeyboardArrowDown } from 'react-icons/md';
 import './Header.css'; // Import custom Header CSS
 import '../../styles/animations.css'; // Import animations
 import { motion, AnimatePresence } from 'framer-motion'; // For subtle animations
@@ -317,13 +319,31 @@ const Header = ({ openSignUpModal }) => {
               </span>
             </li>
             <li className="nav-item flex items-center">
+              <div className="relative group">
+                <Link 
+                  to="/ai-tools" 
+                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                  aria-label="AI Tools & Prompts"
+                >
+                  <FaTools className="mr-1.5" /> 
+                  <div className="flex flex-col items-start">
+                    <span>AI Tools</span>
+                    <span className="text-xs mt-[-2px] text-blue-200">Prompts</span>
+                  </div>
+                </Link>
+              </div>
+              <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
+                <FaCircle />
+              </span>
+            </li>
+            <li className="nav-item flex items-center">
               <Link 
-                to="/ai-tools" 
+                to="/video-gallery" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="AI Tools & Prompts"
+                aria-label="Video Gallery"
               >
-                <FaTools className="mr-1.5" /> 
-                <span>AI Tools & Prompts</span>
+                <FaVideo className="mr-1.5" /> 
+                <span>Videos</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -336,7 +356,10 @@ const Header = ({ openSignUpModal }) => {
                 aria-label="Latest News & Tutorials"
               >
                 <FaMicrochip className="mr-1.5" /> 
-                <span>Latest Tech News & Tutorials</span>
+                <div className="flex flex-col items-start">
+                  <span>Latest Tech News</span>
+                  <span className="text-xs mt-[-2px] text-blue-200">Tutorials</span>
+                </div>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -540,7 +563,20 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaTools className="mr-3" /> AI Tools
+                  <FaTools className="mr-3" /> 
+                  <div className="flex flex-col items-start">
+                    <span>AI Tools</span>
+                    <span className="text-xs text-gray-500">Prompts</span>
+                  </div>
+                </Link>
+              </li>
+              <li className="mobile-nav-item">
+                <Link
+                  to="/video-gallery"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FaVideo className="mr-3" /> Videos
                 </Link>
               </li>
               <li className="mobile-nav-item">
@@ -549,7 +585,11 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaMicrochip className="mr-3" /> Latest Tech
+                  <FaMicrochip className="mr-3" /> 
+                  <div className="flex flex-col items-start">
+                    <span>Latest Tech News</span>
+                    <span className="text-xs text-gray-500">Tutorials</span>
+                  </div>
                 </Link>
               </li>
               <li className="mobile-nav-item">

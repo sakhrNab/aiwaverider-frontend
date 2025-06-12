@@ -312,6 +312,11 @@ export const AuthProvider = ({ children }) => {
   }, [clearCache]);
 
   // Memoize the context value to prevent unnecessary re-renders
+  const isAdmin = useMemo(() => {
+    if (!user) return false;
+    return user.role === 'admin' || user.isAdmin === true;
+  }, [user]);
+
   const contextValue = useMemo(() => ({
     user,
     loading,
@@ -320,8 +325,9 @@ export const AuthProvider = ({ children }) => {
     fetchUserProfile,
     updateUserProfile,
     signOut,
-    clearProfileCache: (uid) => clearCache('profile', uid)
-  }), [user, loading, error, fetchUserProfile, updateUserProfile, signOut, clearCache]);
+    clearProfileCache: (uid) => clearCache('profile', uid),
+    isAdmin
+  }), [user, loading, error, fetchUserProfile, updateUserProfile, signOut, clearCache, isAdmin]);
 
   return (
     <AuthContext.Provider value={contextValue}>
