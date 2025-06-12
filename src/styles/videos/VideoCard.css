@@ -1,0 +1,41 @@
+/* src/styles/videos/VideoCard.css */
+
+.video-card {
+  /* Glassy effect */
+  backdrop-filter: blur(10px); /* Adjust blur strength as needed */
+  border-radius: var(--border-radius-medium); /* Use a variable for border-radius */
+  box-shadow: var(--box-shadow-soft); /* Use a variable for soft shadow */
+  overflow: hidden; /* Ensures video iframe doesn't spill out */
+  position: relative; /* For responsive iframe */
+
+  /* Default (light) mode background */
+  background-color: rgba(var(--color-light-background-rgb), 0.6); /* Semi-transparent light background */
+  border: 1px solid rgba(var(--color-light-border-rgb), 0.2); /* Optional: subtle light border */
+  color: var(--color-text-light); /* Default text color for light mode */
+}
+
+/* Dark mode styles */
+body[data-theme="dark"] .video-card {
+  background-color: rgba(var(--color-dark-background-rgb), 0.6); /* Semi-transparent dark background */
+  border: 1px solid rgba(var(--color-dark-border-rgb), 0.2); /* Optional: subtle dark border */
+  color: var(--color-text-dark); /* Default text color for dark mode */
+}
+
+/* Styling for the iframe */
+.video-card iframe {
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio (height / width * 100) */
+  position: relative;
+  top: 0;
+  left: 0;
+  border: none; /* Remove default iframe border */
+  display: block; /* Remove extra space below iframe */
+}
+
+/* Optional: Add padding inside the card if needed for content around the video */
+/* .video-card .video-content {
+  padding: var(--spacing-small);
+} */
+
+/* Responsive considerations can also be handled in the gallery grid */

@@ -15,6 +15,7 @@ import {
   FaTools,  
   FaMicrochip,
   FaUser,
+  FaVideo,
   FaUserPlus,
   FaBars,
   FaCircle,
@@ -352,6 +353,17 @@ const Header = ({ openSignUpModal }) => {
                 <span>About Us</span>
               </Link>
             </li>
+            <li className="nav-item flex items-center">
+              <Link
+                to="/videos"
+                className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                aria-label="Videos"
+              >
+                <FaVideo className="mr-1.5" />
+                <span>Videos</span>
+              </Link>
+            </li>
+
           </ul>
         </nav>
         
@@ -561,6 +573,16 @@ const Header = ({ openSignUpModal }) => {
                   <FaInfoCircle className="mr-3" /> About
                 </Link>
               </li>
+              <li className="mobile-nav-item">
+                <Link
+                  to="/videos"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FaVideo className="mr-3" /> Videos
+                </Link>
+              </li>
+
               {/* <li className="mobile-nav-item">
                 <Link
                   to="/checkout"
