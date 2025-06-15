@@ -1,382 +1,326 @@
-import React, { useState, useEffect } from 'react';
-import { FaPlus, FaSpinner, FaYoutube, FaTiktok, FaInstagram } from 'react-icons/fa';
-import { addVideo, updateVideo } from '../../api/content/videoService.js';
-import { toast } from 'react-toastify';
+import React, { useState, useContext } from 'react';
+import { motion } from 'framer-motion';
+import { FaPlus, FaSpinner, FaYoutube, FaTiktok, FaInstagram, FaExternalLinkAlt } from 'react-icons/fa';
+import { addVideo } from '../../api/content/videoService';
+import { AuthContext } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { toast } from 'react-hot-toast';
 
 const platformOptions = [
-  { id: 'youtube', name: 'YouTube', icon: <FaYoutube className="text-red-600" /> },
-  { id: 'tiktok', name: 'TikTok', icon: <FaTiktok /> },
-  { id: 'instagram', name: 'Instagram', icon: <FaInstagram className="text-purple-600" /> }
+  { 
+    id: 'youtube', 
+    name: 'YouTube', 
+    icon: FaYoutube, 
+    color: 'text-red-600',
+    bgColor: 'bg-red-50 dark:bg-red-900/20',
+    borderColor: 'border-red-200 dark:border-red-800',
+    example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+  },
+  { 
+    id: 'tiktok', 
+    name: 'TikTok', 
+    icon: FaTiktok, 
+    color: 'text-black dark:text-white',
+    bgColor: 'bg-gray-50 dark:bg-gray-800/20',
+    borderColor: 'border-gray-200 dark:border-gray-700',
+    example: 'https://www.tiktok.com/@username/video/1234567890'
+  },
+  { 
+    id: 'instagram', 
+    name: 'Instagram', 
+    icon: FaInstagram, 
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    borderColor: 'border-purple-200 dark:border-purple-800',
+    example: 'https://www.instagram.com/p/ABC123def4g/'
+  }
 ];
 
-const AddVideoForm = ({ onVideoAdded, onCancel, editingVideo }) => {
-  const [videoUrl, setVideoUrl] = useState(editingVideo?.url || '');
-  const [platform, setPlatform] = useState(editingVideo?.platform || 'youtube');
-  const [category, setCategory] = useState(editingVideo?.category || '');
-  const [username, setUsername] = useState(editingVideo?.user || '');
-  const [title, setTitle] = useState(editingVideo?.title || '');
-  const [videoId, setVideoId] = useState('');
-  const [showPreview, setShowPreview] = useState(false);
-  const [categories] = useState([
-    'Tech',
-    'Gaming',
-    'Educational',
-    'Entertainment',
-    'Music',
-    'Travel',
-    'Cooking',
-    'Fitness',
-    'Fashion',
-    'Lifestyle',
-    'Science',
-    'News',
-    'Sports'
-  ]);
+const AddVideoForm = ({ onVideoAdded }) => {
+  const { user, isAdmin } = useContext(AuthContext);
+  const { darkMode } = useTheme();
+  const [originalUrl, setOriginalUrl] = useState('');
+  const [platform, setPlatform] = useState('youtube');
+  const [addedBy, setAddedBy] = useState(user?.displayName || user?.email || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Set initial category
-  if (category === '' && categories.length > 0) {
-    setCategory(categories[0]);
-  }
+  const selectedPlatform = platformOptions.find(p => p.id === platform);
+  const PlatformIcon = selectedPlatform?.icon || FaYoutube;
 
+  // Validate URL format for the selected platform
   const validateVideoUrl = (url, platform) => {
-    // For validation, we'll just check if the URL contains the platform domain
-    // and has a reasonable structure - full validation happens in extractVideoId
-    switch (platform) {
-      case 'youtube':
-        return url.includes('youtube.com') || url.includes('youtu.be');
-      case 'tiktok':
-        return url.includes('tiktok.com') && url.includes('/video/');
-      case 'instagram':
-        return url.includes('instagram.com') && (url.includes('/p/') || url.includes('/reel/'));
-      default:
-        return false;
-    }
-  };
-
-  const extractVideoId = (url, platform) => {
-    switch (platform) {
-      case 'youtube': {
-        // Extract YouTube video ID
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
+    if (!url || !url.trim()) return false;
+    
+    try {
+      const urlObj = new URL(url);
+      
+      switch (platform) {
+        case 'youtube':
+          return (urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be')) &&
+                 (url.includes('watch?v=') || url.includes('youtu.be/') || url.includes('embed/'));
+        case 'tiktok':
+          return urlObj.hostname.includes('tiktok.com') && url.includes('/video/');
+        case 'instagram':
+          return urlObj.hostname.includes('instagram.com') && (url.includes('/p/') || url.includes('/reel/'));
+        default:
+          return false;
       }
-      case 'tiktok': {
-        // Extract TikTok video ID - more permissive pattern
-        try {
-          // Try to parse as URL and get the pathname
-          const videoPath = new URL(url).pathname;
-          // Find video ID - looking for digits after /video/
-          const match = videoPath.match(/\/video\/(\d+)/i);
-          return match ? match[1] : null;
-        } catch {
-          // Fallback to regex if URL parsing fails
-          const regExp = /tiktok\.com.*\/video\/(\d+)/i;
-          const match = url.match(regExp);
-          return match ? match[1] : null;
-        }
-      }
-      case 'instagram': {
-        // Extract Instagram post ID - more permissive
-        try {
-          // Try to parse as URL and get the pathname
-          const postPath = new URL(url).pathname;
-          // Match the ID from either /p/ID or /reel/ID format
-          const match = postPath.match(/\/(p|reel)\/([a-zA-Z0-9_-]+)/i);
-          return match ? match[2] : null;
-        } catch {
-          // Fallback to regex if URL parsing fails
-          const regExp = /instagram\.com.*\/(p|reel)\/([a-zA-Z0-9_-]+)/i;
-          const match = url.match(regExp);
-          return match ? match[2] : null;
-        }
-      }
-      default:
-        return null;
+    } catch {
+      return false;
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isAdmin) {
+      setError('Admin access required to add videos');
+      return;
+    }
+
     setError('');
     
-    // Validate URL
-    if (!validateVideoUrl(videoUrl, platform)) {
-      setError(`Invalid ${platformOptions.find(p => p.id === platform).name} URL format`);
+    // Validation
+    if (!originalUrl.trim()) {
+      setError('Video URL is required');
       return;
     }
-    
-    // Extract video ID
-    const videoId = extractVideoId(videoUrl, platform);
-    if (!videoId) {
-      setError('Could not extract video ID from URL');
+
+    if (!validateVideoUrl(originalUrl, platform)) {
+      setError(`Invalid ${selectedPlatform.name} URL format. Please check the URL and try again.`);
       return;
     }
-    
+
+    if (!addedBy.trim()) {
+      setError('Your name is required');
+      return;
+    }
+
     setLoading(true);
     
     try {
-      // Format URL for backend compatibility
-      let formattedUrl = videoUrl;
+      // Get admin token from localStorage or context
+      const adminToken = localStorage.getItem('adminToken');
       
-      // Special handling for Instagram to ensure it works with updated backend
-      if (platform === 'instagram') {
-        // The backend now handles Instagram posts from any account
-        // For p/ posts keep the format simple to ensure backend can parse it
-        // The backend will now try business account first, then fall back to shortcode
-        formattedUrl = `https://www.instagram.com/p/${videoId}/`;
-      } else if (platform === 'tiktok') {
-        // Simplify TikTok URL to ensure backend can parse it
-        const tiktokUsername = videoUrl.match(/@([\w.-]+)/)?.[1] || 'user';
-        formattedUrl = `https://www.tiktok.com/@${tiktokUsername}/video/${videoId}`;
+      if (!adminToken) {
+        throw new Error('Admin token not found. Please login as admin.');
       }
-      
-      // Submit new or updated video
-      // The backend will fetch the thumbnail from TikTok API
+
       const videoData = {
-        url: formattedUrl, // Use formatted URL
-        platform,
-        videoId,
-        category,
-        user: username,
-        title
+        platform: platform.toLowerCase(),
+        originalUrl: originalUrl.trim(),
+        addedBy: addedBy.trim()
       };
-      
-      // Log for debugging
+
       console.log('[AddVideoForm] Submitting video data:', videoData);
 
-      if (editingVideo) {
-        // Update existing video
-        await updateVideo(editingVideo._id, videoData);
-        toast.success('Video updated successfully!');
-      } else {
-        // Submit new video
-        await addVideo(videoData);
-        toast.success('Video added successfully!');
+      await addVideo(videoData, adminToken);
+
+      // Reset form
+      setOriginalUrl('');
+      setPlatform('youtube');
+      setAddedBy(user?.displayName || user?.email || '');
+      setError('');
+
+      // Notify parent component
+      if (onVideoAdded) {
+        onVideoAdded();
       }
 
-      onVideoAdded();
-      
-      // Reset form
-      setVideoUrl('');
-      setPlatform('youtube');
-      setCategory('');
-      setUsername('');
-      setTitle('');
-      setVideoId('');
-      setShowPreview(false);
-      
     } catch (error) {
-      console.error('Error saving video:', error);
-      setError(error.response?.data?.message || 'Error saving video. Please try again.');
-      toast.error('Failed to save video');
+      console.error('Error adding video:', error);
+      setError(error.message || 'Failed to add video. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Set initial values when editing video changes
-  useEffect(() => {
-    if (editingVideo) {
-      setVideoUrl(editingVideo.url || '');
-      setPlatform(editingVideo.platform || 'youtube');
-      setCategory(editingVideo.category || '');
-      setUsername(editingVideo.user || '');
-      setTitle(editingVideo.title || '');
-      
-      // Extract videoId from the existing video
-      if (editingVideo.videoId) {
-        setVideoId(editingVideo.videoId);
-        setShowPreview(true);
-      }
-    }
-  }, [editingVideo]);
-  
-  // Parse and preview video when URL changes
-  useEffect(() => {
-    if (videoUrl) {
-      const extractedId = extractVideoId(videoUrl, platform);
-      if (extractedId) {
-        setVideoId(extractedId);
-        setShowPreview(true);
-      } else {
-        setShowPreview(false);
-      }
-    } else {
-      setShowPreview(false);
-    }
-  }, [videoUrl, platform]);
-  
-  // Generate embed URL for preview
-  const getEmbedUrl = () => {
-    if (!videoId) return '';
-    
-    switch (platform) {
-      case 'youtube':
-        return `https://www.youtube.com/embed/${videoId}`;
-      case 'tiktok':
-        return `https://www.tiktok.com/embed/v2/${videoId}`;
-      case 'instagram':
-        return `https://www.instagram.com/p/${videoId}/embed`;
-      default:
-        return '';
-    }
-  };
-
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold mb-4 flex items-center dark:text-white">
-        <FaPlus className="mr-2 text-green-500" /> {editingVideo ? 'Edit Video' : 'Add New Video'}
-      </h3>
-      
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
-          {error}
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="platform" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Platform
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {platformOptions.map((option) => (
-              <button
+    <motion.form
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+      onSubmit={handleSubmit}
+    >
+      {/* Platform Selection */}
+      <div>
+        <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          Select Platform
+        </label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {platformOptions.map((option) => {
+            const Icon = option.icon;
+            const isSelected = platform === option.id;
+            return (
+              <motion.button
                 key={option.id}
                 type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setPlatform(option.id)}
-                className={`flex items-center justify-center py-2 px-4 rounded-md border ${
-                  platform === option.id
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
+                className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                  isSelected
+                    ? `${option.borderColor} ${option.bgColor}`
+                    : darkMode
+                    ? 'border-gray-600 bg-gray-800/50 hover:border-gray-500'
+                    : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                 }`}
               >
-                {option.icon}
-                <span className="ml-2">{option.name}</span>
-              </button>
-            ))}
-          </div>
+                <div className="flex items-center space-x-3">
+                  <Icon className={`w-6 h-6 ${option.color}`} />
+                  <span className={`font-medium ${
+                    isSelected 
+                      ? darkMode ? 'text-white' : 'text-gray-900'
+                      : darkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
+                    {option.name}
+                  </span>
+                </div>
+              </motion.button>
+            );
+          })}
         </div>
-        
-        <div className="mb-4">
-          <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Video URL
-          </label>
+      </div>
+
+      {/* Video URL Input */}
+      <div>
+        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          Video URL
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <PlatformIcon className={`w-5 h-5 ${selectedPlatform.color}`} />
+          </div>
           <input
-            type="text"
-            id="videoUrl"
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder={`Enter ${platform} video URL`}
-            className="w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            type="url"
+            value={originalUrl}
+            onChange={(e) => setOriginalUrl(e.target.value)}
+            placeholder={selectedPlatform.example}
+            className={`w-full pl-10 pr-4 py-3 rounded-xl border transition-colors ${
+              darkMode
+                ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
+            } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
             required
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {platform === 'youtube' && 'Example: https://www.youtube.com/watch?v=dQw4w9WgXcQ'}
-            {platform === 'tiktok' && 'Example: https://www.tiktok.com/@username/video/1234567890123456789'}
-            {platform === 'instagram' && 'Example: https://www.instagram.com/p/ABC123XYZ/'}
-          </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="mb-4">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Content creator username"
-              className="w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Video Title
-            </label>
-            <input
-              type="text"
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter video title"
-              className="w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              required
-            />
-          </div>
-        </div>
-        
-        <div className="mb-4">
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Category
-          </label>
-          <select
-            id="category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            required
-          >
-            <option value="" disabled>Select a category</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-        
-        {/* Video Preview */}
-        {showPreview && videoId && (
-          <div className="mb-6 mt-4 border rounded-lg overflow-hidden dark:border-gray-600">
-            <div className="bg-gray-100 dark:bg-gray-700 px-4 py-2 font-medium text-sm dark:text-gray-200">
-              Video Preview
+        <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          Paste the full {selectedPlatform.name} video URL here
+        </p>
+      </div>
+
+      {/* Added By Input */}
+      <div>
+        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          Added By
+        </label>
+        <input
+          type="text"
+          value={addedBy}
+          onChange={(e) => setAddedBy(e.target.value)}
+          placeholder="Your name or username"
+          className={`w-full px-4 py-3 rounded-xl border transition-colors ${
+            darkMode
+              ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
+              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
+          } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+          required
+        />
+        <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          This will be displayed as the person who added the video
+        </p>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`p-4 rounded-xl border ${
+            darkMode
+              ? 'bg-red-900/20 border-red-800 text-red-300'
+              : 'bg-red-50 border-red-200 text-red-700'
+          }`}
+        >
+          <p className="text-sm font-medium">{error}</p>
+        </motion.div>
+      )}
+
+      {/* URL Preview */}
+      {originalUrl && validateVideoUrl(originalUrl, platform) && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`p-4 rounded-xl border ${
+            darkMode
+              ? 'bg-green-900/20 border-green-800'
+              : 'bg-green-50 border-green-200'
+          }`}
+        >
+          <div className="flex items-center space-x-2">
+            <div className={`p-2 rounded-lg ${selectedPlatform.bgColor}`}>
+              <PlatformIcon className={`w-4 h-4 ${selectedPlatform.color}`} />
             </div>
-            <div className="relative pb-[56.25%] h-0 overflow-hidden bg-gray-200 dark:bg-gray-800">
-              <iframe 
-                src={getEmbedUrl()}
-                className="absolute top-0 left-0 w-full h-full" 
-                frameBorder="0" 
-                allowFullScreen
-                title="Video preview"
-                loading="lazy"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              ></iframe>
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${darkMode ? 'text-green-300' : 'text-green-800'}`}>
+                Valid {selectedPlatform.name} URL detected
+              </p>
+              <p className={`text-xs truncate ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                {originalUrl}
+              </p>
             </div>
+            <a
+              href={originalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`p-2 rounded-lg transition-colors ${
+                darkMode
+                  ? 'hover:bg-green-800/50 text-green-300'
+                  : 'hover:bg-green-100 text-green-600'
+              }`}
+            >
+              <FaExternalLinkAlt className="w-3 h-3" />
+            </a>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Submit Button */}
+      <motion.button
+        type="submit"
+        disabled={loading || !validateVideoUrl(originalUrl, platform) || !addedBy.trim()}
+        whileHover={{ scale: loading ? 1 : 1.02 }}
+        whileTap={{ scale: loading ? 1 : 0.98 }}
+        className={`w-full py-3 px-6 rounded-xl font-semibold transition-all duration-200 ${
+          loading || !validateVideoUrl(originalUrl, platform) || !addedBy.trim()
+            ? darkMode
+              ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            : darkMode
+            ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
+            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
+        }`}
+      >
+        {loading ? (
+          <div className="flex items-center justify-center space-x-2">
+            <FaSpinner className="animate-spin" />
+            <span>Adding Video...</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center space-x-2">
+            <FaPlus />
+            <span>Add Video</span>
           </div>
         )}
-        
-        <div className="flex justify-end mt-6 space-x-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <FaSpinner className="inline mr-2 animate-spin" /> Adding...
-              </>
-            ) : (
-              editingVideo ? 'Update Video' : 'Add Video'
-            )}
-          </button>
-        </div>
-      </form>
-    </div>
+      </motion.button>
+
+      {/* Help Text */}
+      <div className={`text-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+        <p>The video information will be automatically fetched from the platform.</p>
+        <p className="mt-1">Make sure the video is publicly accessible.</p>
+      </div>
+    </motion.form>
   );
 };
 
