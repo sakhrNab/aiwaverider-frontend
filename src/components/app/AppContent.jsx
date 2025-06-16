@@ -17,6 +17,9 @@ const AppContent = () => {
   const location = useLocation();
   const [pageTitle, setPageTitle] = useState('');
 
+  // Check if Vercel Analytics should be enabled
+  const isVercelAnalyticsEnabled = import.meta.env.VITE_VERCEL_ANALYTICS_ENABLED === 'true';
+
   const openSignUpModal = () => setIsSignUpModalOpen(true);
   const closeSignUpModal = () => setIsSignUpModalOpen(false);
   
@@ -31,6 +34,7 @@ const AppContent = () => {
     else if (path.startsWith('/agents/')) title = 'Agent Details';
     else if (path === '/ai-tools') title = 'AI Tools';
     else if (path === '/latest-tech') title = 'Latest Tech';
+    else if (path === '/videos') title = 'Videos';
     else if (path === '/about') title = 'About Us';
     else if (path === '/profile') title = 'Your Profile';
     else if (path === '/sign-in') title = 'Sign In';
@@ -79,7 +83,10 @@ const AppContent = () => {
           )}
         </div>
       </ErrorBoundary>
-      <VercelAnalytics />
+      
+      {/* Only load Vercel Analytics if properly configured */}
+      {isVercelAnalyticsEnabled && <VercelAnalytics />}
+      
       <ChatBot />
       <BackToTop />
     </>
