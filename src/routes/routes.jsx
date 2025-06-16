@@ -24,6 +24,7 @@ const PostDetail = lazy(() => import('../components/posts/PostDetail'));
 const CreatePost = lazy(() => import('../components/posts/CreatePost'));
 const PromptPage = lazy(() => import('../pages/PromptPage'));
 const ApiTestPage = lazy(() => import('../pages/ApiTestPage'));
+const VideosPage = lazy(() => import('../pages/VideosPage'));
 
 // Admin pages
 const Dashboard = lazy(() => import('../pages/admin/AdminDashboardPage'));
@@ -37,6 +38,7 @@ const EmailManagement = lazy(() => import('../pages/admin/AdminEmailManagementPa
 const EmailComposer = lazy(() => import('../pages/admin/AdminEmailComposerPage'));
 const AdminPromptsPage = lazy(() => import('../pages/admin/AdminPromptsPage'));
 const AdminPromptEditPage = lazy(() => import('../pages/admin/AdminPromptEditPage'));
+const AdminVideosPage = lazy(() => import('../pages/admin/AdminVideosPage'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -69,6 +71,7 @@ const AppRoutes = () => {
       <Route path="/profile" element={withSuspense(<Profile />)} />
       <Route path="/agents" element={withSuspense(<Agents />)} />
       <Route path="/ai-tools" element={withSuspense(<AITools />)} />
+      <Route path="/videos" element={withSuspense(<VideosPage />)} />
       <Route path="/latest-tech" element={withSuspense(<LatestTech />)} />
       <Route path="/about" element={withSuspense(<About />)} />
       <Route path="/monetization-paths" element={withSuspense(<MonetizationPaths />)} />
@@ -206,6 +209,16 @@ const AppRoutes = () => {
 
       {/* Post Detail */}
       <Route path="/posts/:postId" element={withSuspense(<PostDetail />)} />
+
+      {/* Admin Videos */}
+      <Route
+        path="/admin/videos"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            {withSuspense(<AdminVideosPage />)}
+          </ProtectedRoute>
+        }
+      />
 
       {/* Fallback */}
       <Route path="*" element={<HomePage />} />

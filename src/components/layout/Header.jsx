@@ -331,6 +331,21 @@ const Header = ({ openSignUpModal }) => {
             </li>
             <li className="nav-item flex items-center">
               <Link 
+                to="/videos" 
+                className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                aria-label="Videos Gallery"
+              >
+                <svg className="mr-1.5 w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span>Videos</span>
+              </Link>
+              <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
+                <FaCircle />
+              </span>
+            </li>
+            <li className="nav-item flex items-center">
+              <Link 
                 to="/latest-tech" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
                 aria-label="Latest News & Tutorials"
@@ -541,6 +556,18 @@ const Header = ({ openSignUpModal }) => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <FaTools className="mr-3" /> AI Tools
+                </Link>
+              </li>
+              <li className="mobile-nav-item">
+                <Link
+                  to="/videos"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <svg className="mr-3 w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                  Videos
                 </Link>
               </li>
               <li className="mobile-nav-item">
