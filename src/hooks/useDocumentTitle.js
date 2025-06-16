@@ -7,7 +7,7 @@ import { useLocation } from 'react-router-dom';
  * 
  * @param {string} title - The title to set for the current page
  */
-const useDocumentTitle = (title) => {
+export const useDocumentTitle = (title) => {
   const location = useLocation();
 
   useEffect(() => {
