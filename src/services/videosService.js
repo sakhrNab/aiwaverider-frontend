@@ -1,5 +1,6 @@
 import apiClient from './apiClient';
 import { auth } from '../utils/firebase';
+import { API } from '../config/config';
 
 // Mock data for development/fallback when backend is not available
 const MOCK_VIDEOS = {
@@ -75,12 +76,12 @@ class VideosService {
     }
 
     try {
-      // Construct URL with query parameters manually
+      // Construct URL with query parameters manually - USE ABSOLUTE URL
       const searchParams = new URLSearchParams({
         platform: platform.toLowerCase(),
         page: Math.max(1, page)
       });
-      const url = `/api/videos?${searchParams.toString()}`;
+      const url = `${API.URL}/api/videos?${searchParams.toString()}`;
       
       const response = await apiClient.get(url);
       
@@ -150,7 +151,7 @@ class VideosService {
       
       console.log('Final payload being sent:', JSON.stringify(payload, null, 2));
       
-      const response = await apiClient.post('/api/videos', payload, {
+      const response = await apiClient.post(`${API.URL}/api/videos`, payload, {
         headers: {
           'Content-Type': 'application/json',
           'X-Admin-Token': adminToken
@@ -200,7 +201,7 @@ class VideosService {
         throw new Error('Authentication required. Please log in as an admin.');
       }
 
-      const response = await apiClient.put(`/api/videos/${videoId}/refresh`, null, {
+      const response = await apiClient.put(`${API.URL}/api/videos/${videoId}/refresh`, null, {
         headers: {
           'X-Admin-Token': adminToken
         }
