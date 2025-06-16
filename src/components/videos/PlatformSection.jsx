@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useVideos } from '../../hooks/useVideos';
 import VideoGrid from './VideoGrid';
@@ -25,7 +25,7 @@ const PlatformIcons = {
 /**
  * Platform Section Component - Displays videos for a specific platform
  */
-const PlatformSection = memo(({ platform, onVideoPlay, className = '' }) => {
+const PlatformSection = memo(({ platform, onVideoPlay, filters = {}, onResultsChange, className = '' }) => {
   const { darkMode } = useTheme();
   const {
     videos,
@@ -42,6 +42,79 @@ const PlatformSection = memo(({ platform, onVideoPlay, className = '' }) => {
     refresh,
     isEmpty
   } = useVideos(platform);
+
+  // Apply client-side filtering to videos
+  const filteredVideos = useMemo(() => {
+    if (!videos || videos.length === 0) return videos;
+
+    let filtered = [...videos];
+
+    // Filter by author/creator - handle different field names across platforms
+    if (filters.author && filters.author.trim()) {
+      const authorFilter = filters.author.toLowerCase().trim();
+      filtered = filtered.filter(video => {
+        // Check all possible author field variations
+        const authorName = video.authorName || video.author || '';
+        const authorUser = video.authorUser || video.username || '';
+        
+        return authorName.toLowerCase().includes(authorFilter) || 
+               authorUser.toLowerCase().includes(authorFilter);
+      });
+    }
+
+    // Filter by category
+    if (filters.category && filters.category !== 'all') {
+      filtered = filtered.filter(video => {
+        const videoCategory = video.category || '';
+        return videoCategory.toLowerCase() === filters.category.toLowerCase();
+      });
+    }
+
+    // Filter by views range
+    if (filters.minViews && filters.minViews.trim()) {
+      const minViews = parseInt(filters.minViews);
+      if (!isNaN(minViews)) {
+        filtered = filtered.filter(video => (video.views || 0) >= minViews);
+      }
+    }
+    if (filters.maxViews && filters.maxViews.trim()) {
+      const maxViews = parseInt(filters.maxViews);
+      if (!isNaN(maxViews)) {
+        filtered = filtered.filter(video => (video.views || 0) <= maxViews);
+      }
+    }
+
+    // Filter by likes range
+    if (filters.minLikes && filters.minLikes.trim()) {
+      const minLikes = parseInt(filters.minLikes);
+      if (!isNaN(minLikes)) {
+        filtered = filtered.filter(video => (video.likes || 0) >= minLikes);
+      }
+    }
+    if (filters.maxLikes && filters.maxLikes.trim()) {
+      const maxLikes = parseInt(filters.maxLikes);
+      if (!isNaN(maxLikes)) {
+        filtered = filtered.filter(video => (video.likes || 0) <= maxLikes);
+      }
+    }
+
+    return filtered;
+  }, [videos, filters]);
+
+  // Calculate filtered stats
+  const filteredStats = useMemo(() => {
+    return {
+      totalVideos: filteredVideos?.length || 0,
+      hasResults: filteredVideos && filteredVideos.length > 0
+    };
+  }, [filteredVideos]);
+
+  // Report filtered results to parent for smart ordering
+  useEffect(() => {
+    if (onResultsChange && typeof onResultsChange === 'function') {
+      onResultsChange(platform, filteredStats.totalVideos);
+    }
+  }, [platform, filteredStats.totalVideos, onResultsChange]);
 
   // Platform-specific styling and metadata
   const getPlatformConfig = (platform) => {
@@ -146,10 +219,16 @@ const PlatformSection = memo(({ platform, onVideoPlay, className = '' }) => {
               {!loading && totalVideos > 0 && (
                 <div className="text-right">
                   <div className={`font-bold text-lg ${config.accentColor}`}>
-                    {totalVideos.toLocaleString()}
+                    {filteredStats.totalVideos.toLocaleString()}
+                    {filteredStats.totalVideos !== totalVideos && (
+                      <span className="text-xs opacity-60">
+                        /{totalVideos.toLocaleString()}
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs">
-                    {totalVideos === 1 ? 'video' : 'videos'}
+                    {filteredStats.totalVideos === 1 ? 'video' : 'videos'}
+                    {filteredStats.totalVideos !== totalVideos && ' (filtered)'}
                   </div>
                 </div>
               )}
@@ -200,17 +279,34 @@ const PlatformSection = memo(({ platform, onVideoPlay, className = '' }) => {
               </div>
             )}
           </div>
+
+          {/* No Results Message */}
+          {!loading && totalVideos > 0 && !filteredStats.hasResults && (
+            <div className={`
+              mt-4 p-4 rounded-lg text-center
+              ${darkMode 
+                ? 'bg-yellow-900/20 border border-yellow-700/50 text-yellow-300' 
+                : 'bg-yellow-50 border border-yellow-200 text-yellow-800'
+              }
+            `}>
+              <svg className="w-8 h-8 mx-auto mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m6-6V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h14a2 2 0 002-2v-4z" />
+              </svg>
+              <p className="text-sm font-medium">No videos match your current filters</p>
+              <p className="text-xs opacity-75 mt-1">Try adjusting your filter criteria to see more results</p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Video Grid */}
       <VideoGrid
-        videos={videos}
+        videos={filteredVideos}
         loading={loading}
         error={error}
         currentPage={currentPage}
         totalPages={totalPages}
-        totalVideos={totalVideos}
+        totalVideos={filteredStats.totalVideos}
         hasNextPage={hasNextPage}
         hasPreviousPage={hasPreviousPage}
         onNext={nextPage}

@@ -7,6 +7,59 @@ import VideosService from '../services/videosService';
 import { toast } from 'react-toastify';
 import { db } from '../utils/firebase';
 
+// Platform SVG Icons - Enhanced with gradients and better styling
+const PlatformIcons = {
+  all: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
+      <defs>
+        <linearGradient id="allGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#6366f1" />
+          <stop offset="100%" stopColor="#8b5cf6" />
+        </linearGradient>
+      </defs>
+      <path d="M8 5v14l11-7z" fill="url(#allGradient)" />
+      <circle cx="12" cy="12" r="10" stroke="url(#allGradient)" strokeWidth="1.5" fill="none" opacity="0.3" />
+    </svg>
+  ),
+  youtube: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
+      <defs>
+        <linearGradient id="youtubeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ff0000" />
+          <stop offset="100%" stopColor="#cc0000" />
+        </linearGradient>
+      </defs>
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="url(#youtubeGradient)" />
+    </svg>
+  ),
+  tiktok: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
+      <defs>
+        <linearGradient id="tiktokGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ff0050" />
+          <stop offset="50%" stopColor="#00f2ea" />
+          <stop offset="100%" stopColor="#ff0050" />
+        </linearGradient>
+      </defs>
+      <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" fill="url(#tiktokGradient)" />
+    </svg>
+  ),
+  instagram: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
+      <defs>
+        <radialGradient id="instagramGradient" cx="30%" cy="107%">
+          <stop offset="0%" stopColor="#fdf497" />
+          <stop offset="5%" stopColor="#fdf497" />
+          <stop offset="45%" stopColor="#fd5949" />
+          <stop offset="60%" stopColor="#d6249f" />
+          <stop offset="90%" stopColor="#285AEB" />
+        </radialGradient>
+      </defs>
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" fill="url(#instagramGradient)" />
+    </svg>
+  )
+};
+
 /**
  * Videos Page - Main page displaying videos from all platforms
  */
@@ -15,6 +68,25 @@ const VideosPage = () => {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'youtube', 'tiktok', 'instagram'
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Filter states
+  const [filters, setFilters] = useState({
+    author: '', // Filter by author/user name
+    minViews: '',
+    maxViews: '',
+    minLikes: '',
+    maxLikes: '',
+    category: 'all' // 'all', 'tech', 'entertainment', 'education', 'music', 'sports', 'news'
+  });
+  
+  // Track filtered results per platform for smart ordering
+  const [platformResults, setPlatformResults] = useState({
+    youtube: 0,
+    tiktok: 0,
+    instagram: 0
+  });
+
   const [editFormData, setEditFormData] = useState({
     platform: 'youtube',
     title: '',
@@ -31,14 +103,27 @@ const VideosPage = () => {
   useDocumentTitle('Videos Gallery');
 
   // Check if user is admin
-  const userIsAdmin = user?.role === 'admin';
-
-  console.log('Current user info:', {
-    uid: user?.uid,
-    email: user?.email,
-    role: user?.role,
-    isAdmin: userIsAdmin
-  });
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setUserIsAdmin(false);
+        return;
+      }
+      
+      try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        const userData = userDoc.data();
+        setUserIsAdmin(userData?.role === 'admin');
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setUserIsAdmin(false);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [user]);
 
   // Handle video play action
   const handleVideoPlay = useCallback((video) => {
@@ -46,6 +131,69 @@ const VideosPage = () => {
     console.log('Playing video:', video);
     window.open(video.originalUrl, '_blank', 'noopener,noreferrer');
   }, []);
+
+  // Available categories - Tech is common across all platforms, others are alternatives
+  const categories = [
+    { id: 'all', label: 'All Categories' },
+    { id: 'tech', label: 'Tech' }, // Common across all platforms
+    { id: 'entertainment', label: 'Entertainment' },
+    { id: 'education', label: 'Education' },
+    { id: 'music', label: 'Music' },
+    { id: 'sports', label: 'Sports' },
+    { id: 'news', label: 'News' },
+    { id: 'lifestyle', label: 'Lifestyle' },
+    { id: 'gaming', label: 'Gaming' },
+    { id: 'comedy', label: 'Comedy' }
+  ];
+
+  // Handle filter changes
+  const handleFilterChange = (filterKey, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterKey]: value
+    }));
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({
+      author: '',
+      minViews: '',
+      maxViews: '',
+      minLikes: '',
+      maxLikes: '',
+      category: 'all'
+    });
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return filters.author || filters.minViews || filters.maxViews || 
+           filters.minLikes || filters.maxLikes || filters.category !== 'all';
+  };
+
+  // Helper function to determine platform rendering order based on filter results
+  const getPlatformOrder = (platformResults) => {
+    if (!hasActiveFilters()) {
+      // Default order when no filters are active
+      return ['youtube', 'tiktok', 'instagram'];
+    }
+
+    // Sort platforms by number of results (descending), then by name
+    const platformsWithResults = Object.entries(platformResults)
+      .sort(([, aResults], [, bResults]) => {
+        // First sort by whether they have results
+        if (aResults > 0 && bResults === 0) return -1;
+        if (aResults === 0 && bResults > 0) return 1;
+        // Then by number of results (descending)
+        if (aResults !== bResults) return bResults - aResults;
+        // Finally by platform name for consistency
+        return 0;
+      })
+      .map(([platform]) => platform);
+
+    return platformsWithResults;
+  };
 
   // Handle admin edit button click
   const handleEditClick = () => {
@@ -189,12 +337,12 @@ const VideosPage = () => {
     }
   };
 
-  // Tab configuration
+  // Tab configuration with SVG icons
   const tabs = [
-    { id: 'all', label: 'All Platforms', icon: '🎬' },
-    { id: 'youtube', label: 'YouTube', icon: '🎥' },
-    { id: 'tiktok', label: 'TikTok', icon: '🎵' },
-    { id: 'instagram', label: 'Instagram', icon: '📸' }
+    { id: 'all', label: 'All Platforms', icon: PlatformIcons.all },
+    { id: 'youtube', label: 'YouTube', icon: PlatformIcons.youtube },
+    { id: 'tiktok', label: 'TikTok', icon: PlatformIcons.tiktok },
+    { id: 'instagram', label: 'Instagram', icon: PlatformIcons.instagram }
   ];
 
   const getTabStyle = (tabId) => {
@@ -237,6 +385,14 @@ const VideosPage = () => {
       toast.error('Failed to set admin role');
     }
   };
+
+  // Update platform results when filters change
+  const updatePlatformResults = useCallback((platform, resultCount) => {
+    setPlatformResults(prev => ({
+      ...prev,
+      [platform]: resultCount
+    }));
+  }, []);
 
   return (
     <div className={`
@@ -336,6 +492,277 @@ const VideosPage = () => {
                 </button>
               ))}
             </div>
+
+            {/* Filter Section */}
+            <div className={`
+              mt-6 rounded-2xl overflow-hidden transition-all duration-300
+              ${darkMode 
+                ? 'bg-gray-800/40 backdrop-blur-xl border border-gray-700/30' 
+                : 'bg-white/40 backdrop-blur-xl border border-white/30'
+              }
+              shadow-lg
+            `}>
+              {/* Filter Toggle Button */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`
+                  w-full px-6 py-4 flex items-center justify-between
+                  ${darkMode ? 'text-white hover:bg-gray-700/50' : 'text-gray-900 hover:bg-gray-100/50'}
+                  transition-colors duration-200
+                `}
+              >
+                <div className="flex items-center space-x-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  <span className="font-medium">Filters</span>
+                  {hasActiveFilters() && (
+                    <span className={`
+                      px-2 py-1 text-xs rounded-full
+                      ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'}
+                    `}>
+                      Active
+                    </span>
+                  )}
+                </div>
+                <svg 
+                  className={`w-5 h-5 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Filter Content */}
+              {showFilters && (
+                <div className="px-6 pb-6 space-y-6 border-t border-gray-200/20">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
+                    {/* Author Filter */}
+                    <div className="space-y-2">
+                      <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Author/Creator
+                      </label>
+                      <input
+                        type="text"
+                        value={filters.author}
+                        onChange={(e) => handleFilterChange('author', e.target.value)}
+                        placeholder="Search by author name..."
+                        className={`
+                          w-full px-4 py-2 rounded-lg border
+                          ${darkMode 
+                            ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white/70 border-gray-300 text-gray-900 placeholder-gray-500'
+                          }
+                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                          transition-all duration-200
+                        `}
+                      />
+                    </div>
+
+                    {/* Category Filter */}
+                    <div className="space-y-2">
+                      <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Category
+                      </label>
+                      <select
+                        value={filters.category}
+                        onChange={(e) => handleFilterChange('category', e.target.value)}
+                        className={`
+                          w-full px-4 py-2 rounded-lg border
+                          ${darkMode 
+                            ? 'bg-gray-700/50 border-gray-600 text-white' 
+                            : 'bg-white/70 border-gray-300 text-gray-900'
+                          }
+                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                          transition-all duration-200
+                        `}
+                      >
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Views Range */}
+                    <div className="space-y-2">
+                      <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Views Range
+                      </label>
+                      <div className="flex space-x-2">
+                        <input
+                          type="number"
+                          value={filters.minViews}
+                          onChange={(e) => handleFilterChange('minViews', e.target.value)}
+                          placeholder="Min views"
+                          className={`
+                            flex-1 px-3 py-2 rounded-lg border text-sm
+                            ${darkMode 
+                              ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white/70 border-gray-300 text-gray-900 placeholder-gray-500'
+                            }
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                            transition-all duration-200
+                          `}
+                        />
+                        <input
+                          type="number"
+                          value={filters.maxViews}
+                          onChange={(e) => handleFilterChange('maxViews', e.target.value)}
+                          placeholder="Max views"
+                          className={`
+                            flex-1 px-3 py-2 rounded-lg border text-sm
+                            ${darkMode 
+                              ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white/70 border-gray-300 text-gray-900 placeholder-gray-500'
+                            }
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                            transition-all duration-200
+                          `}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Likes Range */}
+                    <div className="space-y-2">
+                      <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Likes Range
+                      </label>
+                      <div className="flex space-x-2">
+                        <input
+                          type="number"
+                          value={filters.minLikes}
+                          onChange={(e) => handleFilterChange('minLikes', e.target.value)}
+                          placeholder="Min likes"
+                          className={`
+                            flex-1 px-3 py-2 rounded-lg border text-sm
+                            ${darkMode 
+                              ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white/70 border-gray-300 text-gray-900 placeholder-gray-500'
+                            }
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                            transition-all duration-200
+                          `}
+                        />
+                        <input
+                          type="number"
+                          value={filters.maxLikes}
+                          onChange={(e) => handleFilterChange('maxLikes', e.target.value)}
+                          placeholder="Max likes"
+                          className={`
+                            flex-1 px-3 py-2 rounded-lg border text-sm
+                            ${darkMode 
+                              ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white/70 border-gray-300 text-gray-900 placeholder-gray-500'
+                            }
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                            transition-all duration-200
+                          `}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Clear Filters Button */}
+                    <div className="flex items-end">
+                      <button
+                        onClick={clearFilters}
+                        disabled={!hasActiveFilters()}
+                        className={`
+                          w-full px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200
+                          ${hasActiveFilters()
+                            ? darkMode
+                              ? 'bg-red-600/80 text-white hover:bg-red-700/80 border border-red-500/50'
+                              : 'bg-red-500/80 text-white hover:bg-red-600/80 border border-red-400/50'
+                            : darkMode
+                              ? 'bg-gray-700/50 text-gray-500 cursor-not-allowed border border-gray-600/50'
+                              : 'bg-gray-200/50 text-gray-400 cursor-not-allowed border border-gray-300/50'
+                          }
+                        `}
+                      >
+                        Clear Filters
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Active Filters Summary */}
+                  {hasActiveFilters() && (
+                    <div className="pt-4 border-t border-gray-200/20">
+                      <div className="flex flex-wrap gap-2">
+                        {filters.author && (
+                          <span className={`
+                            px-3 py-1 text-xs rounded-full flex items-center space-x-1
+                            ${darkMode ? 'bg-blue-600/20 text-blue-300' : 'bg-blue-100 text-blue-800'}
+                          `}>
+                            <span>Author: {filters.author}</span>
+                            <button
+                              onClick={() => handleFilterChange('author', '')}
+                              className="ml-1 hover:text-red-400"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        )}
+                        {filters.category !== 'all' && (
+                          <span className={`
+                            px-3 py-1 text-xs rounded-full flex items-center space-x-1
+                            ${darkMode ? 'bg-purple-600/20 text-purple-300' : 'bg-purple-100 text-purple-800'}
+                          `}>
+                            <span>Category: {categories.find(c => c.id === filters.category)?.label}</span>
+                            <button
+                              onClick={() => handleFilterChange('category', 'all')}
+                              className="ml-1 hover:text-red-400"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        )}
+                        {(filters.minViews || filters.maxViews) && (
+                          <span className={`
+                            px-3 py-1 text-xs rounded-full flex items-center space-x-1
+                            ${darkMode ? 'bg-yellow-600/20 text-yellow-300' : 'bg-yellow-100 text-yellow-800'}
+                          `}>
+                            <span>
+                              Views: {filters.minViews || '0'} - {filters.maxViews || '∞'}
+                            </span>
+                            <button
+                              onClick={() => {
+                                handleFilterChange('minViews', '');
+                                handleFilterChange('maxViews', '');
+                              }}
+                              className="ml-1 hover:text-red-400"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        )}
+                        {(filters.minLikes || filters.maxLikes) && (
+                          <span className={`
+                            px-3 py-1 text-xs rounded-full flex items-center space-x-1
+                            ${darkMode ? 'bg-pink-600/20 text-pink-300' : 'bg-pink-100 text-pink-800'}
+                          `}>
+                            <span>
+                              Likes: {filters.minLikes || '0'} - {filters.maxLikes || '∞'}
+                            </span>
+                            <button
+                              onClick={() => {
+                                handleFilterChange('minLikes', '');
+                                handleFilterChange('maxLikes', '');
+                              }}
+                              className="ml-1 hover:text-red-400"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -345,18 +772,34 @@ const VideosPage = () => {
             {/* All Platforms View */}
             {activeTab === 'all' && (
               <div className="space-y-16">
-                <PlatformSection
-                  platform="youtube"
-                  onVideoPlay={handleVideoPlay}
-                />
-                <PlatformSection
-                  platform="tiktok"
-                  onVideoPlay={handleVideoPlay}
-                />
-                <PlatformSection
-                  platform="instagram"
-                  onVideoPlay={handleVideoPlay}
-                />
+                {/* Filter Results Indicator */}
+                {hasActiveFilters() && (
+                  <div className={`
+                    p-4 rounded-lg text-center text-sm
+                    ${darkMode 
+                      ? 'bg-blue-900/20 border border-blue-700/30 text-blue-300' 
+                      : 'bg-blue-50 border border-blue-200 text-blue-800'
+                    }
+                  `}>
+                    <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <span className="font-medium">Platforms with results are shown first</span>
+                    <span className="opacity-75 ml-2">
+                      ({Object.values(platformResults).reduce((a, b) => a + b, 0)} total results)
+                    </span>
+                  </div>
+                )}
+                
+                {getPlatformOrder(platformResults).map((platform) => (
+                  <PlatformSection
+                    key={platform}
+                    platform={platform}
+                    onVideoPlay={handleVideoPlay}
+                    filters={filters}
+                    onResultsChange={updatePlatformResults}
+                  />
+                ))}
               </div>
             )}
 
@@ -365,6 +808,8 @@ const VideosPage = () => {
               <PlatformSection
                 platform={activeTab}
                 onVideoPlay={handleVideoPlay}
+                filters={filters}
+                onResultsChange={updatePlatformResults}
               />
             )}
           </div>
