@@ -116,8 +116,8 @@ const Header = ({ openSignUpModal }) => {
       // Special case for iPad Air portrait (820x1180)
       const isIpadAirPortrait = window.innerWidth === 820 && window.innerHeight > 1000;
       
-      // Close mobile menu when screen size is 1333px or larger
-      if ((window.innerWidth >= 1333 && !isIpadAirPortrait) && isMenuOpen) {
+      // Close mobile menu when screen size is 1000px or larger (updated from 1333px)
+      if ((window.innerWidth >= 800 && !isIpadAirPortrait) && isMenuOpen) {
         setIsMenuOpen(false);
       }
     };
@@ -289,8 +289,8 @@ const Header = ({ openSignUpModal }) => {
         </Link>
         </motion.div>
         
-        {/* Desktop Navigation - hidden at 1332px and below */}
-        <nav className="hidden custom-1333:flex items-center justify-center flex-grow">
+        {/* Desktop Navigation - hidden at 999px and below, visible at 1000px+ */}
+        <nav className="hidden custom-1000:flex items-center justify-center flex-grow">
           <ul className="flex nav-links items-center">
             <li className="nav-item flex items-center">
               <Link 
@@ -500,10 +500,10 @@ const Header = ({ openSignUpModal }) => {
             </AnimatePresence>
           </div>
           
-          {/* Mobile menu button - Hamburger icon - visible only on screens below 1333px */}
+          {/* Mobile menu button - Hamburger icon - visible only on screens below 1000px */}
           <button 
             ref={toggleButtonRef}
-            className="mobile-menu-btn custom-1333:hidden text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0 rounded-md"
+            className="mobile-menu-btn custom-1000:hidden text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0 rounded-md"
             onClick={toggleMobileMenu}
             aria-label="Toggle mobile menu"
             aria-expanded={isMenuOpen}
