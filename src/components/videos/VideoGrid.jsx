@@ -21,6 +21,7 @@ const VideoGrid = memo(({
   onRefresh,
   onVideoPlay,
   platform,
+  isAdmin = false,
   className = '' 
 }) => {
   const { darkMode } = useTheme();
@@ -92,7 +93,7 @@ const VideoGrid = memo(({
       </svg>
       <h3 className="text-lg font-semibold mb-2">Failed to load videos</h3>
       <p className="text-sm opacity-80 mb-4">{error}</p>
-      {onRefresh && (
+      {onRefresh && isAdmin && (
         <button
           onClick={onRefresh}
           className={`
@@ -103,9 +104,25 @@ const VideoGrid = memo(({
             }
             transition-colors duration-200 backdrop-blur-sm
           `}
+          title="Admin: Try again"
         >
           Try Again
         </button>
+      )}
+      {!isAdmin && (
+        <div className={`
+          text-xs px-3 py-2 rounded-lg inline-flex items-center space-x-2
+          ${darkMode 
+            ? 'bg-blue-900/20 text-blue-300 border border-blue-700/30' 
+            : 'bg-blue-50 text-blue-600 border border-blue-200'
+          }
+          backdrop-blur-sm
+        `}>
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Data will refresh automatically at midnight</span>
+        </div>
       )}
     </div>
   );
@@ -145,24 +162,44 @@ const VideoGrid = memo(({
             )}
           </div>
           
-          {onRefresh && !loading && (
-            <button
-              onClick={onRefresh}
-              className={`
-                p-2 rounded-lg transition-colors duration-200
+          <div className="flex items-center space-x-3">
+            {/* Admin refresh button */}
+            {onRefresh && !loading && isAdmin && (
+              <button
+                onClick={onRefresh}
+                className={`
+                  p-2 rounded-lg transition-colors duration-200
+                  ${darkMode 
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-800/60' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+                  }
+                  backdrop-blur-sm
+                `}
+                title="Admin: Refresh videos (Auto-refresh runs daily at midnight)"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
+            
+            {/* Auto-refresh indicator for non-admin users */}
+            {!isAdmin && !loading && (
+              <div className={`
+                text-xs px-2 py-1 rounded-lg flex items-center space-x-1
                 ${darkMode 
-                  ? 'text-gray-400 hover:text-white hover:bg-gray-800/60' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+                  ? 'bg-green-900/20 text-green-300 border border-green-700/30' 
+                  : 'bg-green-50 text-green-600 border border-green-200'
                 }
                 backdrop-blur-sm
-              `}
-              title="Refresh videos"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          )}
+              `}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Auto-sync</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
