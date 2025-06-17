@@ -139,19 +139,22 @@ const ChatBot = () => {
   const getMessageStyle = (message) => ({
     alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
     backgroundColor: message.role === 'user' 
-      ? (darkMode ? '#3b82f6' : '#e2f8f5')
+      ? (darkMode ? '#3b82f6' : '#4FD1C5')
       : message.role === 'error' 
         ? (darkMode ? '#dc2626' : '#ffeded') 
         : (darkMode ? '#374151' : '#f0f0f0'),
     color: message.role === 'user'
       ? 'white'
       : message.role === 'error' 
-        ? 'white' 
+        ? (darkMode ? 'white' : '#dc2626') 
         : (darkMode ? '#f3f4f6' : '#333'),
     padding: '10px 15px',
     borderRadius: message.role === 'user' ? '18px 18px 0 18px' : '18px 18px 18px 0',
     maxWidth: '80%',
-    wordBreak: 'break-word'
+    wordBreak: 'break-word',
+    boxShadow: message.role === 'user' 
+      ? (darkMode ? '0 2px 8px rgba(59, 130, 246, 0.3)' : '0 2px 8px rgba(79, 209, 197, 0.3)')
+      : 'none'
   });
 
   const getInputStyle = () => ({
