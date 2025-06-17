@@ -1,6 +1,9 @@
-import React, { memo, useMemo, useEffect } from 'react';
+import React, { memo, useMemo, useEffect, useContext, useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useVideos } from '../../hooks/useVideos';
+import { AuthContext } from '../../contexts/AuthContext';
+import { db } from '../../utils/firebase';
+import { toast } from 'react-toastify';
 import VideoGrid from './VideoGrid';
 
 // Platform SVG Icons
@@ -25,8 +28,11 @@ const PlatformIcons = {
 /**
  * Platform Section Component - Displays videos for a specific platform
  */
-const PlatformSection = memo(({ platform, onVideoPlay, filters = {}, onResultsChange, className = '' }) => {
+const PlatformSection = memo(({ platform, onVideoPlay, filters = {}, searchQuery = '', onResultsChange, className = '' }) => {
   const { darkMode } = useTheme();
+  const { user } = useContext(AuthContext);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  
   const {
     videos,
     loading,
@@ -43,11 +49,107 @@ const PlatformSection = memo(({ platform, onVideoPlay, filters = {}, onResultsCh
     isEmpty
   } = useVideos(platform);
 
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setUserIsAdmin(false);
+        return;
+      }
+      
+      try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        const userData = userDoc.data();
+        setUserIsAdmin(userData?.role === 'admin');
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setUserIsAdmin(false);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [user]);
+
+  // Automatic daily refresh at midnight
+  useEffect(() => {
+    const scheduleAutoRefresh = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0); // Set to midnight
+      
+      const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+      
+      console.log(`[${platform}] Auto-refresh scheduled for: ${tomorrow.toLocaleString()}`);
+      console.log(`[${platform}] Time until next refresh: ${Math.round(timeUntilMidnight / 1000 / 60)} minutes`);
+      
+      const timeoutId = setTimeout(() => {
+        console.log(`[${platform}] Executing automatic daily refresh at midnight`);
+        
+        // Show notification for automatic refresh
+        toast.info(`🔄 ${platform.toUpperCase()} videos refreshed automatically`, {
+          position: 'bottom-right',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        
+        // Execute the refresh
+        refresh();
+        
+        // Schedule the next refresh for the following day
+        scheduleAutoRefresh();
+      }, timeUntilMidnight);
+      
+      return timeoutId;
+    };
+    
+    const timeoutId = scheduleAutoRefresh();
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        console.log(`[${platform}] Auto-refresh timeout cleared`);
+      }
+    };
+  }, [platform, refresh]);
+
   // Apply client-side filtering to videos
   const filteredVideos = useMemo(() => {
     if (!videos || videos.length === 0) return videos;
 
     let filtered = [...videos];
+
+    // Search filter - search across multiple fields
+    if (searchQuery && searchQuery.trim()) {
+      const searchTerm = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(video => {
+        // Search in title
+        const title = video.title || '';
+        if (title.toLowerCase().includes(searchTerm)) return true;
+        
+        // Search in description
+        const description = video.description || '';
+        if (description.toLowerCase().includes(searchTerm)) return true;
+        
+        // Search in author name (multiple field variations)
+        const authorName = video.authorName || video.author || '';
+        if (authorName.toLowerCase().includes(searchTerm)) return true;
+        
+        // Search in author username/user (multiple field variations)
+        const authorUser = video.authorUser || video.username || '';
+        if (authorUser.toLowerCase().includes(searchTerm)) return true;
+        
+        // Search in platform
+        const videoPlatform = video.platform || platform || '';
+        if (videoPlatform.toLowerCase().includes(searchTerm)) return true;
+        
+        return false;
+      });
+    }
 
     // Filter by author/creator - handle different field names across platforms
     if (filters.author && filters.author.trim()) {
@@ -99,7 +201,7 @@ const PlatformSection = memo(({ platform, onVideoPlay, filters = {}, onResultsCh
     }
 
     return filtered;
-  }, [videos, filters]);
+  }, [videos, filters, searchQuery, platform]);
 
   // Calculate filtered stats
   const filteredStats = useMemo(() => {
@@ -236,48 +338,104 @@ const PlatformSection = memo(({ platform, onVideoPlay, filters = {}, onResultsCh
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={refresh}
-              disabled={loading}
-              className={`
-                px-4 py-2 rounded-lg text-sm font-medium
-                transition-all duration-200
-                ${darkMode 
-                  ? 'bg-gray-700/50 hover:bg-gray-600/60 text-gray-300 hover:text-white border border-gray-600/50' 
-                  : 'bg-white/50 hover:bg-white/70 text-gray-700 hover:text-gray-900 border border-gray-300/50'
-                }
-                backdrop-blur-sm
-                ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}
-              `}
-            >
-              {loading ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {/* Admin-only Refresh Button */}
+              {userIsAdmin && (
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  <span>Loading...</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  <span>Refresh</span>
+                  <button
+                    onClick={refresh}
+                    disabled={loading}
+                    className={`
+                      px-4 py-2 rounded-lg text-sm font-medium
+                      transition-all duration-200
+                      ${darkMode 
+                        ? 'bg-gray-700/50 hover:bg-gray-600/60 text-gray-300 hover:text-white border border-gray-600/50' 
+                        : 'bg-white/50 hover:bg-white/70 text-gray-700 hover:text-gray-900 border border-gray-300/50'
+                      }
+                      backdrop-blur-sm
+                      ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}
+                    `}
+                    title="Admin: Manual refresh (Auto-refresh runs daily at midnight)"
+                  >
+                    {loading ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        <span>Loading...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Refresh</span>
+                      </div>
+                    )}
+                  </button>
+                  
+                  {/* Development: Test Auto-refresh (only in dev mode) */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <button
+                      onClick={() => {
+                        toast.info(`🧪 Testing auto-refresh for ${platform.toUpperCase()}`, {
+                          position: 'bottom-right',
+                          autoClose: 2000,
+                        });
+                        setTimeout(() => {
+                          refresh();
+                        }, 1000);
+                      }}
+                      disabled={loading}
+                      className={`
+                        px-3 py-2 rounded-lg text-xs font-medium
+                        transition-all duration-200
+                        ${darkMode 
+                          ? 'bg-yellow-700/50 hover:bg-yellow-600/60 text-yellow-300 hover:text-white border border-yellow-600/50' 
+                          : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700 hover:text-yellow-900 border border-yellow-300/50'
+                        }
+                        backdrop-blur-sm
+                        ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}
+                      `}
+                      title="Dev: Test auto-refresh functionality"
+                    >
+                      🧪 Test Auto-refresh
+                    </button>
+                  )}
                 </div>
               )}
-            </button>
 
-            {totalPages > 1 && (
-              <div className={`
-                text-xs px-3 py-2 rounded-lg
-                ${darkMode 
-                  ? 'bg-gray-700/30 text-gray-400' 
-                  : 'bg-white/30 text-gray-600'
-                }
-                backdrop-blur-sm
-              `}>
-                Page {currentPage} of {totalPages}
-              </div>
-            )}
+              {/* Auto-refresh indicator for non-admin users */}
+              {!userIsAdmin && (
+                <div className={`
+                  text-xs px-3 py-2 rounded-lg flex items-center space-x-2
+                  ${darkMode 
+                    ? 'bg-blue-900/20 text-blue-300 border border-blue-700/30' 
+                    : 'bg-blue-50 text-blue-600 border border-blue-200'
+                  }
+                  backdrop-blur-sm
+                `}>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Auto-updates daily at midnight</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-4">
+              {totalPages > 1 && (
+                <div className={`
+                  text-xs px-3 py-2 rounded-lg
+                  ${darkMode 
+                    ? 'bg-gray-700/30 text-gray-400' 
+                    : 'bg-white/30 text-gray-600'
+                  }
+                  backdrop-blur-sm
+                `}>
+                  Page {currentPage} of {totalPages}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* No Results Message */}
@@ -315,6 +473,7 @@ const PlatformSection = memo(({ platform, onVideoPlay, filters = {}, onResultsCh
         onRefresh={refresh}
         onVideoPlay={onVideoPlay}
         platform={platform}
+        isAdmin={userIsAdmin}
       />
     </section>
   );

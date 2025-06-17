@@ -328,7 +328,7 @@ const Header = ({ openSignUpModal }) => {
                   <FaTools className="mr-1.5" /> 
                   <div className="flex flex-col items-start">
                     <span>AI Tools</span>
-                    <span className="text-xs mt-[-2px] text-blue-200">Prompts</span>
+                    <span className="text-xs mt-[-2px] text-blue-200">& Prompts</span>
                   </div>
                 </Link>
               </div>
@@ -345,7 +345,7 @@ const Header = ({ openSignUpModal }) => {
                 <FaMicrochip className="mr-1.5" /> 
                 <div className="flex flex-col items-start">
                   <span>Latest Tech News</span>
-                  <span className="text-xs mt-[-2px] text-blue-200">Tutorials</span>
+                  <span className="text-xs mt-[-2px] text-blue-200">& Tutorials</span>
                 </div>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">

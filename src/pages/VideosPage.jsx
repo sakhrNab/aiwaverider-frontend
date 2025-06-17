@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useContext, useEffect } from 'react';
+import React, { useState, useCallback, useContext, useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { AuthContext } from '../contexts/AuthContext';
@@ -69,6 +69,10 @@ const VideosPage = () => {
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'youtube', 'tiktok', 'instagram'
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(''); // Add search query state
+  const searchInputRef = useRef(null); // Ref for search input
+  const resultsRef = useRef(null); // Ref for results section
+  const [isSearchFloating, setIsSearchFloating] = useState(false); // Track if search is floating
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -105,6 +109,75 @@ const VideosPage = () => {
   // Check if user is admin
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   
+  // Keyboard shortcut for search focus (Ctrl+K or Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          searchInputRef.current.select();
+        }
+      }
+      
+      // Escape to clear search when focused
+      if (event.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        setSearchQuery('');
+        searchInputRef.current.blur();
+        setIsSearchFloating(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Handle search query changes and auto-scroll to results
+  useEffect(() => {
+    if (searchQuery && searchQuery.trim()) {
+      setIsSearchFloating(true);
+      
+      // Auto-scroll to results with smooth animation
+      setTimeout(() => {
+        if (resultsRef.current) {
+          resultsRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+          });
+        }
+      }, 300); // Delay to allow search effects to render
+    } else {
+      setIsSearchFloating(false);
+    }
+  }, [searchQuery]);
+
+  // Handle scroll to hide floating search when back at top
+  useEffect(() => {
+    const handleScroll = () => {
+      // Only manage floating search if there's an active search query
+      if (searchQuery && searchQuery.trim()) {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const searchInputPosition = searchInputRef.current?.offsetTop || 0;
+        
+        // Hide floating search if user scrolls back to the main search area (with some buffer)
+        if (scrollTop < searchInputPosition + 200) {
+          setIsSearchFloating(false);
+        } else {
+          setIsSearchFloating(true);
+        }
+      }
+    };
+
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [searchQuery]); // Re-run when searchQuery changes
+
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
@@ -166,16 +239,17 @@ const VideosPage = () => {
     });
   };
 
-  // Check if any filters are active
+  // Check if any filters or search are active
   const hasActiveFilters = () => {
     return filters.author || filters.minViews || filters.maxViews || 
-           filters.minLikes || filters.maxLikes || filters.category !== 'all';
+           filters.minLikes || filters.maxLikes || filters.category !== 'all' ||
+           (searchQuery && searchQuery.trim());
   };
 
-  // Helper function to determine platform rendering order based on filter results
+  // Helper function to determine platform rendering order based on filter/search results
   const getPlatformOrder = (platformResults) => {
     if (!hasActiveFilters()) {
-      // Default order when no filters are active
+      // Default order when no filters or search are active
       return ['youtube', 'tiktok', 'instagram'];
     }
 
@@ -465,11 +539,185 @@ const VideosPage = () => {
                 Videos Gallery
               </h1>
               <p className={`
-                text-lg sm:text-xl max-w-3xl mx-auto
+                text-lg sm:text-xl max-w-3xl mx-auto mb-8
                 ${darkMode ? 'text-gray-300' : 'text-gray-600'}
               `}>
                 Discover trending videos from YouTube, TikTok, and Instagram all in one place
               </p>
+              
+              {/* Search Bar */}
+              <div className="max-w-2xl mx-auto mb-8">
+                <div className="relative group">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => {
+                      // If user clicks on search while already searching, keep floating
+                      if (searchQuery && searchQuery.trim()) {
+                        setIsSearchFloating(true);
+                      }
+                    }}
+                    placeholder="Search videos by title, description, author, or platform... (Ctrl+K)"
+                    className={`
+                      w-full px-6 py-4 pl-12 pr-16 rounded-2xl border
+                      ${darkMode 
+                        ? 'bg-gray-800/60 border-gray-700/50 text-white placeholder-gray-400' 
+                        : 'bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500'
+                      }
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                      backdrop-blur-sm transition-all duration-300 ease-out
+                      ${searchQuery && searchQuery.trim() 
+                        ? `shadow-2xl transform hover:scale-105 hover:-translate-y-1 
+                           ${darkMode 
+                             ? 'shadow-blue-500/25 border-blue-500/50 bg-gray-800/80' 
+                             : 'shadow-blue-500/20 border-blue-400/60 bg-white/90'
+                           }
+                           ring-2 ring-blue-500/30` 
+                        : 'shadow-lg hover:shadow-xl hover:scale-102 hover:-translate-y-0.5'
+                      }
+                      group-hover:shadow-2xl
+                      ${isSearchFloating ? 'opacity-70 pointer-events-none' : ''}
+                    `}
+                    ref={searchInputRef}
+                  />
+                  
+                  {/* Search Icon with enhanced effects */}
+                  <div className={`
+                    absolute left-4 top-1/2 transform -translate-y-1/2 
+                    transition-all duration-300 ease-out
+                    ${searchQuery && searchQuery.trim() 
+                      ? `scale-110 ${darkMode ? 'text-blue-400' : 'text-blue-600'}` 
+                      : `${darkMode ? 'text-gray-400 group-hover:text-blue-400' : 'text-gray-500 group-hover:text-blue-600'}`
+                    }
+                  `}>
+                    <svg 
+                      className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12"
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  
+                  {/* Close Button - Positioned inside the input field */}
+                  {searchQuery && (
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setIsSearchFloating(false);
+                        // Smooth scroll back to top
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={`
+                        absolute right-3 top-1/2 transform -translate-y-1/2 
+                        p-1.5 rounded-full transition-all duration-300 ease-out
+                        hover:scale-125 hover:rotate-180 active:scale-95
+                        ${darkMode 
+                          ? 'text-gray-400 hover:text-white hover:bg-red-600/30 hover:shadow-xl hover:shadow-red-500/40' 
+                          : 'text-gray-500 hover:text-red-600 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/30'
+                        }
+                        group
+                        border border-transparent hover:border-red-500/50
+                      `}
+                      title="Close search and return to top"
+                    >
+                      <svg className="w-4 h-4 transition-transform duration-500 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                  
+                  {/* Keyboard Shortcut Hint */}
+                  {!searchQuery && (
+                    <div className={`
+                      absolute right-4 top-1/2 transform -translate-y-1/2 
+                      hidden sm:flex items-center space-x-1 text-xs
+                      ${darkMode ? 'text-gray-500' : 'text-gray-400'}
+                      transition-all duration-300 group-hover:opacity-100
+                    `}>
+                      <kbd className={`
+                        px-1.5 py-0.5 rounded text-xs font-mono
+                        ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
+                      `}>
+                        {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}
+                      </kbd>
+                      <kbd className={`
+                        px-1.5 py-0.5 rounded text-xs font-mono
+                        ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
+                      `}>
+                        K
+                      </kbd>
+                    </div>
+                  )}
+                  
+                  {/* Search Now Button - appears on hover when no search is active */}
+                  {!searchQuery && !isSearchFloating && (
+                    <button
+                      onClick={() => {
+                        if (searchInputRef.current) {
+                          searchInputRef.current.focus();
+                        }
+                      }}
+                      className={`
+                        absolute right-4 top-1/2 transform -translate-y-1/2 
+                        px-3 py-1.5 rounded-lg text-xs font-medium
+                        transition-all duration-300 ease-out opacity-0 group-hover:opacity-100
+                        hover:scale-110 active:scale-95
+                        ${darkMode 
+                          ? 'bg-blue-600/80 text-white hover:bg-blue-500 border border-blue-500/50' 
+                          : 'bg-blue-500/80 text-white hover:bg-blue-600 border border-blue-400/50'
+                        }
+                        backdrop-blur-sm shadow-lg hover:shadow-xl
+                        sm:hidden
+                      `}
+                      title="Start searching"
+                    >
+                      Search
+                    </button>
+                  )}
+                  
+                  {/* Search glow effect when active */}
+                  {searchQuery && searchQuery.trim() && (
+                    <div className={`
+                      absolute inset-0 rounded-2xl transition-all duration-300
+                      ${darkMode 
+                        ? 'bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10' 
+                        : 'bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5'
+                      }
+                      -z-10 blur-xl scale-105 animate-pulse-slow
+                    `} />
+                  )}
+                </div>
+                
+                {/* Enhanced Search Results Indicator */}
+                {searchQuery && searchQuery.trim() && (
+                  <div className={`
+                    mt-4 text-center transition-all duration-300 animate-fadeIn
+                  `}>
+                    <div className={`
+                      inline-flex items-center space-x-2 px-4 py-2 rounded-full
+                      ${darkMode 
+                        ? 'bg-blue-900/30 text-blue-300 border border-blue-700/50' 
+                        : 'bg-blue-50/80 text-blue-700 border border-blue-200/60'
+                      }
+                      backdrop-blur-sm shadow-lg
+                    `}>
+                      <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <span className="text-sm font-medium">
+                        Searching for: <span className="font-bold">"{searchQuery}"</span>
+                      </span>
+                      <div className={`
+                        w-2 h-2 rounded-full animate-pulse
+                        ${darkMode ? 'bg-blue-400' : 'bg-blue-600'}
+                      `} />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Navigation Tabs */}
@@ -767,36 +1015,60 @@ const VideosPage = () => {
         </header>
 
         {/* Main Content */}
-        <main className="px-4 sm:px-6 lg:px-8 pb-16">
+        <main className="px-4 sm:px-6 lg:px-8 pb-16" ref={resultsRef}>
           <div className="max-w-7xl mx-auto">
+            {/* Enhanced Filter/Search Results Indicator */}
+            {hasActiveFilters() && (
+              <div className={`
+                p-4 rounded-lg text-center text-sm transition-all duration-300 animate-fadeIn
+                ${darkMode 
+                  ? 'bg-blue-900/20 border border-blue-700/30 text-blue-300' 
+                  : 'bg-blue-50 border border-blue-200 text-blue-800'
+                }
+              `}>
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  {searchQuery && searchQuery.trim() ? (
+                    <>
+                      <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <span className="font-medium">
+                        Search results for "{searchQuery}" - Platforms with matches shown first
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                      <span className="font-medium">Platforms with filter results shown first</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center justify-center space-x-1 text-xs opacity-75">
+                  <span>
+                    {Object.values(platformResults).reduce((a, b) => a + b, 0)} total results
+                  </span>
+                  {searchQuery && searchQuery.trim() && (
+                    <>
+                      <span>•</span>
+                      <span className="animate-pulse">Live search active</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            
             {/* All Platforms View */}
             {activeTab === 'all' && (
               <div className="space-y-16">
-                {/* Filter Results Indicator */}
-                {hasActiveFilters() && (
-                  <div className={`
-                    p-4 rounded-lg text-center text-sm
-                    ${darkMode 
-                      ? 'bg-blue-900/20 border border-blue-700/30 text-blue-300' 
-                      : 'bg-blue-50 border border-blue-200 text-blue-800'
-                    }
-                  `}>
-                    <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
-                    <span className="font-medium">Platforms with results are shown first</span>
-                    <span className="opacity-75 ml-2">
-                      ({Object.values(platformResults).reduce((a, b) => a + b, 0)} total results)
-                    </span>
-                  </div>
-                )}
-                
                 {getPlatformOrder(platformResults).map((platform) => (
                   <PlatformSection
                     key={platform}
                     platform={platform}
                     onVideoPlay={handleVideoPlay}
                     filters={filters}
+                    searchQuery={searchQuery}
                     onResultsChange={updatePlatformResults}
                   />
                 ))}
@@ -809,6 +1081,7 @@ const VideosPage = () => {
                 platform={activeTab}
                 onVideoPlay={handleVideoPlay}
                 filters={filters}
+                searchQuery={searchQuery}
                 onResultsChange={updatePlatformResults}
               />
             )}
@@ -833,6 +1106,114 @@ const VideosPage = () => {
           </div>
         </footer>
       </div>
+
+      {/* Floating Search Overlay */}
+      {isSearchFloating && (
+        <div className={`
+          fixed top-4 left-1/2 transform -translate-x-1/2 z-40
+          transition-all duration-500 ease-out animate-slideUp
+        `}>
+          <div className={`
+            relative max-w-2xl mx-auto p-4 rounded-2xl
+            ${darkMode 
+              ? 'bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 shadow-2xl shadow-blue-500/25' 
+              : 'bg-white/95 backdrop-blur-xl border border-white/50 shadow-2xl shadow-blue-500/20'
+            }
+            transform hover:scale-105 transition-all duration-300 ease-out
+            animate-floatSearch
+          `}>
+            {/* Floating Search Input */}
+            <div className="relative group">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search videos..."
+                className={`
+                  w-full px-6 py-3 pl-12 pr-14 rounded-xl border
+                  ${darkMode 
+                    ? 'bg-gray-800/80 border-gray-600/50 text-white placeholder-gray-300' 
+                    : 'bg-white/80 border-gray-300/50 text-gray-900 placeholder-gray-400'
+                  }
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                  backdrop-blur-sm transition-all duration-300 ease-out
+                  shadow-lg hover:shadow-xl
+                `}
+                autoFocus
+              />
+              
+              {/* Search Icon */}
+              <div className={`
+                absolute left-4 top-1/2 transform -translate-y-1/2 
+                ${darkMode ? 'text-blue-400' : 'text-blue-600'}
+                transition-all duration-300
+              `}>
+                <svg 
+                  className="w-5 h-5 animate-pulse"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              
+              {/* Close Button - Positioned inside the input field */}
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setIsSearchFloating(false);
+                  // Smooth scroll back to top
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`
+                  absolute right-3 top-1/2 transform -translate-y-1/2 
+                  p-1.5 rounded-full transition-all duration-300 ease-out
+                  hover:scale-125 hover:rotate-180 active:scale-95
+                  ${darkMode 
+                    ? 'text-gray-400 hover:text-white hover:bg-red-600/30 hover:shadow-xl hover:shadow-red-500/40' 
+                    : 'text-gray-500 hover:text-red-600 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/30'
+                  }
+                  group
+                  border border-transparent hover:border-red-500/50
+                `}
+                title="Close search and return to top"
+              >
+                <svg className="w-4 h-4 transition-transform duration-500 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Search Status */}
+            <div className={`
+              mt-3 flex items-center justify-center space-x-2 text-sm
+              ${darkMode ? 'text-blue-300' : 'text-blue-700'}
+            `}>
+              <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span className="font-medium">
+                Searching for: <span className="font-bold">"{searchQuery}"</span>
+              </span>
+              <div className={`
+                w-2 h-2 rounded-full animate-pulse
+                ${darkMode ? 'bg-blue-400' : 'bg-blue-600'}
+              `} />
+            </div>
+            
+            {/* Floating search glow effect */}
+            <div className={`
+              absolute inset-0 rounded-2xl transition-all duration-500
+              ${darkMode 
+                ? 'bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-blue-600/20' 
+                : 'bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10'
+              }
+              -z-10 blur-2xl scale-110 animate-pulse-slow
+            `} />
+          </div>
+        </div>
+      )}
 
       {/* Admin Edit Modal */}
       {showEditModal && (
