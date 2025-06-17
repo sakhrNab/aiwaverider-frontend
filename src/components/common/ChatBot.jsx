@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaTimes, FaPaperPlane, FaRedo } from 'react-icons/fa';
 import chatIcon from '../../assets/chat-icon.jpg';
 import chatApi from '../../api/chat/chatApi';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const ChatBot = () => {
+  const { darkMode } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { 
@@ -114,6 +116,75 @@ const ChatBot = () => {
     }
   };
 
+  // Dynamic styles based on theme
+  const getChatContainerStyle = () => ({
+    position: 'fixed',
+    bottom: '90px',
+    right: '20px',
+    width: '350px',
+    height: '500px',
+    backgroundColor: darkMode ? '#1f2937' : 'white',
+    borderRadius: '10px',
+    boxShadow: darkMode 
+      ? '0 5px 15px rgba(0,0,0,0.4)' 
+      : '0 5px 15px rgba(0,0,0,0.2)',
+    display: 'flex',
+    flexDirection: 'column',
+    zIndex: 1000,
+    overflow: 'hidden',
+    animation: 'slideUp 0.3s ease',
+    border: darkMode ? '1px solid #374151' : 'none'
+  });
+
+  const getMessageStyle = (message) => ({
+    alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
+    backgroundColor: message.role === 'user' 
+      ? (darkMode ? '#3b82f6' : '#e2f8f5')
+      : message.role === 'error' 
+        ? (darkMode ? '#dc2626' : '#ffeded') 
+        : (darkMode ? '#374151' : '#f0f0f0'),
+    color: message.role === 'user'
+      ? 'white'
+      : message.role === 'error' 
+        ? 'white' 
+        : (darkMode ? '#f3f4f6' : '#333'),
+    padding: '10px 15px',
+    borderRadius: message.role === 'user' ? '18px 18px 0 18px' : '18px 18px 18px 0',
+    maxWidth: '80%',
+    wordBreak: 'break-word'
+  });
+
+  const getInputStyle = () => ({
+    flex: 1,
+    padding: '10px 15px',
+    borderRadius: '20px',
+    border: darkMode ? '1px solid #4b5563' : '1px solid #ddd',
+    outline: 'none',
+    fontSize: '14px',
+    color: darkMode ? '#f3f4f6' : '#333',
+    backgroundColor: darkMode ? '#374151' : '#ffffff',
+    transition: 'all 0.2s ease'
+  });
+
+  const getInputContainerStyle = () => ({
+    borderTop: darkMode ? '1px solid #374151' : '1px solid #eee',
+    backgroundColor: darkMode ? '#1f2937' : 'transparent',
+    padding: '15px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px'
+  });
+
+  const getMessagesContainerStyle = () => ({
+    flex: 1,
+    overflowY: 'auto',
+    padding: '15px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    backgroundColor: darkMode ? '#1f2937' : 'transparent'
+  });
+
   return (
     <>
       {/* Chat Toggle Button */}
@@ -147,23 +218,7 @@ const ChatBot = () => {
       
       {/* Chat Interface */}
       {isOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '90px',
-            right: '20px',
-            width: '350px',
-            height: '500px',
-            backgroundColor: 'white',
-            borderRadius: '10px',
-            boxShadow: '0 5px 15px rgba(0,0,0,0.2)',
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 1000,
-            overflow: 'hidden',
-            animation: 'slideUp 0.3s ease'
-          }}
-        >
+        <div style={getChatContainerStyle()}>
           {/* Chat Header */}
           <div
             style={{
@@ -193,30 +248,9 @@ const ChatBot = () => {
           </div>
           
           {/* Chat Messages */}
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '15px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px'
-            }}
-          >
+          <div style={getMessagesContainerStyle()}>
             {messages.map((message, index) => (
-              <div
-                key={index}
-                style={{
-                  alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
-                  backgroundColor: message.role === 'user' ? '#e2f8f5' 
-                    : message.role === 'error' ? '#ffeded' : '#f0f0f0',
-                  color: message.role === 'error' ? '#d32f2f' : '#333',
-                  padding: '10px 15px',
-                  borderRadius: message.role === 'user' ? '18px 18px 0 18px' : '18px 18px 18px 0',
-                  maxWidth: '80%',
-                  wordBreak: 'break-word'
-                }}
-              >
+              <div key={index} style={getMessageStyle(message)}>
                 {message.content}
                 {message.role === 'error' && (
                   <button
@@ -224,7 +258,7 @@ const ChatBot = () => {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#d32f2f',
+                      color: 'white',
                       cursor: 'pointer',
                       marginTop: '8px',
                       display: 'flex',
@@ -243,8 +277,8 @@ const ChatBot = () => {
               <div
                 style={{
                   alignSelf: 'flex-start',
-                  backgroundColor: '#f0f0f0',
-                  color: '#333',
+                  backgroundColor: darkMode ? '#374151' : '#f0f0f0',
+                  color: darkMode ? '#f3f4f6' : '#333',
                   padding: '10px 15px',
                   borderRadius: '18px 18px 18px 0',
                   maxWidth: '80%'
@@ -261,30 +295,14 @@ const ChatBot = () => {
           </div>
           
           {/* Chat Input */}
-          <div
-            style={{
-              borderTop: '1px solid #eee',
-              padding: '15px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}
-          >
+          <div style={getInputContainerStyle()}>
             <input
               type="text"
               value={inputMessage}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
-              style={{
-                flex: 1,
-                padding: '10px 15px',
-                borderRadius: '20px',
-                border: '1px solid #ddd',
-                outline: 'none',
-                fontSize: '14px',
-                color: '#333' // Dark text color
-              }}
+              style={getInputStyle()}
               disabled={isLoading}
             />
             <button
@@ -331,7 +349,7 @@ const ChatBot = () => {
         .typing-indicator span {
           width: 8px;
           height: 8px;
-          background-color: #999;
+          background-color: ${darkMode ? '#9ca3af' : '#999'};
           border-radius: 50%;
           animation: typing 1s infinite ease-in-out;
         }
@@ -354,6 +372,31 @@ const ChatBot = () => {
           }
           50% {
             transform: translateY(-5px);
+          }
+        }
+
+        /* Enhanced input focus styles for better visibility */
+        input:focus {
+          box-shadow: 0 0 0 2px ${darkMode ? 'rgba(59, 130, 246, 0.5)' : 'rgba(79, 209, 197, 0.5)'} !important;
+          border-color: ${darkMode ? '#3b82f6' : '#4FD1C5'} !important;
+        }
+
+        /* Ensure placeholder text is visible in both themes */
+        input::placeholder {
+          color: ${darkMode ? '#9ca3af' : '#6b7280'} !important;
+          opacity: 1 !important;
+        }
+
+        /* Mobile-specific fixes */
+        @media (max-width: 480px) {
+          input {
+            -webkit-appearance: none !important;
+            -webkit-text-fill-color: ${darkMode ? '#f3f4f6' : '#333'} !important;
+            background-color: ${darkMode ? '#374151' : '#ffffff'} !important;
+          }
+          
+          input:focus {
+            -webkit-text-fill-color: ${darkMode ? '#f3f4f6' : '#333'} !important;
           }
         }
       `}</style>
