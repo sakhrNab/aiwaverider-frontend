@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaHome, FaQuestion, FaUserFriends, FaCalendarAlt, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHome, FaQuestion, FaUserFriends, FaCalendarAlt, FaBars, FaTimes, FaDiscord } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import './FloatingNav.css'; 
@@ -48,6 +48,11 @@ const FloatingNav = ({ scrollRefs = {} }) => {
 
   const openCalendly = useCallback(() => {
     window.open('https://calendly.com/aiwaverider8/30min', '_blank');
+    if (windowWidth < 640) setExpanded(false); // Auto-collapse after selection on mobile
+  }, [windowWidth]);
+
+  const openDiscord = useCallback(() => {
+    window.open('https://discord.com/channels/1377544516579491891/1377544516579491894', '_blank');
     if (windowWidth < 640) setExpanded(false); // Auto-collapse after selection on mobile
   }, [windowWidth]);
 
@@ -144,6 +149,20 @@ const FloatingNav = ({ scrollRefs = {} }) => {
                 >
                   <FaUserFriends className="text-lg" />
                   <span className="text-sm font-medium ml-2">Who It's For</span>
+                </button>
+
+                {windowWidth >= 640 && <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>}
+
+                <button
+                  onClick={openDiscord}
+                  className={`floating-nav-button ${darkMode ? 'bg-purple-600 hover:bg-purple-700 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 border-purple-400'} text-white border-2
+                    py-2 px-3 rounded-full flex items-center justify-center md:justify-start
+                    ${windowWidth < 640 ? 'w-full' : ''}
+                    transition-colors duration-200 shadow-lg hover:shadow-xl`}
+                  aria-label="Join Community"
+                >
+                  <FaDiscord className="text-lg" />
+                  <span className="text-sm font-medium ml-2">Join Community</span>
                 </button>
 
                 {windowWidth >= 640 && <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>}

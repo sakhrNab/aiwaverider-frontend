@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HashLoader } from 'react-spinners';
-import { FaRobot, FaTools, FaLightbulb, FaCalendarAlt, FaArrowRight, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion } from 'react-icons/fa';
+import { FaRobot, FaTools, FaLightbulb, FaCalendarAlt, FaArrowRight, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion, FaDiscord } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import '../styles/animations.css'; // Import animations
@@ -322,9 +322,19 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-            <Link to="/monetization-paths" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'} hover:shadow-lg`}>
-              Explore All Monetization Paths <FaChevronRight className="ml-2" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to="/monetization-paths" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'} hover:shadow-lg`}>
+                Explore All Monetization Paths <FaChevronRight className="ml-2" />
+              </Link>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -422,9 +432,19 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-            <Link to="/ai-obstacle-solutions" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'} hover:shadow-lg`}>
-              Learn How We Solve These Obstacles <FaChevronRight className="ml-2" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to="/ai-obstacle-solutions" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'} hover:shadow-lg`}>
+                Learn How We Solve These Obstacles <FaChevronRight className="ml-2" />
+              </Link>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -501,12 +521,22 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-          <Link to={calendlyLink}              
-          // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-              className="px-10 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-bold text-lg transition-all inline-flex items-center"
-            >
-              START FREE Consultation Call
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to={calendlyLink}              
+              // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+                  className="px-10 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-bold text-lg transition-all inline-flex items-center"
+                >
+                  START FREE Consultation Call
+                </Link>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-lg font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -810,12 +840,22 @@ const HomePage = () => {
 
           {/* CTA Button */}
           <div className="text-center">
-            <Link to={calendlyLink}              
-            // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-                className="px-16 py-6 bg-blue-400 hover:bg-blue-500 text-white rounded-xl font-bold text-3xl transition-all inline-flex items-center"
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to={calendlyLink}              
+              // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+                  className="px-16 py-6 bg-blue-400 hover:bg-blue-500 text-white rounded-xl font-bold text-3xl transition-all inline-flex items-center"
+                >
+                  START FREE Consultation Call
+                </Link>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-6 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold text-xl sm:text-2xl transition-all inline-flex items-center border-2 border-purple-400 hover:shadow-lg"
               >
-                START FREE Consultation Call
-              </Link>
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -1096,13 +1136,23 @@ const HomePage = () => {
           </div>
           
           <div className="text-center mt-12">
-            <button 
-              onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-              className="px-10 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-xl transition-all inline-flex items-center"
-            >
-              JOIN NOW AND START YOUR FREE TRIAL
-              <FaArrowRight className="ml-3" />
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <button 
+                onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+                className="px-10 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-xl transition-all inline-flex items-center"
+              >
+                JOIN NOW AND START YOUR FREE TRIAL
+                <FaArrowRight className="ml-3" />
+              </button>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-full font-bold text-xl transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -1218,6 +1268,16 @@ const HomePage = () => {
                 Bonuses Included
               </div>
             </div>
+            <div className="mt-4">
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-8 py-4 rounded-xl font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -1239,12 +1299,22 @@ const HomePage = () => {
             </p>
             
             <div className="mb-10">
-              <button
-                onClick={openCalendlyConsultation}
-                className="px-10 py-5 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-2xl transition-all hover:shadow-xl inline-flex items-center gap-3"
-              >
-                <FaCalendarAlt /> Schedule Your Free Call Now
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button
+                  onClick={openCalendlyConsultation}
+                  className="px-10 py-5 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-2xl transition-all hover:shadow-xl inline-flex items-center gap-3"
+                >
+                  <FaCalendarAlt /> Schedule Your Free Call Now
+                </button>
+                <a 
+                  href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`px-8 py-5 rounded-full font-bold text-xl transition-all inline-flex items-center gap-3 ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-xl`}
+                >
+                  <FaDiscord /> JOIN COMMUNITY
+                </a>
+              </div>
             </div>
             
             <div className={`${darkMode ? 'text-indigo-200' : 'text-gray-600'}`}>
