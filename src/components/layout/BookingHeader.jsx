@@ -61,7 +61,7 @@ const BookingHeader = () => {
               className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse"
             >
               <FaCalendarAlt className="mr-2" />
-              Book a FREE Training Session
+              Book a FREE Consultation Session
               <FaArrowRight className="ml-2" />
             </a>
           </div>

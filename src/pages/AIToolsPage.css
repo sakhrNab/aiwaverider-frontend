@@ -4,6 +4,12 @@
   z-index: 1;
 }
 
+.tooltip{
+  position: relative;
+  display: inline-block;
+  margin-left: 10px;
+}
+
 /* Theme transition */
 .tool-card,
 .filter-tag,

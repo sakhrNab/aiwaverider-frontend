@@ -141,7 +141,7 @@ const HomePage = () => {
                 className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 transform hover:-translate-y-1"
               >
                 <FaCalendarAlt className="mr-3 text-lg" />
-                <span className="text-lg">Book a FREE Training Session</span>
+                <span className="text-lg">Book a FREE Consultation Session</span>
                 <FaArrowRight className="ml-3 text-lg" />
               </a>
             </div>
