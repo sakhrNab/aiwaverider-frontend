@@ -161,10 +161,20 @@ const HomePage = () => {
                 Learn how to monetize AI without being technical. 7 proven business models to help you sell AI services and make $2,000-$10,000/month as an AI Waverider.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
+
                 <a href="#monetization-paths" onClick={scrollToMonetizationPaths} className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-lg transition-all hover:shadow-lg inline-flex items-center justify-center">
                   Explore Monetization Paths <FaArrowRight className="ml-2" />
                 </a>
+
+                <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
               </div>
               
               <div className={`flex items-center space-x-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
