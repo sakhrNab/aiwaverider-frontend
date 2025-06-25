@@ -10,7 +10,7 @@
 .category-nav {
   width: 100%;
   overflow-x: auto;
-  padding: 8px 12px;
+  padding: 12px 16px; /* Increased padding */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
   position: relative;
@@ -105,12 +105,12 @@
 
 .category-nav::before {
   left: 0;
-  background: linear-gradient(to right, rgba(139, 92, 246, 1), rgba(139, 92, 246, 0));
+  /* background: linear-gradient(to right, rgba(139, 92, 246, 1), rgba(139, 92, 246, 0)); */
 }
 
 .category-nav::after {
   right: 0;
-  background: linear-gradient(to left, rgba(139, 92, 246, 1), rgba(139, 92, 246, 0));
+  /* background: linear-gradient(to left, rgba(139, 92, 246, 1), rgba(139, 92, 246, 0)); */
 }
 
 @media (max-width: 768px) {

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaExternalLinkAlt, FaSearch, FaCalendarAlt, FaArrowRight, FaTimes } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaSearch, FaCalendarAlt, FaArrowRight, FaTimes, FaSync, FaLightbulb } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
 import './AIToolsPage.css';
-import * as aiToolsService from '../services/aiToolsService';
 import { useTheme } from '../contexts/ThemeContext';
 import { HashLoader } from 'react-spinners';
 import { createSvgDataUri } from '../utils/imageUtils';
 import { getToolColor } from '../api/marketplace/aiToolsApi';
+import '../styles/animations.css'; // Import animations
+import useAIToolsStore from '../store/useAIToolsStore';
 
 // Import icons
 import promptIcon from '../assets/ai-tools/prompt-icon.svg';
@@ -55,14 +57,32 @@ const imageCache = new Map();
 
 const AITools = () => {
   const { darkMode } = useTheme();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [tools, setTools] = useState([]);
   const [tags, setTags] = useState(['All']);
-  const [retryCount, setRetryCount] = useState(0);
   const [imageCacheTimestamp, setImageCacheTimestamp] = useState(Date.now());
+  
+  // Use the Zustand store for tools data and loading state
+  const {
+    tools,
+    isLoading: loading,
+    error,
+    isLoaded,
+    startListening,
+    stopListening,
+    forceRefresh,
+    lastRefreshed
+  } = useAIToolsStore(state => ({
+    tools: state.tools,
+    isLoading: state.isLoading,
+    error: state.error,
+    isLoaded: state.isLoaded,
+    startListening: state.startListening,
+    stopListening: state.stopListening,
+    forceRefresh: state.forceRefresh,
+    lastRefreshed: state.lastRefreshed
+  }));
 
   // Helper function to ensure links have proper format
   const formatLink = (link) => {
@@ -108,6 +128,11 @@ const AITools = () => {
         loaded: true
       });
     }
+  };
+  
+  // Handle manual refresh
+  const handleRefresh = () => {
+    forceRefresh();
   };
 
   // Handle image error with better fallback strategy
@@ -193,6 +218,32 @@ const AITools = () => {
     return imageUrl;
   }, []);
 
+  // Extract unique tags from tools
+  const extractTags = useCallback((toolsData) => {
+    if (!toolsData || toolsData.length === 0) {
+      return defaultAvailableTags;
+    }
+    
+    const allTags = ['All'];
+    const tagSet = new Set();
+    
+    toolsData.forEach(tool => {
+      // Add category as tag if exists
+      if (tool.category) {
+        tagSet.add(tool.category);
+      }
+      
+      // Add all tags from tool.tags array if it exists
+      if (Array.isArray(tool.tags)) {
+        tool.tags.forEach(tag => tag && tagSet.add(tag));
+      }
+    });
+    
+    // Convert Set to Array and prepend 'All'
+    const uniqueTags = [...tagSet];
+    return [...allTags, ...uniqueTags];
+  }, []);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -209,8 +260,8 @@ const AITools = () => {
         setTools(fetchedTools);
         
         // Extract unique tags from the tools
-        const toolTags = [...new Set(fetchedTools.flatMap(tool => tool.tags || []))];
-        setTags(['All', ...toolTags]);
+        const toolTags = extractTags(fetchedTools);
+        setTags(toolTags);
       } else {
         setTools([]);
         // Set default tags if no tools are available
@@ -227,7 +278,8 @@ const AITools = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    // Start the Firestore listener when component mounts
+    startListening();
     
     // Clear image cache every hour
     const cacheInterval = setInterval(() => {
@@ -241,17 +293,47 @@ const AITools = () => {
       setImageCacheTimestamp(now);
     }, 3600000); // Check every hour
     
-    return () => clearInterval(cacheInterval);
-  }, [retryCount]);
+    // Clean up listener and interval when component unmounts
+    return () => {
+      clearInterval(cacheInterval);
+      stopListening();
+    };
+  }, []);
 
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
+    // Use the forceRefresh function from the Zustand store
+    forceRefresh();
   };
 
+  // Update tags whenever tools change
+  useEffect(() => {
+    if (tools && tools.length > 0) {
+      const extractedTags = extractTags(tools);
+      setTags(extractedTags);
+    } else {
+      setTags(defaultAvailableTags);
+    }
+  }, [tools, extractTags]);
+
+  // Get tools from Zustand store with pagination support
+  const paginatedTools = useAIToolsStore(state => state.getPaginatedTools());
+  
+  // Get pagination info
+  const pagination = useAIToolsStore(state => state.pagination);
+  const setPage = useAIToolsStore(state => state.setPage);
+  const setPageSize = useAIToolsStore(state => state.setPageSize);
+  
+  // Apply filters first (search and tags)
   const filteredTools = tools.filter((tool) => {
     const titleMatch = tool.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const tagMatch = selectedTag === '' || selectedTag === 'All' || (tool.tags && tool.tags.includes(selectedTag));
-    return titleMatch && tagMatch;
+    const descriptionMatch = tool.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    // Add keyword search functionality
+    const keywordMatch = tool.keyword?.toLowerCase().includes(searchTerm.toLowerCase());
+    const tagMatch = selectedTag === '' || selectedTag === 'All' || 
+                    tool.category === selectedTag || 
+                    (tool.tags && tool.tags.includes(selectedTag));
+    
+    return (titleMatch || descriptionMatch || keywordMatch) && tagMatch;
   });
 
   // Helper function to get the appropriate image for a tool
@@ -290,7 +372,7 @@ const AITools = () => {
       textColor,
       fontSize: 24
     });
-  }, [getImageUrl]);
+  }, []); // getToolColor, createSvgDataUri are stable imports; iconMap is a stable module constant
 
   // Use the new loader component
   if (loading) {
@@ -311,28 +393,55 @@ const AITools = () => {
 
   return (
     <div className={`min-h-screen pb-16 ${darkMode ? "dark bg-[#2D1846]" : "bg-gray-50"} ${themeClasses}`}>
-      {/* Custom booking header that matches the homepage */}
-      <div className="bg-indigo-900 py-6 px-6">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-bold text-white">AI Waverider</h2>
-            <p className="text-yellow-500 font-medium">Your Gateway to AI Mastery</p>
-          </div>
-          <div className="mt-4 md:mt-0">
-            <a 
-              href="https://calendly.com/aiwaverider8/30min" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse"
-            >
-              <FaCalendarAlt className="mr-2" />
-              Book a Training Session
-              <FaArrowRight className="ml-2" />
-            </a>
+        {/* Header content with enhanced glass effect */}
+      {/* Ultra-modern AI header with 3D effects and dynamic animations */}
+      <div className="relative overflow-hidden">
+        {/* Animated background gradient with enhanced colors - different for dark/light modes */}
+        <div className={`absolute inset-0 animate-gradient-x ${darkMode 
+          ? 'bg-gradient-to-r from-indigo-900 via-purple-800 to-blue-900' 
+          : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600'}`}></div>
+        
+        {/* Advanced grid pattern that gives a tech/AI feel */}
+        <div className="absolute inset-0 bg-grid-white/[0.15] bg-[length:15px_15px] opacity-70">
+          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[length:50px_50px] rotate-45"></div>
+        </div>
+        
+        {/* Parallax floating elements - small geometric shapes */}
+        <div className="absolute top-20 right-1/4 w-16 h-16 border-2 border-blue-400/30 rotate-45 animate-float-slow"></div>
+        <div className="absolute bottom-10 left-1/3 w-12 h-12 border-2 border-purple-400/20 rounded-full animate-float"></div>
+        <div className="absolute top-1/3 left-1/5 w-8 h-8 border-2 border-teal-400/20 rotate-12 animate-spin-slow"></div>
+        
+        {/* Advanced glowing orbs with dynamic animations */}
+        <div className="absolute -top-20 right-1/4 w-80 h-80 bg-blue-500 rounded-full filter blur-3xl opacity-10 animate-pulse-slow"></div>
+        <div className="absolute -bottom-40 -left-20 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-10 animate-float"></div>
+        <div className="absolute top-1/2 left-2/3 w-40 h-40 bg-teal-500 rounded-full filter blur-3xl opacity-5 animate-pulse"></div>
+        
+        {/* Header content with enhanced glass effect */}
+        <div className={`relative backdrop-blur-sm py-8 px-6 border-b ${darkMode ? 'border-white/10' : 'border-indigo-500/30'} glass-effect ${darkMode ? 'bg-black/5' : 'bg-white/15'}`}>
+          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div className="relative z-10">
+              <h2 className={`text-5xl font-bold text-transparent bg-clip-text ${darkMode ? 'bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300' : 'bg-gradient-to-r from-white via-yellow-100 to-white'} mb-2 drop-shadow-lg`}>AI Waverider</h2>
+              <div className="flex items-center">
+                <div className={`w-10 h-[2px] bg-gradient-to-r ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent mr-3`}></div>
+                <p className="text-white font-medium text-lg drop-shadow-md">Your Gateway to AI Mastery</p>
+                <div className={`w-10 h-[2px] bg-gradient-to-l ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent ml-3`}></div>
+              </div>
+            </div>
+            <div className="mt-6 md:mt-0 relative z-10">
+              <a 
+                href="https://calendly.com/aiwaverider8/30min"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <FaCalendarAlt className="mr-3 text-lg" />
+                <span className="text-lg">Book a FREE Consultation Session</span>
+                <FaArrowRight className="ml-3 text-lg" />
+              </a>
+            </div>
           </div>
         </div>
       </div>
-
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Page header using global class */}
@@ -365,29 +474,38 @@ const AITools = () => {
           ) : (
             <>
               {/* Search input with better positioning - using class-based approach */}
-              <div className="mb-8">
-                <div className="relative mx-auto max-w-3xl search-container" id="ai-tools-search">
-                  <div className="search-icon-wrapper">
-                    <FaSearch className="search-icon" />
+              <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <div className="flex w-full md:w-auto gap-3">
+                  <div className="relative flex-1 md:flex-auto">
+                    <input
+                      type="text"
+                      placeholder="Search AI tools..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full md:w-72 px-4 py-3 pr-10 rounded-xl bg-white/10 backdrop-blur-md text-white shadow-lg"
+                    />
+                    <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70" />
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="Search AI tools..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="search-input"
-                  />
-                  {searchTerm && (
-                    <button 
-                      type="button" 
-                      className="search-clear-button" 
-                      onClick={() => setSearchTerm('')}
-                      aria-label="Clear search"
-                    >
-                      <FaTimes />
-                    </button>
-                  )}
+                  <button
+                    onClick={handleRefresh}
+                    className="p-3 rounded-xl bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 flex items-center justify-center tooltip-container"
+                    aria-label="Refresh data"
+                    title={lastRefreshed ? `Last updated: ${new Date(lastRefreshed).toLocaleTimeString()}` : 'Refresh data'}
+                  >
+                    <FaSync className={loading ? 'animate-spin' : 'animate-spin-on-hover'} />
+                    <span className="tooltip">Refresh</span>
+                  </button>
                 </div>
+                {searchTerm && (
+                  <button 
+                    type="button" 
+                    className="search-clear-button" 
+                    onClick={() => setSearchTerm('')}
+                    aria-label="Clear search"
+                  >
+                    <FaTimes />
+                  </button>
+                )}
               </div>
 
               {/* Tags filter - using global filter-tags-container */}
@@ -423,19 +541,66 @@ const AITools = () => {
                         <p className="text-white/70">No tools match your search criteria. Try adjusting your filters.</p>
                       </div>
                     ) : (
-                      filteredTools.map((tool, index) => {
+                      // Display paginated data when no filters are applied, otherwise show filtered data
+                      (searchTerm || selectedTag && selectedTag !== 'All' ? filteredTools : paginatedTools).map((tool, index) => {
                         // Get valid image URL or fallback
-                        const toolImageSrc = getToolImage(tool);
+                        // Inlined logic to determine toolImageSrc, preferring iconMap then SVG fallback
+                        let toolImageSrc;
+                        const toolName = tool.title?.split(' ')[0];
+                        if (iconMap[toolName]) {
+                          toolImageSrc = iconMap[toolName];
+                        } else if (tool.keyword && iconMap[tool.keyword]) {
+                          toolImageSrc = iconMap[tool.keyword];
+                        } else {
+                          const bgColor = getToolColor(tool.title);
+                          const textColor = 'ffffff';
+                          const displayText = tool.title ? 
+                            (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) :
+                            'AI Tool';
+                          toolImageSrc = createSvgDataUri({
+                            text: displayText,
+                            width: 300,
+                            height: 200,
+                            bgColor,
+                            textColor,
+                            fontSize: 24
+                          });
+                        }
+                        
+                        // Check if the tool has 'prompt' in its keyword
+                        const isPromptTool = tool.keyword?.toLowerCase().includes('prompt');
+                        
+                        // Create a card wrapper based on the tool type
+                        const CardWrapper = ({ children }) => {
+                          if (isPromptTool) {
+                            return (
+                              <div 
+                                key={tool.id || `tool-${index}`}
+                                onClick={() => navigate(`/prompts/${tool.id}`)}
+                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect cursor-pointer"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                              >
+                                {children}
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <a
+                                key={tool.id || `tool-${index}`}
+                                href={formatLink(tool.url || tool.link)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                              >
+                                {children}
+                              </a>
+                            );
+                          }
+                        };
                         
                         return (
-                          <a
-                            key={tool.id || `tool-${index}`}
-                            href={formatLink(tool.url || tool.link)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ai-tool-card glass-effect animate-fade-in shimmer-effect"
-                            style={{ animationDelay: `${index * 100}ms` }}
-                          >
+                          <CardWrapper key={tool.id || `tool-${index}`}>
                             <div className="tool-icon-container">
                               <img 
                                 src={toolImageSrc}
@@ -449,7 +614,11 @@ const AITools = () => {
                             <div className="ai-tool-content">
                               <div className="flex justify-between items-center">
                                 <h3 className="ai-tool-title">{tool.title}</h3>
-                                <FaExternalLinkAlt className="external-link-icon" />
+                                {isPromptTool ? (
+                                  <FaLightbulb className="text-yellow-400 text-lg" />
+                                ) : (
+                                  <FaExternalLinkAlt className="external-link-icon" />
+                                )}
                               </div>
                               <p className="ai-tool-description">{tool.description}</p>
                               <div className="ai-tool-tags">
@@ -466,11 +635,75 @@ const AITools = () => {
                                 ))}
                               </div>
                             </div>
-                          </a>
+                          </CardWrapper>
                         );
                       })
                     )}
                   </div>
+                  
+                  {/* Pagination Controls - Only show when no filters are applied */}
+                  {(!searchTerm && (!selectedTag || selectedTag === 'All')) && filteredTools.length > pagination.pageSize && (
+                    <div className="flex justify-center items-center mt-8 pagination-controls">
+                      <button
+                        onClick={() => setPage(1)}
+                        disabled={pagination.currentPage === 1}
+                        className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        First
+                      </button>
+                      
+                      <button
+                        onClick={() => setPage(pagination.currentPage - 1)}
+                        disabled={pagination.currentPage === 1}
+                        className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        &laquo; Prev
+                      </button>
+                      
+                      <div className="flex items-center mx-4">
+                        <span className="text-white/80">Page</span>
+                        <span className="mx-2 px-3 py-1 bg-white/20 rounded-md text-white font-medium">{pagination.currentPage}</span>
+                        <span className="text-white/80">of {pagination.totalPages}</span>
+                      </div>
+                      
+                      <button
+                        onClick={() => setPage(pagination.currentPage + 1)}
+                        disabled={pagination.currentPage === pagination.totalPages}
+                        className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next &raquo;
+                      </button>
+                      
+                      <button
+                        onClick={() => setPage(pagination.totalPages)}
+                        disabled={pagination.currentPage === pagination.totalPages}
+                        className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Last
+                      </button>
+                      
+                      {/* Page size selector */}
+                      <div className="ml-4 flex items-center">
+                        <span className="text-white/80 mr-2">Show:</span>
+                        <select
+                          value={pagination.pageSize}
+                          onChange={(e) => setPageSize(Number(e.target.value))}
+                          className="px-2 py-1 rounded-md bg-white/10 backdrop-blur-md text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 [&>option]:bg-gray-800 [&>option]:text-white"
+                        >
+                          <option value="12">12</option>
+                          <option value="24">24</option>
+                          <option value="48">48</option>
+                      </select>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Offline indicator */}
+                  {!navigator.onLine && (
+                    <div className="mt-4 p-2 bg-amber-500/20 text-amber-200 rounded-lg text-center">
+                      <p className="text-sm font-medium">You are currently offline. Viewing cached data.</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-12">

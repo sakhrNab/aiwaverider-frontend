@@ -4,7 +4,7 @@
 const VALID_CATEGORIES = [
   // General categories
   'Trends',
-  'Latest Tech',
+  'Latest News & Tutorials',
   'AI Tools',
   'Tutorials',
   'News',

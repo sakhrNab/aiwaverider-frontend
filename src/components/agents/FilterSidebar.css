@@ -1,12 +1,13 @@
 .filter-sidebar {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 300px;
-  padding-bottom: 12px;
+  background-color: rgba(30, 30, 60, 0.3);
+  border-radius: 12px;
+  padding: 1.25rem;
   height: fit-content;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 260px;
+  width: 100%;
   position: sticky;
   top: 20px;
   color: white;
@@ -43,7 +44,7 @@
 }
 
 .filter-header:hover {
-  background-color: #f9fafb;
+  background-color: rgba(139, 92, 246, 0.15);
 }
 
 .filter-header h3 {
@@ -54,7 +55,144 @@
 }
 
 .filter-content {
-  padding: 8px 20px 16px;
+  padding: 0 12px 12px;
+  margin-bottom: 16px;
+}
+
+/* Dropdown selectors */
+.price-range-selector,
+.rating-selector,
+.feature-selector {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.price-range-dropdown,
+.rating-dropdown,
+.feature-dropdown {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: rgba(30, 30, 60, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 14px;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.price-range-dropdown:hover,
+.rating-dropdown:hover,
+.feature-dropdown:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.price-range-dropdown:focus,
+.rating-dropdown:focus,
+.feature-dropdown:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+}
+
+/* Style dropdown options */
+.price-range-dropdown option,
+.rating-dropdown option,
+.feature-dropdown option {
+  background-color: #2D1846;
+  color: white;
+}
+
+/* Tag cloud */
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tag-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tag-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.tag-button.selected {
+  background-color: rgba(139, 92, 246, 0.6);
+  border-color: rgba(139, 92, 246, 0.8);
+}
+
+.tag-button.more-button {
+  background-color: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.expanded-tags {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+.selected-features {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-feature {
+  display: flex;
+  align-items: center;
+  background-color: rgba(139, 92, 246, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.8);
+  color: white;
+  padding: 4px 8px 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+}
+
+.selected-feature button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  margin-left: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.selected-feature button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .filter-option {
@@ -109,12 +247,14 @@
   flex-grow: 1;
   font-size: 14px;
   margin-right: 8px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 1); /* Increased contrast */
+  font-weight: 500; /* Added weight for better readability */
 }
 
 .filter-count {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.85); /* Increased contrast */
   font-size: 13px;
+  font-weight: 500; /* Added weight for better readability */
 }
 
 .stars {
@@ -136,17 +276,28 @@
 }
 
 .load-more {
-  color: #401b9c;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
   cursor: pointer;
-  margin-top: 8px;
-  padding: 8px 0;
+  margin-top: 12px;
+  padding: 8px 12px;
   font-weight: 500;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+  width: 100%;
 }
 
 .load-more:hover {
-  color: #5f3dc4;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .price-inputs {

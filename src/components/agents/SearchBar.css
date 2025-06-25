@@ -13,16 +13,18 @@
   position: relative;
   width: 100%;
   height: 50px;
-  border-radius: 25px;
+  border-radius: 30px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(30, 30, 60, 0.3);
+  backdrop-filter: blur(8px);
   transition: all 0.3s ease;
 }
 
 .search-input-wrapper:focus-within {
-  box-shadow: 0 3px 15px rgba(74, 77, 231, 0.15);
-  border-color: #4a4de7;
+  box-shadow: 0 3px 15px rgba(74, 77, 231, 0.3);
+  border-color: rgba(139, 92, 246, 0.5);
 }
 
 .search-icon {
@@ -42,9 +44,10 @@
   font-size: 16px;
   outline: none;
   height: 100%;
-  color: #333;
-  background: white;
+  color: white;
+  background: transparent;
   text-overflow: ellipsis;
+  caret-color: white;
 }
 
 /* Fix for dark mode - ensure text is visible */
@@ -74,26 +77,28 @@ body.dark .search-icon,
 
 .clear-button {
   position: absolute;
-  right: 60px;
+  right: 70px;
   top: 50%;
   transform: translateY(-50%);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   cursor: pointer;
-  color: #999;
-  width: 20px;
-  height: 20px;
+  color: white;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: all 0.2s ease;
   z-index: 2;
+  font-size: 12px;
 }
 
 .clear-button:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #333;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  transform: translateY(-50%) scale(1.1);
 }
 
 /* Dark mode for clear button */
@@ -113,9 +118,9 @@ body.dark .clear-button:hover,
 }
 
 .search-button {
-  width: 50px;
+  width: 60px;
   height: 100%;
-  background: #4a4de7;
+  background: #4e46e5;
   color: white;
   border: none;
   cursor: pointer;
@@ -123,10 +128,12 @@ body.dark .clear-button:hover,
   align-items: center;
   justify-content: center;
   transition: background 0.2s ease;
+  font-size: 18px;
 }
 
 .search-button:hover {
-  background: #3a3dc7;
+  background: #5d54f0;
+  transform: scale(1.05);
 }
 
 @media (max-width: 768px) {

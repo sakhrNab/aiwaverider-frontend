@@ -25,6 +25,10 @@ const EmailComposer = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [selectedAll, setSelectedAll] = useState(false);
   
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   // Loading state
   const [loading, setLoading] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -34,7 +38,7 @@ const EmailComposer = () => {
     loadUsers();
   }, []);
   
-  // Filter users based on search query
+  // Filter users based on search query and pagination
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredUsers(allUsers);
@@ -48,6 +52,7 @@ const EmailComposer = () => {
       );
       setFilteredUsers(filtered);
     }
+    setCurrentPage(1); // Reset to first page when search changes
   }, [searchQuery, allUsers]);
   
   // Load users from the API
@@ -113,14 +118,30 @@ const EmailComposer = () => {
     });
   };
   
-  // Handle select all users
-  const handleSelectAll = () => {
+  // Toggle select all users
+  const toggleSelectAll = () => {
     if (selectedAll) {
       setSelectedUsers([]);
     } else {
-      setSelectedUsers(filteredUsers.map(user => user.id));
+      setSelectedUsers(currentPageUsers.map(user => user.id));
     }
     setSelectedAll(!selectedAll);
+  };
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPageUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    setSelectedAll(false);
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1);
   };
   
   // Handle search input change
@@ -406,38 +427,57 @@ const EmailComposer = () => {
             <h2><FaUsers /> Select Recipients</h2>
             
             <div className="recipient-actions">
-              <div className="search-bar">
-                <FaSearch />
-                <input
-                  type="text"
-                  placeholder="Search users..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  aria-label="Search users"
-                />
+              <div className="search-container">
+                <div className="search-wrapper">
+                  <FaSearch className="search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
+                </div>
+                <div className="pagination-controls">
+                  <div className="items-per-page">
+                    <span>Show: </span>
+                    <select 
+                      value={itemsPerPage} 
+                      onChange={handleItemsPerPageChange}
+                      className="page-selector"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </div>
+                  <button 
+                    className={`select-all-btn ${selectedAll ? 'active' : ''}`} 
+                    onClick={toggleSelectAll}
+                    type="button"
+                  >
+                    {selectedAll ? 'Deselect All' : 'Select All'}
+                  </button>
+                </div>
               </div>
-              
-              <button 
-                className="select-all-button"
-                onClick={handleSelectAll}
-                aria-label={selectedAll ? "Deselect all users" : "Select all users"}
-              >
-                {selectedAll ? 'Deselect All' : 'Select All'}
-              </button>
             </div>
             
-            <div className="recipients-list">
+            <div className="user-list">
               {loadingUsers ? (
                 <div className="loading-users">
-                  <HashLoader color="#4FD1C5" size={30} />
-                  <p>Loading users...</p>
+                  <HashLoader size={30} color="#4FD1C5" />
+                  <span>Loading users...</span>
                 </div>
               ) : filteredUsers.length === 0 ? (
-                <div className="no-users">
-                  <p>No users found</p>
-                </div>
+                <div className="no-users">No users found</div>
               ) : (
-                filteredUsers.map(user => (
+                <>
+                  <div className="user-list-header">
+                    <div className="user-avatar"></div>
+                    <div className="user-name">Name</div>
+                    <div className="user-email">Email</div>
+                  </div>
+                  {currentPageUsers.map(user => (
                   <div 
                     key={user.id} 
                     className={`recipient-item ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
@@ -451,22 +491,21 @@ const EmailComposer = () => {
                       }
                     }}
                   >
-                    <div className="user-item-avatar">
+                    <div className="user-avatar">
                       {user.photoURL ? (
-                        <img src={user.photoURL} alt={formatUserName(user)} />
+                        <img src={user.photoURL} alt={formatUserName(user)} className="avatar-img" />
                       ) : (
                         <div className="avatar-placeholder">
                           {user.firstName?.charAt(0) || user.username?.charAt(0) || '?'}
                         </div>
                       )}
                     </div>
-                    <div className="user-info">
-                      <div className="user-name">{formatUserName(user)}</div>
-                      <div className="user-email">{user.email}</div>
-                    </div>
+                    <div className="user-name">{formatUserName(user)}</div>
+                    <div className="user-email">{user.email}</div>
                     <div className="select-indicator"></div>
                   </div>
-                ))
+                ))}
+                </>
               )}
             </div>
             
@@ -474,6 +513,75 @@ const EmailComposer = () => {
               {selectedUsers.length} recipients selected
             </div>
           </div>
+          
+          {/* Pagination */}
+          {filteredUsers.length > 10 && (
+            <div className="pagination">
+              <button 
+                onClick={() => handlePageChange(1)} 
+                disabled={currentPage === 1}
+                className="pagination-button"
+              >
+                ««
+              </button>
+              <button 
+                onClick={() => handlePageChange(currentPage - 1)} 
+                disabled={currentPage === 1}
+                className="pagination-button"
+              >
+                «
+              </button>
+              
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                // Show first page, last page, current page, and 1 page before/after current
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`pagination-button ${currentPage === pageNum ? 'active' : ''}`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              
+              <button 
+                onClick={() => handlePageChange(currentPage + 1)} 
+                disabled={currentPage === totalPages}
+                className="pagination-button"
+              >
+                »
+              </button>
+              <button 
+                onClick={() => handlePageChange(totalPages)} 
+                disabled={currentPage === totalPages}
+                className="pagination-button"
+              >
+                »»
+              </button>
+              
+              <div className="pagination-info">
+                {filteredUsers.length > 0 ? (
+                  <span>
+                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredUsers.length)} of {filteredUsers.length} users
+                  </span>
+                ) : (
+                  <span>No users found</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>

@@ -1,8 +1,10 @@
 import React from 'react';
-import { FaLinkedin, FaGithub, FaTwitter, FaGlobe, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools } from 'react-icons/fa';
+import { FaLinkedin, FaGithub, FaTwitter, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
 import tazProfileImg from '../assets/taz-profile.jpg';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faInstagram, faTiktok} from '@fortawesome/free-brands-svg-icons';
 
 const About = () => {
   const { darkMode } = useTheme();
@@ -26,7 +28,7 @@ const About = () => {
       </section>
 
       {/* Mission Section */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
             <h2 className={`text-3xl font-bold mb-8 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Our Mission</h2>
@@ -77,7 +79,7 @@ const About = () => {
       </section>
 
       {/* Founders Section */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <h2 className={`text-3xl font-bold mb-12 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Meet the Founders</h2>
           
@@ -93,17 +95,17 @@ const About = () => {
                   />
                 </div>
                 <h3 className="text-3xl font-bold mb-1 text-center">Sakhr Nabil</h3>
-                <p className={`text-xl mb-4 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Co-Founder & CEO</p>
+                <p className={`text-xl mb-4 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Co-Founder & CEO/CTO</p>
                 <div className="flex justify-center space-x-6 mb-6">
-                  <a href="https://linkedin.com/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl`}>
+                  <a href="https://www.linkedin.com/in/sakhr-nabil-al-absi/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl`}>
                     <FaLinkedin />
                   </a>
-                  <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} text-2xl`}>
+                  <a href="https://github.com/sakhrNab" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} text-2xl`}>
                     <FaGithub />
                   </a>
-                  <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-400'} text-2xl`}>
-                    <FaTwitter />
-                  </a>
+                  <a href="https://www.tiktok.com/@ai.wave.rider" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-pink-600">
+          <FontAwesomeIcon icon={faTiktok} />
+        </a>
                 </div>
               </div>
               <p className="text-base leading-relaxed mb-4">
@@ -128,17 +130,14 @@ const About = () => {
                   />
                 </div>
                 <h3 className="text-3xl font-bold mb-1 text-center">Mutaz Awn</h3>
-                <p className={`text-xl mb-4 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Co-Founder & CTO</p>
+                <p className={`text-xl mb-4 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Co-Founder & CEO</p>
                 <div className="flex justify-center space-x-6 mb-6">
-                  <a href="https://linkedin.com/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl`}>
+                  <a href="https://www.linkedin.com/in/taz-awn-878940120/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl`}>
                     <FaLinkedin />
                   </a>
-                  <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} text-2xl`}>
-                    <FaGithub />
-                  </a>
-                  <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-400'} text-2xl`}>
-                    <FaTwitter />
-                  </a>
+        <a href="https://www.instagram.com/tazawn/" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-pink-600">
+          <FontAwesomeIcon icon={faInstagram} />
+        </a>
                 </div>
               </div>
               <p className="text-base leading-relaxed mb-4">
@@ -222,7 +221,7 @@ const About = () => {
       </section>
 
       {/* Contact Section */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className={`text-3xl font-bold mb-8 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Get in Touch</h2>

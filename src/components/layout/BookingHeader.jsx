@@ -53,16 +53,18 @@ const BookingHeader = () => {
           <p className="booking-subtitle">{headerText.subtitle}</p>
         </div>
         
-        <div className="booking-actions">
-          <a href={calendlyLink} 
-             target="_blank" 
-             rel="noopener noreferrer"
-             className="booking-button shimmer-effect heartbeat-pulse">
-            <FaCalendarAlt className="booking-icon" />
-            <span>Book a Training Session</span>
-            <FaArrowRight className="arrow-icon" />
-          </a>
-        </div>
+          <div className="mt-4 md:mt-0">
+            <a 
+              href="https://calendly.com/aiwaverider8/30min" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse"
+            >
+              <FaCalendarAlt className="mr-2" />
+              Book a FREE Consultation Session
+              <FaArrowRight className="ml-2" />
+            </a>
+          </div>
       </div>
       
       <div className="booking-benefits">

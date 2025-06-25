@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaTimes, FaPaperPlane, FaRedo, FaCommentAlt } from 'react-icons/fa';
+import { FaTimes, FaPaperPlane, FaRedo } from 'react-icons/fa';
 import chatIcon from '../../assets/chat-icon.jpg';
+import chatApi from '../../api/chat/chatApi';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const ChatBot = () => {
+  const { darkMode } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { 
@@ -45,12 +48,17 @@ const ChatBot = () => {
     if (lastUserMessageIndex !== -1) {
       const lastUserMessage = messages[messages.length - 1 - lastUserMessageIndex];
       // Remove the error message
-      setMessages(prevMessages => prevMessages.filter((_, index) => index !== prevMessages.length - 1));
+      setMessages(prevMessages => {
+        // Filter out the error message
+        const updatedMessages = prevMessages.filter(msg => msg.role !== 'error');
+        return updatedMessages;
+      });
       // Set loading state
       setIsLoading(true);
       setHasError(false);
       // Send the message again
-      sendMessageToAPI(lastUserMessage.content, messages.filter((_, index) => index !== prevMessages.length - 1));
+      const filteredMessages = messages.filter(msg => msg.role !== 'error');
+      sendMessageToAPI(lastUserMessage.content, filteredMessages);
     }
   };
 
@@ -58,31 +66,19 @@ const ChatBot = () => {
     try {
       console.log('Sending chat message to API...');
       
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: currentMessages.filter(msg => msg.role !== 'error'),
-        }),
-      });
+      // Use the chatApi service instead of direct fetch
+      const response = await chatApi.sendMessage(currentMessages.filter(msg => msg.role !== 'error'));
       
-      console.log('API Response Status:', response.status);
+      console.log('API Response:', response);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to get response from chat API');
       }
-      
-      const data = await response.json();
-      console.log('API Response Data:', data);
       
       // Add assistant response to chat
       setMessages(prevMessages => [...prevMessages, { 
         role: 'assistant', 
-        content: data.success ? data.message : 'Sorry, I encountered an error. Please try again.'
+        content: response.message || 'I\'m not sure how to respond to that.'
       }]);
       setHasError(false);
     } catch (error) {
@@ -111,9 +107,86 @@ const ChatBot = () => {
     setIsLoading(true);
     setHasError(false);
     
-    // Call the API
-    await sendMessageToAPI(inputMessage, [...messages, userMessage]);
+    try {
+      // Call the API with the updated messages array including the new user message
+      await sendMessageToAPI(inputMessage, [...messages, userMessage]);
+    } catch (error) {
+      console.error('Error in sendMessage:', error);
+      // If there's an error, we'll handle it in sendMessageToAPI
+    }
   };
+
+  // Dynamic styles based on theme
+  const getChatContainerStyle = () => ({
+    position: 'fixed',
+    bottom: '90px',
+    right: '20px',
+    width: '350px',
+    height: '500px',
+    backgroundColor: darkMode ? '#1f2937' : 'white',
+    borderRadius: '10px',
+    boxShadow: darkMode 
+      ? '0 5px 15px rgba(0,0,0,0.4)' 
+      : '0 5px 15px rgba(0,0,0,0.2)',
+    display: 'flex',
+    flexDirection: 'column',
+    zIndex: 1000,
+    overflow: 'hidden',
+    animation: 'slideUp 0.3s ease',
+    border: darkMode ? '1px solid #374151' : 'none'
+  });
+
+  const getMessageStyle = (message) => ({
+    alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
+    backgroundColor: message.role === 'user' 
+      ? (darkMode ? '#3b82f6' : '#4FD1C5')
+      : message.role === 'error' 
+        ? (darkMode ? '#dc2626' : '#ffeded') 
+        : (darkMode ? '#374151' : '#f0f0f0'),
+    color: message.role === 'user'
+      ? 'white'
+      : message.role === 'error' 
+        ? (darkMode ? 'white' : '#dc2626') 
+        : (darkMode ? '#f3f4f6' : '#333'),
+    padding: '10px 15px',
+    borderRadius: message.role === 'user' ? '18px 18px 0 18px' : '18px 18px 18px 0',
+    maxWidth: '80%',
+    wordBreak: 'break-word',
+    boxShadow: message.role === 'user' 
+      ? (darkMode ? '0 2px 8px rgba(59, 130, 246, 0.3)' : '0 2px 8px rgba(79, 209, 197, 0.3)')
+      : 'none'
+  });
+
+  const getInputStyle = () => ({
+    flex: 1,
+    padding: '10px 15px',
+    borderRadius: '20px',
+    border: darkMode ? '1px solid #4b5563' : '1px solid #ddd',
+    outline: 'none',
+    fontSize: '14px',
+    color: darkMode ? '#f3f4f6' : '#333',
+    backgroundColor: darkMode ? '#374151' : '#ffffff',
+    transition: 'all 0.2s ease'
+  });
+
+  const getInputContainerStyle = () => ({
+    borderTop: darkMode ? '1px solid #374151' : '1px solid #eee',
+    backgroundColor: darkMode ? '#1f2937' : 'transparent',
+    padding: '15px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px'
+  });
+
+  const getMessagesContainerStyle = () => ({
+    flex: 1,
+    overflowY: 'auto',
+    padding: '15px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    backgroundColor: darkMode ? '#1f2937' : 'transparent'
+  });
 
   return (
     <>
@@ -148,23 +221,7 @@ const ChatBot = () => {
       
       {/* Chat Interface */}
       {isOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '90px',
-            right: '20px',
-            width: '350px',
-            height: '500px',
-            backgroundColor: 'white',
-            borderRadius: '10px',
-            boxShadow: '0 5px 15px rgba(0,0,0,0.2)',
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 1000,
-            overflow: 'hidden',
-            animation: 'slideUp 0.3s ease'
-          }}
-        >
+        <div style={getChatContainerStyle()}>
           {/* Chat Header */}
           <div
             style={{
@@ -194,30 +251,9 @@ const ChatBot = () => {
           </div>
           
           {/* Chat Messages */}
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '15px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px'
-            }}
-          >
+          <div style={getMessagesContainerStyle()}>
             {messages.map((message, index) => (
-              <div
-                key={index}
-                style={{
-                  alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
-                  backgroundColor: message.role === 'user' ? '#e2f8f5' 
-                    : message.role === 'error' ? '#ffeded' : '#f0f0f0',
-                  color: message.role === 'error' ? '#d32f2f' : '#333',
-                  padding: '10px 15px',
-                  borderRadius: message.role === 'user' ? '18px 18px 0 18px' : '18px 18px 18px 0',
-                  maxWidth: '80%',
-                  wordBreak: 'break-word'
-                }}
-              >
+              <div key={index} style={getMessageStyle(message)}>
                 {message.content}
                 {message.role === 'error' && (
                   <button
@@ -225,7 +261,7 @@ const ChatBot = () => {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#d32f2f',
+                      color: 'white',
                       cursor: 'pointer',
                       marginTop: '8px',
                       display: 'flex',
@@ -244,8 +280,8 @@ const ChatBot = () => {
               <div
                 style={{
                   alignSelf: 'flex-start',
-                  backgroundColor: '#f0f0f0',
-                  color: '#333',
+                  backgroundColor: darkMode ? '#374151' : '#f0f0f0',
+                  color: darkMode ? '#f3f4f6' : '#333',
                   padding: '10px 15px',
                   borderRadius: '18px 18px 18px 0',
                   maxWidth: '80%'
@@ -262,30 +298,14 @@ const ChatBot = () => {
           </div>
           
           {/* Chat Input */}
-          <div
-            style={{
-              borderTop: '1px solid #eee',
-              padding: '15px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}
-          >
+          <div style={getInputContainerStyle()}>
             <input
               type="text"
               value={inputMessage}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
-              style={{
-                flex: 1,
-                padding: '10px 15px',
-                borderRadius: '20px',
-                border: '1px solid #ddd',
-                outline: 'none',
-                fontSize: '14px',
-                color: '#333' // Dark text color
-              }}
+              style={getInputStyle()}
               disabled={isLoading}
             />
             <button
@@ -332,7 +352,7 @@ const ChatBot = () => {
         .typing-indicator span {
           width: 8px;
           height: 8px;
-          background-color: #999;
+          background-color: ${darkMode ? '#9ca3af' : '#999'};
           border-radius: 50%;
           animation: typing 1s infinite ease-in-out;
         }
@@ -355,6 +375,31 @@ const ChatBot = () => {
           }
           50% {
             transform: translateY(-5px);
+          }
+        }
+
+        /* Enhanced input focus styles for better visibility */
+        input:focus {
+          box-shadow: 0 0 0 2px ${darkMode ? 'rgba(59, 130, 246, 0.5)' : 'rgba(79, 209, 197, 0.5)'} !important;
+          border-color: ${darkMode ? '#3b82f6' : '#4FD1C5'} !important;
+        }
+
+        /* Ensure placeholder text is visible in both themes */
+        input::placeholder {
+          color: ${darkMode ? '#9ca3af' : '#6b7280'} !important;
+          opacity: 1 !important;
+        }
+
+        /* Mobile-specific fixes */
+        @media (max-width: 480px) {
+          input {
+            -webkit-appearance: none !important;
+            -webkit-text-fill-color: ${darkMode ? '#f3f4f6' : '#333'} !important;
+            background-color: ${darkMode ? '#374151' : '#ffffff'} !important;
+          }
+          
+          input:focus {
+            -webkit-text-fill-color: ${darkMode ? '#f3f4f6' : '#333'} !important;
           }
         }
       `}</style>

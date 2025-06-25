@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HashLoader } from 'react-spinners';
 import ProtectedRoute from './ProtectedRoute';
 
@@ -17,9 +17,14 @@ const About = lazy(() => import('../pages/AboutPage'));
 const LatestTech = lazy(() => import('../pages/LatestTechPage'));
 const Checkout = lazy(() => import('../pages/CheckoutPage'));
 const ThankYou = lazy(() => import('../pages/ThankYouPage'));
+const MonetizationPaths = lazy(() => import('../pages/MonetizationPathsPage'));
+const AIObstacleSolutions = lazy(() => import('../pages/AIObstacleSolutionsPage'));
 const CheckoutSuccess = lazy(() => import('../components/checkout/CheckoutSuccessDisplay'));
 const PostDetail = lazy(() => import('../components/posts/PostDetail'));
 const CreatePost = lazy(() => import('../components/posts/CreatePost'));
+const PromptPage = lazy(() => import('../pages/PromptPage'));
+const ApiTestPage = lazy(() => import('../pages/ApiTestPage'));
+const VideosPage = lazy(() => import('../pages/VideosPage'));
 
 // Admin pages
 const Dashboard = lazy(() => import('../pages/admin/AdminDashboardPage'));
@@ -31,6 +36,9 @@ const Pricing = lazy(() => import('../pages/admin/AdminPricingPage'));
 const AIToolsManager = lazy(() => import('../components/admin/ai-tools/AIToolsManager'));
 const EmailManagement = lazy(() => import('../pages/admin/AdminEmailManagementPage'));
 const EmailComposer = lazy(() => import('../pages/admin/AdminEmailComposerPage'));
+const AdminPromptsPage = lazy(() => import('../pages/admin/AdminPromptsPage'));
+const AdminPromptEditPage = lazy(() => import('../pages/admin/AdminPromptEditPage'));
+const AdminVideosPage = lazy(() => import('../pages/admin/AdminVideosPage'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -52,6 +60,8 @@ const withSuspense = (Component) => (
 );
 
 const AppRoutes = () => {
+  const location = useLocation();
+
   return (
     <Routes>
       {/* Public Routes */}
@@ -61,13 +71,22 @@ const AppRoutes = () => {
       <Route path="/profile" element={withSuspense(<Profile />)} />
       <Route path="/agents" element={withSuspense(<Agents />)} />
       <Route path="/ai-tools" element={withSuspense(<AITools />)} />
+      <Route path="/videos" element={withSuspense(<VideosPage />)} />
       <Route path="/latest-tech" element={withSuspense(<LatestTech />)} />
       <Route path="/about" element={withSuspense(<About />)} />
+      <Route path="/monetization-paths" element={withSuspense(<MonetizationPaths />)} />
+      <Route path="/ai-obstacle-solutions" element={withSuspense(<AIObstacleSolutions />)} />
       <Route path="/agents/:agentId" element={withSuspense(<AgentDetail />)} />
       <Route path="/product/:agentId" element={withSuspense(<AgentDetail />)} />
       <Route path="/checkout" element={withSuspense(<Checkout />)} />
       <Route path="/thankyou" element={withSuspense(<ThankYou />)} />
       <Route path="/checkout/success" element={withSuspense(<CheckoutSuccess />)} />
+      
+      {/* Prompt Pages */}
+      <Route path="/prompts/:id" element={withSuspense(<PromptPage />)} />
+      
+      {/* API Test Page - Development tool */}
+      <Route path="/api-test" element={withSuspense(<ApiTestPage />)} />
 
       {/* Protected: Admin only */}
       <Route
@@ -169,9 +188,37 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      
+      <Route
+        path="/admin/prompts"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            {withSuspense(<AdminPromptsPage />)}
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/prompts/:id"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            {withSuspense(<AdminPromptEditPage />)}
+          </ProtectedRoute>
+        }
+      />
 
       {/* Post Detail */}
       <Route path="/posts/:postId" element={withSuspense(<PostDetail />)} />
+
+      {/* Admin Videos */}
+      <Route
+        path="/admin/videos"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            {withSuspense(<AdminVideosPage />)}
+          </ProtectedRoute>
+        }
+      />
 
       {/* Fallback */}
       <Route path="*" element={<HomePage />} />

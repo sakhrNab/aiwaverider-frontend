@@ -43,22 +43,48 @@ const timeoutPromise = (ms) => {
  */
 const handleErrorResponse = async (response) => {
   let errorData = {};
+  let responseText = '';
   
   try {
-    // Try to parse the error response as JSON
-    errorData = await response.json();
+    // Try to get the response text first
+    responseText = await response.text();
+    console.log(`Error response (${response.status}):`, responseText);
+    
+    // Try to parse as JSON if possible
+    if (responseText) {
+      try {
+        errorData = JSON.parse(responseText);
+      } catch (parseError) {
+        // If JSON parsing fails, use the text as the message
+        errorData = {
+          message: responseText,
+          status: response.status,
+          statusText: response.statusText
+        };
+      }
+    } else {
+      errorData = {
+        status: response.status,
+        message: response.statusText || 'Unknown error'
+      };
+    }
   } catch (e) {
-    // If parsing fails, create a basic error object
+    console.error('Error parsing error response:', e);
+    // If everything fails, create a basic error object
     errorData = {
       status: response.status,
-      message: response.statusText || 'Unknown error'
+      message: response.statusText || 'Unknown error',
+      originalError: e.message
     };
   }
+  
+  console.log('Parsed error data:', errorData);
   
   // Create enhanced error object
   const error = new Error(errorData.message || `Request failed with status ${response.status}`);
   error.status = response.status;
   error.statusText = response.statusText;
+  error.response = { data: errorData };
   error.data = errorData;
   error.isApiError = true;
   

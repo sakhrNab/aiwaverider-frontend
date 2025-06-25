@@ -60,6 +60,185 @@ const useAgentStore = create(
       lastLoadTime: null, // Track when data was last loaded
       cacheExpiry: 30 * 60 * 1000, // Increase cache to 30 minutes
       
+      // Review management actions
+      addReviewToAgent: (agentId, newReview) => {
+        console.log(`Adding review to agent ${agentId} in store`, newReview);
+        const { agents, allAgents } = get();
+        
+        // Update the main agents array
+        const updatedAgents = agents.map(agent => {
+          if (agent.id === agentId || agent._id === agentId) {
+            // Add the new review to the reviews array
+            const updatedReviews = [...(agent.reviews || []), newReview];
+            
+            // Recalculate the rating
+            let updatedRating = { ...agent.rating } || { average: 0, count: 0 };
+            if (updatedReviews.length > 0) {
+              const sum = updatedReviews.reduce((acc, review) => acc + (parseFloat(review.rating) || 0), 0);
+              updatedRating.average = sum / updatedReviews.length;
+              updatedRating.count = updatedReviews.length;
+            }
+            
+            return { 
+              ...agent, 
+              reviews: updatedReviews,
+              rating: updatedRating
+            };
+          }
+          return agent;
+        });
+        
+        // Also update the allAgents array
+        const updatedAllAgents = allAgents.map(agent => {
+          if (agent.id === agentId || agent._id === agentId) {
+            // Add the new review to the reviews array
+            const updatedReviews = [...(agent.reviews || []), newReview];
+            
+            // Recalculate the rating
+            let updatedRating = { ...agent.rating } || { average: 0, count: 0 };
+            if (updatedReviews.length > 0) {
+              const sum = updatedReviews.reduce((acc, review) => acc + (parseFloat(review.rating) || 0), 0);
+              updatedRating.average = sum / updatedReviews.length;
+              updatedRating.count = updatedReviews.length;
+            }
+            
+            return { 
+              ...agent, 
+              reviews: updatedReviews,
+              rating: updatedRating
+            };
+          }
+          return agent;
+        });
+        
+        // Update the store
+        set({
+          agents: updatedAgents,
+          allAgents: updatedAllAgents
+        });
+      },
+      
+      // Update all reviews for an agent (for refreshing page)
+      updateAgentReviews: (agentId, reviews) => {
+        console.log(`Updating all reviews for agent ${agentId} in store`, reviews.length);
+        const { agents, allAgents } = get();
+        
+        // Update the main agents array
+        const updatedAgents = agents.map(agent => {
+          if (agent.id === agentId || agent._id === agentId) {
+            // Calculate new rating average
+            let updatedRating = { ...agent.rating } || { average: 0, count: 0 };
+            if (reviews.length > 0) {
+              const sum = reviews.reduce((acc, review) => acc + (parseFloat(review.rating) || 0), 0);
+              updatedRating.average = sum / reviews.length;
+              updatedRating.count = reviews.length;
+            } else {
+              updatedRating.average = 0;
+              updatedRating.count = 0;
+            }
+            
+            return { 
+              ...agent, 
+              reviews: reviews,
+              rating: updatedRating
+            };
+          }
+          return agent;
+        });
+        
+        // Also update the allAgents array
+        const updatedAllAgents = allAgents.map(agent => {
+          if (agent.id === agentId || agent._id === agentId) {
+            // Calculate new rating average
+            let updatedRating = { ...agent.rating } || { average: 0, count: 0 };
+            if (reviews.length > 0) {
+              const sum = reviews.reduce((acc, review) => acc + (parseFloat(review.rating) || 0), 0);
+              updatedRating.average = sum / reviews.length;
+              updatedRating.count = reviews.length;
+            } else {
+              updatedRating.average = 0;
+              updatedRating.count = 0;
+            }
+            
+            return { 
+              ...agent, 
+              reviews: reviews,
+              rating: updatedRating
+            };
+          }
+          return agent;
+        });
+        
+        // Update the store
+        set({
+          agents: updatedAgents,
+          allAgents: updatedAllAgents
+        });
+      },
+      
+      removeReviewFromAgent: (agentId, reviewId) => {
+        console.log(`Removing review ${reviewId} from agent ${agentId} in store`);
+        const { agents, allAgents } = get();
+        
+        // Update the main agents array
+        const updatedAgents = agents.map(agent => {
+          if (agent.id === agentId || agent._id === agentId) {
+            // Filter out the deleted review
+            const updatedReviews = agent.reviews?.filter(review => review.id !== reviewId) || [];
+            
+            // Recalculate the rating
+            let updatedRating = { ...agent.rating } || { average: 0, count: 0 };
+            if (updatedReviews.length > 0) {
+              const sum = updatedReviews.reduce((acc, review) => acc + (parseFloat(review.rating) || 0), 0);
+              updatedRating.average = sum / updatedReviews.length;
+              updatedRating.count = updatedReviews.length;
+            } else {
+              updatedRating.average = 0;
+              updatedRating.count = 0;
+            }
+            
+            return { 
+              ...agent, 
+              reviews: updatedReviews,
+              rating: updatedRating
+            };
+          }
+          return agent;
+        });
+        
+        // Also update the allAgents array
+        const updatedAllAgents = allAgents.map(agent => {
+          if (agent.id === agentId || agent._id === agentId) {
+            // Filter out the deleted review
+            const updatedReviews = agent.reviews?.filter(review => review.id !== reviewId) || [];
+            
+            // Recalculate the rating
+            let updatedRating = { ...agent.rating } || { average: 0, count: 0 };
+            if (updatedReviews.length > 0) {
+              const sum = updatedReviews.reduce((acc, review) => acc + (parseFloat(review.rating) || 0), 0);
+              updatedRating.average = sum / updatedReviews.length;
+              updatedRating.count = updatedReviews.length;
+            } else {
+              updatedRating.average = 0;
+              updatedRating.count = 0;
+            }
+            
+            return { 
+              ...agent, 
+              reviews: updatedReviews,
+              rating: updatedRating
+            };
+          }
+          return agent;
+        });
+        
+        // Update the store
+        set({
+          agents: updatedAgents,
+          allAgents: updatedAllAgents
+        });
+      },
+      
       // Actions
       setAgents: (agents) => set({ agents }),
       setAllAgents: (allAgents) => set({ allAgents }),
@@ -118,6 +297,8 @@ const useAgentStore = create(
         
         const tagCount = {};
         const featureCount = {};
+        let othersTagCount = 0;
+        let othersFeatureCount = 0;
         
         // Use more efficient loops for better performance
         for (let i = 0; i < agents.length; i++) {
@@ -125,22 +306,45 @@ const useAgentStore = create(
           
           // For tags, use category or tags array if available
           if (agent.category) {
-            const category = agent.category;
-            tagCount[category] = (tagCount[category] || 0) + 1;
+            if (agent.category.trim()) {
+              const category = agent.category.trim();
+              tagCount[category] = (tagCount[category] || 0) + 1;
+            } else {
+              // Count empty categories as "Others"
+              othersTagCount++;
+            }
           }
           
+          let hasValidTag = false;
           if (agent.tags && Array.isArray(agent.tags)) {
             for (let j = 0; j < agent.tags.length; j++) {
               const tag = agent.tags[j];
-              tagCount[tag] = (tagCount[tag] || 0) + 1;
+              if (tag && typeof tag === 'string' && tag.trim()) {
+                const trimmedTag = tag.trim();
+                tagCount[trimmedTag] = (tagCount[trimmedTag] || 0) + 1;
+                hasValidTag = true;
+              }
+            }
+            // If agent has tags array but all are empty, count as "Others"
+            if (agent.tags.length > 0 && !hasValidTag) {
+              othersTagCount++;
             }
           }
           
           // For features, check for specific properties or use features array
+          let hasValidFeature = false;
           if (agent.features && Array.isArray(agent.features)) {
             for (let j = 0; j < agent.features.length; j++) {
               const feature = agent.features[j];
-              featureCount[feature] = (featureCount[feature] || 0) + 1;
+              if (feature && typeof feature === 'string' && feature.trim()) {
+                const trimmedFeature = feature.trim();
+                featureCount[trimmedFeature] = (featureCount[trimmedFeature] || 0) + 1;
+                hasValidFeature = true;
+              }
+            }
+            // If agent has features array but all are empty, count as "Others"
+            if (agent.features.length > 0 && !hasValidFeature) {
+              othersFeatureCount++;
             }
           }
           
@@ -161,6 +365,15 @@ const useAgentStore = create(
                agent.price.includes('subscription'))) {
             featureCount['Subscription'] = (featureCount['Subscription'] || 0) + 1;
           }
+        }
+        
+        // Add the "Others" category if there are any empty/invalid tags or features
+        if (othersTagCount > 0) {
+          tagCount['Others'] = othersTagCount;
+        }
+        
+        if (othersFeatureCount > 0) {
+          featureCount['Others'] = othersFeatureCount;
         }
         
         set({ tagCounts: tagCount, featureCounts: featureCount });
@@ -286,6 +499,22 @@ const useAgentStore = create(
                        agent.price.includes('subscription'));
               }
               
+              // Special handling for "Others" feature
+              if (feature === 'Others') {
+                // Check if agent has no features array or empty features array
+                if (!agent.features || !Array.isArray(agent.features) || agent.features.length === 0) {
+                  return true;
+                }
+                
+                // Check if all features in the array are empty strings
+                if (Array.isArray(agent.features) && agent.features.length > 0) {
+                  const allEmpty = agent.features.every(f => !f || !f.trim());
+                  if (allEmpty) return true;
+                }
+                
+                return false;
+              }
+              
               // Check other features in the features array
               return agent.features && 
                     Array.isArray(agent.features) && 
@@ -295,17 +524,48 @@ const useAgentStore = create(
           console.log(`After feature filters (${selectedFeatures.join(', ')}):`, filteredResults.length, 'agents');
         }
         
-        // Apply search query
+        // Apply search query - highly optimized for performance
         if (searchQuery && searchQuery.trim() !== '') {
           const query = searchQuery.toLowerCase().trim();
-          filteredResults = filteredResults.filter(agent => 
-            (agent.name && agent.name.toLowerCase().includes(query)) ||
-            (agent.title && agent.title.toLowerCase().includes(query)) ||
-            (agent.description && agent.description.toLowerCase().includes(query)) ||
-            (agent.category && agent.category.toLowerCase().includes(query)) ||
-            (agent.creator && agent.creator.name && 
-              agent.creator.name.toLowerCase().includes(query))
-          );
+          
+          // Pre-compute lowercase values to avoid repeated toLowerCase() calls
+          // This significantly improves performance for large datasets
+          const searchCache = new Map();
+          
+          filteredResults = filteredResults.filter(agent => {
+            // Check cache first to avoid redundant calculations
+            if (searchCache.has(agent.id)) {
+              return searchCache.get(agent.id);
+            }
+            
+            // Quick check for exact matches in name (highest priority)
+            const name = agent.name ? agent.name.toLowerCase() : '';
+            if (name === query) {
+              searchCache.set(agent.id, true);
+              return true;
+            }
+            
+            // Check name and title first (most common matches)
+            if (name.includes(query) || 
+                (agent.title && agent.title.toLowerCase().includes(query))) {
+              searchCache.set(agent.id, true);
+              return true;
+            }
+            
+            // Only check these other fields if the above didn't match
+            const isMatch = 
+              (agent.category && agent.category.toLowerCase().includes(query)) ||
+              (agent.creator && agent.creator.name && 
+                agent.creator.name.toLowerCase().includes(query)) ||
+              (agent.description && agent.description.toLowerCase().includes(query));
+            
+            searchCache.set(agent.id, isMatch);
+            return isMatch;
+          });
+          
+          // Clear cache after filtering to prevent memory leaks
+          setTimeout(() => searchCache.clear(), 1000);
+          
           console.log(`After search query "${query}":`, filteredResults.length, 'agents');
         }
         

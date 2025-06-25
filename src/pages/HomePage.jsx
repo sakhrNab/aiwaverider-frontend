@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { HashLoader } from 'react-spinners';
-import { FaRobot, FaTools, FaLightbulb, FaCalendarAlt, FaArrowRight, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion } from 'react-icons/fa';
+import { FaRobot, FaTools, FaLightbulb, FaCalendarAlt, FaArrowRight, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion, FaDiscord } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import '../styles/animations.css'; // Import animations
+import FloatingNav from '../components/navigation/FloatingNav';
+// import YouAreYouWant from '../components/sections/YouAreYouWant';
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
 import tazProfileImg from '../assets/taz-profile.jpg';
 import simpleToSellImg from '../assets/simple-to-sell.png';
@@ -11,8 +14,35 @@ import makingAiEasyImg from '../assets/making-ai-easy.png';
 
 const HomePage = () => {
   const [loading, setLoading] = useState(true);
-  const { darkMode } = useTheme();
   
+  // Create refs for all sections we want to navigate to
+  const topRef = useRef(null);
+  const obstaclesRef = useRef(null);
+  const whoItsForRef = useRef(null);
+  const faqRef = useRef(null);
+  const monetizationPathsRef = useRef(null);
+  
+  const { darkMode } = useTheme();
+  const calendlyLink = "https://calendly.com/aiwaverider8/30min";
+  
+  // Refs object for the FloatingNav component
+  const scrollRefs = {
+    top: topRef,
+    obstacles: obstaclesRef,
+    whoItsFor: whoItsForRef,
+    faq: faqRef
+  };
+  // Function to scroll to the monetization paths section
+  const scrollToMonetizationPaths = (e) => {
+    e.preventDefault();
+    monetizationPathsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+  
+  // Function to open Calendly for consultation calls
+  const openCalendlyConsultation = () => {
+    window.open(calendlyLink, '_blank');
+  };
+
   // Simulate loading state for demonstration
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -67,25 +97,54 @@ const HomePage = () => {
   ];
   
   return (
-    <div className={`${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
-      {/* Custom booking header that matches the screenshot */}
-      <div className="bg-indigo-900 py-6 px-6">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-bold text-white">AI Waverider</h2>
-            <p className="text-yellow-500 font-medium">Your Gateway to AI Mastery</p>
-          </div>
-          <div className="mt-4 md:mt-0">
-            <a 
-              href="https://calendly.com/aiwaverider8/30min" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse"
-            >
-              <FaCalendarAlt className="mr-2" />
-              Book a Training Session
-              <FaArrowRight className="ml-2" />
-            </a>
+    <div className={`${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`} ref={topRef}>
+      {/* Floating navigation that appears when scrolling */}
+      <FloatingNav scrollRefs={scrollRefs} />
+      {/* Ultra-modern AI header with 3D effects and dynamic animations */}
+      <div className="relative overflow-hidden">
+        {/* Animated background gradient with enhanced colors - different for dark/light modes */}
+        <div className={`absolute inset-0 animate-gradient-x ${darkMode 
+          ? 'bg-gradient-to-r from-indigo-900 via-purple-800 to-blue-900' 
+          : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600'}`}></div>
+        
+        {/* Advanced grid pattern that gives a tech/AI feel */}
+        <div className="absolute inset-0 bg-grid-white/[0.15] bg-[length:15px_15px] opacity-70">
+          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[length:50px_50px] rotate-45"></div>
+        </div>
+        
+        {/* Parallax floating elements - small geometric shapes */}
+        <div className="absolute top-20 right-1/4 w-16 h-16 border-2 border-blue-400/30 rotate-45 animate-float-slow"></div>
+        <div className="absolute bottom-10 left-1/3 w-12 h-12 border-2 border-purple-400/20 rounded-full animate-float"></div>
+        <div className="absolute top-1/3 left-1/5 w-8 h-8 border-2 border-teal-400/20 rotate-12 animate-spin-slow"></div>
+        
+        {/* Advanced glowing orbs with dynamic animations */}
+        <div className="absolute -top-20 right-1/4 w-80 h-80 bg-blue-500 rounded-full filter blur-3xl opacity-10 animate-pulse-slow"></div>
+        <div className="absolute -bottom-40 -left-20 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-10 animate-float"></div>
+        <div className="absolute top-1/2 left-2/3 w-40 h-40 bg-teal-500 rounded-full filter blur-3xl opacity-5 animate-pulse"></div>
+        
+        {/* Header content with enhanced glass effect */}
+        <div className={`relative backdrop-blur-sm py-8 px-6 border-b ${darkMode ? 'border-white/10' : 'border-indigo-500/30'} glass-effect ${darkMode ? 'bg-black/5' : 'bg-white/15'}`}>
+          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div className="relative z-10">
+              <h2 className={`text-5xl font-bold text-transparent bg-clip-text ${darkMode ? 'bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300' : 'bg-gradient-to-r from-white via-yellow-100 to-white'} mb-2 drop-shadow-lg`}>AI Waverider</h2>
+              <div className="flex items-center">
+                <div className={`w-10 h-[2px] bg-gradient-to-r ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent mr-3`}></div>
+                <p className="text-white font-medium text-lg drop-shadow-md">Your Gateway to AI Mastery</p>
+                <div className={`w-10 h-[2px] bg-gradient-to-l ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent ml-3`}></div>
+              </div>
+            </div>
+            <div className="mt-6 md:mt-0 relative z-10">
+              <a 
+                href="https://calendly.com/aiwaverider8/30min"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <FaCalendarAlt className="mr-3 text-lg" />
+                <span className="text-lg">Book a FREE Consultation Session</span>
+                <FaArrowRight className="ml-3 text-lg" />
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -102,24 +161,31 @@ const HomePage = () => {
                 Learn how to monetize AI without being technical. 7 proven business models to help you sell AI services and make $2,000-$10,000/month as an AI Waverider.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Link to="/monetization-paths" className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-lg transition-all hover:shadow-lg inline-flex items-center justify-center">
+              <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
+
+                <a href="#monetization-paths" onClick={scrollToMonetizationPaths} className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-lg transition-all hover:shadow-lg inline-flex items-center justify-center">
                   Explore Monetization Paths <FaArrowRight className="ml-2" />
-                </Link>
-                <a href="#book-call" className="px-8 py-4 border-2 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white rounded-full font-bold text-lg transition-all inline-flex items-center justify-center">
-                  Book A Strategy Call <FaChevronRight className="ml-2" />
                 </a>
+
+                <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
               </div>
               
-              <div className={`flex items-center space-x-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`flex items-center space-x-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
                 <FaCheck className="text-green-500" />
                 <span>No technical experience required</span>
               </div>
-              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
                 <FaCheck className="text-green-500" />
                 <span>Make $2,000-$10,000/month with our proven models</span>
             </div>
-              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
                 <FaCheck className="text-green-500" />
                 <span>Start monetizing in as little as 7 days</span>
               </div>
@@ -136,8 +202,11 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* YouAreYouWant section with arrow diagrams */}
+      {/* <YouAreYouWant /> */}
+
       {/* Monetization Paths */}
-      <section className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      <section ref={monetizationPathsRef} id="monetization-paths" className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -263,15 +332,25 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-            <Link to="/monetization-paths" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}>
-              Explore All Monetization Paths <FaChevronRight className="ml-2" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to="/monetization-paths" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'} hover:shadow-lg`}>
+                Explore All Monetization Paths <FaChevronRight className="ml-2" />
+              </Link>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Obstacles Section */}
-      <section className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+      <section ref={obstaclesRef} className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -282,7 +361,7 @@ const HomePage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
             {/* Obstacle 1 */}
             <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white shadow-md'}`}>
               <div className="flex items-center mb-6">
@@ -363,15 +442,25 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-            <Link to="/obstacles" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}>
-              Learn How We Solve These Obstacles <FaChevronRight className="ml-2" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to="/ai-obstacle-solutions" className={`px-8 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'} hover:shadow-lg`}>
+                Learn How We Solve These Obstacles <FaChevronRight className="ml-2" />
+              </Link>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Solution Section */}
-      <section className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      <section ref={whoItsForRef} className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -394,10 +483,10 @@ const HomePage = () => {
               />
             </div>
             <div>
-              <h4 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h4 className={`text-2xl md:text-3xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
                 Making AI Easy
               </h4>
-              <p className={`mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-8 text-lg md:text-xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 Providing you a proven strategy and business in a box that's ready for you to generate leads and close more clients. Broken down into easy-to-understand steps, and plain language... so you can apply them and start selling AI in as little as 24 hours without being a tech wizard.
               </p>
             </div>
@@ -405,10 +494,10 @@ const HomePage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center mb-20">
             <div className="order-2 md:order-1">
-              <h4 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h4 className={`text-2xl md:text-3xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
                 Saving You Time
               </h4>
-              <p className={`mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-8 text-lg md:text-xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 We know you're busy. That's why we make selling AI quick and efficient. Our process is designed to get you up and running within hours, not days or weeks. We handle the heavy lifting so you can focus on closing more clients on AI.
               </p>
             </div>
@@ -432,22 +521,32 @@ const HomePage = () => {
               />
             </div>
             <div>
-              <h4 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h4 className={`text-3xl md:text-4xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
                 Simple To Sell
               </h4>
-              <p className={`mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-8 text-xl md:text-2xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 No more confusion and overwhelm. We provide you with your pre-designed business in a box and AI tools all in one place. Simply plug and play for your own business while getting paid to set these AI tools up for business owners. It doesn't stop there... we also show you how to leverage other name brand AI tools that we feel are leading the way in the world.
               </p>
             </div>
           </div>
 
           <div className="text-center mt-16">
-            <button 
-              onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-              className="px-10 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-bold text-lg transition-all inline-flex items-center"
-            >
-              START FREE TRIAL
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to={calendlyLink}              
+              // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+                  className="px-10 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-bold text-lg transition-all inline-flex items-center"
+                >
+                  START FREE Consultation Call
+                </Link>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-lg font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -534,7 +633,7 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h4 className="text-xl font-bold text-white">SAKHR NABIL</h4>
-                    <p className="text-lg text-white">CHIEF AI WAVERIDER INSTRUCTOR</p>
+                    <p className="text-lg text-white">Co-founder, CEO & CTO</p>
                   </div>
                 </div>
               </div>
@@ -608,7 +707,7 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h4 className="text-xl font-bold text-white">TAZ AWN</h4>
-                    <p className="text-lg text-white">EXECUTIVE WAVE STRATEGIST</p>
+                    <p className="text-lg text-white">Co-founder & CEO</p>
                   </div>
                 </div>
               </div>
@@ -713,7 +812,7 @@ const HomePage = () => {
               <div className="flex items-center mb-8">
                 <span className="text-pink-300 mr-4">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-                    <path fillRule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM12.75 20.636A8.214 8.214 0 0118 18.75c.966 0 1.89.166 2.75.47a.75.75 0 001-.708V4.262a.75.75 0 00-.5-.707A9.735 9.735 0 0018 3a9.707 9.707 0 00-5.25 1.533v16.103z" />
                   </svg>
                 </span>
                 <h3 className="text-3xl font-bold text-white uppercase">GROWTH</h3>
@@ -751,12 +850,22 @@ const HomePage = () => {
 
           {/* CTA Button */}
           <div className="text-center">
-            <button 
-              onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-              className="px-16 py-6 bg-blue-400 hover:bg-blue-500 text-white rounded-xl font-bold text-3xl transition-all inline-flex items-center"
-            >
-              START FREE TRIAL
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to={calendlyLink}              
+              // onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+                  className="px-16 py-6 bg-blue-400 hover:bg-blue-500 text-white rounded-xl font-bold text-3xl transition-all inline-flex items-center"
+                >
+                  START FREE Consultation Call
+                </Link>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-6 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold text-xl sm:text-2xl transition-all inline-flex items-center border-2 border-purple-400 hover:shadow-lg"
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -1037,13 +1146,23 @@ const HomePage = () => {
           </div>
           
           <div className="text-center mt-12">
-            <button 
-              onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-              className="px-10 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-xl transition-all inline-flex items-center"
-            >
-              JOIN NOW AND START YOUR FREE TRIAL
-              <FaArrowRight className="ml-3" />
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <button 
+                onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+                className="px-10 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-xl transition-all inline-flex items-center"
+              >
+                JOIN NOW AND START YOUR FREE TRIAL
+                <FaArrowRight className="ml-3" />
+              </button>
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-6 py-4 rounded-full font-bold text-xl transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -1151,16 +1270,65 @@ const HomePage = () => {
           </div>
 
           <div className="text-center mt-16">
-            <div className="bg-blue-400 hover:bg-blue-500 inline-block transition-all rounded-xl shadow-lg overflow-hidden">
-              <button 
-                onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-                className="px-16 py-6 font-bold text-2xl text-white"
-              >
-                START FREE TRIAL
-              </button>
+            <div className="bg-blue-400 hover:bg-blue-500 inline-block transition-all rounded-xl shadow-lg overflow-hidden cursor-pointer" onClick={openCalendlyConsultation}>
+              <div className="px-16 py-6 font-bold text-2xl text-white flex items-center justify-center gap-3">
+                <FaCalendarAlt /> START FREE Consultation Call
+              </div>
               <div className="bg-blue-500 text-white text-sm py-2">
                 Bonuses Included
               </div>
+            </div>
+            <div className="mt-4">
+              <a 
+                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-8 py-4 rounded-xl font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+              >
+                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dedicated Consultation Call Section */}
+      <section className={`py-16 ${darkMode ? 'bg-indigo-900' : 'bg-indigo-50'}`}>
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2
+              className={`text-3xl md:text-4xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-800'}`}
+            >
+              Ready to Start Monetizing Your Expertise with AI?
+            </h2>
+            
+            <p 
+              className={`text-xl mb-10 ${darkMode ? 'text-indigo-100' : 'text-gray-600'}`}
+            >
+              Book a free 30-minute consultation call with our AI experts to discuss how you can leverage AI to create new revenue streams
+            </p>
+            
+            <div className="mb-10">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button
+                  onClick={openCalendlyConsultation}
+                  className="px-10 py-5 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-2xl transition-all hover:shadow-xl inline-flex items-center gap-3"
+                >
+                  <FaCalendarAlt /> Schedule Your Free Call Now
+                </button>
+                <a 
+                  href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`px-8 py-5 rounded-full font-bold text-xl transition-all inline-flex items-center gap-3 ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-xl`}
+                >
+                  <FaDiscord /> JOIN COMMUNITY
+                </a>
+              </div>
+            </div>
+            
+            <div className={`${darkMode ? 'text-indigo-200' : 'text-gray-600'}`}>
+              <p className="text-lg">No obligation, no pressure—just a friendly chat about your goals</p>
             </div>
           </div>
         </div>

@@ -14,7 +14,8 @@ import { HashLoader } from 'react-spinners';
 import { FixedSizeGrid } from 'react-window';
 import useAgentStore from '../store/agentStore';
 import './AgentsPage.css';
-import { debounce } from 'lodash';
+import '../styles/animations.css'; // Import animations for heartbeat-pulse
+// No longer using debounce
 
 // Import theme classes - similar to AITools.jsx
 const themeClasses = "bg-gradient-to-br from-[#4158D0] via-[#C850C0] to-[#FFCC70] stars-pattern";
@@ -82,14 +83,17 @@ const Agents = () => {
   const dataLoadedRef = useRef(false);
   const applyFiltersTimeoutRef = useRef(null);
 
-  // Create debounced filter function
-  const debouncedApplyFilters = useCallback(
-    debounce(() => {
-      console.log('Applying filters (debounced)');
-      applyFilters();
-    }, 500),
-    [applyFilters]
-  );
+  // Apply filters directly with flag to prevent duplicate execution
+  const applyFiltersDirectly = useCallback(() => {
+    console.log('Applying filters directly');
+    // Set the flag to prevent the useEffect from running again
+    isApplyingFiltersRef.current = true;
+    applyFilters();
+  }, [applyFilters]);
+  
+  // Use a simple timeout for search filtering instead of debounce
+  // This is more reliable for responsive typing
+  const searchTimeoutRef = useRef(null);
 
   // Initial data load - only run once with proper mount check
   useEffect(() => {
@@ -143,26 +147,36 @@ const Agents = () => {
     };
   }, []); // Empty dependency array as we're using mountedRef
 
-  // Get search query from URL
+  // Get search query from URL - only on initial load
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const queryFromUrl = queryParams.get('q');
-    if (queryFromUrl) {
-      setSearchQuery(queryFromUrl);
-      console.log('Search query from URL:', queryFromUrl);
-    } else if (searchQuery && location.search === '') {
-      // Clear search query if URL has no query parameter
-      setSearchQuery('');
-      console.log('Clearing search query since URL has no q parameter');
+    // Only run this effect on initial mount
+    if (!mountedRef.current) {
+      const queryParams = new URLSearchParams(location.search);
+      const queryFromUrl = queryParams.get('q');
+      if (queryFromUrl) {
+        setSearchQuery(queryFromUrl);
+        console.log('Search query from URL:', queryFromUrl);
+      }
+      // Don't clear the search query automatically
     }
-  }, [location.search, searchQuery, setSearchQuery]);
+  }, [location.search, setSearchQuery]);
 
+  // Track if filters are being applied to prevent duplicate calls
+  const isApplyingFiltersRef = useRef(false);
+  
   // Add a useEffect to apply filters whenever any filter criteria changes
+  // But only if they weren't already applied by a direct handler call
   useEffect(() => {
-    // Don't apply filters during initial load or multiple times in succession
+    // Skip if we're already applying filters from a direct handler call
+    if (isApplyingFiltersRef.current) {
+      isApplyingFiltersRef.current = false;
+      return;
+    }
+    
+    // Don't apply filters during initial load
     if (mountedRef.current && dataLoadedRef.current) {
-      console.log('Applying filters due to filter change');
-      debouncedApplyFilters();
+      console.log('Applying filters from dependency change');
+      applyFilters();
     }
   }, [
     selectedCategory,
@@ -172,7 +186,7 @@ const Agents = () => {
     selectedTags,
     selectedFeatures,
     searchQuery,
-    debouncedApplyFilters
+    applyFilters
   ]);
 
   const handleCategoryChange = (category) => {
@@ -184,54 +198,66 @@ const Agents = () => {
     document.querySelector('.curated-marketplace').scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSearch = (query) => {
+  const handleSearch = (query, isClearing = false, isExplicitSubmit = false) => {
     console.log('Search handler called with query:', query);
     
-    // Update URL with query parameter
-    if (query) {
-      const newUrl = `/agents?q=${encodeURIComponent(query)}`;
-      window.history.pushState({}, '', newUrl);
-    } else {
-      // Remove query parameter if query is empty
-      window.history.pushState({}, '', '/agents');
+    // Set the search query in the store
+    setSearchQuery(query);
+    
+    // Clear any previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
     
-    setSearchQuery(query);
-    // Apply filters through the debounced function
-    debouncedApplyFilters();
+    // Apply filters directly for immediate feedback
+    applyFiltersDirectly();
+    
+    // Only jump to marketplace on explicit search submissions (Enter key or search button)
+    if (isExplicitSubmit && query) {
+      // Jump to the marketplace section after a short delay
+      // to allow the filters to be applied and results to be displayed
+      setTimeout(() => {
+        const marketplaceElement = document.getElementById('marketplace-section');
+        if (marketplaceElement) {
+          marketplaceElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 300);
+    }
   };
 
   const handleFilterChange = (filter) => {
+    console.log('Filter changed to:', filter);
     setFilter(filter);
-    // Apply filters through the debounced function
-    debouncedApplyFilters();
-    // Scroll to the agents list when a filter is selected
-    agentsContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Apply filters directly for immediate feedback
+    applyFiltersDirectly();
   };
 
   const handlePriceChange = (newPriceRange) => {
+    console.log('Price changed to:', newPriceRange);
     setPrice(newPriceRange);
-    // Apply filters through the debounced function
-    debouncedApplyFilters();
+    // Apply filters directly for immediate feedback
+    applyFiltersDirectly();
   };
 
   const handleRatingChange = (rating) => {
-    // If the same rating is clicked again, clear it
-    setRating(prevRating => prevRating === rating ? 0 : rating);
-    // Apply filters through the debounced function
-    debouncedApplyFilters();
+    console.log('Rating changed to:', rating);
+    setRating(rating);
+    // Apply filters directly for immediate feedback
+    applyFiltersDirectly();
   };
   
   const handleTagChange = (tag) => {
+    console.log('Tags changed to:', tag);
     toggleTag(tag);
-    // Apply filters through the debounced function
-    debouncedApplyFilters();
+    // Apply filters directly for immediate feedback
+    applyFiltersDirectly();
   };
   
   const handleFeatureChange = (feature) => {
+    console.log('Features changed to:', feature);
     toggleFeature(feature);
-    // Apply filters through the debounced function
-    debouncedApplyFilters();
+    // Apply filters directly for immediate feedback
+    applyFiltersDirectly();
   };
 
   // Toggle mobile filters sidebar
@@ -291,9 +317,10 @@ const Agents = () => {
 
     // Calculate grid dimensions based on container width
     const containerWidth = agentsContainerRef.current?.clientWidth || 960;
-    const cardWidth = 300; // Adjust based on your card size including margins
-    const cardHeight = 400; // Adjust based on your card height
-    const columnCount = Math.max(1, Math.floor(containerWidth / cardWidth));
+    // Fixed card width to ensure 3 cards per row
+    const cardWidth = Math.floor(containerWidth / 3) - 20; // 3 cards per row with spacing
+    const cardHeight = 400; // Standard card height
+    const columnCount = 3; // Fixed at 3 columns
     const rowCount = Math.ceil(agents.length / columnCount);
     const containerHeight = Math.min(window.innerHeight * 0.7, rowCount * cardHeight);
 
@@ -306,39 +333,12 @@ const Agents = () => {
           </div>
         )}
         
-        {/* For small screens, use regular grid layout for better responsiveness */}
-        {window.innerWidth < 768 ? (
+        {/* For all screen sizes, use regular grid layout for better consistency */}
         <div className="marketplace-agents-grid">
           {agents.map(agent => (
             <AgentCard key={agent.id} agent={agent} />
           ))}
         </div>
-        ) : (
-          <FixedSizeGrid
-            className="marketplace-agents-virtualized-grid"
-            columnCount={columnCount}
-            columnWidth={cardWidth}
-            height={containerHeight}
-            rowCount={rowCount}
-            rowHeight={cardHeight}
-            width={containerWidth}
-            itemData={agents}
-          >
-            {({ columnIndex, rowIndex, style, data }) => {
-              const index = rowIndex * columnCount + columnIndex;
-              if (index >= data.length) return null;
-              
-              return (
-                <div style={{
-                  ...style,
-                  padding: '10px'
-                }}>
-                  <AgentCard agent={data[index]} />
-                </div>
-              );
-            }}
-          </FixedSizeGrid>
-        )}
       </>
     );
   };
@@ -363,23 +363,51 @@ const Agents = () => {
   return (
     <div className={`min-h-screen pb-16 ${darkMode ? "dark bg-[#2D1846]" : "bg-gray-50"} ${themeClasses}`}>
       {/* Custom booking header that matches the homepage */}
-      <div className="bg-indigo-900 py-4 sm:py-6 px-4 sm:px-6">
-        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Wave Rider</h2>
-            <p className="text-yellow-500 font-medium">Your Gateway to AI Mastery</p>
-          </div>
-          <div className="mt-4 sm:mt-0">
-            <a 
-              href="https://calendly.com/aiwaverider8/30min" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse text-sm sm:text-base"
-            >
-              <FaCalendarAlt className="mr-2" />
-              Book a Training Session
-              <FaArrowRight className="ml-2" />
-            </a>
+      {/* Ultra-modern AI header with 3D effects and dynamic animations */}
+      <div className="relative overflow-hidden">
+        {/* Animated background gradient with enhanced colors - different for dark/light modes */}
+        <div className={`absolute inset-0 animate-gradient-x ${darkMode 
+          ? 'bg-gradient-to-r from-indigo-900 via-purple-800 to-blue-900' 
+          : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600'}`}></div>
+        
+        {/* Advanced grid pattern that gives a tech/AI feel */}
+        <div className="absolute inset-0 bg-grid-white/[0.15] bg-[length:15px_15px] opacity-70">
+          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[length:50px_50px] rotate-45"></div>
+        </div>
+        
+        {/* Parallax floating elements - small geometric shapes */}
+        <div className="absolute top-20 right-1/4 w-16 h-16 border-2 border-blue-400/30 rotate-45 animate-float-slow"></div>
+        <div className="absolute bottom-10 left-1/3 w-12 h-12 border-2 border-purple-400/20 rounded-full animate-float"></div>
+        <div className="absolute top-1/3 left-1/5 w-8 h-8 border-2 border-teal-400/20 rotate-12 animate-spin-slow"></div>
+        
+        {/* Advanced glowing orbs with dynamic animations */}
+        <div className="absolute -top-20 right-1/4 w-80 h-80 bg-blue-500 rounded-full filter blur-3xl opacity-10 animate-pulse-slow"></div>
+        <div className="absolute -bottom-40 -left-20 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-10 animate-float"></div>
+        <div className="absolute top-1/2 left-2/3 w-40 h-40 bg-teal-500 rounded-full filter blur-3xl opacity-5 animate-pulse"></div>
+        
+        {/* Header content with enhanced glass effect */}
+        <div className={`relative backdrop-blur-sm py-8 px-6 border-b ${darkMode ? 'border-white/10' : 'border-indigo-500/30'} glass-effect ${darkMode ? 'bg-black/5' : 'bg-white/15'}`}>
+          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div className="relative z-10">
+              <h2 className={`text-5xl font-bold text-transparent bg-clip-text ${darkMode ? 'bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300' : 'bg-gradient-to-r from-white via-yellow-100 to-white'} mb-2 drop-shadow-lg`}>AI Waverider</h2>
+              <div className="flex items-center">
+                <div className={`w-10 h-[2px] bg-gradient-to-r ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent mr-3`}></div>
+                <p className="text-white font-medium text-lg drop-shadow-md">Your Gateway to AI Mastery</p>
+                <div className={`w-10 h-[2px] bg-gradient-to-l ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent ml-3`}></div>
+              </div>
+            </div>
+            <div className="mt-6 md:mt-0 relative z-10">
+              <a 
+                href="https://calendly.com/aiwaverider8/30min"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <FaCalendarAlt className="mr-3 text-lg" />
+                <span className="text-lg">Book a FREE Consultation Session</span>
+                <FaArrowRight className="ml-3 text-lg" />
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -443,6 +471,7 @@ const Agents = () => {
 
             {/* Main content area */}
             <main className="w-full lg:w-3/4">
+              
               {/* Category navigation */}
               <div className="mb-4 sm:mb-6 curated-marketplace glass-effect">
                 <div className="flex items-center px-3 py-2 sm:hidden">
@@ -462,33 +491,35 @@ const Agents = () => {
               {/* Filter and search area */}
               <div className="filter-search-container glass-effect mb-4 sm:mb-6">
                 <div className="flex sm:hidden justify-between items-center mb-3">
-                  <button 
+                  {/* <button 
                     onClick={toggleMobileOptions}
                     className="flex items-center gap-2 py-2 px-4 bg-purple-700 rounded-md text-white text-sm"
                   >
                     <FaFilter size={14} />
                     Sort Options
                     {mobileOptionsOpen ? <FaTimes size={14} /> : <FaBars size={14} />}
-                  </button>
+                  </button> */}
                   
                   <div className="text-white text-sm">
                     {agents.length} results
                   </div>
                 </div>
                 
-                <div className={`filter-options ${mobileOptionsOpen ? 'flex' : 'hidden'} sm:flex`}>
-                  {['Hot & New', 'Top Rated', 'Most Popular', 'Price: Low to High', 'Price: High to Low'].map((filter) => (
-                    <button 
-                      key={filter}
-                      onClick={() => {
-                        handleFilterChange(filter);
-                        setMobileOptionsOpen(false);
-                      }}
-                      className={`filter-button whitespace-nowrap ${selectedFilter === filter ? 'active' : ''}`}
-                    >
-                      {filter}
-                    </button>
-                  ))}
+                <div className="sort-selector-container">
+                  <select 
+                    className="sort-selector"
+                    value={selectedFilter}
+                    onChange={(e) => {
+                      handleFilterChange(e.target.value);
+                      setMobileOptionsOpen(false);
+                    }}
+                  >
+                    <option value="Hot & New">Sort: Hot & New</option>
+                    <option value="Top Rated">Sort: Top Rated</option>
+                    <option value="Most Popular">Sort: Most Popular</option>
+                    <option value="Price: Low to High">Sort: Price Low to High</option>
+                    <option value="Price: High to Low">Sort: Price High to Low</option>
+                  </select>
                 </div>
 
                 <div className="search-wrapper mt-3 sm:mt-0 flex">
@@ -498,16 +529,6 @@ const Agents = () => {
                     placeholder="Search agents..."
                     className="flex-1"
                   />
-                  
-                  <button 
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    className="refresh-button ml-2 whitespace-nowrap flex items-center gap-2"
-                    title="Refresh agents list"
-                  >
-                    <FaSync className={isRefreshing ? "icon-spin" : ""} />
-                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                  </button>
                 </div>
               </div>
 
@@ -539,13 +560,13 @@ const Agents = () => {
                   </button>
                 </div>
               ) : (
-                <div className="agents-container glass-effect" ref={agentsContainerRef}>
+                <div id="marketplace-section" className="agents-container glass-effect" ref={agentsContainerRef}>
                   {renderAgentGrid()}
                 </div>
               )}
 
               {/* Recommended agents */}
-              {recommendedAgents.length > 0 && (
+              {/* {recommendedAgents.length > 0 && (
                 <section className="mt-16 glass-effect section-container">
                   <h2 className="section-title">Recommended For You</h2>
                   <div className="carousel-container">
@@ -558,7 +579,7 @@ const Agents = () => {
                     )}
                   </div>
                 </section>
-              )}
+              )} */}
 
               {/* Wishlists */}
               {/* {wishlists.length > 0 && (

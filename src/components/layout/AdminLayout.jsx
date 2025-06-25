@@ -11,7 +11,9 @@ import {
   FaBars,
   FaTimes,
   FaTools,
-  FaEnvelope
+  FaEnvelope,
+  FaLightbulb,
+  FaVideo
   // FaSearch
 } from 'react-icons/fa';
 import './AdminLayout.css';
@@ -38,12 +40,14 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/dashboard', icon: <FaHome />, label: 'Dashboard' },
     { path: '/admin/agents', icon: <FaRobot />, label: 'Manage Agents' },
     { path: '/admin/ai-tools', icon: <FaTools />, label: 'AI Tools' },
+    { path: '/admin/prompts', icon: <FaLightbulb />, label: 'Prompts' },
     { path: '/admin/users', icon: <FaUsers />, label: 'Manage Users' },
     { path: '/admin/analytics', icon: <FaChartBar />, label: 'Analytics' },
     { path: '/admin/pricing', icon: <FaDollarSign />, label: 'Pricing' },
     { path: '/admin/email', icon: <FaEnvelope />, label: 'Email Management' },
     { path: '/admin/email-composer', icon: <FaEnvelope />, label: 'Email Composer' },
     { path: '/admin/settings', icon: <FaCog />, label: 'Settings' },
+    { path: '/admin/videos', icon: <FaVideo />, label: 'Videos' },
   ];
   
   const toggleSidebar = () => {

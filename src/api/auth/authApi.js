@@ -57,6 +57,19 @@ export const signUp = async (userData) => {
     
     console.log('Backend signup response:', response.data);
     
+    // Save user data directly to Firestore
+    try {
+      await firebase.firestore().collection('users').doc(firebaseUser.uid).set({
+        ...backendUserData,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      console.log('User data saved to Firestore database');
+    } catch (firestoreError) {
+      console.error('Error saving user to Firestore:', firestoreError);
+      // Continue even if Firestore save fails - don't throw an error
+    }
+    
     // Wait a moment to ensure the data is saved
     await new Promise(resolve => setTimeout(resolve, 1000));
     
@@ -74,6 +87,49 @@ export const signUp = async (userData) => {
 // Sign In with Email and Password
 export const signIn = async (credentials) => {
   try {
+    console.log('Starting sign-in process with email/password...');
+    
+    // First, try to sign out the current user to clear any existing sessions
+    try {
+      await auth.signOut();
+      console.log('Signed out previous user');
+    } catch (signOutError) {
+      console.warn('Could not sign out current user:', signOutError);
+      // Continue anyway - this is just a precaution
+    }
+    
+    // Aggressively clear ALL cached auth data
+    clearTokenCache(); // Clear API tokens
+    localStorage.removeItem('authToken'); // Clear auth token
+    localStorage.removeItem('userProfile'); // Clear user profile
+    
+    // Clear ANY cache that might be related to auth or user data
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+          key.includes('auth') || 
+          key.includes('user') || 
+          key.includes('profile') || 
+          key.includes('token') || 
+          key.includes('firebase')
+        )) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    console.log(`Clearing ${keysToRemove.length} cached items:`, keysToRemove);
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // Clear IndexedDB Firebase data if possible
+    try {
+      indexedDB.deleteDatabase('firebaseLocalStorageDb');
+      console.log('Cleared Firebase IndexedDB cache');
+    } catch (idbError) {
+      console.warn('Could not clear IndexedDB:', idbError);
+    }
+    
+    // Now proceed with the actual sign in
     const { usernameOrEmail, password } = credentials;
     let email = usernameOrEmail;
     const isEmail = usernameOrEmail.includes('@');
@@ -81,11 +137,67 @@ export const signIn = async (credentials) => {
       const response = await api.get(`/api/auth/get-email/${usernameOrEmail}`);
       email = response.data.email;
     }
+    
+    console.log(`Signing in with email: ${email}`);
+    
+    // Sign in with Firebase
     const result = await auth.signInWithEmailAndPassword(email, password);
     if (!result.user) {
       throw new Error('No user data returned from Firebase');
     }
-    // AuthContext handles session creation on auth state change.
+    
+    console.log(`Successfully signed in user: ${result.user.email} (${result.user.uid})`);
+    
+    // Get the fresh token
+    const token = await result.user.getIdToken(true);
+    localStorage.setItem('authToken', token);
+    console.log('New auth token generated and stored');
+    
+    // Try to get user from Firestore to ensure we have the full profile
+    try {
+      const userDoc = await firebase.firestore().collection('users').doc(result.user.uid).get();
+      if (userDoc.exists) {
+        console.log('Found user data in Firestore for current user');
+        const firestoreData = userDoc.data();
+        
+        // Store current user info to local storage with timestamp to prevent stale data
+        localStorage.setItem('currentUserInfo', JSON.stringify({
+          uid: result.user.uid,
+          email: result.user.email,
+          timestamp: Date.now()
+        }));
+        
+        // Return merged data to ensure we have the complete profile
+        return { 
+          firebaseUser: result.user,
+          profile: firestoreData
+        };
+      } else {
+        console.warn('No Firestore data found for this user, creating a new profile');
+        
+        // If no data found, create a minimal profile in Firestore
+        const newProfile = {
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName || result.user.email.split('@')[0],
+          photoURL: result.user.photoURL || '/default-avatar.png',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await firebase.firestore().collection('users').doc(result.user.uid).set(newProfile);
+        console.log('Created new user profile in Firestore');
+        
+        return {
+          firebaseUser: result.user,
+          profile: newProfile
+        };
+      }
+    } catch (firestoreError) {
+      console.error('Error fetching/saving user from Firestore:', firestoreError);
+      // Continue without throwing - just use the firebaseUser
+    }
+    
     return { firebaseUser: result.user };
   } catch (error) {
     console.error('Error signing in:', error);

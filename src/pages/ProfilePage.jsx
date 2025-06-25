@@ -70,8 +70,6 @@ const ProfilePage = () => {
   const updateProfileState = (userObj) => {
     if (!userObj) return;
     
-    console.log('[Profile] Updating profile state with:', userObj);
-    
     // Update profile state
     setProfile(userObj);
     setFormData({

@@ -1,4 +1,4 @@
-// src/components/layout/Header.jsx
+// src/components/Header.jsx
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../assets/v6.webp';
@@ -12,17 +12,24 @@ import {
   FaMoon, 
   FaHome, 
   FaRobot, 
-  FaTools, 
+  FaTools,  
   FaMicrochip,
   FaUser,
-  FaTimes,
+  FaUserPlus,
   FaBars,
   FaCircle,
-  FaInfoCircle
+  FaInfoCircle,
+  FaTimes as FaX,
+  FaSignOutAlt,
+  FaUserCog,
+  FaUserShield,
+  FaChevronDown,
+  FaVideo
 } from 'react-icons/fa';
+import { MdKeyboardArrowDown } from 'react-icons/md';
 import './Header.css'; // Import custom Header CSS
-// import { toggleDarkMode, isDarkMode } from '../utils/theme';
-// import { handleGoogleProfileImage } from '../utils/imageUtils';
+import '../../styles/animations.css'; // Import animations
+import { motion, AnimatePresence } from 'framer-motion'; // For subtle animations
 
 const Header = ({ openSignUpModal }) => {
   const { user, signOut } = useContext(AuthContext);
@@ -41,6 +48,21 @@ const Header = ({ openSignUpModal }) => {
   
   // Toggle body class when menu opens/closes
   useEffect(() => {
+    const toggleMobileMenu = () => {
+      const newMenuState = !isMenuOpen;
+      document.body.classList.toggle('menu-open', newMenuState);
+      setIsMenuOpen(newMenuState);
+      
+      // For devices with specific dimensions, adjust position
+      const isSurfacePro = window.innerWidth === 1368 && window.innerHeight === 912;
+      const isIPad = (window.innerWidth === 768 || window.innerWidth === 820 || window.innerWidth === 1024) && 
+                    (window.innerHeight === 1024 || window.innerHeight === 1180 || window.innerHeight === 1366);
+      
+      if (isSurfacePro || isIPad) {
+        document.documentElement.classList.toggle('tablet-device', newMenuState);
+      }
+    };
+
     const body = document.querySelector('body');
     if (isMenuOpen) {
       body.classList.add('menu-open');
@@ -88,10 +110,14 @@ const Header = ({ openSignUpModal }) => {
     };
   }, [isMenuOpen]);
 
-  // Close mobile menu on window resize
+  // Close mobile menu on window resize and handle iPad Air specifically
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > 768 && isMenuOpen) {
+      // Special case for iPad Air portrait (820x1180)
+      const isIpadAirPortrait = window.innerWidth === 820 && window.innerHeight > 1000;
+      
+      // Close mobile menu when screen size is 1000px or larger (updated from 1333px)
+      if ((window.innerWidth >= 800 && !isIpadAirPortrait) && isMenuOpen) {
         setIsMenuOpen(false);
       }
     };
@@ -99,13 +125,29 @@ const Header = ({ openSignUpModal }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isMenuOpen]);
+  
+  // Check if we're on iPad Air portrait mode
+  useEffect(() => {
+    const checkIpadAir = () => {
+      const isIpadAirPortrait = window.innerWidth === 820 && window.innerHeight > 1000;
+      if (isIpadAirPortrait) {
+        document.documentElement.classList.add('ipad-air-portrait');
+      } else {
+        document.documentElement.classList.remove('ipad-air-portrait');
+      }
+    };
+    
+    checkIpadAir();
+    window.addEventListener('resize', checkIpadAir);
+    return () => window.removeEventListener('resize', checkIpadAir);
+  }, []);
 
   // If we're already on /sign-in, going to sign up should push /sign-up
   const handleSignUp = () => {
-    if (location.pathname === '/sign-in') {
-      navigate('/sign-up');
-    } else {
+    if (typeof openSignUpModal === 'function') {
       openSignUpModal();
+    } else {
+      document.dispatchEvent(new CustomEvent('open-signup-modal'));
     }
   };
 
@@ -120,20 +162,135 @@ const Header = ({ openSignUpModal }) => {
     }
   };
 
-  // Toggle mobile menu
+  // Toggle mobile menu - direct implementation that works across all devices
   const toggleMobileMenu = () => {
-    setIsMenuOpen(prevState => !prevState);
+    // Create direct DOM manipulation to fix the issue
+    // Toggle menu state directly
+    const bodyElement = document.body;
+    const newMenuState = !bodyElement.classList.contains('menu-open');
+    
+    // Check device dimensions for specialized handling
+    const isSurfacePro = window.innerWidth === 1368 && window.innerHeight === 912;
+    const isIPad = [
+      // iPad Mini
+      window.innerWidth === 768 && window.innerHeight === 1024,
+      // iPad Air
+      window.innerWidth === 820 && window.innerHeight === 1180,
+      // iPad Pro
+      window.innerWidth === 1024 && window.innerHeight === 1366
+    ].some(condition => condition);
+    const isNestHub = [
+      // Nest Hub
+      window.innerWidth === 1024 && window.innerHeight === 600,
+      // Nest Hub Max
+      window.innerWidth === 1280 && window.innerHeight === 800
+    ].some(condition => condition);
+    
+    if (newMenuState) {
+      // Opening menu
+      bodyElement.classList.add('menu-open');
+      
+      // Add device-specific classes
+      if (isSurfacePro) document.documentElement.classList.add('surface-pro');
+      if (isIPad) document.documentElement.classList.add('ipad-device');
+      if (isNestHub) document.documentElement.classList.add('nest-hub');
+      
+    } else {
+      // Closing menu
+      bodyElement.classList.remove('menu-open');
+      
+      // Remove device-specific classes
+      document.documentElement.classList.remove('surface-pro', 'ipad-device', 'nest-hub');
+    }
+    
+    setIsMenuOpen(newMenuState);
+  };
+
+  // State for profile dropdown
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+  
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Toggle profile dropdown
+  const toggleProfileDropdown = () => {
+    setProfileDropdownOpen(!profileDropdownOpen);
   };
 
   return (
-    <header className="main-header shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
-        <Link to="/" className="flex-shrink-0 flex items-center mr-4">
-          <img src={logo} alt="AI Waverider" className="min-w-[40px] w-10 md:w-12 h-auto site-logo" />
+    <header className={`main-header sticky top-0 z-50 backdrop-blur-xl ${
+      darkMode 
+        ? 'bg-gradient-to-r from-gray-900/90 via-indigo-950/80 to-gray-900/90 border-b border-indigo-700/30 shadow-lg shadow-indigo-900/20' 
+        : 'bg-gradient-to-r from-blue-600/90 via-indigo-500/80 to-purple-500/90 border-b border-indigo-300 shadow-lg shadow-indigo-500/20'
+    } transition-all duration-300`}>
+      {/* Animated glow effect */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ 
+            repeat: Infinity,
+            duration: 8,
+            ease: "easeInOut" 
+          }}
+          className={`absolute -top-24 -right-24 w-48 h-48 rounded-full ${darkMode ? 'bg-indigo-600' : 'bg-blue-400'} blur-3xl`}
+        />
+        <motion.div 
+          animate={{ 
+            y: [-10, 10, -10],
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ 
+            repeat: Infinity,
+            duration: 10,
+            ease: "easeInOut" 
+          }}
+          className={`absolute -bottom-24 -left-24 w-48 h-48 rounded-full ${darkMode ? 'bg-purple-600' : 'bg-indigo-400'} blur-3xl`}
+        />
+      </div>
+      
+      <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center relative">
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          className="flex-shrink-0 flex items-center mr-4"
+        >
+          <Link to="/" className="flex items-center">
+            <motion.img 
+              whileHover={{ rotate: 10 }}
+              src={logo} 
+              alt="AI Waverider" 
+              className="min-w-[40px] w-10 md:w-12 h-auto site-logo" 
+            />
+            <motion.span 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className={`ml-2 font-bold text-lg md:text-xl text-transparent bg-clip-text ${darkMode 
+                ? 'bg-gradient-to-r from-blue-300 to-purple-300' 
+                : 'bg-gradient-to-r from-yellow-300 via-orange-200 to-yellow-100 drop-shadow-lg'}`}
+            >
+              AIWaverider
+            </motion.span>
         </Link>
+        </motion.div>
         
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center justify-center flex-grow">
+        {/* Desktop Navigation - hidden at 999px and below, visible at 1000px+ */}
+        <nav className="hidden custom-1000:flex items-center justify-center flex-grow">
           <ul className="flex nav-links items-center">
             <li className="nav-item flex items-center">
               <Link 
@@ -152,24 +309,29 @@ const Header = ({ openSignUpModal }) => {
               <Link 
                 to="/agents" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="Agents"
+                aria-label="AI Agents"
               >
                 <FaRobot className="mr-1.5" /> 
-                <span>Agents</span>
+                <span>AI Agents</span>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
               </span>
             </li>
             <li className="nav-item flex items-center">
-              <Link 
-                to="/ai-tools" 
-                className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="AI Tools"
-              >
-                <FaTools className="mr-1.5" /> 
-                <span>AI Tools</span>
-              </Link>
+              <div className="relative group">
+                <Link 
+                  to="/ai-tools" 
+                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                  aria-label="AI Tools & Prompts"
+                >
+                  <FaTools className="mr-1.5" /> 
+                  <div className="flex flex-col items-start">
+                    <span>AI Tools</span>
+                    <span className="text-xs mt-[-2px] text-blue-200">& Prompts</span>
+                  </div>
+                </Link>
+              </div>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
               </span>
@@ -178,15 +340,32 @@ const Header = ({ openSignUpModal }) => {
               <Link 
                 to="/latest-tech" 
                 className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
-                aria-label="Latest Tech"
+                aria-label="Latest News & Tutorials"
               >
                 <FaMicrochip className="mr-1.5" /> 
-                <span>Latest Tech</span>
+                <div className="flex flex-col items-start">
+                  <span>Latest Tech News</span>
+                  <span className="text-xs mt-[-2px] text-blue-200">& Tutorials</span>
+                </div>
               </Link>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
               </span>
             </li>
+            <li className="nav-item flex items-center">
+              <Link 
+                to="/videos" 
+                className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                aria-label="Video Gallery"
+              >
+                <FaVideo className="mr-1.5" /> 
+                <span>Videos</span>
+              </Link>
+              <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
+                <FaCircle />
+              </span>
+            </li>
+
             <li className="nav-item flex items-center">
               <Link 
                 to="/about" 
@@ -200,104 +379,165 @@ const Header = ({ openSignUpModal }) => {
           </ul>
         </nav>
         
-        {/* Right Section with Theme, Cart, Auth, and Mobile Menu Toggle */}
-        <div className="flex items-center space-x-3 md:space-x-4">
-          {/* Theme Toggle Button */}
+        {/* Universal Right Side - visible at all screen sizes - contains theme toggle, cart, and profile */}
+        <div className="flex items-center space-x-3">
+          {/* Dark Mode Toggle - Always visible */}
           <button 
             onClick={toggleDarkMode}
-            className="theme-toggle-button tooltip-container flex-shrink-0"
-            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            className="theme-toggle-btn p-2 rounded-full hover:bg-gray-100/10 transition-colors text-white"
           >
-            {darkMode ? <FaSun className="text-white" /> : <FaMoon className="text-white" />}
+            {darkMode ? <FaSun className="text-yellow-300" /> : <FaMoon className="text-white" />}
           </button>
           
-          {/* Cart Icon - Visible on all screens */}
-          <div className="cart-icon-container relative flex-shrink-0">
-            <Link to="/checkout" className="text-white hover:text-[#00bcd4] block p-2" aria-label="Shopping Cart">
-              <FaShoppingCart className="text-xl" />
-              {itemCount > 0 && (
-                <span className="cart-badge absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">
-                  {itemCount}
-                </span>
+          {/* Cart Button - Always visible */}
+          <Link 
+            to="/checkout" 
+            className="cart-btn p-2 rounded-full hover:bg-gray-100/10 transition-colors relative text-white"
+            aria-label="Cart"
+          >
+            <FaShoppingCart />
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
+          </Link>
+          
+          {/* Profile Button with Dropdown - Always visible */}
+          <div className="relative" ref={profileDropdownRef}>
+            <button 
+              onClick={toggleProfileDropdown} 
+              className="profile-btn flex items-center space-x-1 hover:bg-gray-100/10 rounded-full transition-all duration-200"
+              aria-label="Profile options"
+              aria-expanded={profileDropdownOpen}
+            >
+              {/* Profile Image/Avatar */}
+              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-indigo-300/50 hover:border-indigo-300 transition-colors duration-200 flex items-center justify-center">
+                {user && user.photoURL ? (
+                  <img src={user.photoURL || '/default-avatar.png'} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-xs text-white font-medium">
+                    {user ? (user.displayName?.charAt(0) || user.email?.charAt(0) || 'U') : <FaUser />}
+                  </div>
+                )}
+              </div>
+            </button>
+            
+            {/* Dropdown Menu with Animation */}
+            <AnimatePresence>
+              {profileDropdownOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="profile-dropdown absolute right-0 mt-2 w-56 glass-effect-dark dark:glass-effect rounded-lg shadow-xl overflow-hidden z-20 origin-top-right"
+                >
+                  {user ? (
+                    <div className="profile-dropdown-content">
+                      {/* User Info */}
+                      <div className="px-4 py-3 border-b border-gray-200/10 text-center">
+                        <div className="font-medium text-white truncate">
+                          {user.displayName || user.email?.split('@')[0] || 'User'}
+                        </div>
+                        <div className="text-xs text-gray-300 truncate">{user.email}</div>
+                      </div>
+                      
+                      {/* Menu Options */}
+                      <div className="py-1">
+                        <Link 
+                          to="/profile" 
+                          className="block px-4 py-2 text-sm text-gray-200 hover:bg-indigo-500/20 flex items-center"
+                          onClick={() => setProfileDropdownOpen(false)}
+                        >
+                          <FaUser className="mr-2 text-indigo-300" /> Profile
+                        </Link>
+                        
+                        {user.role === 'admin' && (
+                          <Link 
+                            to="/admin/dashboard" 
+                            className="block px-4 py-2 text-sm text-gray-200 hover:bg-indigo-500/20 flex items-center"
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <FaUserShield className="mr-2 text-indigo-300" /> Admin Dashboard
+                          </Link>
+                        )}
+                        
+                        <button
+                          onClick={() => {
+                            setProfileDropdownOpen(false);
+                            handleSignOut();
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-red-500/20 flex items-center"
+                        >
+                          <FaSignOutAlt className="mr-2 text-red-400" /> Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-1">
+                      <Link 
+                        to="/sign-in" 
+                        className="block px-4 py-2 text-sm text-gray-200 hover:bg-indigo-500/20 flex items-center"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        <FaUser className="mr-2 text-indigo-300" /> Sign In
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setProfileDropdownOpen(false);
+                          handleSignUp();
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-indigo-500/20 flex items-center"
+                      >
+                        <FaUserPlus className="mr-2 text-indigo-300" /> Sign Up
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
               )}
-            </Link>
+            </AnimatePresence>
           </div>
           
-          {/* Auth Buttons - Hidden on Mobile */}
-          <div className="hidden md:flex items-center space-x-3">
-            {!user && (
-              <>
-                <Link 
-                  to="/sign-in" 
-                  className="auth-link text-white hover:text-[#00bcd4] text-base whitespace-nowrap"
-                >
-                  Sign In
-                </Link>
-                <button
-                  onClick={handleSignUp}
-                  className="auth-button bg-[#16213e] hover:bg-[#00bcd4] text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap"
-                >
-                  Sign Up
-                </button>
-              </>
-            )}
-
-            {user && (
-              <>
-                {user.role === 'admin' && (
-                  <Link to="/admin/agents" className="auth-link text-white hover:text-[#00bcd4] text-base whitespace-nowrap">
-                    Admin
-                  </Link>
-                )}
-                <button
-                  onClick={handleSignOut}
-                  className="auth-button signout-button bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap"
-                >
-                  Sign Out
-                </button>
-                <Link
-                  to="/profile"
-                  className="profile-avatar w-10 h-10 overflow-hidden rounded-full border-2 border-[#00bcd4] bg-white flex-shrink-0"
-                >
-                  <img
-                    src={user?.photoURL || '/default-avatar.png'}
-                    alt={`${user?.displayName || 'User'}'s Profile`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      if (e.target.src.indexOf('default-avatar.png') === -1) {
-                        e.target.src = '/default-avatar.png';
-                      }
-                      e.target.onerror = null;
-                    }}
-                  />
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Mobile Menu Toggle Button */}
+          {/* Mobile menu button - Hamburger icon - visible only on screens below 1000px */}
           <button 
             ref={toggleButtonRef}
-            className="md:hidden text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0"
+            className="mobile-menu-btn custom-1000:hidden text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0 rounded-md"
             onClick={toggleMobileMenu}
             aria-label="Toggle mobile menu"
             aria-expanded={isMenuOpen}
           >
-            {isMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+            <FaBars className="text-xl" />
           </button>
         </div>
+
+        {/* Removed mobile menu button from here as it's now part of the right-side elements group */}
       </div>
       
       {/* Mobile Menu - Enhanced for better accessibility and UX */}
-      {isMenuOpen && (
-        <div 
-          ref={mobileMenuRef}
-          className="md:hidden mobile-menu"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Mobile navigation menu"
-        >
+      <div 
+        ref={mobileMenuRef}
+        className="mobile-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile navigation menu"
+        style={{ display: isMenuOpen ? 'block' : 'none' }}
+      >
+          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+            <div className="flex items-center">
+              <img src={logo} alt="AI Waverider" className="w-10 h-10 mr-2" />
+              <span className="font-bold text-xl text-indigo-600">AIWaverider</span>
+            </div>
+            {/* Mobile Menu Button - Enhanced for all device sizes */}
+          <button
+            onClick={toggleMobileMenu}
+            className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-500/20 active:bg-blue-600/30 transition-all duration-300 text-white sm:text-xl md:hidden"
+            aria-label="Toggle mobile menu"
+          >
+            {isMenuOpen ? <FaX className="text-2xl text-blue-400" /> : <FaBars className="text-2xl" />}
+          </button>
+          </div>
           <nav className="container mx-auto px-4 py-3">
             <ul className="space-y-1">
               <li className="mobile-nav-item">
@@ -324,7 +564,11 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaTools className="mr-3" /> AI Tools
+                  <FaTools className="mr-3" /> 
+                  <div className="flex flex-col items-start">
+                    <span>AI Tools</span>
+                    <span className="text-xs text-gray-500">Prompts</span>
+                  </div>
                 </Link>
               </li>
               <li className="mobile-nav-item">
@@ -333,7 +577,20 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaMicrochip className="mr-3" /> Latest Tech
+                  <FaMicrochip className="mr-3" /> 
+                  <div className="flex flex-col items-start">
+                    <span>Latest Tech News</span>
+                    <span className="text-xs text-gray-500">Tutorials</span>
+                  </div>
+                </Link>
+              </li>
+              <li className="mobile-nav-item">
+                <Link
+                  to="/videos"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FaVideo className="mr-3" /> Videos
                 </Link>
               </li>
               <li className="mobile-nav-item">
@@ -345,7 +602,7 @@ const Header = ({ openSignUpModal }) => {
                   <FaInfoCircle className="mr-3" /> About
                 </Link>
               </li>
-              <li className="mobile-nav-item">
+              {/* <li className="mobile-nav-item">
                 <Link
                   to="/checkout"
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
@@ -353,79 +610,15 @@ const Header = ({ openSignUpModal }) => {
                 >
                   <FaShoppingCart className="mr-3" /> Cart {itemCount > 0 ? `(${itemCount})` : ''}
                 </Link>
-              </li>
+              </li> */}
               
-              {/* Dark/Light mode toggle on mobile */}
-              <li className="mobile-nav-item">
-                <button
-                  onClick={() => {
-                    toggleDarkMode();
-                    setIsMenuOpen(false);
-                  }}
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center w-full"
-                >
-                  {darkMode ? <FaSun className="mr-3" /> : <FaMoon className="mr-3" />}
-                  {darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                </button>
-              </li>
+              {/* Removed Dark/Light mode toggle from mobile menu as it's now always visible in header */}
               
               {/* Mobile-only auth options */}
-              <li className="pt-2 mt-2 border-t border-gray-200">
-                {!user && (
-                  <div className="flex flex-col space-y-1">
-                    <Link
-                      to="/sign-in"
-                      className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Sign In
-                    </Link>
-                    <button
-                      className="mx-4 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-center"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        handleSignUp();
-                      }}
-                    >
-                      Sign Up
-                    </button>
-                  </div>
-                )}
-                
-                {user && (
-                  <div className="flex flex-col space-y-1">
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <FaUser className="mr-3" /> Profile
-                    </Link>
-                    {user.role === 'admin' && (
-                      <Link
-                        to="/admin/agents"
-                        className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Admin Dashboard
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        handleSignOut();
-                      }}
-                      className="mx-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-center mt-2"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </li>
+
             </ul>
           </nav>
         </div>
-      )}
     </header>
   );
 };

@@ -1,5 +1,6 @@
 // src/App.jsx
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom'; // <<<< CORRECTED: Added useNavigate import
 import './styles/globals.css';
 import AppContent from './components/app/AppContent';
 import { AuthProvider } from './contexts/AuthContext';
@@ -12,26 +13,24 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AuthCallback from './components/auth/AuthCallback';
 import { PAYMENT } from './config/config';
-import useAgentStore from './store/agentStore'; // Import agentStore
+import useAgentStore from './store/agentStore';
 
 // PayPal initial options from config
 const paypalOptions = {
-  "client-id": PAYMENT.PAYPAL.CLIENT_ID || "test", // Use a safe fallback value
+  "client-id": PAYMENT.PAYPAL.CLIENT_ID || "test",
   currency: PAYMENT.PAYPAL.CURRENCY || "USD",
   intent: PAYMENT.PAYPAL.INTENT || "capture",
-  "disable-funding": "paylater,venmo,credit", // Optional: disable specific payment methods
+  "disable-funding": "paylater,venmo,credit",
 };
 
-// Track if app has been initialized - use module scope
-let appInitialized = false;
+// Module-scoped flag to track if global, one-time initialization has occurred.
+let globalAppSetupDone = false;
 
-// Expose agent store preloading as a global function for pages to use
+// Expose agent store preloading as a global function
 window.preloadAgentData = async (force = false) => {
   try {
     console.log('Preloading agent data (called manually)');
     const agentStore = useAgentStore.getState();
-    
-    // Only load if we have no agents or force is true
     const currentAgents = agentStore.allAgents;
     if (force || currentAgents.length === 0) {
       await agentStore.loadInitialData(force);
@@ -47,37 +46,49 @@ window.preloadAgentData = async (force = false) => {
 };
 
 const App = () => {
-  // State to track if app has initialized
-  const [isInitialized, setIsInitialized] = useState(false);
-  // Ref to prevent multiple initialization
-  const initRef = useRef(false);
+  const [isUIVisible, setIsUIVisible] = useState(false); // State to control rendering of AppContent
+  const effectRanThisMount = useRef(false); // Ref to ensure initialization logic in useEffect runs once per mount
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Only initialize once across all renders
-    if (initRef.current || appInitialized) return;
-    initRef.current = true;
-    
-    // Enhanced initialization with data preloading
+    // --- 1. Redirect Logic (handles deep links after 404 redirect) ---
+    const redirectPath = sessionStorage.getItem('redirect');
+    if (redirectPath) {
+      sessionStorage.removeItem('redirect');
+      window.history.replaceState(null, '', redirectPath); // Update browser bar URL
+
+      navigate(redirectPath, { replace: true }); // Sync React Router's internal state
+    }
+
+    // --- 2. Initialization Logic ---
+    // This guard ensures the main initialization steps run only once per mount.
+    if (effectRanThisMount.current) {
+      if (!isUIVisible) setIsUIVisible(true);
+      return;
+    }
+    effectRanThisMount.current = true;
+
     const initializeApp = async () => {
       try {
-        console.log('Initializing application...');
-        
-        // Initialize store but don't preload data automatically
-        // This keeps the caching mechanism intact but doesn't make API calls on startup
-        
-        if (process.env.NODE_ENV === 'development' && !appInitialized) {
-          console.log('App initialized without preloaded agent data');
-          appInitialized = true;
+        if (!globalAppSetupDone) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[App.jsx initializeApp] Development-specific global setup done.');
+          }
+          globalAppSetupDone = true; // Mark global setup as done
         }
+
       } catch (error) {
-        console.error('Error during app initialization:', error);
+        console.error('[App.jsx initializeApp] Error during app initialization:', error);
       } finally {
-        setIsInitialized(true);
+        if (!isUIVisible) { // Only set state if it needs changing, to avoid unnecessary re-renders
+            setIsUIVisible(true); // Make AppContent visible
+        }
       }
     };
 
     initializeApp();
-  }, []);
+
+  }, [navigate, isUIVisible]); // Add isUIVisible because we check it before calling setIsUIVisible
 
   return (
     <ErrorBoundary>
@@ -98,7 +109,7 @@ const App = () => {
             <CartProvider>
               <PayPalScriptProvider options={paypalOptions}>
                 <AuthCallback>
-                  {isInitialized ? <AppContent /> : <div>Loading application...</div>}
+                  {isUIVisible ? <AppContent /> : <div>Loading application...</div>}
                 </AuthCallback>
               </PayPalScriptProvider>
             </CartProvider>
