@@ -188,6 +188,16 @@ const AgentCard = memo(({ agent }) => {
     return 'Price unavailable';
   }, [agent.isFree, agent.price, agent.priceDetails]);
 
+  // Check if agent is free to conditionally show add to cart button
+  const isFreeAgent = React.useMemo(() => {
+    return agent.isFree || 
+           agent.price === 0 || 
+           agent.price === '0' || 
+           agent.price === 'Free' || 
+           agent.price === 'free' || 
+           (agent.priceDetails && (agent.priceDetails.basePrice === 0 || agent.priceDetails.discountedPrice === 0));
+  }, [agent.isFree, agent.price, agent.priceDetails]);
+
   // Handle image loading errors
   const handleImageError = useCallback(() => {
     console.log(`Image error for agent: ${agent.id}`);
@@ -232,13 +242,16 @@ const AgentCard = memo(({ agent }) => {
                 {isWishlisted ? <FaHeart /> : <FaRegHeart />}
               </button>
               
-              <button
-                className="marketplace-cart-button"
-                onClick={handleAddToCart}
-                aria-label="Add to cart"
-              >
-                <FaPlus />
-              </button>
+              {/* Only show add to cart button for paid agents */}
+              {!isFreeAgent && (
+                <button
+                  className="marketplace-cart-button"
+                  onClick={handleAddToCart}
+                  aria-label="Add to cart"
+                >
+                  <FaPlus />
+                </button>
+              )}
             </div>
             
             {/* Badges */}
@@ -249,7 +262,7 @@ const AgentCard = memo(({ agent }) => {
 
           {/* Card content */}
           <div className="marketplace-agent-content">
-            <h3 className="marketplace-agent-title">{title}</h3>
+            <h3 className="marketplace-agent-title" title={title}>{title}</h3>
             <p className="marketplace-agent-description">{description}</p>
             
             <div className="marketplace-agent-creator">

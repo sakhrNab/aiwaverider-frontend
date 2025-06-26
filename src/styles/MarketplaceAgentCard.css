@@ -186,15 +186,46 @@
 }
 
 .marketplace-agent-title {
-  font-size: 1.125rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: var(--agent-card-text);
-  line-height: 1.4;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+  /* Allow text to wrap to multiple lines */
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  /* Limit to 3 lines maximum */
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  /* Ensure minimum height for consistency */
+  min-height: 2.6rem; /* Approximately 2 lines */
+}
+
+/* Responsive text sizing */
+@media (max-width: 1200px) {
+  .marketplace-agent-title {
+    font-size: 1rem;
+    min-height: 2.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .marketplace-agent-title {
+    font-size: 0.95rem;
+    min-height: 2.2rem;
+    -webkit-line-clamp: 2; /* Reduce to 2 lines on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .marketplace-agent-title {
+    font-size: 0.9rem;
+    min-height: 2rem;
+  }
 }
 
 .marketplace-agent-description {
@@ -295,16 +326,6 @@
   background: rgba(255, 255, 255, 0.1);
   border-radius: 9999px;
   color: rgba(255, 255, 255, 0.8);
-}
-
-@media (max-width: 768px) {
-  .marketplace-agent-title {
-    font-size: 1rem;
-  }
-  
-  .marketplace-agent-description {
-    font-size: 0.8125rem;
-  }
 }
 
 .marketplace-agent-card-link {

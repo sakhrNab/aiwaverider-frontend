@@ -60,6 +60,17 @@ const useAgentStore = create(
       lastLoadTime: null, // Track when data was last loaded
       cacheExpiry: 30 * 60 * 1000, // Increase cache to 30 minutes
       
+      // Pagination state
+      pagination: {
+        currentPage: 1,
+        pageSize: 50,
+        totalItems: 0,
+        totalPages: 1,
+        hasMore: false,
+        lastVisibleId: null,
+        isLoadingMore: false
+      },
+      
       // Review management actions
       addReviewToAgent: (agentId, newReview) => {
         console.log(`Adding review to agent ${agentId} in store`, newReview);
@@ -379,259 +390,193 @@ const useAgentStore = create(
         set({ tagCounts: tagCount, featureCounts: featureCount });
       },
       
-      // Apply filters to allAgents
-      applyFilters: () => {
+      // Apply filters with cursor-based pagination
+      applyFilters: async (resetPagination = true) => {
+        const state = get();
         const { 
-          allAgents, 
           selectedCategory, 
           selectedFilter, 
           selectedPrice, 
           selectedRating, 
           selectedTags, 
           selectedFeatures, 
-          searchQuery 
-        } = get();
+          searchQuery,
+          pagination
+        } = state;
         
-        if (!allAgents || allAgents.length === 0) return;
+        console.log('Applying filters with cursor-based pagination...');
         
-        let filteredResults = [...allAgents];
-        
-        console.log('Applying filters to', allAgents.length, 'agents');
-        console.log('Current filters:', {
-          category: selectedCategory,
-          filter: selectedFilter,
-          price: selectedPrice,
-          rating: selectedRating,
-          tags: selectedTags,
-          features: selectedFeatures,
-          query: searchQuery
-        });
-        
-        // Apply category filter
-        if (selectedCategory && selectedCategory !== 'All') {
-          filteredResults = filteredResults.filter(agent => agent.category === selectedCategory);
-          console.log(`After category filter (${selectedCategory}):`, filteredResults.length, 'agents');
-        }
-        
-        // Apply price filter
-        if (selectedPrice && (selectedPrice.min > 0 || selectedPrice.max < 1000)) {
-          filteredResults = filteredResults.filter(agent => {
-            // First check the new format with priceDetails
-            if (agent.priceDetails) {
-              const basePrice = agent.priceDetails.basePrice || 0;
-              const discountedPrice = agent.priceDetails.discountedPrice || basePrice;
-              const effectivePrice = agent.isFree ? 0 : (discountedPrice || basePrice);
-              
-              return (
-                effectivePrice >= selectedPrice.min && 
-                effectivePrice <= selectedPrice.max
-              );
+        try {
+          // Use cursor-based pagination API
+          const lastVisibleId = resetPagination ? null : pagination.lastVisibleId;
+          
+          const response = await fetchAgents(
+            selectedCategory,
+            selectedFilter,
+            lastVisibleId,
+            {
+              limit: pagination.pageSize,
+              priceRange: selectedPrice,
+              rating: selectedRating,
+              tags: selectedTags,
+              features: selectedFeatures,
+              search: searchQuery
             }
-            
-            // Legacy format - handle price as string
-            let price = agent.price;
-            if (typeof price === 'string') {
-              // Extract numeric part
-              const numValue = parseFloat(price.replace(/[^0-9.]/g, ''));
-              if (!isNaN(numValue)) {
-                price = numValue;
-              } else {
-                price = 0; // Default for non-numeric prices
+          );
+          
+          if (!response || !response.agents) {
+            console.warn('No data returned from fetchAgents');
+            set({ 
+              agents: [], 
+              isLoading: false,
+              pagination: {
+                ...pagination,
+                hasMore: false,
+                lastVisibleId: null,
+                isLoadingMore: false
               }
-            }
-            
-            // Compare with min and max
-            return (
-              price >= selectedPrice.min && 
-              price <= selectedPrice.max
-            );
-          });
-          console.log(`After price filter (${selectedPrice.min}-${selectedPrice.max}):`, filteredResults.length, 'agents');
-        }
-        
-        // Apply rating filter
-        if (selectedRating > 0) {
-          filteredResults = filteredResults.filter(agent => {
-            const rating = agent.rating?.average ? parseFloat(agent.rating.average) : 0;
-            return rating >= selectedRating;
-          });
-          console.log(`After rating filter (${selectedRating}+):`, filteredResults.length, 'agents');
-        }
-        
-        // Apply tag filters
-        if (selectedTags && selectedTags.length > 0) {
-          filteredResults = filteredResults.filter(agent => {
-            // Check if category matches any selected tag
-            if (agent.category && selectedTags.includes(agent.category)) {
-              return true;
-            }
-            
-            // Check agent tags if available
-            if (agent.tags && Array.isArray(agent.tags)) {
-              return agent.tags.some(tag => selectedTags.includes(tag));
-            }
-            
-            return false;
-          });
-          console.log(`After tag filters (${selectedTags.join(', ')}):`, filteredResults.length, 'agents');
-        }
-        
-        // Apply feature filters 
-        if (selectedFeatures && selectedFeatures.length > 0) {
-          filteredResults = filteredResults.filter(agent => {
-            // Process each selected feature
-            return selectedFeatures.some(feature => {
-              // Check for 'Free' feature
-              if (feature === 'Free') {
-                return agent.price === 0 || 
-                      agent.price === '0' || 
-                      agent.price === 'Free' || 
-                      agent.price === '$0' ||
-                      agent.isFree === true;
-              }
-              
-              // Check for 'Subscription' feature
-              if (feature === 'Subscription') {
-                return typeof agent.price === 'string' && 
-                      (agent.price.includes('/month') || 
-                       agent.price.includes('a month') || 
-                       agent.price.includes('monthly') ||
-                       agent.price.includes('subscription'));
-              }
-              
-              // Special handling for "Others" feature
-              if (feature === 'Others') {
-                // Check if agent has no features array or empty features array
-                if (!agent.features || !Array.isArray(agent.features) || agent.features.length === 0) {
-                  return true;
-                }
-                
-                // Check if all features in the array are empty strings
-                if (Array.isArray(agent.features) && agent.features.length > 0) {
-                  const allEmpty = agent.features.every(f => !f || !f.trim());
-                  if (allEmpty) return true;
-                }
-                
-                return false;
-              }
-              
-              // Check other features in the features array
-              return agent.features && 
-                    Array.isArray(agent.features) && 
-                    agent.features.includes(feature);
             });
+            return;
+          }
+          
+          // Fix placeholder URLs for the filtered agents
+          const fixedAgents = fixPlaceholderUrls(response.agents);
+          
+          console.log(`Applied filters - found ${fixedAgents.length} agents, hasMore: ${response.pagination.hasMore}`);
+
+          // Update state with filtered agents and new pagination info
+          set({
+            agents: resetPagination ? fixedAgents : [...state.agents, ...fixedAgents], // Append if loading more
+            pagination: {
+              ...pagination,
+              totalItems: response.total,
+              totalPages: response.pagination.totalPages || 1,
+              currentPage: response.pagination.currentPage || 1,
+              hasMore: response.pagination.hasMore,
+              lastVisibleId: response.pagination.lastVisibleId,
+              isLoadingMore: false
+            }
           });
-          console.log(`After feature filters (${selectedFeatures.join(', ')}):`, filteredResults.length, 'agents');
-        }
-        
-        // Apply search query - highly optimized for performance
-        if (searchQuery && searchQuery.trim() !== '') {
-          const query = searchQuery.toLowerCase().trim();
+        } catch (error) {
+          console.error('Error applying filters:', error);
           
-          // Pre-compute lowercase values to avoid repeated toLowerCase() calls
-          // This significantly improves performance for large datasets
-          const searchCache = new Map();
+          // Fallback to client-side filtering if API fails
+          console.log('Falling back to client-side filtering...');
+          const { allAgents } = state;
           
-          filteredResults = filteredResults.filter(agent => {
-            // Check cache first to avoid redundant calculations
-            if (searchCache.has(agent.id)) {
-              return searchCache.get(agent.id);
-            }
-            
-            // Quick check for exact matches in name (highest priority)
-            const name = agent.name ? agent.name.toLowerCase() : '';
-            if (name === query) {
-              searchCache.set(agent.id, true);
-              return true;
-            }
-            
-            // Check name and title first (most common matches)
-            if (name.includes(query) || 
-                (agent.title && agent.title.toLowerCase().includes(query))) {
-              searchCache.set(agent.id, true);
-              return true;
-            }
-            
-            // Only check these other fields if the above didn't match
-            const isMatch = 
-              (agent.category && agent.category.toLowerCase().includes(query)) ||
-              (agent.creator && agent.creator.name && 
-                agent.creator.name.toLowerCase().includes(query)) ||
-              (agent.description && agent.description.toLowerCase().includes(query));
-            
-            searchCache.set(agent.id, isMatch);
-            return isMatch;
-          });
+          let filtered = [...allAgents];
           
-          // Clear cache after filtering to prevent memory leaks
-          setTimeout(() => searchCache.clear(), 1000);
+          // Apply category filter
+          if (selectedCategory && selectedCategory !== 'All') {
+            filtered = filtered.filter(agent => 
+              agent.category === selectedCategory ||
+              (agent.categories && agent.categories.includes(selectedCategory))
+            );
+          }
           
-          console.log(`After search query "${query}":`, filteredResults.length, 'agents');
-        }
-        
-        // Apply sorting based on selected filter
-        if (selectedFilter) {
-          console.log(`Sorting by ${selectedFilter}`);
+          // Apply search filter
+          if (searchQuery && searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            filtered = filtered.filter(agent => 
+              agent.title?.toLowerCase().includes(query) ||
+              agent.name?.toLowerCase().includes(query) ||
+              agent.description?.toLowerCase().includes(query) ||
+              agent.tags?.some(tag => tag.toLowerCase().includes(query)) ||
+              agent.features?.some(feature => feature.toLowerCase().includes(query)) ||
+              agent.creator?.name?.toLowerCase().includes(query)
+            );
+          }
+          
+          // Apply price range filter
+          if (selectedPrice.min > 0 || selectedPrice.max < 1000) {
+            filtered = filtered.filter(agent => {
+              let price = 0;
+              if (agent.priceDetails?.basePrice !== undefined) {
+                price = agent.priceDetails.discountedPrice || agent.priceDetails.basePrice;
+              } else if (typeof agent.price === 'number') {
+                price = agent.price;
+              } else if (typeof agent.price === 'string') {
+                price = parseFloat(agent.price.replace(/[^0-9.]/g, '')) || 0;
+              }
+              return price >= selectedPrice.min && price <= selectedPrice.max;
+            });
+          }
+          
+          // Apply rating filter
+          if (selectedRating > 0) {
+            filtered = filtered.filter(agent => {
+              const rating = agent.rating?.average || 0;
+              return rating >= selectedRating;
+            });
+          }
+          
+          // Apply tag filters
+          if (selectedTags.length > 0) {
+            filtered = filtered.filter(agent => 
+              agent.tags && selectedTags.some(tag => agent.tags.includes(tag))
+            );
+          }
+          
+          // Apply feature filters
+          if (selectedFeatures.length > 0) {
+            filtered = filtered.filter(agent => 
+              agent.features && selectedFeatures.some(feature => agent.features.includes(feature))
+            );
+          }
+          
+          // Apply sorting
           switch (selectedFilter) {
-            case 'Hot & New':
-              // Sort by newest first, then by rating
-              filteredResults.sort((a, b) => {
-                if (a.isNew && !b.isNew) return -1;
-                if (!a.isNew && b.isNew) return 1;
-                const aRating = a.rating?.average || 0;
-                const bRating = b.rating?.average || 0;
-                return bRating - aRating;
-              });
-              break;
             case 'Top Rated':
-              // Sort by rating (highest first)
-              filteredResults.sort((a, b) => {
-                const aRating = a.rating?.average || 0;
-                const bRating = b.rating?.average || 0;
-                return bRating - aRating;
-              });
+              filtered.sort((a, b) => (b.rating?.average || 0) - (a.rating?.average || 0));
               break;
             case 'Most Popular':
-              // Sort by number of users or views if available, otherwise rating count
-              filteredResults.sort((a, b) => {
-                const aPopularity = a.usersCount || a.views || a.rating?.count || 0;
-                const bPopularity = b.usersCount || b.views || b.rating?.count || 0;
-                return bPopularity - aPopularity;
-              });
+              filtered.sort((a, b) => (b.downloadCount || 0) - (a.downloadCount || 0));
               break;
             case 'Price: Low to High':
-              // Sort by price (lowest first)
-              filteredResults.sort((a, b) => {
-                const aPrice = typeof a.price === 'number' ? a.price : 
-                              a.priceDetails?.basePrice || 
-                              (typeof a.price === 'string' ? parseFloat(a.price.replace(/[^0-9.]/g, '')) : 0);
-                const bPrice = typeof b.price === 'number' ? b.price : 
-                              b.priceDetails?.basePrice || 
-                              (typeof b.price === 'string' ? parseFloat(b.price.replace(/[^0-9.]/g, '')) : 0);
+              filtered.sort((a, b) => {
+                const aPrice = a.priceDetails?.basePrice || a.price || 0;
+                const bPrice = b.priceDetails?.basePrice || b.price || 0;
                 return aPrice - bPrice;
               });
               break;
             case 'Price: High to Low':
-              // Sort by price (highest first)
-              filteredResults.sort((a, b) => {
-                const aPrice = typeof a.price === 'number' ? a.price : 
-                              a.priceDetails?.basePrice || 
-                              (typeof a.price === 'string' ? parseFloat(a.price.replace(/[^0-9.]/g, '')) : 0);
-                const bPrice = typeof b.price === 'number' ? b.price : 
-                              b.priceDetails?.basePrice || 
-                              (typeof b.price === 'string' ? parseFloat(b.price.replace(/[^0-9.]/g, '')) : 0);
+              filtered.sort((a, b) => {
+                const aPrice = a.priceDetails?.basePrice || a.price || 0;
+                const bPrice = b.priceDetails?.basePrice || b.price || 0;
                 return bPrice - aPrice;
               });
               break;
-            default:
-              // No sorting
+            default: // 'Hot & New'
+              filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
               break;
           }
+          
+          // Calculate pagination information
+          const totalItems = filtered.length;
+          const { pageSize } = pagination;
+          const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+          const currentPage = Math.min(pagination.currentPage, totalPages);
+          
+          // Apply pagination
+          const startIndex = (currentPage - 1) * pageSize;
+          const endIndex = startIndex + pageSize;
+          const paginatedAgents = filtered.slice(startIndex, endIndex);
+          
+          // Update state with filtered and paginated results
+          set({
+            agents: paginatedAgents,
+            pagination: {
+              ...pagination,
+              currentPage: currentPage,
+              totalItems: totalItems,
+              totalPages: totalPages,
+              hasMore: endIndex < totalItems,
+              isLoadingMore: false
+            }
+          });
+          
+          console.log(`Applied filters (fallback): ${totalItems} total, showing page ${currentPage}/${totalPages} (${paginatedAgents.length} items)`);
         }
-        
-        // Set the filtered agents to state
-        console.log('Setting filtered results:', filteredResults.length, 'agents');
-        set({ agents: filteredResults });
       },
       
       // Load initial data
@@ -680,11 +625,13 @@ const useAgentStore = create(
           // 1. All standard filtering
           // 2. Featured agents
           // 3. Recommended agents
-          const allAgentsResponse = await fetchAgents('All', 'All', 1, { 
+          const response = await fetchAgents('All', 'All', null, { 
             limit: 100, // Higher limit to get enough data for all needs
             bypassCache: forceRefresh, // Only bypass cache if forceRefresh is true
             useMockData: process.env.NODE_ENV === 'development' // Use mock data in development if needed
           });
+          
+          const allAgentsResponse = response.agents || response;
           
           // Check if this request is still relevant
           if (currentLoadId !== requestId) {
@@ -838,6 +785,99 @@ const useAgentStore = create(
             return bRating - aRating;
           })
           .slice(0, limit);
+      },
+
+      // Load more agents using cursor-based pagination
+      loadMore: async () => {
+        const state = get();
+        const { pagination } = state;
+        
+        // Don't load if already loading or no more data
+        if (pagination.isLoadingMore || !pagination.hasMore) {
+          return;
+        }
+        
+        // Set loading state
+        set({
+          pagination: {
+            ...pagination,
+            isLoadingMore: true
+          }
+        });
+        
+        // Load more data without resetting pagination
+        await get().applyFilters(false);
+      },
+
+      // Reset pagination and filters
+      resetFilters: () => {
+        set({
+          selectedCategory: 'All',
+          selectedFilter: 'Hot & New',
+          selectedPrice: { min: 0, max: 1000 },
+          selectedRating: 0,
+          selectedTags: [],
+          selectedFeatures: [],
+          searchQuery: '',
+          pagination: {
+            currentPage: 1,
+            pageSize: 50,
+            totalItems: 0,
+            totalPages: 1,
+            hasMore: false,
+            lastVisibleId: null,
+            isLoadingMore: false
+          }
+        });
+        
+        // Apply filters to reload data
+        get().applyFilters();
+      },
+
+      // Pagination actions (kept for backward compatibility)
+      setPage: (pageNumber) => {
+        const state = get();
+        const { pagination } = state;
+
+        // Validate page number
+        if (pageNumber === pagination.currentPage ||
+            pageNumber < 1 ||
+            pageNumber > pagination.totalPages) {
+          return;
+        }
+
+        // Update pagination state
+        set({
+          pagination: {
+            ...pagination,
+            currentPage: pageNumber
+          }
+        });
+
+        // Apply filters to get the correct page of data
+        get().applyFilters();
+      },
+
+      setPageSize: (newSize) => {
+        const state = get();
+        const totalPages = Math.max(1, Math.ceil(state.pagination.totalItems / newSize));
+        
+        // Ensure current page is still valid
+        const currentPage = Math.min(state.pagination.currentPage, totalPages);
+        
+        // Update pagination state
+        set({
+          pagination: {
+            ...state.pagination,
+            pageSize: newSize,
+            currentPage: currentPage,
+            totalPages: totalPages,
+            lastVisibleId: null // Reset cursor when changing page size
+          }
+        });
+
+        // Apply filters to get the correct page of data
+        get().applyFilters();
       }
     }),
     { name: 'agent-store' }

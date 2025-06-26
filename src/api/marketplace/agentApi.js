@@ -345,14 +345,14 @@ export const searchAgents = async (query, filters = {}) => {
  */
 export const fetchAgents = async (
   category = 'All',
-  filter = 'Hot & Now',
-  page = 1,
+  filter = 'Hot & New',
+  lastVisibleId = null,
   options = {}
 ) => {
   try {
     // Extract options or use defaults
     const {
-      limit = 20,
+      limit = 50,
       priceRange = { min: 0, max: 1000 },
       rating = 0,
       tags = [],
@@ -366,8 +366,12 @@ export const fetchAgents = async (
     const params = new URLSearchParams();
     params.append('category', category);
     params.append('filter', filter);
-    params.append('page', page);
     params.append('limit', limit);
+    
+    // Use cursor-based pagination instead of page-based
+    if (lastVisibleId) {
+      params.append('lastVisibleId', lastVisibleId);
+    }
     
     // Add filter params
     if (priceRange?.min > 0) params.append('priceMin', priceRange.min);
@@ -391,7 +395,7 @@ export const fetchAgents = async (
     if (!bypassCache && requestCache.has(cacheKey)) {
       const { data, expiry } = requestCache.get(cacheKey);
       if (expiry > Date.now()) {
-        console.log('Using cached agents data:', data.length, 'agents');
+        console.log('Using cached agents data:', data.agents?.length || data.length, 'agents');
         return data;
       } else {
         // Remove expired cache entry
@@ -412,28 +416,57 @@ export const fetchAgents = async (
     const requestPromise = (async () => {
       // Fetch from backend API
       const response = await api.get(`/api/agents?${params.toString()}`);
-      console.log('Successfully fetched agents from API:', response.data.agents.length);
+      console.log('Successfully fetched agents from API:', response.data);
+      
+      // Handle new response format with cursor-based pagination
+      const responseData = response.data;
+      
+      // Extract agents array and pagination info from new format
+      const agents = responseData.agents || [];
+      const paginationInfo = responseData.pagination || {
+        hasMore: false,
+        lastVisibleId: null,
+        limit: limit,
+        currentPage: 1
+      };
+      const total = responseData.total || agents.length;
+      const fromCache = responseData.fromCache || false;
       
       // Validate agents to ensure they exist and have valid IDs
-      // This removes any potentially corrupted data that could cause errors
-      const validAgents = response.data.agents.filter(agent => {
+      const validAgents = agents.filter(agent => {
         return agent && agent.id && typeof agent.id === 'string';
       });
       
-      if (validAgents.length !== response.data.agents.length) {
-        console.warn(`Filtered out ${response.data.agents.length - validAgents.length} invalid agents from results`);
+      if (validAgents.length !== agents.length) {
+        console.warn(`Filtered out ${agents.length - validAgents.length} invalid agents from results`);
       }
       
-      // Cache the valid response data
+      // Create response object that matches what the store expects
+      const finalResponse = {
+        agents: validAgents,
+        pagination: {
+          hasMore: paginationInfo.hasMore,
+          lastVisibleId: paginationInfo.lastVisibleId,
+          limit: paginationInfo.limit,
+          currentPage: paginationInfo.currentPage || 1,
+          // Maintain backward compatibility for existing UI
+          totalItems: total,
+          totalPages: Math.ceil(total / limit) // Approximate for UI compatibility
+        },
+        total,
+        fromCache
+      };
+      
+      // Cache the response
       requestCache.set(cacheKey, {
-        data: validAgents,
+        data: finalResponse,
         expiry: Date.now() + CACHE_EXPIRY
       });
       
       // Remove from pending requests
       pendingRequests.delete(cacheKey);
       
-      return validAgents;
+      return finalResponse;
     })();
     
     // Store the promise in pending requests map
@@ -443,11 +476,22 @@ export const fetchAgents = async (
     return requestPromise;
   } catch (error) {
     console.error('Error fetching agents from API:', error);
-    // Return empty array on error
-    return [];
+    // Return empty response structure on error
+    return {
+      agents: [],
+      pagination: {
+        hasMore: false,
+        lastVisibleId: null,
+        limit: options.limit || 50,
+        currentPage: 1,
+        totalItems: 0,
+        totalPages: 0
+      },
+      total: 0,
+      fromCache: false
+    };
   }
 };
-
 
 /**
  * Fetch featured agents with options

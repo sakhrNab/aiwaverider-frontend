@@ -168,7 +168,7 @@ const HomePage = () => {
                 </a>
 
                 <a 
-                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                href="https://discord.gg/PNqBfZcm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
@@ -337,7 +337,7 @@ const HomePage = () => {
                 Explore All Monetization Paths <FaChevronRight className="ml-2" />
               </Link>
               <a 
-                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                href="https://discord.gg/PNqBfZcm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
@@ -447,7 +447,7 @@ const HomePage = () => {
                 Learn How We Solve These Obstacles <FaChevronRight className="ml-2" />
               </Link>
               <a 
-                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                href="https://discord.gg/PNqBfZcm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
@@ -539,7 +539,7 @@ const HomePage = () => {
                   START FREE Consultation Call
                 </Link>
               <a 
-                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                href="https://discord.gg/PNqBfZcm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-6 py-4 rounded-lg font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
@@ -858,7 +858,7 @@ const HomePage = () => {
                   START FREE Consultation Call
                 </Link>
               <a 
-                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                href="https://discord.gg/PNqBfZcm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-6 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold text-xl sm:text-2xl transition-all inline-flex items-center border-2 border-purple-400 hover:shadow-lg"
@@ -1155,7 +1155,7 @@ const HomePage = () => {
                 <FaArrowRight className="ml-3" />
               </button>
               <a 
-                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                href="https://discord.gg/PNqBfZcm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-6 py-4 rounded-full font-bold text-xl transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
@@ -1280,7 +1280,7 @@ const HomePage = () => {
             </div>
             <div className="mt-4">
               <a 
-                href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                href="https://discord.gg/PNqBfZcm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`px-8 py-4 rounded-xl font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
@@ -1317,7 +1317,7 @@ const HomePage = () => {
                   <FaCalendarAlt /> Schedule Your Free Call Now
                 </button>
                 <a 
-                  href="https://discord.com/channels/1377544516579491891/1377544516579491894"
+                  href="https://discord.gg/PNqBfZcm"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`px-8 py-5 rounded-full font-bold text-xl transition-all inline-flex items-center gap-3 ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-xl`}

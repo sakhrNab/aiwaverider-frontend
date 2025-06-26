@@ -58,6 +58,7 @@ const Agents = () => {
     featureCounts,
     isLoading,
     isRecommendationsLoading,
+    pagination,
     
     // Actions
     setCategory,
@@ -69,7 +70,10 @@ const Agents = () => {
     toggleFeature,
     resetFilters,
     loadInitialData,
-    applyFilters
+    applyFilters,
+    loadMore,
+    setPage,
+    setPageSize
   } = useAgentStore();
 
   // Local UI states  
@@ -83,13 +87,7 @@ const Agents = () => {
   const dataLoadedRef = useRef(false);
   const applyFiltersTimeoutRef = useRef(null);
 
-  // Apply filters directly with flag to prevent duplicate execution
-  const applyFiltersDirectly = useCallback(() => {
-    console.log('Applying filters directly');
-    // Set the flag to prevent the useEffect from running again
-    isApplyingFiltersRef.current = true;
-    applyFilters();
-  }, [applyFilters]);
+
   
   // Use a simple timeout for search filtering instead of debounce
   // This is more reliable for responsive typing
@@ -161,39 +159,14 @@ const Agents = () => {
     }
   }, [location.search, setSearchQuery]);
 
-  // Track if filters are being applied to prevent duplicate calls
-  const isApplyingFiltersRef = useRef(false);
-  
-  // Add a useEffect to apply filters whenever any filter criteria changes
-  // But only if they weren't already applied by a direct handler call
-  useEffect(() => {
-    // Skip if we're already applying filters from a direct handler call
-    if (isApplyingFiltersRef.current) {
-      isApplyingFiltersRef.current = false;
-      return;
-    }
-    
-    // Don't apply filters during initial load
-    if (mountedRef.current && dataLoadedRef.current) {
-      console.log('Applying filters from dependency change');
-      applyFilters();
-    }
-  }, [
-    selectedCategory,
-    selectedFilter,
-    selectedPrice,
-    selectedRating,
-    selectedTags,
-    selectedFeatures,
-    searchQuery,
-    applyFilters
-  ]);
+  // Auto-apply filters when dependencies change (disabled to prevent duplicate calls)
+  // Filters are now applied directly in handlers for better control
 
   const handleCategoryChange = (category) => {
     // No page refresh needed, just update state
     setCategory(category);
-    // Apply filters through the debounced function
-    debouncedApplyFilters();
+    // Apply filters with reset pagination for fresh results
+    applyFilters(true);
     // Scroll to the curated section for better UX
     document.querySelector('.curated-marketplace').scrollIntoView({ behavior: 'smooth' });
   };
@@ -209,8 +182,8 @@ const Agents = () => {
       clearTimeout(searchTimeoutRef.current);
     }
     
-    // Apply filters directly for immediate feedback
-    applyFiltersDirectly();
+    // Apply filters with reset pagination for fresh results
+    applyFilters(true);
     
     // Only jump to marketplace on explicit search submissions (Enter key or search button)
     if (isExplicitSubmit && query) {
@@ -228,36 +201,36 @@ const Agents = () => {
   const handleFilterChange = (filter) => {
     console.log('Filter changed to:', filter);
     setFilter(filter);
-    // Apply filters directly for immediate feedback
-    applyFiltersDirectly();
+    // Apply filters with reset pagination for fresh results
+    applyFilters(true);
   };
 
   const handlePriceChange = (newPriceRange) => {
     console.log('Price changed to:', newPriceRange);
     setPrice(newPriceRange);
-    // Apply filters directly for immediate feedback
-    applyFiltersDirectly();
+    // Apply filters with reset pagination for fresh results
+    applyFilters(true);
   };
 
   const handleRatingChange = (rating) => {
     console.log('Rating changed to:', rating);
     setRating(rating);
-    // Apply filters directly for immediate feedback
-    applyFiltersDirectly();
+    // Apply filters with reset pagination for fresh results
+    applyFilters(true);
   };
   
   const handleTagChange = (tag) => {
     console.log('Tags changed to:', tag);
     toggleTag(tag);
-    // Apply filters directly for immediate feedback
-    applyFiltersDirectly();
+    // Apply filters with reset pagination for fresh results
+    applyFilters(true);
   };
   
   const handleFeatureChange = (feature) => {
     console.log('Features changed to:', feature);
     toggleFeature(feature);
-    // Apply filters directly for immediate feedback
-    applyFiltersDirectly();
+    // Apply filters with reset pagination for fresh results
+    applyFilters(true);
   };
 
   // Toggle mobile filters sidebar
@@ -540,6 +513,28 @@ const Agents = () => {
                 </section>
               )}
 
+              {/* Results summary */}
+              <div className="results-summary glass-effect mb-4 p-4 text-white">
+                <div className="flex justify-between items-center">
+                  <span>
+                    Showing {agents.length > 0 ? ((pagination.currentPage - 1) * pagination.pageSize + 1) : 0} to {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)} of {pagination.totalItems} agents
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm">Show:</label>
+                    <select 
+                      value={pagination.pageSize} 
+                      onChange={(e) => setPageSize(parseInt(e.target.value))}
+                      className="bg-white/20 text-white px-2 py-1 rounded border border-white/30 text-sm"
+                    >
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <span className="text-sm">per page</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Agent grid - Conditional rendering based on loading state */}
               {isLoading ? (
                 <div className="loading-wrapper glass-effect">
@@ -560,9 +555,71 @@ const Agents = () => {
                   </button>
                 </div>
               ) : (
-                <div id="marketplace-section" className="agents-container glass-effect" ref={agentsContainerRef}>
-                  {renderAgentGrid()}
-                </div>
+                <>
+                  <div id="marketplace-section" className="agents-container glass-effect" ref={agentsContainerRef}>
+                    {renderAgentGrid()}
+                  </div>
+
+                  {/* Load More Pagination */}
+                  {pagination.hasMore && (
+                    <div className="load-more-container glass-effect mt-6 p-4 text-center">
+                      <button
+                        onClick={loadMore}
+                        disabled={pagination.isLoadingMore}
+                        className="load-more-button bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
+                      >
+                        {pagination.isLoadingMore ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Loading More...</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-2">
+                            <span>Load More Agents</span>
+                            <FaArrowRight className="w-4 h-4" />
+                          </div>
+                        )}
+                      </button>
+                      
+                      {/* Info text */}
+                      <div className="text-white/80 text-sm mt-3">
+                        Showing {agents.length} agents {pagination.totalItems > 0 && `of ${pagination.totalItems} total`}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fallback pagination for backward compatibility */}
+                  {!pagination.hasMore && pagination.totalPages > 1 && (
+                    <div className="pagination-container glass-effect mt-6 p-4">
+                      <div className="flex justify-center items-center gap-2">
+                        {/* Previous page button */}
+                        <button
+                          onClick={() => setPage(Math.max(1, pagination.currentPage - 1))}
+                          disabled={pagination.currentPage === 1}
+                          className="pagination-button"
+                          aria-label="Go to previous page"
+                        >
+                          ‹ Previous
+                        </button>
+
+                        {/* Next page button */}
+                        <button
+                          onClick={() => setPage(Math.min(pagination.totalPages, pagination.currentPage + 1))}
+                          disabled={pagination.currentPage === pagination.totalPages}
+                          className="pagination-button"
+                          aria-label="Go to next page"
+                        >
+                          Next ›
+                        </button>
+                      </div>
+
+                      {/* Page info */}
+                      <div className="text-center mt-2 text-white/80 text-sm">
+                        Page {pagination.currentPage} of {pagination.totalPages}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Recommended agents */}
