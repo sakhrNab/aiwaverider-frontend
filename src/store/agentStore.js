@@ -64,7 +64,7 @@ const useAgentStore = create(
       // Pagination state
       pagination: {
         currentPage: 1,
-        pageSize: 50,
+        pageSize: 25,
         totalItems: 0,
         totalPages: 1,
         hasMore: false,
@@ -607,10 +607,11 @@ const useAgentStore = create(
           if (currentLoadId !== requestId) return;
           
           console.log('🚀 REDIS-FIRST: Loading initial data with optimized strategy');
+          console.log('🔧 DEBUG: Current pageSize:', get().pagination.pageSize);
           
           // Load first page of agents with Redis-First backend
           const response = await fetchAgents('All', 'Hot & New', null, { 
-            limit: 100,
+            limit: get().pagination.pageSize,
             bypassCache: forceRefresh
           });
           
@@ -644,6 +645,7 @@ const useAgentStore = create(
           console.log(`📊 Derived ${featuredAgents.length} featured, ${recommendedAgents.length} recommended agents`);
           
           // Update store
+          const currentPageSize = get().pagination.pageSize;
           set({ 
             agents: fixedAgents,
             allAgents: fixedAgents,
@@ -654,9 +656,9 @@ const useAgentStore = create(
             lastLoadTime: Date.now(),
             pagination: {
               currentPage: 1,
-              pageSize: 100,
+              pageSize: currentPageSize,
               totalItems: total,
-              totalPages: Math.ceil(total / 100),
+              totalPages: Math.ceil(total / currentPageSize),
               hasMore: paginationData.hasMore || false,
               lastVisibleId: paginationData.lastVisibleId || null,
               isLoadingMore: false
