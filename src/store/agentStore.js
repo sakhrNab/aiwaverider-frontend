@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { fetchAgents } from '../api/marketplace/agentApi'; //fetchWishlists
 import { fixPlaceholderUrl } from '../utils/imageUtils';
+import freeSearchService from '../services/freeSearchService';
 
 // Helper to fix any via.placeholder.com URLs at runtime
 const fixPlaceholderUrls = (agents) => {
@@ -390,7 +391,7 @@ const useAgentStore = create(
         set({ tagCounts: tagCount, featureCounts: featureCount });
       },
       
-      // Apply filters with cursor-based pagination
+      // Apply filters and search with intelligent dual-mode operation
       applyFilters: async (resetPagination = true) => {
         const state = get();
         const { 
@@ -401,29 +402,92 @@ const useAgentStore = create(
           selectedTags, 
           selectedFeatures, 
           searchQuery,
-          pagination
+          pagination,
+          allAgents
         } = state;
         
-        console.log('Applying filters with cursor-based pagination...');
+        console.log('🔍 ApplyFilters: Starting with Redis-First dual-mode architecture');
+        console.log('🔍 Parameters:', {
+          category: selectedCategory,
+          filter: selectedFilter,
+          search: searchQuery,
+          hasAllAgents: allAgents.length,
+          resetPagination
+        });
+        
+        // **DUAL-MODE INTELLIGENCE**: Choose optimal approach based on use case
+        
+        // MODE 1: Category browsing with client-side filtering (Redis-First cached data)
+        const shouldUseClientSideFiltering = 
+          selectedCategory !== 'All' && 
+          !searchQuery?.trim() && 
+          allAgents.length > 0 && 
+          freeSearchService.initialized;
+        
+        if (shouldUseClientSideFiltering) {
+          console.log('🏷️ MODE 1: Using client-side filtering for category browsing');
+          
+          // Use FreeSearchService for instant filtering
+          const searchResults = freeSearchService.searchAndFilter({
+            searchQuery: '',
+            category: selectedCategory,
+            selectedFilter: selectedFilter,
+            priceRange: selectedPrice,
+            rating: selectedRating,
+            tags: selectedTags,
+            features: selectedFeatures,
+            page: resetPagination ? 1 : pagination.currentPage,
+            pageSize: pagination.pageSize
+          });
+          
+          console.log(`✅ MODE 1: Client-side filtering completed in ${searchResults.searchTime}ms - ${searchResults.agents.length}/${searchResults.total} agents`);
+          
+          set({
+            agents: searchResults.agents,
+            isLoading: false,
+            pagination: {
+              ...searchResults.pagination,
+              isLoadingMore: false
+            }
+          });
+          
+          return;
+        }
+        
+        // MODE 2: Search or "All" category - Use server-side processing with Redis-First caching
+        console.log('🔍 MODE 2: Using server-side processing with Redis-First caching');
         
         try {
-          // Use cursor-based pagination API
+          set({ isLoading: true });
+          
           const lastVisibleId = resetPagination ? null : pagination.lastVisibleId;
+          
+          const apiParams = {
+            limit: pagination.pageSize,
+            priceRange: selectedPrice,
+            rating: selectedRating > 0 ? selectedRating : undefined,
+            tags: selectedTags,
+            features: selectedFeatures,
+            search: searchQuery?.trim() || undefined
+          };
+          
+          console.log('🔍 API Parameters:', apiParams);
           
           const response = await fetchAgents(
             selectedCategory,
             selectedFilter,
             lastVisibleId,
-            {
-              limit: pagination.pageSize,
-              priceRange: selectedPrice,
-              rating: selectedRating,
-              tags: selectedTags,
-              features: selectedFeatures,
-              search: searchQuery
-            }
+            apiParams
           );
           
+          console.log('🔍 API Response:', {
+            agentsCount: response?.agents?.length || 0,
+            fromCache: response?.fromCache,
+            total: response?.total,
+            mode: response?.mode,
+            hasMore: response?.pagination?.hasMore
+          });
+
           if (!response || !response.agents) {
             console.warn('No data returned from fetchAgents');
             set({ 
@@ -433,302 +497,193 @@ const useAgentStore = create(
                 ...pagination,
                 hasMore: false,
                 lastVisibleId: null,
-                isLoadingMore: false
+                isLoadingMore: false,
+                totalItems: 0,
+                currentPage: 1,
+                totalPages: 1
               }
             });
             return;
           }
-          
-          // Fix placeholder URLs for the filtered agents
+
           const fixedAgents = fixPlaceholderUrls(response.agents);
           
-          console.log(`Applied filters - found ${fixedAgents.length} agents, hasMore: ${response.pagination.hasMore}`);
+          console.log(`✅ MODE 2: Received ${fixedAgents.length} agents (fromCache: ${response.fromCache})`);
 
-          // Update state with filtered agents and new pagination info
+          // Update state with new agents and pagination info
           set({
-            agents: resetPagination ? fixedAgents : [...state.agents, ...fixedAgents], // Append if loading more
+            agents: resetPagination ? fixedAgents : [...state.agents, ...fixedAgents],
+            isLoading: false,
             pagination: {
-              ...pagination,
-              totalItems: response.total,
-              totalPages: response.pagination.totalPages || 1,
-              currentPage: response.pagination.currentPage || 1,
-              hasMore: response.pagination.hasMore,
-              lastVisibleId: response.pagination.lastVisibleId,
+              currentPage: resetPagination ? 1 : pagination.currentPage + 1,
+              pageSize: pagination.pageSize,
+              totalItems: response.total || fixedAgents.length,
+              totalPages: Math.ceil((response.total || fixedAgents.length) / pagination.pageSize),
+              hasMore: response.pagination?.hasMore || false,
+              lastVisibleId: response.pagination?.lastVisibleId || null,
               isLoadingMore: false
             }
           });
+          
+          console.log('✅ MODE 2: Store updated successfully');
+          
         } catch (error) {
-          console.error('Error applying filters:', error);
+          console.error('Error in MODE 2 server-side processing:', error);
           
-          // Fallback to client-side filtering if API fails
-          console.log('Falling back to client-side filtering...');
-          const { allAgents } = state;
-          
-          let filtered = [...allAgents];
-          
-          // Apply category filter
-          if (selectedCategory && selectedCategory !== 'All') {
-            filtered = filtered.filter(agent => 
-              agent.category === selectedCategory ||
-              (agent.categories && agent.categories.includes(selectedCategory))
-            );
-          }
-          
-          // Apply search filter
-          if (searchQuery && searchQuery.trim()) {
-            const query = searchQuery.toLowerCase().trim();
-            filtered = filtered.filter(agent => 
-              agent.title?.toLowerCase().includes(query) ||
-              agent.name?.toLowerCase().includes(query) ||
-              agent.description?.toLowerCase().includes(query) ||
-              agent.tags?.some(tag => tag.toLowerCase().includes(query)) ||
-              agent.features?.some(feature => feature.toLowerCase().includes(query)) ||
-              agent.creator?.name?.toLowerCase().includes(query)
-            );
-          }
-          
-          // Apply price range filter
-          if (selectedPrice.min > 0 || selectedPrice.max < 1000) {
-            filtered = filtered.filter(agent => {
-              let price = 0;
-              if (agent.priceDetails?.basePrice !== undefined) {
-                price = agent.priceDetails.discountedPrice || agent.priceDetails.basePrice;
-              } else if (typeof agent.price === 'number') {
-                price = agent.price;
-              } else if (typeof agent.price === 'string') {
-                price = parseFloat(agent.price.replace(/[^0-9.]/g, '')) || 0;
-              }
-              return price >= selectedPrice.min && price <= selectedPrice.max;
-            });
-          }
-          
-          // Apply rating filter
-          if (selectedRating > 0) {
-            filtered = filtered.filter(agent => {
-              const rating = agent.rating?.average || 0;
-              return rating >= selectedRating;
-            });
-          }
-          
-          // Apply tag filters
-          if (selectedTags.length > 0) {
-            filtered = filtered.filter(agent => 
-              agent.tags && selectedTags.some(tag => agent.tags.includes(tag))
-            );
-          }
-          
-          // Apply feature filters
-          if (selectedFeatures.length > 0) {
-            filtered = filtered.filter(agent => 
-              agent.features && selectedFeatures.some(feature => agent.features.includes(feature))
-            );
-          }
-          
-          // Apply sorting
-          switch (selectedFilter) {
-            case 'Top Rated':
-              filtered.sort((a, b) => (b.rating?.average || 0) - (a.rating?.average || 0));
-              break;
-            case 'Most Popular':
-              filtered.sort((a, b) => (b.downloadCount || 0) - (a.downloadCount || 0));
-              break;
-            case 'Price: Low to High':
-              filtered.sort((a, b) => {
-                const aPrice = a.priceDetails?.basePrice || a.price || 0;
-                const bPrice = b.priceDetails?.basePrice || b.price || 0;
-                return aPrice - bPrice;
-              });
-              break;
-            case 'Price: High to Low':
-              filtered.sort((a, b) => {
-                const aPrice = a.priceDetails?.basePrice || a.price || 0;
-                const bPrice = b.priceDetails?.basePrice || b.price || 0;
-                return bPrice - aPrice;
-              });
-              break;
-            default: // 'Hot & New'
-              filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-              break;
-          }
-          
-          // Calculate pagination information
-          const totalItems = filtered.length;
-          const { pageSize } = pagination;
-          const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-          const currentPage = Math.min(pagination.currentPage, totalPages);
-          
-          // Apply pagination
-          const startIndex = (currentPage - 1) * pageSize;
-          const endIndex = startIndex + pageSize;
-          const paginatedAgents = filtered.slice(startIndex, endIndex);
-          
-          // Update state with filtered and paginated results
-          set({
-            agents: paginatedAgents,
-            pagination: {
-              ...pagination,
-              currentPage: currentPage,
-              totalItems: totalItems,
-              totalPages: totalPages,
-              hasMore: endIndex < totalItems,
-              isLoadingMore: false
+          // Fallback to client-side filtering if we have allAgents data
+          if (allAgents.length > 0) {
+            console.log('📦 Fallback: Using client-side filtering with existing data');
+            
+            // Initialize FreeSearchService if needed
+            if (!freeSearchService.initialized) {
+              freeSearchService.initialize(allAgents);
             }
-          });
-          
-          console.log(`Applied filters (fallback): ${totalItems} total, showing page ${currentPage}/${totalPages} (${paginatedAgents.length} items)`);
+            
+            const searchResults = freeSearchService.searchAndFilter({
+              searchQuery: searchQuery || '',
+              category: selectedCategory,
+              selectedFilter: selectedFilter,
+              priceRange: selectedPrice,
+              rating: selectedRating,
+              tags: selectedTags,
+              features: selectedFeatures,
+              page: resetPagination ? 1 : pagination.currentPage,
+              pageSize: pagination.pageSize
+            });
+            
+            set({
+              agents: searchResults.agents,
+              isLoading: false,
+              pagination: {
+                ...searchResults.pagination,
+                isLoadingMore: false
+              }
+            });
+            
+            console.log(`✅ Fallback: Client-side filtering completed - ${searchResults.agents.length}/${searchResults.total} agents`);
+          } else {
+            // No fallback data available
+        set({
+              agents: [], 
+              isLoading: false,
+          pagination: {
+            ...pagination,
+                hasMore: false,
+                lastVisibleId: null,
+                isLoadingMore: false,
+                totalItems: 0,
+                currentPage: 1,
+                totalPages: 1
+              }
+            });
+          }
         }
       },
       
-      // Load initial data
+      // Load initial data with Redis-First optimization
       loadInitialData: async (forceRefresh = false) => {
-        // Generate a unique ID for this request
         const requestId = Date.now();
         currentLoadId = requestId;
         
         try {
-          // Check if we have recent data in cache
+          // Check cache validity
           const now = Date.now();
           const lastLoad = get().lastLoadTime;
           const cacheExpiry = get().cacheExpiry;
           
-          // Skip cache if forceRefresh is true
           if (!forceRefresh && lastLoad && (now - lastLoad < cacheExpiry) && get().allAgents.length > 0) {
-            console.log('Using cached agent data from', Math.round((now - lastLoad)/1000), 'seconds ago');
-            // If we have cached data, just update loading states
+            console.log('✅ Using cached agent data from', Math.round((now - lastLoad)/1000), 'seconds ago');
             set({ isLoading: false, isRecommendationsLoading: false });
+            
+            // Initialize FreeSearchService with cached data
+            if (!freeSearchService.initialized) {
+              freeSearchService.initialize(get().allAgents);
+            }
             return;
           }
           
-          // Set loading state
           set({ isLoading: true, isRecommendationsLoading: true });
           
-          // If the ID changes during fetch, abort operation
-          if (currentLoadId !== requestId) {
-            console.log('Aborting superseded loadInitialData request');
-            return;
-          }
+          if (currentLoadId !== requestId) return;
           
-          // MAKE ONLY ONE API CALL - Get all agents with a larger limit to ensure we have enough data
-          console.log('Fetching fresh agent data with a single API call');
+          console.log('🚀 REDIS-FIRST: Loading initial data with optimized strategy');
           
-          // Avoid duplicate calls with a short timeout
-          await new Promise(resolve => setTimeout(resolve, 10));
-          
-          // Check again if this request is still relevant
-          if (currentLoadId !== requestId) {
-            console.log('Aborting superseded loadInitialData request after timeout');
-            return;
-          }
-          
-          // Use a larger limit to ensure we have enough agents for all purposes
-          // We need to make sure we get enough for:
-          // 1. All standard filtering
-          // 2. Featured agents
-          // 3. Recommended agents
-          const response = await fetchAgents('All', 'All', null, { 
-            limit: 100, // Higher limit to get enough data for all needs
-            bypassCache: forceRefresh, // Only bypass cache if forceRefresh is true
-            useMockData: process.env.NODE_ENV === 'development' // Use mock data in development if needed
+          // Load first page of agents with Redis-First backend
+          const response = await fetchAgents('All', 'Hot & New', null, { 
+            limit: 100,
+            bypassCache: forceRefresh
           });
           
-          const allAgentsResponse = response.agents || response;
+          if (currentLoadId !== requestId) return;
           
-          // Check if this request is still relevant
-          if (currentLoadId !== requestId) {
-            console.log('Ignoring stale agent data response');
-            return;
-          }
+          // Extract response data
+          const allAgentsResponse = response.agents || [];
+          const fromCache = response.fromCache || false;
+          const paginationData = response.pagination || {};
+          const total = response.total || allAgentsResponse.length;
           
-          // Fetch wishlists separately (this is essential user data, not redundant)
-          // Only fetch wishlists if we have an authenticated user or force refresh is true
-          // let wishlistsResponse = [];
-          // if (localStorage.getItem('authToken') || forceRefresh) {
-          //   try {
-          //     wishlistsResponse = await fetchWishlists();
-          //   } catch (error) {
-          //     console.error('Error fetching wishlists, using empty array:', error);
-          //     wishlistsResponse = [];
-          //   }
-          // } else {
-          //   console.log('Skipping wishlist fetch for unauthenticated user');
-          // }
+          console.log(`✅ REDIS-FIRST: Received ${allAgentsResponse.length} agents (fromCache: ${fromCache}, total: ${total})`);
           
-          // Check again if this request is still relevant
-          if (currentLoadId !== requestId) {
-            console.log('Ignoring stale wishlist data response');
-            return;
-          }
+          const fixedAgents = fixPlaceholderUrls(allAgentsResponse);
           
-          // Apply URL fixes to ensure placeholders work
-          const fixedAgents = fixPlaceholderUrls(allAgentsResponse) || [];
-          
-          // DERIVE FEATURED AGENTS - No separate API call
-          const featuredAgents = [...fixedAgents]
-            .filter(agent => agent.isFeatured === true) // Only include agents explicitly marked as featured
-            .sort((a, b) => {
-              // Sort by creation date - newest first
-              const aDate = a.createdAt || a.dateCreated || a.updatedAt || '0';
-              const bDate = b.createdAt || b.dateCreated || b.updatedAt || '0';
-              return new Date(bDate) - new Date(aDate);
-            })
-            .slice(0, 8); // Limit to 8 featured agents
+          // Derive featured and recommended agents efficiently
+          const featuredAgents = fixedAgents
+            .filter(agent => agent.isFeatured === true)
+            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+            .slice(0, 8);
             
-          console.log(`Derived ${featuredAgents.length} featured agents locally from all agents data`);
-          
-          // DERIVE RECOMMENDED AGENTS - No separate API call
-          const recommendedAgents = [...fixedAgents]
+          const recommendedAgents = fixedAgents
             .sort((a, b) => {
               const aPopularity = a.usersCount || a.views || a.rating?.count || 0;
               const bPopularity = b.usersCount || b.views || b.rating?.count || 0;
-              
-              if (aPopularity !== bPopularity) {
-                return bPopularity - aPopularity;
-              }
-              
-              const aRating = a.rating?.average || 0;
-              const bRating = b.rating?.average || 0;
-              return bRating - aRating;
+              if (aPopularity !== bPopularity) return bPopularity - aPopularity;
+              return (b.rating?.average || 0) - (a.rating?.average || 0);
             })
             .slice(0, 10);
             
-          console.log(`Derived ${recommendedAgents.length} recommended agents locally from all agents data`);
+          console.log(`📊 Derived ${featuredAgents.length} featured, ${recommendedAgents.length} recommended agents`);
           
-          // Update store with ALL data at once
+          // Update store
           set({ 
             agents: fixedAgents,
             allAgents: fixedAgents,
             featuredAgents: featuredAgents,
             recommendedAgents: recommendedAgents,
-            // wishlists: wishlistsResponse,
             isLoading: false,
             isRecommendationsLoading: false,
-            lastLoadTime: Date.now() // Update the cache timestamp
+            lastLoadTime: Date.now(),
+            pagination: {
+              currentPage: 1,
+              pageSize: 100,
+              totalItems: total,
+              totalPages: Math.ceil(total / 100),
+              hasMore: paginationData.hasMore || false,
+              lastVisibleId: paginationData.lastVisibleId || null,
+              isLoadingMore: false
+            }
           });
           
-          // Compute tag and feature statistics
+          // Initialize FreeSearchService for client-side filtering
+          freeSearchService.initialize(fixedAgents);
+          console.log('🔍 FreeSearchService initialized for optimal client-side filtering');
+          
+          // Compute statistics
           const tagCounter = {};
           const featureCounter = {};
           
           fixedAgents.forEach(agent => {
-            // Count tags
-            if (agent.tags && Array.isArray(agent.tags)) {
-              agent.tags.forEach(tag => {
+            agent.tags?.forEach(tag => {
                 tagCounter[tag] = (tagCounter[tag] || 0) + 1;
               });
-            }
-            
-            // Count features
-            if (agent.features && Array.isArray(agent.features)) {
-              agent.features.forEach(feature => {
+            agent.features?.forEach(feature => {
                 featureCounter[feature] = (featureCounter[feature] || 0) + 1;
               });
-            }
           });
           
-          set({ 
-            tagCounts: tagCounter, 
-            featureCounts: featureCounter
-          });
+          set({ tagCounts: tagCounter, featureCounts: featureCounter });
+          
+          console.log('✅ REDIS-FIRST: Initial data loading completed successfully');
+          
         } catch (error) {
           console.error('Error in loadInitialData:', error);
           set({ isLoading: false, isRecommendationsLoading: false });
@@ -790,12 +745,15 @@ const useAgentStore = create(
       // Load more agents using cursor-based pagination
       loadMore: async () => {
         const state = get();
-        const { pagination } = state;
+        const { pagination, selectedCategory, selectedFilter, selectedPrice, selectedRating, selectedTags, selectedFeatures, searchQuery } = state;
         
         // Don't load if already loading or no more data
         if (pagination.isLoadingMore || !pagination.hasMore) {
+          console.log('📋 LoadMore: Skipping - already loading or no more data', { isLoadingMore: pagination.isLoadingMore, hasMore: pagination.hasMore });
           return;
         }
+        
+        console.log('📋 LoadMore: Loading next page with lastVisibleId:', pagination.lastVisibleId);
         
         // Set loading state
         set({
@@ -805,33 +763,70 @@ const useAgentStore = create(
           }
         });
         
-        // Load more data without resetting pagination
-        await get().applyFilters(false);
-      },
-
-      // Reset pagination and filters
-      resetFilters: () => {
-        set({
-          selectedCategory: 'All',
-          selectedFilter: 'Hot & New',
-          selectedPrice: { min: 0, max: 1000 },
-          selectedRating: 0,
-          selectedTags: [],
-          selectedFeatures: [],
-          searchQuery: '',
-          pagination: {
-            currentPage: 1,
-            pageSize: 50,
-            totalItems: 0,
-            totalPages: 1,
-            hasMore: false,
-            lastVisibleId: null,
-            isLoadingMore: false
+        try {
+          // Call API with cursor-based pagination
+          const response = await fetchAgents(selectedCategory, selectedFilter, pagination.lastVisibleId, {
+            limit: pagination.pageSize,
+            priceRange: selectedPrice,
+            rating: selectedRating > 0 ? selectedRating : undefined,
+            tags: selectedTags,
+            features: selectedFeatures,
+            search: searchQuery || undefined
+          });
+          
+          if (response && response.agents && response.agents.length > 0) {
+            // Fix placeholder URLs for new agents
+            const newFixedAgents = fixPlaceholderUrls(response.agents);
+            
+            console.log(`✅ LoadMore: Received ${newFixedAgents.length} more agents (fromCache: ${response.fromCache})`);
+            
+            // Append new agents to existing ones
+            const updatedAgents = [...state.agents, ...newFixedAgents];
+            const updatedAllAgents = [...state.allAgents, ...newFixedAgents];
+            
+            // Update store with new data
+            set({
+              agents: updatedAgents,
+              allAgents: updatedAllAgents,
+              pagination: {
+                ...pagination,
+                currentPage: pagination.currentPage + 1,
+                hasMore: response.pagination?.hasMore || false,
+                lastVisibleId: response.pagination?.lastVisibleId || null,
+                isLoadingMore: false,
+                totalItems: response.total || state.pagination.totalItems
+              }
+            });
+            
+            // 🐛 DEBUG: Log loadMore pagination update
+            console.log('🔍 DEBUG: LoadMore pagination update:', {
+              newCurrentPage: pagination.currentPage + 1,
+              newHasMore: response.pagination?.hasMore || false,
+              newLastVisibleId: response.pagination?.lastVisibleId || null,
+              totalAgentsNow: updatedAgents.length,
+              totalItems: response.total || state.pagination.totalItems,
+              responseTotal: response.total,
+              responsePagination: response.pagination
+            });
+          } else {
+            console.log('📋 LoadMore: No more agents received');
+            set({
+              pagination: {
+                ...pagination,
+                hasMore: false,
+                isLoadingMore: false
+              }
+            });
           }
-        });
-        
-        // Apply filters to reload data
-        get().applyFilters();
+        } catch (error) {
+          console.error('Error in loadMore:', error);
+          set({
+            pagination: {
+              ...pagination,
+              isLoadingMore: false
+            }
+          });
+        }
       },
 
       // Pagination actions (kept for backward compatibility)

@@ -358,22 +358,74 @@ export const fetchAgents = async (
       tags = [],
       features = [],
       search = '',
-      timestamp = Date.now(), // Add timestamp for cache busting
+      timestamp = Date.now(),
       bypassCache = false
     } = options;
     
     // Create query params for API
     const params = new URLSearchParams();
+    
+    // 🚀 NEW REDIS-FIRST ARCHITECTURE: Dual-Mode API calls
+    
+    // MODE 1: Category View - Fetch ALL agents in category for client-side filtering
+    if (category !== 'All' && !search && !lastVisibleId) {
+      console.log(`🏷️ MODE 1: Category browsing for "${category}" - fetching all agents for client-side filtering`);
+      
+      params.append('category', category);
+      // No limit for category view - get all agents in category for Fuse.js
+      
+      // Add cache busting if needed
+      if (bypassCache) {
+        params.append('_t', timestamp);
+      }
+      
+      const url = `/api/agents?${params.toString()}`;
+      console.log(`[API] Category Mode - URL: ${url}`);
+      
+      const response = await api.get(url);
+      const responseData = response.data;
+      
+      // Handle Redis-First response format
+      const agents = responseData.agents || [];
+      const fromCache = responseData.fromCache || false;
+      
+      console.log(`✅ MODE 1: Received ${agents.length} agents for category "${category}" (fromCache: ${fromCache})`);
+      
+      // Return format for client-side filtering
+      return {
+        agents: agents,
+        pagination: {
+          hasMore: false, // No pagination in category mode
+          lastVisibleId: null,
+          limit: agents.length,
+          currentPage: 1,
+          totalItems: agents.length,
+          totalPages: 1
+        },
+        total: agents.length,
+        fromCache: fromCache,
+        mode: 'category' // Indicator for frontend
+      };
+    }
+    
+    // MODE 2: All Categories/Search View - Server-side search and pagination
+    console.log(`🔍 MODE 2: Search/All view - server-side processing`);
+    
     params.append('category', category);
     params.append('filter', filter);
     params.append('limit', limit);
     
-    // Use cursor-based pagination instead of page-based
+    // Add cursor-based pagination
     if (lastVisibleId) {
       params.append('lastVisibleId', lastVisibleId);
     }
     
-    // Add filter params
+    // Add search query for server-side processing
+    if (search) {
+      params.append('searchQuery', search);
+    }
+    
+    // Add filter params for server-side processing
     if (priceRange?.min > 0) params.append('priceMin', priceRange.min);
     if (priceRange?.max < 1000) params.append('priceMax', priceRange.max);
     if (rating > 0) params.append('rating', rating);
@@ -381,9 +433,8 @@ export const fetchAgents = async (
     // Join arrays for API consumption
     if (tags && tags.length > 0) params.append('tags', tags.join(','));
     if (features && features.length > 0) params.append('features', features.join(','));
-    if (search) params.append('search', search);
     
-    // Add timestamp for cache busting only if bypassCache is true
+    // Add cache busting if needed
     if (bypassCache) {
       params.append('_t', timestamp);
     }
@@ -410,51 +461,49 @@ export const fetchAgents = async (
     }
     
     // Create the promise for this request
-    console.log(`Fetching agents from API with params: ${params.toString()}`);
+    const url = `/api/agents?${params.toString()}`;
+    console.log(`[API] Search/All Mode - URL: ${url}`);
     
     // Create promise for the API request
     const requestPromise = (async () => {
       // Fetch from backend API
-      const response = await api.get(`/api/agents?${params.toString()}`);
+      const response = await api.get(url);
       console.log('Successfully fetched agents from API:', response.data);
       
-      // Handle new response format with cursor-based pagination
+      // Handle Redis-First response format
       const responseData = response.data;
       
-      // Extract agents array and pagination info from new format
+      // Extract data from new backend response format
       const agents = responseData.agents || [];
-      const paginationInfo = responseData.pagination || {
-        hasMore: false,
-        lastVisibleId: null,
-        limit: limit,
-        currentPage: 1
-      };
-      const total = responseData.total || agents.length;
+      const lastVisibleId = responseData.lastVisibleId || null;
       const fromCache = responseData.fromCache || false;
+      const total = responseData.total || agents.length;
       
       // Validate agents to ensure they exist and have valid IDs
       const validAgents = agents.filter(agent => {
-        return agent && agent.id && typeof agent.id === 'string';
+        return agent && (agent.id || agent._id) && typeof (agent.id || agent._id) === 'string';
       });
       
       if (validAgents.length !== agents.length) {
         console.warn(`Filtered out ${agents.length - validAgents.length} invalid agents from results`);
       }
       
+      console.log(`✅ MODE 2: Received ${validAgents.length} agents (fromCache: ${fromCache}, hasMore: ${!!lastVisibleId})`);
+      
       // Create response object that matches what the store expects
       const finalResponse = {
         agents: validAgents,
         pagination: {
-          hasMore: paginationInfo.hasMore,
-          lastVisibleId: paginationInfo.lastVisibleId,
-          limit: paginationInfo.limit,
-          currentPage: paginationInfo.currentPage || 1,
-          // Maintain backward compatibility for existing UI
+          hasMore: !!lastVisibleId, // More data available if lastVisibleId exists
+          lastVisibleId: lastVisibleId,
+          limit: limit,
+          currentPage: Math.floor((validAgents.length / limit)) + 1,
           totalItems: total,
-          totalPages: Math.ceil(total / limit) // Approximate for UI compatibility
+          totalPages: Math.ceil(total / limit)
         },
         total,
-        fromCache
+        fromCache,
+        mode: 'search' // Indicator for frontend
       };
       
       // Cache the response
@@ -488,7 +537,8 @@ export const fetchAgents = async (
         totalPages: 0
       },
       total: 0,
-      fromCache: false
+      fromCache: false,
+      mode: 'error'
     };
   }
 };

@@ -1,7 +1,7 @@
 //src/pages
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import SearchBar from '../components/agents/SearchBar';
+// import SearchBar from '../components/agents/SearchBar'; // Replaced with VideosPage search implementation
 import CategoryNav from '../components/agents/CategoryNav';
 import FeaturedAgents from '../components/agents/FeaturedAgents';
 // import WishlistSection from '../components/agents/WishlistSection';
@@ -87,11 +87,98 @@ const Agents = () => {
   const dataLoadedRef = useRef(false);
   const applyFiltersTimeoutRef = useRef(null);
 
+  // Search-related refs and state - improved implementation
+  const searchInputRef = useRef(null);
+  const mainSearchBarRef = useRef(null);
+  const resultsRef = useRef(null);
+  const [isSearchFloating, setIsSearchFloating] = React.useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = React.useState(searchQuery || '');
 
-  
-  // Use a simple timeout for search filtering instead of debounce
-  // This is more reliable for responsive typing
-  const searchTimeoutRef = useRef(null);
+
+
+  // Keyboard shortcut for search focus (Ctrl+K or Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          searchInputRef.current.select();
+        }
+      }
+      
+      // Escape to clear search when focused
+      if (event.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        handleClearSearch();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Handle scroll to show/hide floating search
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      
+      // Get the position of the search wrapper (not just the input)
+      const searchWrapper = document.querySelector('.search-wrapper');
+      const categoryNav = document.querySelector('.curated-marketplace');
+      const filterSearchContainer = document.querySelector('.filter-search-container');
+      
+      if (!searchWrapper || !categoryNav || !filterSearchContainer) {
+        return; // Elements not ready yet
+      }
+      
+      // Get the bottom position of the entire search area
+      const searchWrapperRect = searchWrapper.getBoundingClientRect();
+      const categoryNavRect = categoryNav.getBoundingClientRect();
+      const filterContainerRect = filterSearchContainer.getBoundingClientRect();
+      
+      // Calculate the bottom position of the entire search section
+      const searchSectionBottom = window.pageYOffset + filterContainerRect.bottom;
+      
+      // Show floating search only when the entire search section is not visible
+      // Hide it as soon as any part of the search area becomes visible
+      const isSearchSectionVisible = 
+        categoryNavRect.bottom > 0 || // CategoryNav is visible
+        filterContainerRect.bottom > 0 || // Filter container is visible
+        searchWrapperRect.bottom > 0; // Search wrapper is visible
+      
+      // Only show floating search when the search section is completely scrolled past
+      if (!isSearchSectionVisible && scrollTop > searchSectionBottom + 50) {
+        setIsSearchFloating(true);
+      } else {
+        setIsSearchFloating(false);
+      }
+    };
+    // Add scroll event listener with throttling for better performance
+    let ticking = false;
+    const throttledScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    
+    // Initial check
+    handleScroll();
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('scroll', throttledScroll);
+    };
+  }, []); // No dependencies needed since it should work regardless of search state
+
+  // Sync local search query with store
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery || '');
+  }, [searchQuery]);
 
   // Initial data load - only run once with proper mount check
   useEffect(() => {
@@ -171,31 +258,41 @@ const Agents = () => {
     document.querySelector('.curated-marketplace').scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSearch = (query, isClearing = false, isExplicitSubmit = false) => {
-    console.log('Search handler called with query:', query);
-    
-    // Set the search query in the store
+  // Improved search handlers
+  const handleSearchSubmit = (query = localSearchQuery) => {
+    console.log('🔍 SEARCH SUBMIT:', query);
     setSearchQuery(query);
-    
-    // Clear any previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    // Apply filters with reset pagination for fresh results
     applyFilters(true);
     
-    // Only jump to marketplace on explicit search submissions (Enter key or search button)
-    if (isExplicitSubmit && query) {
-      // Jump to the marketplace section after a short delay
-      // to allow the filters to be applied and results to be displayed
-      setTimeout(() => {
-        const marketplaceElement = document.getElementById('marketplace-section');
-        if (marketplaceElement) {
-          marketplaceElement.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 300);
+    // Auto-scroll to results after search
+    setTimeout(() => {
+      const marketplaceElement = document.getElementById('marketplace-section');
+      if (marketplaceElement) {
+        marketplaceElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300);
+  };
+
+  const handleSearchKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleSearchSubmit();
     }
+  };
+
+  const handleClearSearch = () => {
+    setLocalSearchQuery('');
+    setSearchQuery('');
+    setIsSearchFloating(false);
+    applyFilters(true);
+    
+    // Smooth scroll back to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearchInputChange = (value) => {
+    setLocalSearchQuery(value);
+    // No immediate search - only update local state
   };
 
   const handleFilterChange = (filter) => {
@@ -495,13 +592,174 @@ const Agents = () => {
                   </select>
                 </div>
 
-                <div className="search-wrapper mt-3 sm:mt-0 flex">
-                  <SearchBar
-                    initialQuery={searchQuery}
-                    onSearch={handleSearch}
-                    placeholder="Search agents..."
-                    className="flex-1"
-                  />
+                {/* Enhanced Search Bar from VideosPage */}
+                <div className="search-wrapper mt-3 sm:mt-0 flex" ref={mainSearchBarRef}>
+                  <div className="max-w-2xl mx-auto mb-8 w-full">
+                    <div className="relative group">
+                      <input
+                        type="text"
+                        value={localSearchQuery}
+                        onChange={(e) => {
+                          handleSearchInputChange(e.target.value);
+                        }}
+                        onKeyDown={handleSearchKeyPress}
+                        placeholder="Search agents by title, description, creator, or category..."
+                        className={`
+                          w-full px-6 py-4 pl-12 pr-24 rounded-2xl border
+                          ${darkMode 
+                            ? 'bg-gray-800/60 border-gray-700/50 text-white placeholder-gray-400' 
+                            : 'bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500'
+                          }
+                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                          backdrop-blur-sm transition-all duration-300 ease-out
+                          ${localSearchQuery && localSearchQuery.trim() 
+                            ? `shadow-2xl transform hover:scale-105 hover:-translate-y-1 
+                               ${darkMode 
+                                 ? 'shadow-blue-500/25 border-blue-500/50 bg-gray-800/80' 
+                                 : 'shadow-blue-500/20 border-blue-400/60 bg-white/90'
+                               }
+                               ring-2 ring-blue-500/30` 
+                            : 'shadow-lg hover:shadow-xl hover:scale-102 hover:-translate-y-0.5'
+                          }
+                          group-hover:shadow-2xl
+                          ${isSearchFloating && localSearchQuery ? 'opacity-70' : ''}
+                        `}
+                        ref={searchInputRef}
+                      />
+                      
+                      {/* Search Icon with enhanced effects */}
+                      <div className={`
+                        absolute left-4 top-1/2 transform -translate-y-1/2 
+                        transition-all duration-300 ease-out
+                        ${localSearchQuery && localSearchQuery.trim() 
+                          ? `scale-110 ${darkMode ? 'text-blue-400' : 'text-blue-600'}` 
+                          : `${darkMode ? 'text-gray-400 group-hover:text-blue-400' : 'text-gray-500 group-hover:text-blue-600'}`
+                        }
+                      `}>
+                        <svg 
+                          className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12"
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      
+                      {/* Search Button */}
+                      <button
+                        onClick={() => handleSearchSubmit()}
+                        disabled={!localSearchQuery || !localSearchQuery.trim()}
+                        className={`
+                          absolute right-12 top-1/2 transform -translate-y-1/2 
+                          p-2 rounded-xl transition-all duration-300 ease-out
+                          hover:scale-110 active:scale-95
+                          ${localSearchQuery && localSearchQuery.trim()
+                            ? `${darkMode 
+                                ? 'text-white bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-500/50' 
+                                : 'text-white bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-500/40'
+                              }
+                              border border-blue-500/50` 
+                            : `${darkMode 
+                                ? 'text-gray-500 bg-gray-700/50 border-gray-600/50' 
+                                : 'text-gray-400 bg-gray-200/50 border-gray-300/50'
+                              }
+                              border cursor-not-allowed`
+                          }
+                        `}
+                        title={localSearchQuery && localSearchQuery.trim() ? "Search agents" : "Enter search term"}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </button>
+
+                      {/* Close Button - Positioned inside the input field */}
+                      {localSearchQuery && (
+                        <button
+                          onClick={handleClearSearch}
+                          className={`
+                            absolute right-3 top-1/2 transform -translate-y-1/2 
+                            p-1.5 rounded-full transition-all duration-300 ease-out
+                            hover:scale-125 hover:rotate-180 active:scale-95
+                            ${darkMode 
+                              ? 'text-gray-400 hover:text-white hover:bg-red-600/30 hover:shadow-xl hover:shadow-red-500/40' 
+                              : 'text-gray-500 hover:text-red-600 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/30'
+                            }
+                            group
+                            border border-transparent hover:border-red-500/50
+                          `}
+                          title="Close search and return to top"
+                        >
+                          <svg className="w-4 h-4 transition-transform duration-500 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                      
+                      {/* Keyboard Shortcut Hint */}
+                      {!localSearchQuery && (
+                        <div className={`
+                          absolute right-24 top-1/2 transform -translate-y-1/2 
+                          hidden sm:flex items-center space-x-1 text-xs
+                          ${darkMode ? 'text-gray-500' : 'text-gray-400'}
+                          transition-all duration-300 group-hover:opacity-100
+                        `}>
+                          <kbd className={`
+                            px-1.5 py-0.5 rounded text-xs font-mono
+                            ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
+                          `}>
+                            {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}
+                          </kbd>
+                          <kbd className={`
+                            px-1.5 py-0.5 rounded text-xs font-mono
+                            ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
+                          `}>
+                            K
+                          </kbd>
+                        </div>
+                      )}
+                      
+                      {/* Search glow effect when active */}
+                      {localSearchQuery && localSearchQuery.trim() && (
+                        <div className={`
+                          absolute inset-0 rounded-2xl transition-all duration-300
+                          ${darkMode 
+                            ? 'bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10' 
+                            : 'bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5'
+                          }
+                          -z-10 blur-xl scale-105 animate-pulse-slow
+                        `} />
+                      )}
+                    </div>
+                    
+                    {/* Enhanced Search Results Indicator */}
+                    {localSearchQuery && localSearchQuery.trim() && (
+                      <div className={`
+                        mt-4 text-center transition-all duration-300 animate-fadeIn
+                      `}>
+                        <div className={`
+                          inline-flex items-center space-x-2 px-4 py-2 rounded-full
+                          ${darkMode 
+                            ? 'bg-blue-900/30 text-blue-300 border border-blue-700/50' 
+                            : 'bg-blue-50/80 text-blue-700 border border-blue-200/60'
+                          }
+                          backdrop-blur-sm shadow-lg
+                        `}>
+                          <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          <span className="text-sm font-medium">
+                            Searching for: <span className="font-bold">"{localSearchQuery}"</span>
+                          </span>
+                          <div className={`
+                            w-2 h-2 rounded-full animate-pulse
+                            ${darkMode ? 'bg-blue-400' : 'bg-blue-600'}
+                          `} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -514,7 +772,7 @@ const Agents = () => {
               )}
 
               {/* Results summary */}
-              <div className="results-summary glass-effect mb-4 p-4 text-white">
+              <div className="results-summary glass-effect mb-4 p-4 text-white" ref={resultsRef}>
                 <div className="flex justify-between items-center">
                   <span>
                     Showing {agents.length > 0 ? ((pagination.currentPage - 1) * pagination.pageSize + 1) : 0} to {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)} of {pagination.totalItems} agents
@@ -649,6 +907,118 @@ const Agents = () => {
           </div>
         </div>
       </div>
+
+
+
+      {/* Static Floating Search Overlay - Absolutely no movement */}
+      {isSearchFloating && (
+        <div 
+          className="fixed z-50 top-4"
+          style={{
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'calc(100vw - 2rem)',
+            maxWidth: '32rem'
+          }}>
+          <div className={`
+            relative w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl
+            ${darkMode 
+              ? 'bg-gray-900/98 backdrop-blur-xl border border-gray-700/50 shadow-2xl shadow-blue-500/25' 
+              : 'bg-white/98 backdrop-blur-xl border border-white/50 shadow-2xl shadow-blue-500/20'
+            }
+          `}>
+            {/* Responsive Floating Search Input */}
+            <div className="relative group">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search agents..."
+                className={`
+                  w-full px-4 py-2.5 pl-10 pr-8 sm:px-6 sm:py-3 sm:pl-12 sm:pr-10 
+                  rounded-lg sm:rounded-xl border text-sm sm:text-base
+                  ${darkMode 
+                    ? 'bg-gray-800/80 border-gray-600/50 text-white placeholder-gray-300' 
+                    : 'bg-white/80 border-gray-300/50 text-gray-900 placeholder-gray-400'
+                  }
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                  backdrop-blur-sm transition-all duration-300 ease-out
+                  shadow-lg hover:shadow-xl
+                `}
+                autoFocus
+              />
+              
+              {/* Responsive Search Icon */}
+              <div className={`
+                absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 
+                ${darkMode ? 'text-blue-400' : 'text-blue-600'}
+                transition-all duration-300
+              `}>
+                <svg 
+                  className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              
+              {/* Responsive Close Button */}
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setIsSearchFloating(false);
+                  // Stay in current position - no scroll to top
+                }}
+                className={`
+                  absolute right-1.5 sm:right-2 top-1/2 transform -translate-y-1/2 
+                  p-1 sm:p-1.5 rounded-full transition-all duration-300 ease-out
+                  hover:scale-125 hover:rotate-180 active:scale-95
+                  ${darkMode 
+                    ? 'text-gray-400 hover:text-white hover:bg-red-600/30 hover:shadow-xl hover:shadow-red-500/40' 
+                    : 'text-gray-500 hover:text-red-600 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/30'
+                  }
+                  group
+                  border border-transparent hover:border-red-500/50
+                `}
+                title="Close search"
+              >
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-500 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Responsive Search Status */}
+            <div className={`
+              mt-2 sm:mt-3 flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm
+              ${darkMode ? 'text-blue-300' : 'text-blue-700'}
+            `}>
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+                              <span className="font-medium">
+                  Searching: <span className="font-bold">"{searchQuery.length > 20 ? searchQuery.substring(0, 20) + '...' : searchQuery}"</span>
+                </span>
+              <div className={`
+                w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse
+                ${darkMode ? 'bg-blue-400' : 'bg-blue-600'}
+              `} />
+            </div>
+            
+            {/* Floating search glow effect */}
+            <div className={`
+              absolute inset-0 rounded-2xl transition-all duration-500
+              ${darkMode 
+                ? 'bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-blue-600/20' 
+                : 'bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10'
+              }
+              -z-10 blur-2xl scale-110 animate-pulse-slow
+            `} />
+          </div>
+        </div>
+      )}
 
       {/* Floating filter button for mobile */}
       <button 
