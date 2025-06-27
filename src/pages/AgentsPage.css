@@ -6,6 +6,32 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
+/* Responsive agents page container */
+@media (max-width: 1200px) {
+  .agents-page {
+    max-width: 100%;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .agents-page {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .agents-page {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 375px) {
+  .agents-page {
+    padding: 6px;
+  }
+}
+
 /* Floating Search Improvements */
 /* Floating Search Animations */
 @keyframes slideUp {
@@ -122,8 +148,34 @@
   margin-bottom: 48px;
 }
 
+/* Responsive main content */
+@media (max-width: 768px) {
+  .agents-main-content {
+    margin-bottom: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .agents-main-content {
+    margin-bottom: 24px;
+  }
+}
+
 .page-header {
   margin-bottom: 24px;
+}
+
+/* Responsive page header */
+@media (max-width: 768px) {
+  .page-header {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    margin-bottom: 16px;
+  }
 }
 
 .page-title {
@@ -133,17 +185,78 @@
   margin: 0;
 }
 
+/* Responsive page title */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 375px) {
+  .page-title {
+    font-size: 20px;
+  }
+}
+
 .content-container {
   display: flex;
   gap: 24px;
+}
+
+/* Responsive content container */
+@media (max-width: 1024px) {
+  .content-container {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-container {
+    gap: 12px;
+  }
 }
 
 .sidebar-container {
   flex: 0 0 250px;
 }
 
+/* Responsive sidebar */
+@media (max-width: 1024px) {
+  .sidebar-container {
+    flex: 0 0 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-container {
+    flex: none;
+    width: 100%;
+  }
+}
+
 .main-content {
   flex: 1;
+  min-width: 0; /* Prevent overflow issues */
+}
+
+/* Ensure main content is responsive */
+@media (max-width: 768px) {
+  .main-content {
+    width: 100%;
+  }
 }
 
 /* Filter bar */
@@ -189,10 +302,12 @@
 /* Agent grid */
 .marketplace-agents-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
   width: 100%;
   margin-bottom: 24px; /* Consistent bottom margin */
+  padding: 0; /* Remove any default padding */
+  box-sizing: border-box; /* Ensure proper box model */
 }
 
 /* Virtualized grid container */
@@ -323,8 +438,8 @@
 
 @media (max-width: 1041px) {
   .marketplace-agents-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
   }
   
   .page-title {
@@ -344,7 +459,8 @@
   }
   
   .marketplace-agents-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
   }
 }
 
@@ -354,8 +470,8 @@
   }
   
   .marketplace-agents-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
   }
   
   .filter-bar {
@@ -571,7 +687,7 @@
   }
   
   .marketplace-agents-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
   }
 }
@@ -709,8 +825,10 @@
 /* Agent grid layout */
 .marketplace-agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+  margin-bottom: 24px; /* Consistent bottom margin */
 }
 
 /* Agent card styling */
@@ -1288,8 +1406,8 @@
 
 @media (max-width: 768px) {
   .marketplace-agents-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
   }
 
   .filter-search-container {
@@ -1359,7 +1477,7 @@
 @media (max-width: 480px) {
   .marketplace-agents-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 16px;
   }
 
   .agent-card {
@@ -2232,5 +2350,129 @@
   
   .load-more-container .text-sm {
     font-size: 12px;
+  }
+}
+
+/* Ensure proper container behavior on mobile */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive container adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .container {
+    padding: 0 0.25rem;
+  }
+}
+
+/* Ensure agents container is properly responsive */
+.agents-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* Responsive agents container */
+@media (max-width: 768px) {
+  .agents-container {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .agents-container {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .agents-container {
+    padding: 0.25rem;
+  }
+}
+
+/* Ensure grid container is fully responsive */
+.marketplace-agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+  margin-bottom: 24px; /* Consistent bottom margin */
+  padding: 0; /* Remove any default padding */
+  box-sizing: border-box; /* Ensure proper box model */
+}
+
+/* Comprehensive responsive grid with improved breakpoints */
+@media (max-width: 1400px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 22px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 992px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .marketplace-agents-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 375px) {
+  .marketplace-agents-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* iPhone SE and smaller devices */
+@media (max-width: 320px) {
+  .marketplace-agents-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 } 
