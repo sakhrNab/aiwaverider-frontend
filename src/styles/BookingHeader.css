@@ -156,7 +156,7 @@
 }
 
 .heartbeat-pulse::after {
-  content: '';
+  content: 'Book a FREE Consultation Session' !important;
   position: absolute;
   top: -5px;
   right: -5px;

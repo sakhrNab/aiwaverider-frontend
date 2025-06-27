@@ -9,7 +9,8 @@ import FilterSidebar from '../components/agents/FilterSidebar';
 import AgentCard from '../components/agents/AgentCard';
 import AgentCarousel from '../components/agents/AgentCarousel';
 import { useTheme } from '../contexts/ThemeContext';
-import { FaExclamationTriangle, FaCalendarAlt, FaArrowRight, FaBars, FaTimes, FaFilter, FaSync } from 'react-icons/fa';
+import {FaArrowRight, FaExclamationTriangle, FaBars, FaTimes, FaFilter, FaSync } from 'react-icons/fa';
+import PageHeader from '../components/layout/PageHeader';
 import { HashLoader } from 'react-spinners';
 import { FixedSizeGrid } from 'react-window';
 import useAgentStore from '../store/agentStore';
@@ -19,10 +20,6 @@ import '../styles/animations.css'; // Import animations for heartbeat-pulse
 
 // Import theme classes - similar to AITools.jsx
 const themeClasses = "bg-gradient-to-br from-[#4158D0] via-[#C850C0] to-[#FFCC70] stars-pattern";
-const headerClass = "text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100";
-const subHeaderClass = "text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-200";
-const sectionClass = "mb-12";
-const cardGridClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6";
 
 // Add debounce function to reduce unnecessary filter calls
 // function debounce(func, wait) {
@@ -265,12 +262,12 @@ const Agents = () => {
     applyFilters(true);
     
     // Auto-scroll to results after search
-    setTimeout(() => {
-      const marketplaceElement = document.getElementById('marketplace-section');
-      if (marketplaceElement) {
+      setTimeout(() => {
+        const marketplaceElement = document.getElementById('marketplace-section');
+        if (marketplaceElement) {
         marketplaceElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 300);
+        }
+      }, 300);
   };
 
   const handleSearchKeyPress = (event) => {
@@ -432,57 +429,10 @@ const Agents = () => {
 
   return (
     <div className={`min-h-screen pb-16 ${darkMode ? "dark bg-[#2D1846]" : "bg-gray-50"} ${themeClasses}`}>
-      {/* Custom booking header that matches the homepage */}
-      {/* Ultra-modern AI header with 3D effects and dynamic animations */}
-      <div className="relative overflow-hidden">
-        {/* Animated background gradient with enhanced colors - different for dark/light modes */}
-        <div className={`absolute inset-0 animate-gradient-x ${darkMode 
-          ? 'bg-gradient-to-r from-indigo-900 via-purple-800 to-blue-900' 
-          : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600'}`}></div>
-        
-        {/* Advanced grid pattern that gives a tech/AI feel */}
-        <div className="absolute inset-0 bg-grid-white/[0.15] bg-[length:15px_15px] opacity-70">
-          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[length:50px_50px] rotate-45"></div>
-        </div>
-        
-        {/* Parallax floating elements - small geometric shapes */}
-        <div className="absolute top-20 right-1/4 w-16 h-16 border-2 border-blue-400/30 rotate-45 animate-float-slow"></div>
-        <div className="absolute bottom-10 left-1/3 w-12 h-12 border-2 border-purple-400/20 rounded-full animate-float"></div>
-        <div className="absolute top-1/3 left-1/5 w-8 h-8 border-2 border-teal-400/20 rotate-12 animate-spin-slow"></div>
-        
-        {/* Advanced glowing orbs with dynamic animations */}
-        <div className="absolute -top-20 right-1/4 w-80 h-80 bg-blue-500 rounded-full filter blur-3xl opacity-10 animate-pulse-slow"></div>
-        <div className="absolute -bottom-40 -left-20 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-10 animate-float"></div>
-        <div className="absolute top-1/2 left-2/3 w-40 h-40 bg-teal-500 rounded-full filter blur-3xl opacity-5 animate-pulse"></div>
-        
-        {/* Header content with enhanced glass effect */}
-        <div className={`relative backdrop-blur-sm py-8 px-6 border-b ${darkMode ? 'border-white/10' : 'border-indigo-500/30'} glass-effect ${darkMode ? 'bg-black/5' : 'bg-white/15'}`}>
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <div className="relative z-10">
-              <h2 className={`text-5xl font-bold text-transparent bg-clip-text ${darkMode ? 'bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300' : 'bg-gradient-to-r from-white via-yellow-100 to-white'} mb-2 drop-shadow-lg`}>AI Waverider</h2>
-              <div className="flex items-center">
-                <div className={`w-10 h-[2px] bg-gradient-to-r ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent mr-3`}></div>
-                <p className="text-white font-medium text-lg drop-shadow-md">Your Gateway to AI Mastery</p>
-                <div className={`w-10 h-[2px] bg-gradient-to-l ${darkMode ? 'from-blue-400' : 'from-gray-200'} to-transparent ml-3`}></div>
-              </div>
-            </div>
-            <div className="mt-6 md:mt-0 relative z-10">
-              <a 
-                href="https://calendly.com/aiwaverider8/30min"
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <FaCalendarAlt className="mr-3 text-lg" />
-                <span className="text-lg">Book a FREE Consultation Session</span>
-                <FaArrowRight className="ml-3 text-lg" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Use centralized PageHeader component */}
+      <PageHeader />
       
-      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 mt-8">
         <div className="max-w-6xl mx-auto">
           {/* Enhanced 3D Header */}
           <div className="page-header-3d mb-6 sm:mb-8">
@@ -592,7 +542,7 @@ const Agents = () => {
                   </select>
                 </div>
 
-                {/* Enhanced Search Bar from VideosPage */}
+                {/* Enhanced Search Bar */}
                 <div className="search-wrapper mt-3 sm:mt-0 flex" ref={mainSearchBarRef}>
                   <div className="max-w-2xl mx-auto mb-8 w-full">
                     <div className="relative group">
@@ -644,7 +594,7 @@ const Agents = () => {
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                      </div>
+                </div>
                       
                       {/* Search Button */}
                       <button
@@ -821,7 +771,7 @@ const Agents = () => {
                   {/* Load More Pagination */}
                   {pagination.hasMore && (
                     <div className="load-more-container glass-effect mt-6 p-4 text-center">
-                      <button
+                        <button
                         onClick={loadMore}
                         disabled={pagination.isLoadingMore}
                         className="load-more-button bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
@@ -837,8 +787,8 @@ const Agents = () => {
                             <FaArrowRight className="w-4 h-4" />
                           </div>
                         )}
-                      </button>
-                      
+                        </button>
+
                       {/* Info text */}
                       <div className="text-white/80 text-sm mt-3">
                         Showing {agents.length} agents {pagination.totalItems > 0 && `of ${pagination.totalItems} total`}

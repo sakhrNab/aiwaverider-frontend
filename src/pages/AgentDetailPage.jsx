@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaArrowLeft, FaArrowRight, FaThumbsUp, FaComment, FaShare, FaCheckCircle, FaShoppingCart, FaTrash } from 'react-icons/fa';
+import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaComment, FaShare, FaCheckCircle, FaShoppingCart, FaTrash } from 'react-icons/fa';
 import { 
   toggleWishlist, 
   toggleAgentLike,

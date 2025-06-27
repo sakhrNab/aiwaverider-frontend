@@ -2475,4 +2475,164 @@
     grid-template-columns: 1fr;
     gap: 10px;
   }
+}
+
+/* Mobile-specific header optimizations - cleaner approach */
+/* Compact header on mobile devices */
+@media (max-width: 768px) {
+  /* Reduce header padding significantly */
+  .relative.backdrop-blur-sm {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  /* Compact main title */
+  h2.text-5xl {
+    font-size: 1.75rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Reduce subtitle size */
+  p.text-lg {
+    font-size: 0.9rem !important;
+  }
+  
+  /* Compact booking button */
+  a.px-8.py-4 {
+    padding: 0.5rem 1rem !important;
+  }
+  
+  /* Reduce page header section */
+  .page-header-3d {
+    margin-bottom: 1rem !important;
+  }
+  
+  .page-header-3d .relative {
+    padding: 1rem !important;
+  }
+  
+  /* Compact "Master AI Agents" section */
+  h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Hide decorative floating elements for cleaner mobile view */
+  .animate-float-slow,
+  .animate-float,
+  .animate-spin-slow {
+    display: none !important;
+  }
+  
+  /* Reduce glass effect padding */
+  .glass-effect {
+    padding: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Even more compact for small screens */
+  .relative.backdrop-blur-sm {
+    padding: 0.75rem 0.5rem !important;
+  }
+  
+  h2.text-5xl {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  p.text-lg {
+    font-size: 0.8rem !important;
+  }
+  
+  a.px-8.py-4 {
+    padding: 0.4rem 0.8rem !important;
+  }
+  
+  a.px-8.py-4 span {
+    font-size: 0.75rem !important;
+  }
+  
+  .page-header-3d {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .page-header-3d .relative {
+    padding: 0.75rem !important;
+  }
+  
+  h1 {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .glass-effect {
+    padding: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+}
+
+/* Optimize containers for mobile */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  .max-w-6xl {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+  
+  .max-w-6xl {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+}
+
+/* Booking button styling moved to PageHeader.css */
+
+/* Ensure 2rem margin-top is maintained across all devices */
+.container.mx-auto.mt-8,
+.booking-header-container.mt-8 {
+  margin-top: 2rem !important;
+}
+
+/* Responsive margin-top maintenance */
+@media (max-width: 768px) {
+  .container.mx-auto.mt-8,
+  .booking-header-container.mt-8 {
+    margin-top: 2rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .container.mx-auto.mt-8,
+  .booking-header-container.mt-8 {
+    margin-top: 2rem !important;
+  }
+}
+
+@media (max-width: 375px) {
+  .container.mx-auto.mt-8,
+  .booking-header-container.mt-8 {
+    margin-top: 2rem !important;
+  }
+}
+
+@media (max-width: 320px) {
+  .container.mx-auto.mt-8,
+  .booking-header-container.mt-8 {
+    margin-top: 2rem !important;
+  }
 } 
