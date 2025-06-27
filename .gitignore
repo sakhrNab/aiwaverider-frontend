@@ -33,3 +33,4 @@ TODO.md
 *.xlsx
 # unneccessary generated files
 *.$*
+*.mdc

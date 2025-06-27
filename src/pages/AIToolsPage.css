@@ -574,7 +574,7 @@ input[type="text"]:focus {
 }
 
 .heartbeat-pulse::after {
-  content: '';
+  content: 'Book a FREE Consultation Session';
   position: absolute;
   top: -5px;
   right: -5px;

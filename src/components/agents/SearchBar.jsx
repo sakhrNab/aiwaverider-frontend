@@ -1,52 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaSearch, FaTimes } from 'react-icons/fa';
 import './SearchBar.css';
 
-// Simple search component with guaranteed typing response
+// SINGLE-RESPONSIBILITY SEARCH: Only handles UI, NO search logic
 const SearchBar = ({ onSearch, initialQuery = '', placeholder = "Search agents..." }) => {
-  // Use a single state value for the input
+  // Local state for the input field ONLY
   const [query, setQuery] = useState(initialQuery || '');
   
   // Initialize with initial query when it changes
   useEffect(() => {
-    if (initialQuery) {
+    if (initialQuery !== query) {
       setQuery(initialQuery);
     }
   }, [initialQuery]);
   
-  // Super simple input change handler - just update the local state
+  // PURE UI HANDLER: Only updates local state, no search logic
   const handleInputChange = (e) => {
-    // Update local state immediately
-    setQuery(e.target.value);
+    const newValue = e.target.value;
     
-    // Use a custom DOM event to trigger the search after a delay
-    // This approach bypasses React's state management for the search operation
-    const element = e.target;
+    // Update local state immediately for responsive typing
+    setQuery(newValue);
     
-    // Use the browser's native setTimeout instead of creating a ref
-    setTimeout(() => {
-      if (element.value === e.target.value) { // Only if value hasn't changed again
-        onSearch(e.target.value);
-      }
-    }, 500);
+    // IMMEDIATELY notify parent of the change (no debouncing here)
+    // Parent will handle all debouncing and search logic
+    onSearch(newValue, false, false);
   };
   
-  // Handle form submission (Enter key or search button click)
+  // Handle form submission (Enter key) - EXPLICIT ACTION
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    // Pass true as the third parameter to indicate this is an explicit submission
-    // which should trigger a jump to the marketplace
+    e.stopPropagation();
+    
+    // Trigger immediate search with explicit submit flag
     onSearch(query, false, true);
   };
   
-  // Clear the search input
-  const handleClear = () => {
+  // Clear the search input - EXPLICIT ACTION
+  const handleClear = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     setQuery('');
-    // Pass true as the second parameter to indicate this is a clear action
-    onSearch('', true);
+    onSearch('', true, false); // true = clearing action
+  };
+  
+  // Handle search button click - EXPLICIT ACTION
+  const handleSearchButtonClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Trigger immediate search
+    onSearch(query, false, true);
   };
   
   return (
@@ -61,6 +65,7 @@ const SearchBar = ({ onSearch, initialQuery = '', placeholder = "Search agents..
             onChange={handleInputChange}
             className="search-input"
             autoComplete="off"
+            spellCheck="false"
           />
           {query && (
             <button 
@@ -73,13 +78,10 @@ const SearchBar = ({ onSearch, initialQuery = '', placeholder = "Search agents..
             </button>
           )}
           <button 
-            type="submit" 
+            type="button"
             className="search-button"
-            onClick={(e) => {
-              e.preventDefault();
-              // Explicitly pass the jump parameter
-              onSearch(query, false, true);
-            }}
+            onClick={handleSearchButtonClick}
+            aria-label="Search"
           >
             <FaSearch />
           </button>
