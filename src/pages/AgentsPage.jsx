@@ -882,7 +882,11 @@ const Agents = () => {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setLocalSearchQuery(e.target.value);
+                  setSearchQuery(e.target.value);
+                }}
+                onKeyDown={handleSearchKeyPress}
                 placeholder="Search agents..."
                 className={`
                   w-full px-4 py-2.5 pl-10 pr-8 sm:px-6 sm:py-3 sm:pl-12 sm:pr-10 
@@ -914,12 +918,42 @@ const Agents = () => {
                 </svg>
               </div>
               
+              {/* Search Button */}
+              <button
+                onClick={() => handleSearchSubmit(searchQuery)}
+                disabled={!searchQuery || !searchQuery.trim()}
+                className={`
+                  absolute right-8 sm:right-10 top-1/2 transform -translate-y-1/2 
+                  p-1.5 sm:p-2 rounded-lg transition-all duration-300 ease-out
+                  hover:scale-110 active:scale-95
+                  ${searchQuery && searchQuery.trim()
+                    ? `${darkMode 
+                        ? 'text-white bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-500/50' 
+                        : 'text-white bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-500/40'
+                      }
+                      border border-blue-500/50` 
+                    : `${darkMode 
+                        ? 'text-gray-500 bg-gray-700/50 border-gray-600/50' 
+                        : 'text-gray-400 bg-gray-200/50 border-gray-300/50'
+                      }
+                      border cursor-not-allowed`
+                  }
+                `}
+                title={searchQuery && searchQuery.trim() ? "Search agents" : "Enter search term"}
+              >
+                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+
               {/* Responsive Close Button */}
               <button
                 onClick={() => {
+                  setLocalSearchQuery('');
                   setSearchQuery('');
                   setIsSearchFloating(false);
-                  // Stay in current position - no scroll to top
+                  // Apply filters to clear search results
+                  applyFilters(true);
                 }}
                 className={`
                   absolute right-1.5 sm:right-2 top-1/2 transform -translate-y-1/2 
