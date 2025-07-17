@@ -531,13 +531,13 @@ const HomePage = () => {
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2072&q=80')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
                 <img 
                   src={sakhrProfileImg} 
-                  alt="Sakhr Nabil" 
+                  alt="Zaki Nabil" 
                   className="w-full h-full object-cover relative z-10"
                   onError={(e) => { e.target.src = 'https://placehold.co/600x800/333/white?text=Sakhr+Nabil'; }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6 z-20">
                   <h3 className="text-4xl font-bold text-white">SAKHR</h3>
-                  <h4 className="text-3xl font-bold text-white">NABIL</h4>
+                  <h4 className="text-3xl font-bold text-white">AL-ABSI</h4>
                 </div>
               </div>
             </div>
@@ -582,13 +582,13 @@ const HomePage = () => {
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-pink-300 mr-4">
                     <img 
                       src={sakhrProfileImg} 
-                      alt="Sakhr Nabil" 
+                      alt="Zaki Nabil" 
                       className="w-full h-full object-cover"
                       onError={(e) => { e.target.src = 'https://placehold.co/200x200/333/white?text=S'; }}
                     />
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold text-white">SAKHR NABIL</h4>
+                    <h4 className="text-xl font-bold text-white">SAKHR AL-ABSI</h4>
                     <p className="text-lg text-white">Co-founder, CEO & CTO</p>
                   </div>
                 </div>
@@ -597,7 +597,7 @@ const HomePage = () => {
           </div>
 
           {/* Taz Awn */}
-          <div className="flex flex-col lg:flex-row-reverse items-stretch gap-10">
+          {/* <div className="flex flex-col lg:flex-row-reverse items-stretch gap-10">
             {/* Educator Card */}
             <div className="w-full lg:w-1/3">
               <div className="rounded-3xl overflow-hidden border-4 border-white h-full relative" style={{
@@ -668,7 +668,7 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </section>
 
