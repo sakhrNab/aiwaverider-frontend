@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { fetchAgents } from '../api/marketplace/agentApi'; //fetchWishlists
+import { fetchAgents, getAgentsCount } from '../api/marketplace/agentApi'; //fetchWishlists
 import { fixPlaceholderUrl } from '../utils/imageUtils';
 import freeSearchService from '../services/freeSearchService';
 
@@ -276,6 +276,29 @@ const useAgentStore = create(
         set({ lastLoadTime: null });
         // Call loadInitialData with forceRefresh to get fresh data
         await get().loadInitialData(true);
+      },
+      
+      // Method to fetch and update total count for current category
+      updateTotalCount: async (category = null) => {
+        try {
+          const totalCount = await getAgentsCount(category);
+          const { pagination } = get();
+          
+          console.log(`📊 Updated total count: ${totalCount} for category: ${category || 'All'}`);
+          
+          set({
+            pagination: {
+              ...pagination,
+              totalItems: totalCount,
+              totalPages: Math.ceil(totalCount / pagination.pageSize)
+            }
+          });
+          
+          return totalCount;
+        } catch (error) {
+          console.error('Error updating total count:', error);
+          return 0;
+        }
       },
       
       // Toggle a tag selection
