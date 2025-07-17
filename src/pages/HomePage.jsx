@@ -596,9 +596,9 @@ const HomePage = () => {
             </div>
           </div>
 
-          {/* Taz Awn */}
-          {/* <div className="flex flex-col lg:flex-row-reverse items-stretch gap-10">
-            {/* Educator Card */}
+          {/* Taz Awn 
+          <div className="flex flex-col lg:flex-row-reverse items-stretch gap-10">*/}
+            {/* Educator Card 
             <div className="w-full lg:w-1/3">
               <div className="rounded-3xl overflow-hidden border-4 border-white h-full relative" style={{
                 background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
@@ -617,9 +617,9 @@ const HomePage = () => {
                   <h4 className="text-3xl font-bold text-white">AWN</h4>
                 </div>
               </div>
-            </div>
+            </div>*/}
             
-            {/* Educator Bio */}
+            {/* Educator Bio
             <div className="w-full lg:w-2/3">
               <div className="text-white space-y-6">
                 <h3 className="text-2xl font-semibold text-white">From Yemen's heartland to the world stage—guiding creators in four languages toward freedom and impact.</h3>
@@ -667,8 +667,8 @@ const HomePage = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div> */}
+            </div>*/}
+          {/*</div>*/}
         </div>
       </section>
 
