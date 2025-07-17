@@ -388,8 +388,9 @@ export const fetchAgents = async (
       // Handle Redis-First response format
       const agents = responseData.agents || [];
       const fromCache = responseData.fromCache || false;
+      const totalCount = responseData.totalCount || agents.length;
       
-      console.log(`✅ MODE 1: Received ${agents.length} agents for category "${category}" (fromCache: ${fromCache})`);
+      console.log(`✅ MODE 1: Received ${agents.length} agents for category "${category}" (fromCache: ${fromCache}, totalCount: ${totalCount})`);
       
       // Return format for client-side filtering
       return {
@@ -399,10 +400,10 @@ export const fetchAgents = async (
           lastVisibleId: null,
           limit: agents.length,
           currentPage: 1,
-          totalItems: agents.length,
+          totalItems: totalCount,
           totalPages: 1
         },
-        total: agents.length,
+        total: totalCount,
         fromCache: fromCache,
         mode: 'category' // Indicator for frontend
       };
@@ -477,7 +478,7 @@ export const fetchAgents = async (
       const agents = responseData.agents || [];
       const lastVisibleId = responseData.lastVisibleId || null;
       const fromCache = responseData.fromCache || false;
-      const total = responseData.total || agents.length;
+      const total = responseData.totalCount || responseData.total || agents.length;
       
       // Validate agents to ensure they exist and have valid IDs
       const validAgents = agents.filter(agent => {
@@ -725,6 +726,32 @@ export const checkCanReviewAgent = async (agentId) => {
       canReview: false,
       reason: error.message || 'Error checking eligibility'
     };
+  }
+};
+
+/**
+ * Get the total count of agents optionally filtered by category
+ * @param {string} category - Optional category to filter by
+ * @returns {Promise<number>} - Total count of agents
+ */
+export const getAgentsCount = async (category = null) => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (category && category !== 'All') {
+      queryParams.append('category', category);
+    }
+    
+    const queryString = queryParams.toString();
+    const url = `/api/agents/count${queryString ? `?${queryString}` : ''}`;
+    
+    console.log(`[API] Getting agents count${category ? ` for category "${category}"` : ''}`);
+    const response = await api.get(url);
+    
+    return response.data?.count || response.data?.totalCount || 0;
+  } catch (error) {
+    console.error('Error fetching agents count:', error);
+    return 0;
   }
 };
 

@@ -70,7 +70,8 @@ const Agents = () => {
     applyFilters,
     loadMore,
     setPage,
-    setPageSize
+    setPageSize,
+    updateTotalCount
   } = useAgentStore();
 
   // Local UI states  
@@ -208,15 +209,20 @@ const Agents = () => {
       
       if (shouldFetchFromApi) {
         console.log('Initial data load - fetching from API');
-        loadInitialData().then(() => {
+        loadInitialData().then(async () => {
+          // Ensure we have the correct total count
+          await updateTotalCount();
           dataLoadedRef.current = true;
           console.log('Initial data loaded successfully from API');
         });
       } else {
         console.log('Using cached agent data from store');
-        // Apply filters to the existing data
-        applyFilters();
-        dataLoadedRef.current = true;
+        // Ensure we have the correct total count even with cached data
+        updateTotalCount().then(() => {
+          // Apply filters to the existing data
+          applyFilters();
+          dataLoadedRef.current = true;
+        });
       }
     }
     
@@ -246,9 +252,13 @@ const Agents = () => {
   // Auto-apply filters when dependencies change (disabled to prevent duplicate calls)
   // Filters are now applied directly in handlers for better control
 
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = async (category) => {
     // No page refresh needed, just update state
     setCategory(category);
+    
+    // Update total count for the new category
+    await updateTotalCount(category === 'All' ? null : category);
+    
     // Apply filters with reset pagination for fresh results
     applyFilters(true);
     // Scroll to the curated section for better UX
@@ -256,10 +266,19 @@ const Agents = () => {
   };
 
   // Improved search handlers
-  const handleSearchSubmit = (query = localSearchQuery) => {
+  const handleSearchSubmit = async (query = localSearchQuery) => {
     console.log('🔍 SEARCH SUBMIT:', query);
     setSearchQuery(query);
-    applyFilters(true);
+    
+    // Update total count for search results
+    if (query?.trim()) {
+      // For search, we'll get the total from the API response
+      await applyFilters(true);
+    } else {
+      // If clearing search, update total count for current category
+      await updateTotalCount(selectedCategory === 'All' ? null : selectedCategory);
+      await applyFilters(true);
+    }
     
     // Auto-scroll to results after search
       setTimeout(() => {
@@ -277,10 +296,13 @@ const Agents = () => {
     }
   };
 
-  const handleClearSearch = () => {
+  const handleClearSearch = async () => {
     setLocalSearchQuery('');
     setSearchQuery('');
     setIsSearchFloating(false);
+    
+    // Update total count for current category (no search)
+    await updateTotalCount(selectedCategory === 'All' ? null : selectedCategory);
     applyFilters(true);
     
     // Smooth scroll back to top
@@ -948,11 +970,12 @@ const Agents = () => {
 
               {/* Responsive Close Button */}
               <button
-                onClick={() => {
+                onClick={async () => {
                   setLocalSearchQuery('');
                   setSearchQuery('');
                   setIsSearchFloating(false);
-                  // Apply filters to clear search results
+                  // Update total count for current category and apply filters
+                  await updateTotalCount(selectedCategory === 'All' ? null : selectedCategory);
                   applyFilters(true);
                 }}
                 className={`

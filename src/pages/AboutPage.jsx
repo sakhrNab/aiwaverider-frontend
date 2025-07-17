@@ -90,11 +90,11 @@ const About = () => {
                 <div className="w-64 h-64 mb-6 rounded-full overflow-hidden bg-gradient-to-r from-blue-100 to-teal-100 p-1">
                   <img 
                     src={sakhrProfileImg} 
-                    alt="Sakhr Nabil" 
+                    alt="Zaki Nabil" 
                     className="w-full h-full rounded-full object-cover"
                   />
                 </div>
-                <h3 className="text-3xl font-bold mb-1 text-center">Sakhr Nabil</h3>
+                <h3 className="text-3xl font-bold mb-1 text-center">Sakhr Al-absi</h3>
                 <p className={`text-xl mb-4 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Co-Founder & CEO/CTO</p>
                 <div className="flex justify-center space-x-6 mb-6">
                   <a href="https://www.linkedin.com/in/sakhr-nabil-al-absi/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl`}>
@@ -120,7 +120,7 @@ const About = () => {
             </div>
             
             {/* Mutaz Awn */}
-            <div className={`rounded-lg overflow-hidden shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} p-8`}>
+            {/* <div className={`rounded-lg overflow-hidden shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} p-8`}>
               <div className="flex flex-col items-center">
                 <div className="w-64 h-64 mb-6 rounded-full overflow-hidden bg-gradient-to-r from-blue-100 to-teal-100 p-1">
                   <img 
@@ -150,7 +150,7 @@ const About = () => {
                 providing clear, actionable guidance that helps businesses implement AI solutions without requiring 
                 extensive technical resources.
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
