@@ -78,6 +78,7 @@ const Agents = () => {
   const [mobileFiltersOpen, setMobileFiltersOpen] = React.useState(false);
   const [mobileOptionsOpen, setMobileOptionsOpen] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [searchResultsHighlight, setSearchResultsHighlight] = React.useState(false);
 
   // Add a ref for the agents container
   const agentsContainerRef = useRef(null);
@@ -274,10 +275,14 @@ const Agents = () => {
     if (query?.trim()) {
       // For search, we'll get the total from the API response
       await applyFilters(true);
+      // Highlight search results when they load
+      setSearchResultsHighlight(true);
+      setTimeout(() => setSearchResultsHighlight(false), 3000); // Clear highlight after 3 seconds
     } else {
       // If clearing search, update total count for current category
       await updateTotalCount(selectedCategory === 'All' ? null : selectedCategory);
       await applyFilters(true);
+      setSearchResultsHighlight(false);
     }
     
     // Auto-scroll to results after search
@@ -300,6 +305,7 @@ const Agents = () => {
     setLocalSearchQuery('');
     setSearchQuery('');
     setIsSearchFloating(false);
+    setSearchResultsHighlight(false);
     
     // Update total count for current category (no search)
     await updateTotalCount(selectedCategory === 'All' ? null : selectedCategory);
@@ -376,7 +382,20 @@ const Agents = () => {
     }
   };
 
-  // Render the agent grid with appropriate filtering
+  // Calculate current page agents for proper pagination
+  const getCurrentPageAgents = () => {
+    if (searchQuery?.trim()) {
+      // For search results, show all found agents (no pagination)
+      return agents;
+    } else {
+      // For regular browsing, paginate properly
+      const startIndex = (pagination.currentPage - 1) * pagination.pageSize;
+      const endIndex = startIndex + pagination.pageSize;
+      return agents.slice(startIndex, endIndex);
+    }
+  };
+
+  // Render the agent grid with proper pagination
   const renderAgentGrid = () => {
     const isMockData = agents.some(agent => 
       // Only consider it mock data if the ID specifically starts with 'mock-'
@@ -404,14 +423,8 @@ const Agents = () => {
       );
     }
 
-    // Calculate grid dimensions based on container width
-    const containerWidth = agentsContainerRef.current?.clientWidth || 960;
-    // Fixed card width to ensure 3 cards per row
-    const cardWidth = Math.floor(containerWidth / 3) - 20; // 3 cards per row with spacing
-    const cardHeight = 400; // Standard card height
-    const columnCount = 3; // Fixed at 3 columns
-    const rowCount = Math.ceil(agents.length / columnCount);
-    const containerHeight = Math.min(window.innerHeight * 0.7, rowCount * cardHeight);
+    // Get current page agents to prevent layout issues
+    const currentPageAgents = getCurrentPageAgents();
 
     return (
       <>
@@ -422,9 +435,9 @@ const Agents = () => {
           </div>
         )}
         
-        {/* For all screen sizes, use regular grid layout for better consistency */}
+        {/* Optimized grid - only render current page agents */}
         <div className="marketplace-agents-grid">
-          {agents.map(agent => (
+          {currentPageAgents.map(agent => (
             <AgentCard key={agent.id} agent={agent} />
           ))}
         </div>
@@ -743,12 +756,101 @@ const Agents = () => {
                 </section>
               )}
 
+              {/* Search Results Notification */}
+              {searchQuery && searchQuery.trim() && (
+                <div className={`mb-4 p-4 bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-2 border-blue-400/50 rounded-xl backdrop-blur-md shadow-xl transition-all duration-500 ${
+                  searchResultsHighlight ? 'ring-4 ring-blue-400 ring-opacity-75 shadow-2xl shadow-blue-500/50 scale-105' : ''
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-blue-500 rounded-full p-2">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                                             <div>
+                         <h3 className="text-lg font-semibold text-white">
+                           {pagination.totalItems > 0 ? (
+                             <>Found {pagination.totalItems} agents for "{searchQuery}"</>
+                           ) : (
+                             <>No agents found for "{searchQuery}"</>
+                           )}
+                         </h3>
+                         <p className="text-sm text-blue-200">
+                           {pagination.totalItems > 0 ? (
+                             <>Searched across all categories • Showing {agents.length} results</>
+                           ) : (
+                             <>Searched across all categories • Try adjusting your search terms</>
+                           )}
+                         </p>
+                       </div>
+                    </div>
+                    <button
+                      onClick={handleClearSearch}
+                      className="text-blue-300 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+                      title="Clear search"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Results summary */}
               <div className="results-summary glass-effect mb-4 p-4 text-white" ref={resultsRef}>
                 <div className="flex justify-between items-center">
-                  <span>
-                    Showing {agents.length > 0 ? ((pagination.currentPage - 1) * pagination.pageSize + 1) : 0} to {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)} of {pagination.totalItems} agents
-                  </span>
+                  <div className="flex flex-col">
+                    {searchQuery && searchQuery.trim() ? (
+                      // Search Results Display
+                      <div className="space-y-1">
+                        <span className="text-lg font-semibold text-blue-300">
+                          🔍 Search Results for "{searchQuery}"
+                        </span>
+                        <span className="text-sm">
+                          {agents.length > 0 ? (
+                            <>Found {agents.length} agents matching your search</>
+                          ) : (
+                            <>No agents found matching your search</>
+                          )}
+                        </span>
+                        <span className="text-xs text-blue-200 opacity-80">
+                          {agents.length > 0 ? (
+                            <>Showing all {agents.length} results (sorted by popularity)</>
+                          ) : (
+                            <>Try different search terms or browse by category</>
+                          )}
+                        </span>
+                      </div>
+                    ) : (
+                      // Normal Browse Display
+                                            <div className="space-y-1">
+                        <span>
+                          {(() => {
+                            const totalItems = pagination.totalItems || 0;
+                            const pageSize = pagination.pageSize || 25;
+                            const currentPage = pagination.currentPage || 1;
+                            const start = agents.length > 0 ? ((currentPage - 1) * pageSize + 1) : 0;
+                            const end = Math.min(currentPage * pageSize, totalItems);
+                            
+                            if (totalItems > 0) {
+                              return `Showing ${start} to ${end} of ${totalItems} agents`;
+                            } else if (agents.length > 0) {
+                              return `Showing ${agents.length} agents`;
+                            } else {
+                              return 'No agents found';
+                            }
+                          })()}
+                        </span>
+                        {selectedCategory !== 'All' && (
+                          <span className="text-sm text-green-300">
+                            📂 Filtered by category: {selectedCategory}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <label className="text-sm">Show:</label>
                     <select 
@@ -790,62 +892,201 @@ const Agents = () => {
                     {renderAgentGrid()}
                   </div>
 
-                  {/* Load More Pagination */}
-                  {pagination.hasMore && (
-                    <div className="load-more-container glass-effect mt-6 p-4 text-center">
-                        <button
-                        onClick={loadMore}
-                        disabled={pagination.isLoadingMore}
-                        className="load-more-button bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
-                      >
-                        {pagination.isLoadingMore ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Loading More...</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center gap-2">
-                            <span>Load More Agents</span>
-                            <FaArrowRight className="w-4 h-4" />
-                          </div>
-                        )}
-                        </button>
+                  {/* Smart Pagination System */}
+                  {!searchQuery?.trim() && pagination.totalPages > 1 && (
+                    <div className="pagination-container glass-effect mt-6 p-4">
+                      {/* Mobile-First Responsive Pagination */}
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        
+                        {/* Page Info - Mobile Top */}
+                        <div className="text-center sm:text-left text-white/80 text-sm order-2 sm:order-1">
+                          {(() => {
+                            const currentPage = pagination.currentPage || 1;
+                            const totalPages = pagination.totalPages || 1;
+                            const totalItems = pagination.totalItems || 0;
+                            
+                            if (totalPages > 1 && totalItems > 0) {
+                              return `Page ${currentPage} of ${totalPages} (${totalItems} total agents)`;
+                            } else if (totalItems > 0) {
+                              return `${totalItems} total agents`;
+                            } else {
+                              return 'Loading agents...';
+                            }
+                          })()}
+                        </div>
 
-                      {/* Info text */}
-                      <div className="text-white/80 text-sm mt-3">
-                        Showing {agents.length} agents {pagination.totalItems > 0 && `of ${pagination.totalItems} total`}
+                        {/* Pagination Controls - Mobile Bottom */}
+                        <div className="flex items-center justify-center gap-1 sm:gap-2 order-1 sm:order-2">
+                          
+                          {/* First Page */}
+                          <button
+                            onClick={() => setPage(1)}
+                            disabled={pagination.currentPage === 1}
+                            className={`
+                              px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 border
+                              min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 flex items-center justify-center
+                              ${pagination.currentPage === 1 
+                                ? 'bg-gray-600/20 text-gray-400 border-gray-600/20 cursor-not-allowed opacity-50' 
+                                : 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105'
+                              }
+                            `}
+                            aria-label="Go to first page"
+                          >
+                            <span className="hidden sm:inline">First</span>
+                            <span className="sm:hidden">«</span>
+                          </button>
+
+                          {/* Previous Page */}
+                          <button
+                            onClick={() => setPage(Math.max(1, pagination.currentPage - 1))}
+                            disabled={pagination.currentPage === 1}
+                            className={`
+                              px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 border
+                              min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 flex items-center justify-center
+                              ${pagination.currentPage === 1 
+                                ? 'bg-gray-600/20 text-gray-400 border-gray-600/20 cursor-not-allowed opacity-50' 
+                                : 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105'
+                              }
+                            `}
+                            aria-label="Go to previous page"
+                          >
+                            <span className="hidden sm:inline">‹ Prev</span>
+                            <span className="sm:hidden">‹</span>
+                          </button>
+
+                          {/* Page Numbers - Smart Display */}
+                          {(() => {
+                            const current = pagination.currentPage;
+                            const total = pagination.totalPages;
+                            const pages = [];
+                            
+                            // Mobile: Show fewer pages, Desktop: Show more
+                            const maxVisible = window.innerWidth < 640 ? 3 : 5;
+                            const sidePages = Math.floor(maxVisible / 2);
+                            
+                            let start = Math.max(1, current - sidePages);
+                            let end = Math.min(total, current + sidePages);
+                            
+                            // Adjust if we're near the beginning or end
+                            if (end - start + 1 < maxVisible) {
+                              if (start === 1) {
+                                end = Math.min(total, start + maxVisible - 1);
+                              } else {
+                                start = Math.max(1, end - maxVisible + 1);
+                              }
+                            }
+                            
+                            // Show first page and ellipsis if needed
+                            if (start > 1) {
+                              pages.push(
+                                                                 <button
+                                   key={1}
+                                   onClick={() => setPage(1)}
+                                   className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 border min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 flex items-center justify-center bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105"
+                                 >
+                                   1
+                                 </button>
+                              );
+                              if (start > 2) {
+                                                                 pages.push(
+                                   <span key="ellipsis1" className="px-2 py-2 text-white/60 text-sm flex items-center">
+                                     ...
+                                   </span>
+                                 );
+                              }
+                            }
+                            
+                            // Show page numbers
+                            for (let i = start; i <= end; i++) {
+                              pages.push(
+                                                                 <button
+                                   key={i}
+                                   onClick={() => setPage(i)}
+                                   className={`
+                                     px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 border
+                                     min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 flex items-center justify-center
+                                     ${i === current 
+                                       ? 'bg-blue-600 text-white border-blue-500 ring-2 ring-blue-400 ring-opacity-50 scale-105' 
+                                       : 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105'
+                                     }
+                                   `}
+                                 >
+                                   {i}
+                                 </button>
+                              );
+                            }
+                            
+                            // Show last page and ellipsis if needed
+                            if (end < total) {
+                              if (end < total - 1) {
+                                                                 pages.push(
+                                   <span key="ellipsis2" className="px-2 py-2 text-white/60 text-sm flex items-center">
+                                     ...
+                                   </span>
+                                 );
+                               }
+                               pages.push(
+                                 <button
+                                   key={total}
+                                   onClick={() => setPage(total)}
+                                   className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 border min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 flex items-center justify-center bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105"
+                                 >
+                                   {total}
+                                 </button>
+                               );
+                            }
+                            
+                            return pages;
+                          })()}
+
+                          {/* Next Page */}
+                          <button
+                            onClick={() => setPage(Math.min(pagination.totalPages, pagination.currentPage + 1))}
+                            disabled={pagination.currentPage === pagination.totalPages}
+                            className={`
+                              px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 border
+                              min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 flex items-center justify-center
+                              ${pagination.currentPage === pagination.totalPages 
+                                ? 'bg-gray-600/20 text-gray-400 border-gray-600/20 cursor-not-allowed opacity-50' 
+                                : 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105'
+                              }
+                            `}
+                            aria-label="Go to next page"
+                          >
+                            <span className="hidden sm:inline">Next ›</span>
+                            <span className="sm:hidden">›</span>
+                          </button>
+
+                          {/* Last Page */}
+                          <button
+                            onClick={() => setPage(pagination.totalPages)}
+                            disabled={pagination.currentPage === pagination.totalPages}
+                            className={`
+                              px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 border
+                              min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 flex items-center justify-center
+                              ${pagination.currentPage === pagination.totalPages 
+                                ? 'bg-gray-600/20 text-gray-400 border-gray-600/20 cursor-not-allowed opacity-50' 
+                                : 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105'
+                              }
+                            `}
+                            aria-label="Go to last page"
+                          >
+                            <span className="hidden sm:inline">Last</span>
+                            <span className="sm:hidden">»</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Fallback pagination for backward compatibility */}
-                  {!pagination.hasMore && pagination.totalPages > 1 && (
-                    <div className="pagination-container glass-effect mt-6 p-4">
-                      <div className="flex justify-center items-center gap-2">
-                        {/* Previous page button */}
-                        <button
-                          onClick={() => setPage(Math.max(1, pagination.currentPage - 1))}
-                          disabled={pagination.currentPage === 1}
-                          className="pagination-button"
-                          aria-label="Go to previous page"
-                        >
-                          ‹ Previous
-                        </button>
-
-                        {/* Next page button */}
-                        <button
-                          onClick={() => setPage(Math.min(pagination.totalPages, pagination.currentPage + 1))}
-                          disabled={pagination.currentPage === pagination.totalPages}
-                          className="pagination-button"
-                          aria-label="Go to next page"
-                        >
-                          Next ›
-                        </button>
+                  {/* Search Results - No Pagination (Show All) */}
+                  {searchQuery?.trim() && agents.length > 0 && (
+                    <div className="search-results-info glass-effect mt-6 p-4 text-center">
+                      <div className="text-white/80 text-sm">
+                        Showing all {agents.length} search results for "{searchQuery}"
                       </div>
-
-                      {/* Page info */}
-                      <div className="text-center mt-2 text-white/80 text-sm">
-                        Page {pagination.currentPage} of {pagination.totalPages}
+                      <div className="text-white/60 text-xs mt-1">
+                        Search results are displayed without pagination for better user experience
                       </div>
                     </div>
                   )}
@@ -974,6 +1215,7 @@ const Agents = () => {
                   setLocalSearchQuery('');
                   setSearchQuery('');
                   setIsSearchFloating(false);
+                  setSearchResultsHighlight(false);
                   // Update total count for current category and apply filters
                   await updateTotalCount(selectedCategory === 'All' ? null : selectedCategory);
                   applyFilters(true);
@@ -999,19 +1241,24 @@ const Agents = () => {
             
             {/* Responsive Search Status */}
             <div className={`
-              mt-2 sm:mt-3 flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm
+              mt-2 sm:mt-3 flex flex-col items-center justify-center space-y-1 text-xs sm:text-sm
               ${darkMode ? 'text-blue-300' : 'text-blue-700'}
             `}>
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-                              <span className="font-medium">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span className="font-medium">
                   Searching: <span className="font-bold">"{searchQuery.length > 20 ? searchQuery.substring(0, 20) + '...' : searchQuery}"</span>
                 </span>
-              <div className={`
-                w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse
-                ${darkMode ? 'bg-blue-400' : 'bg-blue-600'}
-              `} />
+                <div className={`
+                  w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse
+                  ${darkMode ? 'bg-blue-400' : 'bg-blue-600'}
+                `} />
+              </div>
+              <span className="text-xs opacity-80">
+                🔍 Across all categories
+              </span>
             </div>
             
             {/* Floating search glow effect */}

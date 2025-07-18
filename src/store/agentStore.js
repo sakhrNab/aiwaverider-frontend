@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { fetchAgents, getAgentsCount } from '../api/marketplace/agentApi'; //fetchWishlists
+import { fetchAgents, getAgentsCount, getSearchResultsCount } from '../api/marketplace/agentApi'; //fetchWishlists
 import { fixPlaceholderUrl } from '../utils/imageUtils';
 import freeSearchService from '../services/freeSearchService';
 
@@ -477,29 +477,151 @@ const useAgentStore = create(
           return;
         }
         
-        // MODE 2: Search or "All" category - Use server-side processing with Redis-First caching
-        console.log('🔍 MODE 2: Using server-side processing with Redis-First caching');
+        // MODE 2: Search or "All" category - Use server-side processing with smart caching
+        console.log('🔍 MODE 2: Using server-side processing with smart caching');
         
         try {
           set({ isLoading: true });
           
           const lastVisibleId = resetPagination ? null : pagination.lastVisibleId;
+          const isSearching = searchQuery?.trim();
+          
+          // SMART SEARCH CACHING LOGIC
+          if (isSearching) {
+            console.log('🔍 SMART CACHE: Implementing intelligent search caching');
+            
+            // Step 1: Get total search results count from database
+            const databaseTotal = await getSearchResultsCount(searchQuery);
+            console.log(`🔍 SMART CACHE: Database has ${databaseTotal} total results for "${searchQuery}"`);
+            
+            // Step 2: Check current cache
+            const currentCachedResults = state.agents.filter(agent => {
+              // Simple search match check (this could be more sophisticated)
+              const agentText = `${agent.name} ${agent.description} ${agent.category}`.toLowerCase();
+              return agentText.includes(searchQuery.toLowerCase());
+            });
+            
+            console.log(`🔍 SMART CACHE: Cache has ${currentCachedResults.length} results, database has ${databaseTotal}`);
+            
+            // Step 3: Decide strategy based on cache vs database comparison
+            let shouldFetchFromApi = true;
+            let limitToUse = Math.min(databaseTotal, 50); // Don't exceed backend limit
+            
+            if (currentCachedResults.length >= databaseTotal && databaseTotal > 0) {
+              console.log('✅ SMART CACHE: Cache is complete, using cached results');
+              shouldFetchFromApi = false;
+              
+              // Use cached results
+              set({
+                agents: currentCachedResults,
+                isLoading: false,
+                pagination: {
+                  ...pagination,
+                  currentPage: 1,
+                  totalItems: databaseTotal,
+                  totalPages: 1,
+                  hasMore: false,
+                  lastVisibleId: null,
+                  isLoadingMore: false
+                }
+              });
+              
+              console.log('✅ SMART CACHE: Updated store with cached results');
+              return;
+            } else if (databaseTotal > 0) {
+              console.log(`📦 SMART CACHE: Cache incomplete (${currentCachedResults.length}/${databaseTotal}), fetching from API`);
+              limitToUse = Math.min(databaseTotal, 50); // Fetch up to the total or backend limit
+            } else {
+              console.log('🔍 SMART CACHE: No results in database, fetching to confirm');
+              limitToUse = 10; // Small limit for zero-result confirmation
+            }
+            
+            // Step 4: Fetch from API with optimized limit
+            const apiParams = {
+              limit: limitToUse,
+              priceRange: { min: 0, max: 1000 }, // Remove filters for comprehensive search
+              rating: undefined,
+              tags: [],
+              features: [],
+              search: searchQuery.trim()
+            };
+            
+            console.log('🔍 SMART CACHE: API Parameters:', apiParams, `(fetching ${limitToUse} results)`);
+            
+            const response = await fetchAgents('All', 'Most Popular', null, apiParams);
+            
+            if (response && response.agents) {
+              const fixedAgents = fixPlaceholderUrls(response.agents);
+              
+              console.log(`✅ SMART CACHE: Received ${fixedAgents.length} agents from API`);
+              
+              // Update store with fresh search results
+              set({
+                agents: fixedAgents,
+                isLoading: false,
+                pagination: {
+                  currentPage: 1,
+                  pageSize: pagination.pageSize,
+                  totalItems: databaseTotal, // Use the accurate database count
+                  totalPages: Math.ceil(databaseTotal / pagination.pageSize),
+                  hasMore: fixedAgents.length < databaseTotal,
+                  lastVisibleId: response.pagination?.lastVisibleId || null,
+                  isLoadingMore: false
+                }
+              });
+              
+              console.log(`✅ SMART CACHE: Updated store with ${fixedAgents.length}/${databaseTotal} search results`);
+            } else {
+              // Handle API failure
+              console.warn('🔍 SMART CACHE: API call failed, showing empty results');
+              set({
+                agents: [],
+                isLoading: false,
+                pagination: {
+                  ...pagination,
+                  totalItems: 0,
+                  hasMore: false,
+                  isLoadingMore: false
+                }
+              });
+            }
+            
+            return;
+          }
+          
+          // REGULAR BROWSING (non-search) - Pagination Logic
+          console.log('🔍 BROWSE MODE: Using pagination-based fetching');
+          
+          // Step 1: Get accurate total count first
+          let totalCount;
+          try {
+            totalCount = await getAgentsCount(selectedCategory === 'All' ? null : selectedCategory);
+            console.log(`🔍 BROWSE MODE: Total count from database: ${totalCount}`);
+          } catch (error) {
+            console.warn('Failed to get total count, will use response total:', error);
+            totalCount = null; // Will fallback to response total
+          }
+          
+          // For proper pagination, we need to calculate offset
+          const offset = (pagination.currentPage - 1) * pagination.pageSize;
+          console.log(`🔍 BROWSE MODE: Page ${pagination.currentPage}, offset ${offset}, pageSize ${pagination.pageSize}`);
           
           const apiParams = {
             limit: pagination.pageSize,
+            offset: offset, // Add offset for proper pagination
             priceRange: selectedPrice,
             rating: selectedRating > 0 ? selectedRating : undefined,
             tags: selectedTags,
             features: selectedFeatures,
-            search: searchQuery?.trim() || undefined
+            search: undefined
           };
           
-          console.log('🔍 API Parameters:', apiParams);
+          console.log('🔍 BROWSE MODE: API Parameters:', apiParams);
           
           const response = await fetchAgents(
             selectedCategory,
             selectedFilter,
-            lastVisibleId,
+            null, // No cursor for offset-based pagination
             apiParams
           );
           
@@ -531,74 +653,132 @@ const useAgentStore = create(
 
           const fixedAgents = fixPlaceholderUrls(response.agents);
           
-          console.log(`✅ MODE 2: Received ${fixedAgents.length} agents (fromCache: ${response.fromCache})`);
+          console.log(`✅ BROWSE MODE: Received ${fixedAgents.length} agents for page ${pagination.currentPage} (fromCache: ${response.fromCache})`);
 
-          // Update state with new agents and pagination info
+          // Use the accurate total count we fetched, fallback to response total
+          const finalTotalCount = totalCount || response.total || fixedAgents.length;
+          
+          // Ensure totalCount is a valid number
+          const validTotalCount = typeof finalTotalCount === 'number' && !isNaN(finalTotalCount) 
+            ? finalTotalCount 
+            : fixedAgents.length;
+            
+          console.log(`🔍 BROWSE MODE: Using total count: ${validTotalCount} (from: ${totalCount ? 'database' : 'response'})`);
+
+          // Calculate total pages based on valid total count
+          const totalPages = Math.ceil(validTotalCount / pagination.pageSize);
+
+          // For browsing mode, always replace agents (don't append)
           set({
-            agents: resetPagination ? fixedAgents : [...state.agents, ...fixedAgents],
+            agents: fixedAgents,
             isLoading: false,
             pagination: {
-              currentPage: resetPagination ? 1 : pagination.currentPage + 1,
+              currentPage: pagination.currentPage,
               pageSize: pagination.pageSize,
-              totalItems: response.total || fixedAgents.length,
-              totalPages: Math.ceil((response.total || fixedAgents.length) / pagination.pageSize),
-              hasMore: response.pagination?.hasMore || false,
-              lastVisibleId: response.pagination?.lastVisibleId || null,
+              totalItems: validTotalCount,
+              totalPages: totalPages,
+              hasMore: pagination.currentPage < totalPages,
+              lastVisibleId: null, // Not used in offset-based pagination
               isLoadingMore: false
             }
           });
           
-          console.log('✅ MODE 2: Store updated successfully');
+          console.log(`✅ BROWSE MODE: Store updated successfully - Page ${pagination.currentPage}/${totalPages} (${validTotalCount} total agents)`);
           
         } catch (error) {
-          console.error('Error in MODE 2 server-side processing:', error);
+          console.error('Error in browse mode server-side processing:', error);
           
-          // Fallback to client-side filtering if we have allAgents data
-          if (allAgents.length > 0) {
-            console.log('📦 Fallback: Using client-side filtering with existing data');
-            
-            // Initialize FreeSearchService if needed
-            if (!freeSearchService.initialized) {
-              freeSearchService.initialize(allAgents);
+          // For browsing mode errors, try to provide reasonable fallback
+          if (!searchQuery?.trim()) {
+            // This is browse mode - try to get at least some agents
+            try {
+              // Get total count directly if we don't have it
+              if (!totalCount) {
+                totalCount = await getAgentsCount(selectedCategory === 'All' ? null : selectedCategory);
+                console.log(`🔍 BROWSE MODE ERROR FALLBACK: Got total count: ${totalCount}`);
+              }
+              
+              const validTotalCount = typeof totalCount === 'number' && !isNaN(totalCount) ? totalCount : 100; // Reasonable fallback
+              const totalPages = Math.ceil(validTotalCount / pagination.pageSize);
+              
+              set({
+                agents: [], // Empty for now, but with correct pagination
+                isLoading: false,
+                pagination: {
+                  currentPage: pagination.currentPage,
+                  pageSize: pagination.pageSize,
+                  totalItems: validTotalCount,
+                  totalPages: totalPages,
+                  hasMore: pagination.currentPage < totalPages,
+                  lastVisibleId: null,
+                  isLoadingMore: false
+                }
+              });
+              
+              console.log(`🔍 BROWSE MODE ERROR FALLBACK: Set pagination with ${validTotalCount} total items`);
+            } catch (fallbackError) {
+              console.error('Even fallback failed:', fallbackError);
+              // Final fallback - minimal state
+              set({
+                agents: [],
+                isLoading: false,
+                pagination: {
+                  ...pagination,
+                  totalItems: 0,
+                  totalPages: 1,
+                  hasMore: false,
+                  isLoadingMore: false
+                }
+              });
             }
-            
-            const searchResults = freeSearchService.searchAndFilter({
-              searchQuery: searchQuery || '',
-              category: selectedCategory,
-              selectedFilter: selectedFilter,
-              priceRange: selectedPrice,
-              rating: selectedRating,
-              tags: selectedTags,
-              features: selectedFeatures,
-              page: resetPagination ? 1 : pagination.currentPage,
-              pageSize: pagination.pageSize
-            });
-            
-            set({
-              agents: searchResults.agents,
-              isLoading: false,
-              pagination: {
-                ...searchResults.pagination,
-                isLoadingMore: false
-              }
-            });
-            
-            console.log(`✅ Fallback: Client-side filtering completed - ${searchResults.agents.length}/${searchResults.total} agents`);
           } else {
-            // No fallback data available
-        set({
-              agents: [], 
-              isLoading: false,
-          pagination: {
-            ...pagination,
-                hasMore: false,
-                lastVisibleId: null,
-                isLoadingMore: false,
-                totalItems: 0,
-                currentPage: 1,
-                totalPages: 1
+            // This is search mode - use original fallback logic
+            if (allAgents.length > 0) {
+              console.log('📦 Fallback: Using client-side filtering with existing data');
+              
+              // Initialize FreeSearchService if needed
+              if (!freeSearchService.initialized) {
+                freeSearchService.initialize(allAgents);
               }
-            });
+              
+              const searchResults = freeSearchService.searchAndFilter({
+                searchQuery: searchQuery || '',
+                category: selectedCategory,
+                selectedFilter: selectedFilter,
+                priceRange: selectedPrice,
+                rating: selectedRating,
+                tags: selectedTags,
+                features: selectedFeatures,
+                page: resetPagination ? 1 : pagination.currentPage,
+                pageSize: pagination.pageSize
+              });
+              
+              set({
+                agents: searchResults.agents,
+                isLoading: false,
+                pagination: {
+                  ...searchResults.pagination,
+                  isLoadingMore: false
+                }
+              });
+              
+              console.log(`✅ Fallback: Client-side filtering completed - ${searchResults.agents.length}/${searchResults.total} agents`);
+            } else {
+              // No fallback data available
+              set({
+                agents: [], 
+                isLoading: false,
+                pagination: {
+                  ...pagination,
+                  hasMore: false,
+                  lastVisibleId: null,
+                  isLoadingMore: false,
+                  totalItems: 0,
+                  currentPage: 1,
+                  totalPages: 1
+                }
+              });
+            }
           }
         }
       },
@@ -789,6 +969,78 @@ const useAgentStore = create(
         });
         
         try {
+          const isSearching = searchQuery?.trim();
+          
+          if (isSearching) {
+            console.log('📋 LoadMore: Smart caching for search results');
+            
+            // For search results, check if we need more data
+            const databaseTotal = await getSearchResultsCount(searchQuery);
+            const currentCount = state.agents.length;
+            
+            console.log(`📋 LoadMore: Current ${currentCount}, Database total ${databaseTotal}`);
+            
+            if (currentCount >= databaseTotal) {
+              console.log('📋 LoadMore: Already have all search results, no more to load');
+              set({
+                pagination: {
+                  ...pagination,
+                  hasMore: false,
+                  isLoadingMore: false
+                }
+              });
+              return;
+            }
+            
+            // Fetch remaining results
+            const remainingCount = databaseTotal - currentCount;
+            const limitToUse = Math.min(remainingCount, 25); // Load in chunks of 25
+            
+            console.log(`📋 LoadMore: Fetching ${limitToUse} more search results`);
+            
+            const response = await fetchAgents('All', 'Most Popular', pagination.lastVisibleId, {
+              limit: limitToUse,
+              priceRange: { min: 0, max: 1000 },
+              rating: undefined,
+              tags: [],
+              features: [],
+              search: searchQuery
+            });
+            
+            if (response && response.agents && response.agents.length > 0) {
+              const newFixedAgents = fixPlaceholderUrls(response.agents);
+              const updatedAgents = [...state.agents, ...newFixedAgents];
+              
+              console.log(`✅ LoadMore: Added ${newFixedAgents.length} more search results (${updatedAgents.length}/${databaseTotal} total)`);
+              
+              set({
+                agents: updatedAgents,
+                pagination: {
+                  ...pagination,
+                  currentPage: pagination.currentPage + 1,
+                  hasMore: updatedAgents.length < databaseTotal,
+                  lastVisibleId: response.pagination?.lastVisibleId || null,
+                  isLoadingMore: false,
+                  totalItems: databaseTotal
+                }
+              });
+            } else {
+              console.log('📋 LoadMore: No more search results available');
+              set({
+                pagination: {
+                  ...pagination,
+                  hasMore: false,
+                  isLoadingMore: false
+                }
+              });
+            }
+            
+            return;
+          }
+          
+          // Regular browsing (non-search) - original logic
+          console.log('📋 LoadMore: Regular browsing mode');
+          
           // Call API with cursor-based pagination
           const response = await fetchAgents(selectedCategory, selectedFilter, pagination.lastVisibleId, {
             limit: pagination.pageSize,
@@ -796,7 +1048,7 @@ const useAgentStore = create(
             rating: selectedRating > 0 ? selectedRating : undefined,
             tags: selectedTags,
             features: selectedFeatures,
-            search: searchQuery || undefined
+            search: undefined
           });
           
           if (response && response.agents && response.agents.length > 0) {

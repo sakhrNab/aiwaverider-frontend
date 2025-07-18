@@ -353,6 +353,7 @@ export const fetchAgents = async (
     // Extract options or use defaults
     const {
       limit = 50,
+      offset = 0,
       priceRange = { min: 0, max: 1000 },
       rating = 0,
       tags = [],
@@ -416,6 +417,11 @@ export const fetchAgents = async (
     params.append('filter', filter);
     params.append('limit', limit);
     
+    // Add offset-based pagination for browse mode
+    if (offset > 0) {
+      params.append('offset', offset);
+    }
+    
     // Add cursor-based pagination
     if (lastVisibleId) {
       params.append('lastVisibleId', lastVisibleId);
@@ -478,7 +484,32 @@ export const fetchAgents = async (
       const agents = responseData.agents || [];
       const lastVisibleId = responseData.lastVisibleId || null;
       const fromCache = responseData.fromCache || false;
-      const total = responseData.totalCount || responseData.total || agents.length;
+      const searchQuery = responseData.searchQuery || null;
+      
+      // For search results, get the actual search result count from database
+      let total;
+      if (searchQuery) {
+        // This is a search result - get the real total from database
+        try {
+          // Import is at top of file, so we can call it directly
+          const searchResultsTotal = await getSearchResultsCount(searchQuery);
+          total = searchResultsTotal;
+          console.log(`🔍 Search result detected for "${searchQuery}": Database has ${total} total results, received ${agents.length} in response`);
+          
+          // Log cache vs database comparison
+          if (agents.length < total) {
+            console.log(`📦 Cache incomplete: ${agents.length}/${total} results cached. May need to fetch more.`);
+          } else {
+            console.log(`✅ Cache complete: All ${total} results available.`);
+          }
+        } catch (error) {
+          console.warn(`Failed to get search results count for "${searchQuery}", using response count:`, error);
+          total = agents.length;
+        }
+      } else {
+        // This is normal browsing - use the provided total count
+        total = responseData.totalCount || responseData.total || agents.length;
+      }
       
       // Validate agents to ensure they exist and have valid IDs
       const validAgents = agents.filter(agent => {
@@ -752,6 +783,54 @@ export const getAgentsCount = async (category = null) => {
   } catch (error) {
     console.error('Error fetching agents count:', error);
     return 0;
+  }
+};
+
+/**
+ * Get the total count of search results for a specific search query
+ * @param {string} searchQuery - The search query to count results for
+ * @returns {Promise<number>} - Total count of search results
+ */
+export const getSearchResultsCount = async (searchQuery) => {
+  try {
+    if (!searchQuery || !searchQuery.trim()) {
+      return 0;
+    }
+    
+    const queryParams = new URLSearchParams();
+    queryParams.append('q', searchQuery.trim());
+    queryParams.append('category', 'All'); // Always search across all categories
+    
+    const url = `/api/agents/search/count?${queryParams.toString()}`;
+    
+    console.log(`[API] Getting search results count for "${searchQuery}"`);
+    const response = await api.get(url);
+    
+    const count = response.data?.count || response.data?.totalCount || response.data?.searchResultCount || 0;
+    console.log(`[API] Search results count for "${searchQuery}": ${count}`);
+    
+    return count;
+  } catch (error) {
+    console.error(`Error fetching search results count for "${searchQuery}":`, error);
+    // Fallback: try the regular search endpoint with limit=1 to get total
+    try {
+      console.log(`[API] Fallback: Using regular search endpoint to get count for "${searchQuery}"`);
+      const response = await fetchAgents('All', 'Most Popular', null, {
+        limit: 1,
+        search: searchQuery.trim()
+      });
+      
+      // Check if the response has a proper total count
+      if (response && response.pagination && response.pagination.totalItems) {
+        console.log(`[API] Fallback successful: ${response.pagination.totalItems} results`);
+        return response.pagination.totalItems;
+      }
+      
+      return 0;
+    } catch (fallbackError) {
+      console.error('Fallback search count also failed:', fallbackError);
+      return 0;
+    }
   }
 };
 
