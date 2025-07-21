@@ -430,15 +430,25 @@ const AITools = () => {
               {/* Search input with better positioning - using class-based approach */}
               <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <div className="flex w-full md:w-auto gap-3">
-                  <div className="relative flex-1 md:flex-auto">
+                  <div className="relative flex-1 md:flex-auto" id="ai-tools-search">
                     <input
                       type="text"
                       placeholder="Search AI tools..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full md:w-72 px-4 py-3 pr-10 rounded-xl bg-white/10 backdrop-blur-md text-white shadow-lg"
+                      className="search-input w-full md:w-72 px-4 py-3 pr-10 rounded-xl bg-white/10 backdrop-blur-md text-white shadow-lg"
                     />
-                    <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70" />
+                    <FaSearch className="search-icon absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70" />
+                    {searchTerm && (
+                      <button 
+                        type="button" 
+                        className="search-clear-button" 
+                        onClick={() => setSearchTerm('')}
+                        aria-label="Clear search"
+                      >
+                        <FaTimes />
+                      </button>
+                    )}
                   </div>
                   <button
                     onClick={handleRefresh}
@@ -450,16 +460,6 @@ const AITools = () => {
                     <span className="tooltip">Refresh</span>
                   </button>
                 </div>
-                {searchTerm && (
-                  <button 
-                    type="button" 
-                    className="search-clear-button" 
-                    onClick={() => setSearchTerm('')}
-                    aria-label="Clear search"
-                  >
-                    <FaTimes />
-                  </button>
-                )}
               </div>
 
               {/* Tags filter - using global filter-tags-container */}
