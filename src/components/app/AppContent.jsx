@@ -8,6 +8,7 @@ import SignUp from '../auth/SignUpForm';
 import AppRoutes from '../../routes/routes.jsx';
 import ChatBot from '../common/ChatBot';
 import BackToTop from '../common/BackToTop';
+import CookieConsent from '../common/CookieConsent';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import ErrorBoundary from '../common/ErrorBoundary';
 import PageTitle from '../common/PageTitle';
@@ -25,29 +26,35 @@ const AppContent = () => {
   
   // Update page title based on current route
   useEffect(() => {
-    const path = location.pathname;
-    let title = '';
+    const pathToTitle = {
+      '/': 'AI Waverider - AI Agents & Tools Marketplace',
+      '/agents': 'AI Agents - AI Waverider',
+      '/ai-tools': 'AI Tools - AI Waverider',
+      '/about': 'About Us - AI Waverider',
+      '/videos': 'Videos - AI Waverider',
+      '/latest-tech': 'Latest Technology - AI Waverider',
+      '/monetization-paths': 'Monetization Paths - AI Waverider',
+      '/ai-obstacle-solutions': 'AI Solutions - AI Waverider',
+      '/checkout': 'Checkout - AI Waverider',
+      '/profile': 'Profile - AI Waverider',
+      '/sign-in': 'Sign In - AI Waverider',
+      '/sign-up': 'Sign Up - AI Waverider',
+      '/terms': 'Terms and Conditions - AI Waverider',
+      '/privacy': 'Privacy Policy - AI Waverider',
+      '/delivery': 'Delivery Terms - AI Waverider',
+      '/refund': 'Refund Policy - AI Waverider',
+      '/contact': 'Contact Information - AI Waverider',
+      '/company-info': 'Company Information - AI Waverider',
+      '/thankyou': 'Thank You - AI Waverider',
+      '/checkout/success': 'Order Success - AI Waverider'
+    };
 
-    // Map routes to page titles
-    if (path === '/') title = 'Home';
-    else if (path === '/agents') title = 'AI Agents';
-    else if (path.startsWith('/agents/')) title = 'Agent Details';
-    else if (path === '/ai-tools') title = 'AI Tools';
-    else if (path === '/latest-tech') title = 'Latest Tech';
-    else if (path === '/videos') title = 'Videos';
-    else if (path === '/about') title = 'About Us';
-    else if (path === '/profile') title = 'Your Profile';
-    else if (path === '/sign-in') title = 'Sign In';
-    else if (path === '/sign-up') title = 'Create Account';
-    else if (path === '/checkout') title = 'Checkout';
-    else if (path === '/thankyou') title = 'Thank You';
-    else if (path === '/monetization-paths') title = 'Monetization Paths';
-    else if (path === '/ai-obstacle-solutions') title = 'AI Obstacle Solutions';
-    else if (path.startsWith('/admin')) title = 'Admin Dashboard';
-    else title = 'AIWaverider'; // Default title
-
-    setPageTitle(title);
-  }, [location]);
+    const currentTitle = pathToTitle[location.pathname] || 'AI Waverider';
+    setPageTitle(currentTitle);
+    
+    // Also update the document title directly for better SEO
+    document.title = currentTitle;
+  }, [location.pathname]);
 
   // Add event listener for opening signup modal from anywhere in the app
   useEffect(() => {
@@ -81,6 +88,9 @@ const AppContent = () => {
           {location.pathname !== '/sign-up' && (
             <SignUp isOpen={isSignUpModalOpen} onClose={closeSignUpModal} />
           )}
+
+          {/* Cookie Consent Banner - Required for GDPR/Legal Compliance */}
+          <CookieConsent />
         </div>
       </ErrorBoundary>
       
