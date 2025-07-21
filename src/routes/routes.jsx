@@ -26,6 +26,14 @@ const PromptPage = lazy(() => import('../pages/PromptPage'));
 const ApiTestPage = lazy(() => import('../pages/ApiTestPage'));
 const VideosPage = lazy(() => import('../pages/VideosPage'));
 
+// Legal pages
+const TermsPage = lazy(() => import('../pages/TermsPage'));
+const PrivacyPage = lazy(() => import('../pages/PrivacyPage'));
+const DeliveryPage = lazy(() => import('../pages/DeliveryPage'));
+const RefundPage = lazy(() => import('../pages/RefundPage'));
+const CompanyInfoPage = lazy(() => import('../pages/CompanyInfoPage'));
+const ContactPage = lazy(() => import('../pages/ContactPage'));
+
 // Admin pages
 const Dashboard = lazy(() => import('../pages/admin/AdminDashboardPage'));
 const ManageAgents = lazy(() => import('../pages/admin/AdminManageAgentsPage'));
@@ -81,6 +89,14 @@ const AppRoutes = () => {
       <Route path="/checkout" element={withSuspense(<Checkout />)} />
       <Route path="/thankyou" element={withSuspense(<ThankYou />)} />
       <Route path="/checkout/success" element={withSuspense(<CheckoutSuccess />)} />
+      
+      {/* Legal Pages - Required for Georgian E-Commerce Compliance */}
+      <Route path="/terms" element={withSuspense(<TermsPage />)} />
+      <Route path="/privacy" element={withSuspense(<PrivacyPage />)} />
+      <Route path="/delivery" element={withSuspense(<DeliveryPage />)} />
+      <Route path="/refund" element={withSuspense(<RefundPage />)} />
+      <Route path="/company-info" element={withSuspense(<CompanyInfoPage />)} />
+      <Route path="/contact" element={withSuspense(<ContactPage />)} />
       
       {/* Prompt Pages */}
       <Route path="/prompts/:id" element={withSuspense(<PromptPage />)} />

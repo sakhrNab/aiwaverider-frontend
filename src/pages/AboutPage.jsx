@@ -1,10 +1,9 @@
 import React from 'react';
-import { FaLinkedin, FaGithub, FaTwitter, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools } from 'react-icons/fa';
+import { FaLinkedin, FaGithub, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
-import tazProfileImg from '../assets/taz-profile.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInstagram, faTiktok} from '@fortawesome/free-brands-svg-icons';
+import { faTiktok } from '@fortawesome/free-brands-svg-icons';
 
 const About = () => {
   const { darkMode } = useTheme();
@@ -81,21 +80,21 @@ const About = () => {
       {/* Founders Section */}
       <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
-          <h2 className={`text-3xl font-bold mb-12 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Meet the Founders</h2>
+          <h2 className={`text-3xl font-bold mb-12 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Meet the Founder</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             {/* Sakhr Nabil */}
             <div className={`rounded-lg overflow-hidden shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} p-8`}>
               <div className="flex flex-col items-center">
                 <div className="w-64 h-64 mb-6 rounded-full overflow-hidden bg-gradient-to-r from-blue-100 to-teal-100 p-1">
                   <img 
                     src={sakhrProfileImg} 
-                    alt="Zaki Nabil" 
+                    alt="Sakhr Al-absi" 
                     className="w-full h-full rounded-full object-cover"
                   />
                 </div>
                 <h3 className="text-3xl font-bold mb-1 text-center">Sakhr Al-absi</h3>
-                <p className={`text-xl mb-4 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Co-Founder & CEO/CTO</p>
+                <p className={`text-xl mb-4 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Founder & CEO</p>
                 <div className="flex justify-center space-x-6 mb-6">
                   <a href="https://www.linkedin.com/in/sakhr-nabil-al-absi/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl`}>
                     <FaLinkedin />
@@ -104,8 +103,8 @@ const About = () => {
                     <FaGithub />
                   </a>
                   <a href="https://www.tiktok.com/@ai.wave.rider" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-pink-600">
-          <FontAwesomeIcon icon={faTiktok} />
-        </a>
+                    <FontAwesomeIcon icon={faTiktok} />
+                  </a>
                 </div>
               </div>
               <p className="text-base leading-relaxed mb-4">
@@ -160,84 +159,87 @@ const About = () => {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
             <h2 className={`text-3xl font-bold mb-8 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>
-              The AI Waverider Platform
+              What We Offer
             </h2>
             <p className="text-lg mb-6 leading-relaxed">
-              AI Waverider is more than just a website – it's a comprehensive platform designed to help you navigate 
-              the world of artificial intelligence and find the right AI solutions for your business needs.
-            </p>
-            <p className="text-lg mb-8 leading-relaxed">
-              Our platform offers a carefully curated marketplace of AI agents and tools, educational resources, 
-              implementation guidance, and a supportive community of AI enthusiasts and professionals.
+              AI Waverider specializes in making artificial intelligence accessible and practical for businesses of all sizes. 
+              We focus on three core areas that deliver real value to our clients.
             </p>
 
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 mb-8`}>
+            <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 mb-8`}>
               <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
                 <h3 className="text-xl font-bold mb-3 flex items-center">
                   <FaRobot className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  AI Agents Marketplace
+                  AI Tool Recommendations
                 </h3>
                 <p>
-                  Discover and deploy pre-built AI agents that can automate tasks, enhance customer experiences, 
-                  and streamline operations across your business.
+                  We help you discover and implement the right AI tools for your business through our affiliate partnerships, 
+                  ensuring you get the best solutions at competitive prices.
                 </p>
               </div>
               
               <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
                 <h3 className="text-xl font-bold mb-3 flex items-center">
                   <FaTools className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  AI Tools Directory
+                  Custom n8n Workflows
                 </h3>
                 <p>
-                  Browse our extensive collection of AI tools categorized by function, industry, and use case to 
-                  find the right solutions for your specific needs.
-                </p>
-              </div>
-              
-              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
-                <h3 className="text-xl font-bold mb-3 flex items-center">
-                  <FaCode className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  Implementation Resources
-                </h3>
-                <p>
-                  Access guides, tutorials, and case studies that walk you through implementing AI solutions in 
-                  your business without requiring deep technical knowledge.
+                  Get powerful automation workflows built specifically for your business needs. Our n8n solutions 
+                  streamline operations and eliminate repetitive tasks.
                 </p>
               </div>
               
               <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
                 <h3 className="text-xl font-bold mb-3 flex items-center">
                   <FaChartLine className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  Latest Technology Updates
+                  AI Consulting Services
                 </h3>
                 <p>
-                  Stay informed about the newest developments in AI technology and learn how these advancements 
-                  can be applied to solve real business challenges.
+                  Work directly with our AI experts to develop comprehensive implementation strategies, 
+                  integrate new technologies, and optimize your existing workflows.
                 </p>
               </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-lg mb-6">
+                Whether you're just starting your AI journey or looking to optimize existing systems, 
+                we're here to guide you every step of the way.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Contact Section */}
+      {/* Get Started Section */}
       <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className={`text-3xl font-bold mb-8 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Get in Touch</h2>
+            <h2 className={`text-3xl font-bold mb-8 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Ready to Get Started?</h2>
             <p className="text-lg mb-8">
-              Have questions about AI Waverider or want to learn more about how we can help your business leverage AI technology? 
-              We'd love to hear from you!
+              Discover how AI can transform your business. Explore our services, check out our AI tool recommendations, 
+              or get in touch to discuss your specific needs.
             </p>
-            <a 
-              href="mailto:contact@aiwaverider.com" 
-              className={`inline-block px-8 py-3 ${darkMode ? 
-                'bg-teal-600 hover:bg-teal-700' : 
-                'bg-teal-600 hover:bg-teal-700'} 
-                text-white rounded-lg font-semibold transition duration-300`}
-            >
-              Contact Us
-            </a>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a 
+                href="/agents" 
+                className={`inline-block px-8 py-3 ${darkMode ? 
+                  'bg-teal-600 hover:bg-teal-700' : 
+                  'bg-teal-600 hover:bg-teal-700'} 
+                  text-white rounded-lg font-semibold transition duration-300`}
+              >
+                Browse AI Solutions
+              </a>
+              <a 
+                href="/contact" 
+                className={`inline-block px-8 py-3 ${darkMode ? 
+                  'bg-blue-600 hover:bg-blue-700' : 
+                  'bg-blue-600 hover:bg-blue-700'} 
+                  text-white rounded-lg font-semibold transition duration-300`}
+              >
+                Get in Touch
+              </a>
+            </div>
           </div>
         </div>
       </section>
