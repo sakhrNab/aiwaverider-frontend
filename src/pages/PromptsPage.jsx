@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { FaExternalLinkAlt, FaSearch, FaTimes, FaSync } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaSearch, FaTimes, FaSync, FaLightbulb } from 'react-icons/fa';
 import PageHeader from '../components/layout/PageHeader';
 import { Link, useNavigate } from 'react-router-dom';
-import './AIToolsPage.css';
+import './AIToolsPage.css'; // Reuse the same CSS
 import { useTheme } from '../contexts/ThemeContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { HashLoader } from 'react-spinners';
@@ -38,26 +38,26 @@ const iconMap = {
   "default": defaultAiIcon
 };
 
-// Available default tags if none are found in the database
+// Available default tags for prompts only
 const defaultAvailableTags = [
   'All',
-  'Free tools',
-  'Video Generator',
-  'Animation',
-  'Make money with AI',
-  '3D tools',
-  'Content',
-  'AI Coding',
-  'Digital Influencer',
-  'Video Editing',
-  'Viral Video Hacks',
-  'Organization'
+  'Free prompts',
+  'Writing',
+  'Creative',
+  'Business',
+  'Marketing',
+  'Social Media',
+  'Content Creation',
+  'Copywriting',
+  'Storytelling',
+  'Productivity',
+  'Education'
 ];
 
 // Create a cache for images
 const imageCache = new Map();
 
-const AITools = () => {
+const PromptsPage = () => {
   const { darkMode } = useTheme();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -166,7 +166,7 @@ const AITools = () => {
       // Get text to display (use the full name if it fits, otherwise first word or initial)
       const displayText = tool.title ? 
         (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) : 
-        'AI';
+        'Prompt';
       
       // Use the utility function to create the SVG data URI
       img.src = createSvgDataUri({
@@ -224,7 +224,7 @@ const AITools = () => {
     return imageUrl;
   }, []);
 
-  // Extract unique tags from AI tools only (exclude prompts)
+  // Extract unique tags from prompts only
   const extractTags = useCallback((toolsData) => {
     if (!toolsData || toolsData.length === 0) {
       return defaultAvailableTags;
@@ -233,14 +233,14 @@ const AITools = () => {
     const allTags = ['All'];
     const tagSet = new Set();
     
-    // Filter out prompts first
-    const aiToolsOnly = toolsData.filter(tool => {
-      return !tool.keyword?.toLowerCase().includes('prompt') &&
-             !tool.title?.toLowerCase().includes('prompt') &&
-             !tool.category?.toLowerCase().includes('prompt');
-    });
+    // Filter for prompts only
+    const promptsOnly = toolsData.filter(tool => 
+      tool.keyword?.toLowerCase().includes('prompt') ||
+      tool.title?.toLowerCase().includes('prompt') ||
+      tool.category?.toLowerCase().includes('prompt')
+    );
     
-    aiToolsOnly.forEach(tool => {
+    promptsOnly.forEach(tool => {
       // Add category as tag if exists
       if (tool.category) {
         tagSet.add(tool.category);
@@ -282,7 +282,7 @@ const AITools = () => {
       }
     } catch (err) {
       console.error('Error fetching AI tools:', err);
-      setError('Failed to load AI tools. Please try again later.');
+      setError('Failed to load prompts. Please try again later.');
       // Set default tags when there's an error
       setTags(defaultAvailableTags);
     } finally {
@@ -328,16 +328,16 @@ const AITools = () => {
     }
   }, [tools, extractTags]);
 
-  // Filter tools to only show AI tools (exclude prompts)
-  const aiToolsOnly = tools.filter(tool => {
-    // Exclude anything that contains "prompt" in keyword, title, or category
-    return !tool.keyword?.toLowerCase().includes('prompt') &&
-           !tool.title?.toLowerCase().includes('prompt') &&
-           !tool.category?.toLowerCase().includes('prompt');
+  // Filter tools to only show prompts (exclude AI tools)
+  const promptsOnly = tools.filter(tool => {
+    // Only include items that contain "prompt" in keyword, title, or category
+    return tool.keyword?.toLowerCase().includes('prompt') ||
+           tool.title?.toLowerCase().includes('prompt') ||
+           tool.category?.toLowerCase().includes('prompt');
   });
 
-  // Apply filters first (search and tags) - only on AI tools
-  const filteredTools = aiToolsOnly.filter((tool) => {
+  // Apply filters first (search and tags) - only on prompts
+  const filteredTools = promptsOnly.filter((tool) => {
     const titleMatch = tool.title.toLowerCase().includes(searchTerm.toLowerCase());
     const descriptionMatch = tool.description?.toLowerCase().includes(searchTerm.toLowerCase());
     // Add keyword search functionality
@@ -349,7 +349,7 @@ const AITools = () => {
     return (titleMatch || descriptionMatch || keywordMatch) && tagMatch;
   });
 
-  // Create pagination for filtered AI tools
+  // Create pagination for filtered prompts
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setCurrentPageSize] = useState(12);
   
@@ -415,8 +415,8 @@ const AITools = () => {
     
     // Get text to display (use the full name if it fits, otherwise first word)
     const displayText = tool.title ? 
-      (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) : 
-      'AI Tool';
+      (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) :
+      'Prompt';
     
     // Use the utility function to create the SVG data URI
     return createSvgDataUri({
@@ -437,10 +437,10 @@ const AITools = () => {
           <HashLoader color="#4FD1C5" size={70} speedMultiplier={0.8} />
         </div>
         <div className="text-white text-xl font-semibold mt-4">
-          Loading AI Tools
+          Loading Prompts
         </div>
         <div className="text-blue-300 text-sm mt-2">
-          Discovering the best tools for you...
+          Discovering the best prompts for you...
         </div>
       </div>
     );
@@ -458,11 +458,11 @@ const AITools = () => {
             <div className="relative z-10">
               <h1 className="text-4xl sm:text-5xl font-bold text-center mb-4 tracking-tight">
                 <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-yellow-200 text-transparent bg-clip-text">
-                  AI Tools Directory
+                  AI Prompts Directory
                 </span>
               </h1>
               <p className="text-white/80 text-center text-lg mb-2">
-                Discover the best AI tools to enhance your workflow
+                Discover the best AI prompts to enhance your creativity
               </p>
               <div className="w-20 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mt-4 rounded-full"></div>
             </div>
@@ -487,7 +487,7 @@ const AITools = () => {
                   <div className="relative flex-1 md:flex-auto" id="ai-tools-search">
                     <input
                       type="text"
-                      placeholder="Search AI tools..."
+                      placeholder="Search prompts..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="search-input w-full md:w-72 px-4 py-3 pr-10 rounded-xl bg-white/10 backdrop-blur-md text-white shadow-lg"
@@ -519,7 +519,7 @@ const AITools = () => {
               </div>
 
               {/* Tags filter - using global filter-tags-container */}
-              {aiToolsOnly.length > 0 && (
+              {promptsOnly.length > 0 && (
                 <div className="filter-tags-container">
                   <button
                     onClick={() => setSelectedTag('')}
@@ -543,12 +543,12 @@ const AITools = () => {
               )}
 
               {/* Tools Container - Enhanced with glass effect */}
-              {aiToolsOnly.length > 0 ? (
+              {promptsOnly.length > 0 ? (
                 <div className="glass-effect rounded-3xl p-6 shadow-xl transform transition-transform duration-700 hover:scale-[1.01]">
                   <div className="content-grid">
                     {filteredTools.length === 0 ? (
                       <div className="col-span-2 text-center py-12">
-                        <p className="text-white/70">No tools match your search criteria. Try adjusting your filters.</p>
+                        <p className="text-white/70">No prompts match your search criteria. Try adjusting your filters.</p>
                       </div>
                     ) : (
                       // Always show paginated tools (they're already filtered)
@@ -566,7 +566,7 @@ const AITools = () => {
                           const textColor = 'ffffff';
                           const displayText = tool.title ? 
                             (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) :
-                            'AI Tool';
+                            'Prompt';
                           toolImageSrc = createSvgDataUri({
                             text: displayText,
                             width: 300,
@@ -577,20 +577,36 @@ const AITools = () => {
                           });
                         }
                         
-                        // Create a card wrapper for AI tools (no prompts)
+                        // Check if the tool has 'prompt' in its keyword
+                        const isPromptTool = tool.keyword?.toLowerCase().includes('prompt');
+                        
+                        // Create a card wrapper based on the tool type
                         const CardWrapper = ({ children }) => {
-                          return (
-                            <a
-                              key={tool.id || `tool-${index}`}
-                              href={formatLink(tool.url || tool.link)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ai-tool-card glass-effect animate-fade-in shimmer-effect"
-                              style={{ animationDelay: `${index * 100}ms` }}
-                            >
-                              {children}
-                            </a>
-                          );
+                          if (isPromptTool) {
+                            return (
+                              <div 
+                                key={tool.id || `tool-${index}`}
+                                onClick={() => navigate(`/prompts/${tool.id}`)}
+                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect cursor-pointer"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                              >
+                                {children}
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <a
+                                key={tool.id || `tool-${index}`}
+                                href={formatLink(tool.url || tool.link)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                              >
+                                {children}
+                              </a>
+                            );
+                          }
                         };
                         
                         return (
@@ -608,12 +624,16 @@ const AITools = () => {
                             <div className="ai-tool-content">
                               <div className="flex justify-between items-center">
                                 <h3 className="ai-tool-title">{tool.title}</h3>
-                                <FaExternalLinkAlt className="external-link-icon" />
+                                {isPromptTool ? (
+                                  <FaLightbulb className="text-yellow-400 text-lg" />
+                                ) : (
+                                  <FaExternalLinkAlt className="external-link-icon" />
+                                )}
                               </div>
                               <p className="ai-tool-description">{tool.description}</p>
                               <div className="ai-tool-tags">
                                 <span className="ai-tool-primary-tag">
-                                  {tool.category || tool.keyword || 'AI Tool'}
+                                  {tool.category || tool.keyword || 'Prompt'}
                                 </span>
                                 {tool.tags?.slice(0, 2).map((tag, tagIndex) => (
                                   <span 
@@ -707,8 +727,8 @@ const AITools = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-white/70 mb-4">No AI tools found in the database.</p>
-                  <p className="text-white/50 mb-6">AI tools need to be added by an administrator.</p>
+                  <p className="text-white/70 mb-4">No prompts found in the database.</p>
+                  <p className="text-white/50 mb-6">Prompts need to be added by an administrator.</p>
                   
                   {/* Admin-only button */}
                   <a 
@@ -727,5 +747,4 @@ const AITools = () => {
   );
 };
 
-export default AITools;
- 
+export default PromptsPage; 

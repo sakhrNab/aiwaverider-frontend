@@ -10,6 +10,7 @@ import HomePage from '../pages/HomePage';
 const Agents = lazy(() => import('../pages/AgentsPage'));
 const AgentDetail = lazy(() => import('../pages/AgentDetailPage'));
 const AITools = lazy(() => import('../pages/AIToolsPage'));
+const PromptsPage = lazy(() => import('../pages/PromptsPage'));
 const Profile = lazy(() => import('../pages/ProfilePage'));
 const SignIn = lazy(() => import('../components/auth/SignInForm'));
 const SignUp = lazy(() => import('../components/auth/SignUpForm'));
@@ -79,6 +80,7 @@ const AppRoutes = () => {
       <Route path="/profile" element={withSuspense(<Profile />)} />
       <Route path="/agents" element={withSuspense(<Agents />)} />
       <Route path="/ai-tools" element={withSuspense(<AITools />)} />
+      <Route path="/prompts" element={withSuspense(<PromptsPage />)} />
       <Route path="/videos" element={withSuspense(<VideosPage />)} />
       <Route path="/latest-tech" element={withSuspense(<LatestTech />)} />
       <Route path="/about" element={withSuspense(<About />)} />
