@@ -195,7 +195,7 @@ const TermsPage = () => {
                 For questions about these Terms and Conditions, please contact us at:
               </p>
               <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} mt-4`}>
-                <p><strong>Email:</strong> contact@aiwaverider.com</p>
+                <p><strong>Email:</strong> support@aiwaverider.com</p>
                 <p><strong>Address:</strong> Georgia, Tbilisi, Krtsanisi district, Nino and Ilia Nakashidze str., N1, Flat N3, Building N3</p>
                 <p><strong>Phone:</strong> +995 558950430</p>
                 <p><strong>Business Hours:</strong> Monday-Friday 9:00 AM - 6:00 PM (GMT+4)</p>
