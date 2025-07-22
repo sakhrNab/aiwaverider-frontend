@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { FaClock, FaRocket, FaChartLine, FaUsers, FaLightbulb, FaDollarSign, FaStar, FaTrophy } from 'react-icons/fa';
+import { FaClock, FaRocket, FaChartLine, FaUsers, FaLightbulb, FaDollarSign, FaStar, FaTrophy, FaHandshake, FaCogs, FaUserGraduate, FaGraduationCap } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -28,70 +28,70 @@ const MonetizationPathsPage = () => {
     }
   };
 
-  // Timeline steps data
+  // Timeline steps data - Updated to reflect actual business model
   const timelineSteps = [
     {
       id: 1,
-      title: 'Software Referral',
-      description: 'Earn a 40% commission by referring businesses to AI tools they need. No technical skills required, just connect businesses with the right solutions.',
-      income: '$600-$5,000/month',
-      timeToSetup: '1-2 days',
-      icon: <FaUsers className="text-blue-500" size={24} />,
+      title: 'AI Tool Affiliate Marketing',
+      description: 'Partner with leading AI companies to earn 20-50% commissions by recommending their tools to businesses. Learn my proven strategies for identifying high-converting partnerships and building relationships with potential clients.',
+      income: '$2,000-$15,000/month',
+      timeToSetup: '1-2 weeks',
+      icon: <FaHandshake className="text-blue-500" size={24} />,
       color: 'blue'
     },
     {
       id: 2,
-      title: 'Setup/Build Fees',
-      description: 'Charge $500-$15,000 for setting up AI tools for businesses. Includes customization, training, and implementation services.',
-      income: '$1,500-$15,000 per project',
-      timeToSetup: '1-2 weeks',
-      icon: <FaRocket className="text-purple-500" size={24} />,
+      title: 'n8n Automation Workflows',
+      description: 'Create and sell powerful automation workflows using n8n that save businesses 10-40 hours per week. From lead generation to customer service automation, these digital products sell for $297-$2,997 each.',
+      income: '$3,000-$20,000/month',
+      timeToSetup: '2-4 weeks',
+      icon: <FaCogs className="text-purple-500" size={24} />,
       color: 'purple'
     },
     {
       id: 3,
-      title: 'Monthly Retainer',
-      description: 'Manage AI tools for clients on an ongoing basis. Provide monthly maintenance, updates, and optimization to ensure maximum ROI.',
-      income: '$1,000-$5,000/month per client',
-      timeToSetup: '2-4 weeks',
-      icon: <FaClock className="text-green-500" size={24} />,
+      title: 'AI Consulting Services',
+      description: 'Provide strategic AI consulting to help businesses identify automation opportunities, implement AI solutions, and optimize their operations. Charge $200-$500/hour for your expertise.',
+      income: '$8,000-$50,000/month',
+      timeToSetup: '1-3 months',
+      icon: <FaUserGraduate className="text-green-500" size={24} />,
       color: 'green'
     },
     {
       id: 4,
-      title: 'Consulting',
-      description: 'Charge $150-$500/hour for strategic AI consulting. Help businesses identify opportunities, develop AI strategies, and implement AI solutions.',
-      income: '$3,000-$20,000/month',
-      timeToSetup: '1-3 weeks',
-      icon: <FaLightbulb className="text-yellow-500" size={24} />,
-      color: 'yellow'
+      title: 'Teaching & Training Programs',
+      description: 'Share your knowledge and help others build their own AI businesses. Create courses, coaching programs, and training materials that teach affiliate marketing, workflow creation, and AI consulting strategies.',
+      income: '$5,000-$100,000/month',
+      timeToSetup: '3-6 months',
+      icon: <FaGraduationCap className="text-orange-500" size={24} />,
+      color: 'orange'
     },
     {
       id: 5,
-      title: 'Profit Sharing',
-      description: 'Earn 5%-35% of the sales generated through AI implementation. This performance-based model aligns your income with client success.',
-      income: 'Unlimited (based on client success)',
-      timeToSetup: '1-3 months',
-      icon: <FaChartLine className="text-red-500" size={24} />,
+      title: 'Advanced Workflow Marketplace',
+      description: 'Build a marketplace for selling specialized n8n workflows across different industries. Create templates for e-commerce, healthcare, real estate, and other niches with premium pricing.',
+      income: '$10,000-$75,000/month',
+      timeToSetup: '6-12 months',
+      icon: <FaRocket className="text-red-500" size={24} />,
       color: 'red'
     },
     {
       id: 6,
-      title: 'Equity Deals',
-      description: 'Get part ownership in companies you help transform with AI. Ideal for startups and businesses with high growth potential.',
-      income: '$100,000+ in equity',
-      timeToSetup: '3-6 months',
-      icon: <FaDollarSign className="text-indigo-500" size={24} />,
+      title: 'AI Integration Partnerships',
+      description: 'Form strategic partnerships with software companies to integrate AI capabilities into their existing products. Earn equity stakes and revenue sharing agreements from successful integrations.',
+      income: '$50,000+ equity value',
+      timeToSetup: '6-18 months',
+      icon: <FaChartLine className="text-indigo-500" size={24} />,
       color: 'indigo'
     },
     {
       id: 7,
-      title: 'Affiliate/Referral Program',
-      description: 'Earn 30% of all sales you refer to our program. Recommend our training to others and get paid recurring commissions.',
-      income: '30% of all referred sales',
-      timeToSetup: 'Immediate',
-      icon: <FaStar className="text-orange-500" size={24} />,
-      color: 'orange'
+      title: 'Certification & Licensing Programs',
+      description: 'Create official certification programs for AI automation specialists. License your methodologies to other trainers and consultants, building a network of certified practitioners.',
+      income: '$25,000-$200,000/month',
+      timeToSetup: '12-24 months',
+      icon: <FaStar className="text-yellow-500" size={24} />,
+      color: 'yellow'
     }
   ];
   
@@ -107,10 +107,10 @@ const MonetizationPathsPage = () => {
             className="text-center"
           >
             <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              Monetization Paths for AI
+              AI Business Monetization Roadmap
             </h1>
             <p className={`text-xl max-w-3xl mx-auto mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Discover the most effective ways to generate income with artificial intelligence technology in today's market.
+              Discover the complete progression from beginner to AI business expert. Each path builds on the previous one, creating multiple income streams and exponential growth potential.
             </p>
           </motion.div>
         </div>
@@ -129,13 +129,13 @@ const MonetizationPathsPage = () => {
               variants={itemVariants}
               className={`text-3xl md:text-4xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}
             >
-              Your AI Monetization Journey
+              Your AI Business Evolution Journey
             </motion.h2>
             <motion.p 
               variants={itemVariants}
               className={`max-w-3xl mx-auto text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}
             >
-              Each path represents a proven way to generate income with AI technology. Start with the easiest paths and progress as you build experience and expertise.
+              Start with affiliate marketing and workflow creation, then scale to consulting and teaching. Each level multiplies your income potential and market influence.
             </motion.p>
           </motion.div>
           
@@ -176,7 +176,7 @@ const MonetizationPathsPage = () => {
                             <div className="flex items-center">
                               <FaClock className={`mr-2 text-${step.color}-500`} />
                               <span className={`font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                                Time to Setup: {step.timeToSetup}
+                                Time to Build: {step.timeToSetup}
                               </span>
                             </div>
                           </div>
@@ -209,7 +209,7 @@ const MonetizationPathsPage = () => {
                             <div className="flex items-center">
                               <FaClock className={`mr-2 text-${step.color}-500`} />
                               <span className={`font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                                Time to Setup: {step.timeToSetup}
+                                Time to Build: {step.timeToSetup}
                               </span>
                             </div>
                           </div>
@@ -244,7 +244,7 @@ const MonetizationPathsPage = () => {
                           <div className="flex items-center">
                             <FaClock className={`mr-2 text-${step.color}-500`} />
                             <span className={`font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                              Time to Setup: {step.timeToSetup}
+                              Time to Build: {step.timeToSetup}
                             </span>
                           </div>
                         </div>
@@ -254,6 +254,134 @@ const MonetizationPathsPage = () => {
                 </motion.div>
               ))}
             </motion.div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Business Model Deep Dive */}
+      <section className={`py-16 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className={`text-3xl md:text-4xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              The Complete AI Business Ecosystem
+            </h2>
+            <p className={`max-w-3xl mx-auto text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Learn how each business model connects and amplifies the others, creating a sustainable, scalable AI empire.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+            {/* Foundation Phase */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow-lg`}>
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white mr-4">
+                  <FaUsers />
+                </div>
+                <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Foundation Phase (Months 1-6)</h3>
+              </div>
+              <ul className={`space-y-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <li className="flex items-start">
+                  <span className="text-blue-500 mr-2 mt-1">•</span>
+                  <span>Master affiliate marketing for consistent monthly income</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-500 mr-2 mt-1">•</span>
+                  <span>Create your first 5-10 profitable n8n workflows</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-500 mr-2 mt-1">•</span>
+                  <span>Build your personal brand and online presence</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-500 mr-2 mt-1">•</span>
+                  <span>Establish initial client relationships and testimonials</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Scaling Phase */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow-lg`}>
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white mr-4">
+                  <FaRocket />
+                </div>
+                <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Scaling Phase (Months 6-18)</h3>
+              </div>
+              <ul className={`space-y-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2 mt-1">•</span>
+                  <span>Launch high-value AI consulting services</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2 mt-1">•</span>
+                  <span>Develop premium workflow packages and enterprise solutions</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2 mt-1">•</span>
+                  <span>Create your first training program or course</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2 mt-1">•</span>
+                  <span>Build strategic partnerships with AI companies</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Mastery Phase */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow-lg`}>
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center text-white mr-4">
+                  <FaChartLine />
+                </div>
+                <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Mastery Phase (18+ Months)</h3>
+              </div>
+              <ul className={`space-y-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2 mt-1">•</span>
+                  <span>Launch comprehensive certification programs</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2 mt-1">•</span>
+                  <span>Build advanced workflow marketplace and licensing deals</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2 mt-1">•</span>
+                  <span>Secure equity partnerships with promising AI startups</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2 mt-1">•</span>
+                  <span>Establish yourself as a recognized thought leader</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Empire Phase */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow-lg`}>
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center text-white mr-4">
+                  <FaTrophy />
+                </div>
+                <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Empire Phase (24+ Months)</h3>
+              </div>
+              <ul className={`space-y-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <li className="flex items-start">
+                  <span className="text-yellow-500 mr-2 mt-1">•</span>
+                  <span>Multiple six-figure revenue streams operating simultaneously</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-yellow-500 mr-2 mt-1">•</span>
+                  <span>Team of certified practitioners working under your brand</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-yellow-500 mr-2 mt-1">•</span>
+                  <span>Investment opportunities in emerging AI technologies</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-yellow-500 mr-2 mt-1">•</span>
+                  <span>Global recognition as an AI business authority</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
@@ -270,14 +398,14 @@ const MonetizationPathsPage = () => {
           >
             <FaTrophy className="text-yellow-500 text-5xl mx-auto mb-6" />
             <h2 className={`text-3xl md:text-4xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              Your Path to Success
+              Your AI Business Success Story Starts Here
             </h2>
             <p className={`max-w-3xl mx-auto text-xl mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              With the right training and support, you can combine these monetization paths to create a thriving AI-powered business.
+              Join hundreds of entrepreneurs who have transformed their lives using these exact strategies. From zero to six-figure AI businesses in 12-24 months.
             </p>
             <div className="flex justify-center">
-              <Link to="/pricing" className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-lg transition-all hover:shadow-lg inline-flex items-center justify-center">
-                Start Your Journey <FaRocket className="ml-2" />
+              <Link to="/" className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-lg transition-all hover:shadow-lg inline-flex items-center justify-center">
+                Start Your Journey Today <FaRocket className="ml-2" />
               </Link>
             </div>
           </motion.div>
@@ -296,28 +424,37 @@ const MonetizationPathsPage = () => {
           <div className="max-w-3xl mx-auto">
             <div className={`mb-6 p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
               <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Do I need technical skills to implement these monetization paths?
+                Do I need to master all these monetization paths to be successful?
               </h3>
               <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                No, our program is specifically designed for non-technical people. We provide templates, tools, and step-by-step guidance to make it easy for anyone to implement these monetization paths.
+                Not at all! Many entrepreneurs achieve six-figure success focusing on just 2-3 paths. The key is starting with affiliate marketing and n8n workflows, then adding consulting and teaching as you grow. Each path amplifies the others, but you can be profitable from day one.
               </p>
             </div>
             
             <div className={`mb-6 p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
               <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                How long does it take to start earning income?
+                How realistic are these income projections?
               </h3>
               <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                It varies by path. Some paths like Software Referral and Affiliate Program can generate income within days, while others like Equity Deals may take several months to fully develop. Most of our students see their first results within 30-60 days.
+                These ranges reflect actual results from my students and my own experience. Lower ranges represent conservative goals for part-time effort, while higher ranges reflect full-time focus with proven systems. Individual results vary based on effort, market conditions, and implementation quality.
               </p>
             </div>
             
             <div className={`mb-6 p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
               <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Which monetization path is best for beginners?
+                What's the biggest differentiator between success and failure in AI business?
               </h3>
               <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                We recommend starting with Software Referral or our Affiliate Program as they require the least technical knowledge and can be implemented quickly. As you gain confidence, you can progress to Setup/Build Fees and Monthly Retainer services.
+                Consistent execution and focusing on business value rather than technical complexity. Many people get distracted by new AI tools and forget that clients pay for solved problems, not cool technology. My system keeps you focused on profitable activities that generate real results.
+              </p>
+            </div>
+
+            <div className={`mb-6 p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+              <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                How much time should I dedicate to see meaningful results?
+              </h3>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Most successful students dedicate 10-20 hours per week during their first 6 months. This includes learning, implementing, and client work. Once systems are established, many operate successful AI businesses with 20-30 hours per week while earning six-figure incomes.
               </p>
             </div>
           </div>
