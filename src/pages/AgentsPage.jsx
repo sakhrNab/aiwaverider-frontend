@@ -196,14 +196,14 @@ const Agents = () => {
       mountedRef.current = true;
       
       // Check if we already have agents in the store before loading
-      const currentAgents = useAgentStore.getState().allAgents;
+      const currentAgents = useAgentStore.getState().agents;
       const lastLoadTime = useAgentStore.getState().lastLoadTime;
       const now = Date.now();
       const cacheExpiry = useAgentStore.getState().cacheExpiry;
       
       // Only fetch from API if we have no agents or the cache is expired
       const shouldFetchFromApi = 
-        currentAgents.length === 0 || 
+        !currentAgents || currentAgents.length === 0 || 
         !lastLoadTime || 
         (now - lastLoadTime > cacheExpiry);
       
@@ -542,8 +542,8 @@ const Agents = () => {
                     {mobileOptionsOpen ? <FaTimes size={14} /> : <FaBars size={14} />}
                   </button> */}
                   
-                  <div className="text-white text-sm">
-                    {agents.length} results
+                    <div className="text-white text-sm">
+                      {agents.length} results
                   </div>
                 </div>
                 

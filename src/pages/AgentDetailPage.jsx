@@ -1261,7 +1261,7 @@ const AgentDetail = () => {
     
     // First ensure the store is loaded with initial data, but only if we need it
     // This prevents the redundant 'agents?' API call when we only need a single agent
-    if (allAgents.length === 0 && !isStoreLoading) {
+    if ((!allAgents || allAgents.length === 0) && !(isStoreLoading || false)) {
       // Only load all agents if we're not directly accessing a specific agent
       // or if we've already tried to load this agent directly and failed
       const shouldLoadAllAgents = loadAttempt.current > 0 || !agentId;
@@ -1448,11 +1448,11 @@ const AgentDetail = () => {
           console.log(`Cached agent data for ${agentId} in localStorage`);
           
           // Also update the store with this agent if it's not already there
-          const existingAgent = allAgents.find(a => a.id === agentId || a._id === agentId);
+          const existingAgent = (allAgents || []).find(a => a.id === agentId || a._id === agentId);
           if (!existingAgent) {
             console.log('Adding agent to store for future reference');
             // Add the agent to the store without replacing existing agents
-            setAllAgents([...allAgents, data]);
+            setAllAgents([...(allAgents || []), data]);
           }
         } catch (cacheError) {
           console.warn('Failed to cache agent data:', cacheError);

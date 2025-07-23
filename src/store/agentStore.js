@@ -43,10 +43,9 @@ const useAgentStore = create(
     (set, get) => ({
       // State
       agents: [],
-      allAgents: [],
+      allAgents: [], // Add missing allAgents property
       featuredAgents: [],
       recommendedAgents: [],
-      // wishlists: [],
       selectedCategory: 'All',
       selectedFilter: 'Hot & New',
       selectedPrice: { min: 0, max: 1000 },
@@ -55,11 +54,12 @@ const useAgentStore = create(
       selectedFeatures: [],
       searchQuery: '',
       isLoading: true,
+      isStoreLoading: true, // Add missing isStoreLoading property
       isRecommendationsLoading: true,
       tagCounts: {},
       featureCounts: {},
-      lastLoadTime: null, // Track when data was last loaded
-      cacheExpiry: 30 * 60 * 1000, // Increase cache to 30 minutes
+      lastLoadTime: null,
+      cacheExpiry: 5 * 60 * 1000, // Reduced to 5 minutes to avoid stale data
       
       // Pagination state
       pagination: {
@@ -253,10 +253,8 @@ const useAgentStore = create(
       
       // Actions
       setAgents: (agents) => set({ agents }),
-      setAllAgents: (allAgents) => set({ allAgents }),
       setFeaturedAgents: (featuredAgents) => set({ featuredAgents }),
       setRecommendedAgents: (recommendedAgents) => set({ recommendedAgents }),
-      // setWishlists: (wishlists) => set({ wishlists }),
       setCategory: (category) => set({ selectedCategory: category }),
       setFilter: (filter) => set({ selectedFilter: filter }),
       setPrice: (price) => set({ selectedPrice: price }),
@@ -425,69 +423,30 @@ const useAgentStore = create(
           selectedTags, 
           selectedFeatures, 
           searchQuery,
-          pagination,
-          allAgents
+          pagination
         } = state;
         
-        console.log('🔍 ApplyFilters: Starting with Redis-First dual-mode architecture');
+        console.log('🔍 ApplyFilters: Starting with simplified architecture');
         console.log('🔍 Parameters:', {
           category: selectedCategory,
           filter: selectedFilter,
           search: searchQuery,
-          hasAllAgents: allAgents.length,
+          priceRange: selectedPrice,
+          rating: selectedRating,
+          tags: selectedTags,
+          features: selectedFeatures,
           resetPagination
         });
-        
-        // **DUAL-MODE INTELLIGENCE**: Choose optimal approach based on use case
-        
-        // MODE 1: Category browsing with client-side filtering (Redis-First cached data)
-        const shouldUseClientSideFiltering = 
-          selectedCategory !== 'All' && 
-          !searchQuery?.trim() && 
-          allAgents.length > 0 && 
-          freeSearchService.initialized;
-        
-        if (shouldUseClientSideFiltering) {
-          console.log('🏷️ MODE 1: Using client-side filtering for category browsing');
-          
-          // Use FreeSearchService for instant filtering
-          const searchResults = freeSearchService.searchAndFilter({
-            searchQuery: '',
-            category: selectedCategory,
-            selectedFilter: selectedFilter,
-            priceRange: selectedPrice,
-            rating: selectedRating,
-            tags: selectedTags,
-            features: selectedFeatures,
-            page: resetPagination ? 1 : pagination.currentPage,
-            pageSize: pagination.pageSize
-          });
-          
-          console.log(`✅ MODE 1: Client-side filtering completed in ${searchResults.searchTime}ms - ${searchResults.agents.length}/${searchResults.total} agents`);
-          
-          set({
-            agents: searchResults.agents,
-            isLoading: false,
-            pagination: {
-              ...searchResults.pagination,
-              isLoadingMore: false
-            }
-          });
-          
-          return;
-        }
-        
-        // MODE 2: Search or "All" category - Use server-side processing with Redis-First caching
-        console.log('🔍 MODE 2: Using server-side processing with Redis-First caching');
         
         try {
           set({ isLoading: true });
           
           const lastVisibleId = resetPagination ? null : pagination.lastVisibleId;
           
+          // 🔧 SIMPLIFIED: Always use server-side processing with proper parameters
           const apiParams = {
             limit: pagination.pageSize,
-            priceRange: selectedPrice,
+            priceRange: selectedPrice,  // Backend will convert this properly now
             rating: selectedRating > 0 ? selectedRating : undefined,
             tags: selectedTags,
             features: selectedFeatures,
@@ -507,8 +466,7 @@ const useAgentStore = create(
             agentsCount: response?.agents?.length || 0,
             fromCache: response?.fromCache,
             total: response?.total,
-            mode: response?.mode,
-            hasMore: response?.pagination?.hasMore
+            mode: response?.mode
           });
 
           if (!response || !response.agents) {
@@ -531,7 +489,7 @@ const useAgentStore = create(
 
           const fixedAgents = fixPlaceholderUrls(response.agents);
           
-          console.log(`✅ MODE 2: Received ${fixedAgents.length} agents (fromCache: ${response.fromCache})`);
+          console.log(`✅ Received ${fixedAgents.length} agents (fromCache: ${response.fromCache})`);
 
           // Update state with new agents and pagination info
           set({
@@ -548,91 +506,50 @@ const useAgentStore = create(
             }
           });
           
-          console.log('✅ MODE 2: Store updated successfully');
+          console.log('✅ Store updated successfully');
           
         } catch (error) {
-          console.error('Error in MODE 2 server-side processing:', error);
-          
-          // Fallback to client-side filtering if we have allAgents data
-          if (allAgents.length > 0) {
-            console.log('📦 Fallback: Using client-side filtering with existing data');
-            
-            // Initialize FreeSearchService if needed
-            if (!freeSearchService.initialized) {
-              freeSearchService.initialize(allAgents);
+          console.error('Error in applyFilters:', error);
+          set({
+            agents: [], 
+            isLoading: false,
+            pagination: {
+              ...pagination,
+              hasMore: false,
+              lastVisibleId: null,
+              isLoadingMore: false,
+              totalItems: 0,
+              currentPage: 1,
+              totalPages: 1
             }
-            
-            const searchResults = freeSearchService.searchAndFilter({
-              searchQuery: searchQuery || '',
-              category: selectedCategory,
-              selectedFilter: selectedFilter,
-              priceRange: selectedPrice,
-              rating: selectedRating,
-              tags: selectedTags,
-              features: selectedFeatures,
-              page: resetPagination ? 1 : pagination.currentPage,
-              pageSize: pagination.pageSize
-            });
-            
-            set({
-              agents: searchResults.agents,
-              isLoading: false,
-              pagination: {
-                ...searchResults.pagination,
-                isLoadingMore: false
-              }
-            });
-            
-            console.log(`✅ Fallback: Client-side filtering completed - ${searchResults.agents.length}/${searchResults.total} agents`);
-          } else {
-            // No fallback data available
-        set({
-              agents: [], 
-              isLoading: false,
-          pagination: {
-            ...pagination,
-                hasMore: false,
-                lastVisibleId: null,
-                isLoadingMore: false,
-                totalItems: 0,
-                currentPage: 1,
-                totalPages: 1
-              }
-            });
-          }
+          });
         }
       },
       
-      // Load initial data with Redis-First optimization
+      // Load initial data with simplified caching
       loadInitialData: async (forceRefresh = false) => {
         const requestId = Date.now();
         currentLoadId = requestId;
         
         try {
-          // Check cache validity
+          // Simple cache validity check
           const now = Date.now();
           const lastLoad = get().lastLoadTime;
           const cacheExpiry = get().cacheExpiry;
           
-          if (!forceRefresh && lastLoad && (now - lastLoad < cacheExpiry) && get().allAgents.length > 0) {
+          if (!forceRefresh && lastLoad && (now - lastLoad < cacheExpiry) && get().agents.length > 0) {
             console.log('✅ Using cached agent data from', Math.round((now - lastLoad)/1000), 'seconds ago');
-            set({ isLoading: false, isRecommendationsLoading: false });
-            
-            // Initialize FreeSearchService with cached data
-            if (!freeSearchService.initialized) {
-              freeSearchService.initialize(get().allAgents);
-            }
+            set({ isLoading: false, isStoreLoading: false, isRecommendationsLoading: false });
             return;
           }
           
-          set({ isLoading: true, isRecommendationsLoading: true });
+          set({ isLoading: true, isStoreLoading: true, isRecommendationsLoading: true });
           
           if (currentLoadId !== requestId) return;
           
-          console.log('🚀 REDIS-FIRST: Loading initial data with optimized strategy');
-          console.log('🔧 DEBUG: Current pageSize:', get().pagination.pageSize);
+          console.log('🚀 Loading initial data');
           
-          // Load first page of agents with Redis-First backend
+          // Load first page of agents
           const response = await fetchAgents('All', 'Hot & New', null, { 
             limit: get().pagination.pageSize,
             bypassCache: forceRefresh
@@ -641,14 +558,13 @@ const useAgentStore = create(
           if (currentLoadId !== requestId) return;
           
           // Extract response data
-          const allAgentsResponse = response.agents || [];
+          const agentsResponse = response.agents || [];
           const fromCache = response.fromCache || false;
-          const paginationData = response.pagination || {};
-          const total = response.total || allAgentsResponse.length;
+          const total = response.total || agentsResponse.length;
           
-          console.log(`✅ REDIS-FIRST: Received ${allAgentsResponse.length} agents (fromCache: ${fromCache}, total: ${total})`);
+          console.log(`✅ Received ${agentsResponse.length} agents (fromCache: ${fromCache}, total: ${total})`);
           
-          const fixedAgents = fixPlaceholderUrls(allAgentsResponse);
+          const fixedAgents = fixPlaceholderUrls(agentsResponse);
           
           // Derive featured and recommended agents efficiently
           const featuredAgents = fixedAgents
@@ -671,10 +587,11 @@ const useAgentStore = create(
           const currentPageSize = get().pagination.pageSize;
           set({ 
             agents: fixedAgents,
-            allAgents: fixedAgents,
+            allAgents: fixedAgents, // Set allAgents to the same as agents for now
             featuredAgents: featuredAgents,
             recommendedAgents: recommendedAgents,
             isLoading: false,
+            isStoreLoading: false, // Set isStoreLoading to false when data is loaded
             isRecommendationsLoading: false,
             lastLoadTime: Date.now(),
             pagination: {
@@ -682,17 +599,13 @@ const useAgentStore = create(
               pageSize: currentPageSize,
               totalItems: total,
               totalPages: Math.ceil(total / currentPageSize),
-              hasMore: paginationData.hasMore || false,
-              lastVisibleId: paginationData.lastVisibleId || null,
+              hasMore: response.pagination?.hasMore || false,
+              lastVisibleId: response.pagination?.lastVisibleId || null,
               isLoadingMore: false
             }
           });
           
-          // Initialize FreeSearchService for client-side filtering
-          freeSearchService.initialize(fixedAgents);
-          console.log('🔍 FreeSearchService initialized for optimal client-side filtering');
-          
-          // Compute statistics
+          // Compute statistics for sidebar filters
           const tagCounter = {};
           const featureCounter = {};
           
@@ -707,64 +620,24 @@ const useAgentStore = create(
           
           set({ tagCounts: tagCounter, featureCounts: featureCounter });
           
-          console.log('✅ REDIS-FIRST: Initial data loading completed successfully');
+          console.log('✅ Initial data loading completed successfully');
           
         } catch (error) {
           console.error('Error in loadInitialData:', error);
-          set({ isLoading: false, isRecommendationsLoading: false });
+          set({ isLoading: false, isStoreLoading: false, isRecommendationsLoading: false });
         }
       },
       
-      // Get featured agents from the store with proper filtering
+      // Get featured agents from the store
       getFeaturedAgents: (limit = 8) => {
-        const { allAgents } = get();
-        
-        if (!allAgents || allAgents.length === 0) {
-          return [];
-        }
-        
-        // Only include agents explicitly marked as featured
-        return [...allAgents]
-          .filter(agent => agent.isFeatured === true)
-          .sort((a, b) => {
-            // Sort by creation date - newest first
-            const aDate = a.createdAt || a.dateCreated || a.updatedAt || '0';
-            const bDate = b.createdAt || b.dateCreated || b.updatedAt || '0';
-            return new Date(bDate) - new Date(aDate);
-          })
-          .slice(0, limit);
+        const { featuredAgents } = get();
+        return featuredAgents.slice(0, limit);
       },
       
-      // Get recommended agents with appropriate filtering
+      // Get recommended agents 
       getRecommendedAgents: (limit = 4) => {
-        const { allAgents, recommendedAgents } = get();
-        
-        // If we already have recommended agents, use those
-        if (recommendedAgents && recommendedAgents.length > 0) {
-          return recommendedAgents.slice(0, limit);
-        }
-        
-        if (!allAgents || allAgents.length === 0) {
-          return [];
-        }
-        
-        // Create recommendations based on popularity or ratings
-        return [...allAgents]
-          .sort((a, b) => {
-            // Sort by view count or popularity metrics
-            const aPopularity = a.usersCount || a.views || a.rating?.count || 0;
-            const bPopularity = b.usersCount || b.views || b.rating?.count || 0;
-            
-            if (aPopularity !== bPopularity) {
-              return bPopularity - aPopularity; // Higher popularity first
-            }
-            
-            // If popularity is the same, sort by rating
-            const aRating = a.rating?.average || 0;
-            const bRating = b.rating?.average || 0;
-            return bRating - aRating;
-          })
-          .slice(0, limit);
+        const { recommendedAgents } = get();
+        return recommendedAgents.slice(0, limit);
       },
 
       // Load more agents using cursor-based pagination
@@ -789,10 +662,10 @@ const useAgentStore = create(
         });
         
         try {
-          // Call API with cursor-based pagination
+          // Call API with cursor-based pagination using same parameters as applyFilters
           const response = await fetchAgents(selectedCategory, selectedFilter, pagination.lastVisibleId, {
             limit: pagination.pageSize,
-            priceRange: selectedPrice,
+            priceRange: selectedPrice,  // Consistent with applyFilters
             rating: selectedRating > 0 ? selectedRating : undefined,
             tags: selectedTags,
             features: selectedFeatures,
@@ -807,12 +680,10 @@ const useAgentStore = create(
             
             // Append new agents to existing ones
             const updatedAgents = [...state.agents, ...newFixedAgents];
-            const updatedAllAgents = [...state.allAgents, ...newFixedAgents];
             
             // Update store with new data
             set({
               agents: updatedAgents,
-              allAgents: updatedAllAgents,
               pagination: {
                 ...pagination,
                 currentPage: pagination.currentPage + 1,
@@ -823,15 +694,12 @@ const useAgentStore = create(
               }
             });
             
-            // 🐛 DEBUG: Log loadMore pagination update
-            console.log('🔍 DEBUG: LoadMore pagination update:', {
+            console.log('🔍 LoadMore pagination update:', {
               newCurrentPage: pagination.currentPage + 1,
               newHasMore: response.pagination?.hasMore || false,
               newLastVisibleId: response.pagination?.lastVisibleId || null,
               totalAgentsNow: updatedAgents.length,
-              totalItems: response.total || state.pagination.totalItems,
-              responseTotal: response.total,
-              responsePagination: response.pagination
+              totalItems: response.total || state.pagination.totalItems
             });
           } else {
             console.log('📋 LoadMore: No more agents received');
@@ -898,6 +766,12 @@ const useAgentStore = create(
 
         // Apply filters to get the correct page of data
         get().applyFilters();
+      },
+
+      // Set all agents (for individual agent updates)
+      setAllAgents: (agents) => {
+        console.log('Setting allAgents in store:', agents?.length || 0);
+        set({ allAgents: agents || [] });
       }
     }),
     { name: 'agent-store' }
