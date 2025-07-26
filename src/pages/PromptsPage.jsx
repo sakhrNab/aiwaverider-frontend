@@ -551,7 +551,7 @@ const PromptsPage = () => {
                         <p className="text-white/70">No prompts match your search criteria. Try adjusting your filters.</p>
                       </div>
                     ) : (
-                      // Always show paginated tools (they're already filtered)
+                      // FIXED: Removed shimmer-effect and animation delay to prevent blinking
                       paginatedTools.map((tool, index) => {
                         // Get valid image URL or fallback
                         // Inlined logic to determine toolImageSrc, preferring iconMap then SVG fallback
@@ -587,8 +587,7 @@ const PromptsPage = () => {
                               <div 
                                 key={tool.id || `tool-${index}`}
                                 onClick={() => navigate(`/prompts/${tool.id}`)}
-                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect cursor-pointer"
-                                style={{ animationDelay: `${index * 100}ms` }}
+                                className="ai-tool-card glass-effect stable-card cursor-pointer"
                               >
                                 {children}
                               </div>
@@ -600,8 +599,7 @@ const PromptsPage = () => {
                                 href={formatLink(tool.url || tool.link)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect"
-                                style={{ animationDelay: `${index * 100}ms` }}
+                                className="ai-tool-card glass-effect stable-card"
                               >
                                 {children}
                               </a>
@@ -747,4 +745,4 @@ const PromptsPage = () => {
   );
 };
 
-export default PromptsPage; 
+export default PromptsPage;
