@@ -1,38 +1,20 @@
-//src/pages
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+//src/pages/AgentsPage.js
+import React, { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-// import SearchBar from '../components/agents/SearchBar'; // Replaced with VideosPage search implementation
 import CategoryNav from '../components/agents/CategoryNav';
 import FeaturedAgents from '../components/agents/FeaturedAgents';
-// import WishlistSection from '../components/agents/WishlistSection';
 import FilterSidebar from '../components/agents/FilterSidebar';
 import AgentCard from '../components/agents/AgentCard';
-import AgentCarousel from '../components/agents/AgentCarousel';
 import { useTheme } from '../contexts/ThemeContext';
 import {FaArrowRight, FaExclamationTriangle, FaBars, FaTimes, FaFilter, FaSync } from 'react-icons/fa';
 import PageHeader from '../components/layout/PageHeader';
 import { HashLoader } from 'react-spinners';
-import { FixedSizeGrid } from 'react-window';
 import useAgentStore from '../store/agentStore';
 import './AgentsPage.css';
 import '../styles/animations.css'; // Import animations for heartbeat-pulse
-// No longer using debounce
 
 // Import theme classes - similar to AITools.jsx
 const themeClasses = "bg-gradient-to-br from-[#4158D0] via-[#C850C0] to-[#FFCC70] stars-pattern";
-
-// Add debounce function to reduce unnecessary filter calls
-// function debounce(func, wait) {
-//   let timeout;
-//   return function executedFunction(...args) {
-//     const later = () => {
-//       clearTimeout(timeout);
-//       func(...args);
-//     };
-//     clearTimeout(timeout);
-//     timeout = setTimeout(later, wait);
-//   };
-// }
 
 const Agents = () => {
   const location = useLocation();
@@ -42,8 +24,6 @@ const Agents = () => {
   const { 
     agents, 
     featuredAgents, 
-    recommendedAgents, 
-    wishlists,
     selectedCategory,
     selectedFilter,
     selectedPrice,
@@ -54,7 +34,6 @@ const Agents = () => {
     tagCounts,
     featureCounts,
     isLoading,
-    isRecommendationsLoading,
     pagination,
     
     // Actions
@@ -68,7 +47,7 @@ const Agents = () => {
     resetFilters,
     loadInitialData,
     applyFilters,
-    loadMore,
+    loadMoreAgents,
     setPage,
     setPageSize,
     updateTotalCount
@@ -91,8 +70,6 @@ const Agents = () => {
   const resultsRef = useRef(null);
   const [isSearchFloating, setIsSearchFloating] = React.useState(false);
   const [localSearchQuery, setLocalSearchQuery] = React.useState(searchQuery || '');
-
-
 
   // Keyboard shortcut for search focus (Ctrl+K or Cmd+K)
   useEffect(() => {
@@ -196,14 +173,14 @@ const Agents = () => {
       mountedRef.current = true;
       
       // Check if we already have agents in the store before loading
-      const currentAgents = useAgentStore.getState().allAgents;
+      const currentAgents = useAgentStore.getState().agents;
       const lastLoadTime = useAgentStore.getState().lastLoadTime;
       const now = Date.now();
       const cacheExpiry = useAgentStore.getState().cacheExpiry;
       
       // Only fetch from API if we have no agents or the cache is expired
       const shouldFetchFromApi = 
-        currentAgents.length === 0 || 
+        !currentAgents || currentAgents.length === 0 || 
         !lastLoadTime || 
         (now - lastLoadTime > cacheExpiry);
       
@@ -248,9 +225,6 @@ const Agents = () => {
       // Don't clear the search query automatically
     }
   }, [location.search, setSearchQuery]);
-
-  // Auto-apply filters when dependencies change (disabled to prevent duplicate calls)
-  // Filters are now applied directly in handlers for better control
 
   const handleCategoryChange = async (category) => {
     // No page refresh needed, just update state
@@ -404,15 +378,6 @@ const Agents = () => {
       );
     }
 
-    // Calculate grid dimensions based on container width
-    const containerWidth = agentsContainerRef.current?.clientWidth || 960;
-    // Fixed card width to ensure 3 cards per row
-    const cardWidth = Math.floor(containerWidth / 3) - 20; // 3 cards per row with spacing
-    const cardHeight = 400; // Standard card height
-    const columnCount = 3; // Fixed at 3 columns
-    const rowCount = Math.ceil(agents.length / columnCount);
-    const containerHeight = Math.min(window.innerHeight * 0.7, rowCount * cardHeight);
-
     return (
       <>
         {isMockData && (
@@ -533,17 +498,8 @@ const Agents = () => {
               {/* Filter and search area */}
               <div className="filter-search-container glass-effect mb-4 sm:mb-6">
                 <div className="flex sm:hidden justify-between items-center mb-3">
-                  {/* <button 
-                    onClick={toggleMobileOptions}
-                    className="flex items-center gap-2 py-2 px-4 bg-purple-700 rounded-md text-white text-sm"
-                  >
-                    <FaFilter size={14} />
-                    Sort Options
-                    {mobileOptionsOpen ? <FaTimes size={14} /> : <FaBars size={14} />}
-                  </button> */}
-                  
                   <div className="text-white text-sm">
-                    {agents.length} results
+                      {agents.length} results
                   </div>
                 </div>
                 
@@ -575,7 +531,7 @@ const Agents = () => {
                           handleSearchInputChange(e.target.value);
                         }}
                         onKeyDown={handleSearchKeyPress}
-                        placeholder="Search agents by title, description, creator, or category..."
+                        placeholder="Search agents by title, description, creator, category, integrations..."
                         className={`
                           w-full px-6 py-4 pl-12 pr-24 rounded-2xl border
                           ${darkMode 
@@ -794,7 +750,7 @@ const Agents = () => {
                   {pagination.hasMore && (
                     <div className="load-more-container glass-effect mt-6 p-4 text-center">
                         <button
-                        onClick={loadMore}
+                        onClick={loadMoreAgents}
                         disabled={pagination.isLoadingMore}
                         className="load-more-button bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
                       >
@@ -851,36 +807,10 @@ const Agents = () => {
                   )}
                 </>
               )}
-
-              {/* Recommended agents */}
-              {/* {recommendedAgents.length > 0 && (
-                <section className="mt-16 glass-effect section-container">
-                  <h2 className="section-title">Recommended For You</h2>
-                  <div className="carousel-container">
-                    {isRecommendationsLoading ? (
-                      <div className="loading-recommendations">
-                        <div className="loader"></div>
-                      </div>
-                    ) : (
-                      <AgentCarousel agents={recommendedAgents} />
-                    )}
-                  </div>
-                </section>
-              )} */}
-
-              {/* Wishlists */}
-              {/* {wishlists.length > 0 && (
-                <section className="mt-16 glass-effect section-container">
-                  <h2 className="section-title">Your Saved Collections</h2>
-                  <WishlistSection wishlists={wishlists} />
-                </section>
-              )} */}
             </main>
           </div>
         </div>
       </div>
-
-
 
       {/* Static Floating Search Overlay - Absolutely no movement */}
       {isSearchFloating && (
@@ -1038,4 +968,4 @@ const Agents = () => {
   );
 };
 
-export default Agents; 
+export default Agents;

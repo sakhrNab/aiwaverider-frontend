@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { FaStar, FaHeart, FaRegHeart, FaPlus } from 'react-icons/fa';
+import { FaStar, FaHeart, FaRegHeart, FaPlus, FaDownload } from 'react-icons/fa';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { addToWishlist, removeFromWishlist } from '../../api/marketplace/agentApi';
@@ -91,6 +91,18 @@ const getCurrencySymbol = (currency) => {
 const formatRating = (rating) => {
   if (!rating) return '0';
   return typeof rating === 'number' ? rating.toFixed(1) : parseFloat(rating).toFixed(1);
+};
+
+// Format large numbers (downloads) for display
+const formatCount = (count) => {
+  if (!count || count === 0) return '0';
+  if (count >= 1000000) {
+    return (count / 1000000).toFixed(1) + 'M';
+  }
+  if (count >= 1000) {
+    return (count / 1000).toFixed(1) + 'K';
+  }
+  return count.toString();
 };
 
 const AgentCard = memo(({ agent }) => {
@@ -340,6 +352,9 @@ const AgentCard = memo(({ agent }) => {
   const rating = React.useMemo(() => agent.rating?.average ? formatRating(agent.rating.average) : null, [agent.rating]);
   const ratingCount = React.useMemo(() => agent.rating?.count || 0, [agent.rating]);
 
+  // Download count for the download icon
+  const downloadCount = React.useMemo(() => agent.downloadCount || 0, [agent.downloadCount]);
+
   return (
     <Link to={`/agents/${agent.id}`} className="marketplace-agent-card-link">
       <div className="marketplace-agent-card">
@@ -409,6 +424,14 @@ const AgentCard = memo(({ agent }) => {
                 <span className="marketplace-no-rating">No ratings yet</span>
               )}
             </div>
+
+            {/* Download count with icon - now as separate section */}
+            {downloadCount > 0 && (
+              <div className="marketplace-download-section">
+                <FaDownload className="marketplace-download-icon" />
+                <span className="marketplace-download-count">{formatCount(downloadCount)}</span>
+              </div>
+            )}
             
             <div className="marketplace-agent-price">
               {formattedPrice}

@@ -381,6 +381,7 @@
 .agent-rating {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   font-size: 14px;
   margin-bottom: 8px;
 }
@@ -479,6 +480,46 @@
   }
 }
 
+/* Download info styling - positioned on the right side of rating */
+.download-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #6a6f73;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .download-info {
+    font-size: 11px;
+    gap: 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .download-info {
+    font-size: 10px;
+    gap: 2px;
+  }
+}
+
+.download-icon {
+  color: #6a6f73;
+  font-size: 11px;
+}
+
+@media (max-width: 768px) {
+  .download-icon {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .download-icon {
+    font-size: 9px;
+  }
+}
+
 .agent-price {
   font-weight: 700;
   font-size: 16px;
@@ -562,4 +603,4 @@
   .agent-image-container {
     padding-top: 65%; /* Slightly higher aspect ratio for mobile */
   }
-} 
+}

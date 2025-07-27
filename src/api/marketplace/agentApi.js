@@ -1,3 +1,4 @@
+// src/api/marketplace/agentApi.js
 import { api, API_URL } from '../core/apiConfig';
 import { auth } from '../../utils/firebase';
 
@@ -55,67 +56,6 @@ export const getAuthHeaders = async () => {
   };
 };
 
-// Get all agents
-export const getAllAgents = async (filters = {}) => {
-  try {
-    const queryParams = new URLSearchParams();
-    
-    // Apply filters if provided
-    if (filters.category) {
-      queryParams.append('category', filters.category);
-    }
-    if (filters.type) {
-      queryParams.append('type', filters.type);
-    }
-    if (filters.featured) {
-      queryParams.append('featured', 'true');
-    }
-    if (filters.limit) {
-      queryParams.append('limit', filters.limit.toString());
-    }
-    if (filters.sortBy) {
-      queryParams.append('sortBy', filters.sortBy);
-    }
-    
-    const queryString = queryParams.toString();
-    const url = `/api/agents${queryString ? `?${queryString}` : ''}`;
-    
-    console.log(`[API] Getting agents with filters:`, filters);
-    const response = await api.get(url);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching agents:', error);
-    throw error;
-  }
-};
-
-// Get public agents (no authentication required)
-export const getPublicAgents = async (filters = {}) => {
-  try {
-    const queryParams = new URLSearchParams();
-    
-    // Apply filters if provided
-    if (filters.category) {
-      queryParams.append('category', filters.category);
-    }
-    if (filters.featured) {
-      queryParams.append('featured', 'true');
-    }
-    if (filters.limit) {
-      queryParams.append('limit', filters.limit.toString());
-    }
-    
-    const queryString = queryParams.toString();
-    const url = `/api/agents/public${queryString ? `?${queryString}` : ''}`;
-    
-    console.log(`[API] Getting public agents with filters:`, filters);
-    const response = await api.get(url);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching public agents:', error);
-    throw error;
-  }
-};
 
 // Get agent by ID
 export const getAgentById = async (agentId, options = {}) => {
@@ -306,240 +246,146 @@ export const getNewestAgents = async (limit = 6) => {
   }
 };
 
-// Search for agents
-export const searchAgents = async (query, filters = {}) => {
-  try {
-    const queryParams = new URLSearchParams();
-    
-    // Add search query
-    queryParams.append('q', query);
-    
-    // Apply filters if provided
-    if (filters.category) {
-      queryParams.append('category', filters.category);
-    }
-    if (filters.minRating) {
-      queryParams.append('minRating', filters.minRating.toString());
-    }
-    if (filters.maxPrice) {
-      queryParams.append('maxPrice', filters.maxPrice.toString());
-    }
-    if (filters.sortBy) {
-      queryParams.append('sortBy', filters.sortBy);
-    }
-    
-    const queryString = queryParams.toString();
-    const url = `/api/agents/search${queryString ? `?${queryString}` : ''}`;
-    
-    console.log(`[API] Searching agents with query "${query}" and filters:`, filters);
-    const response = await api.get(url);
-    return response.data;
-  } catch (error) {
-    console.error('Error searching agents:', error);
-    throw error;
-  }
-};
 
 /**
- * Fetch agents from the API with caching and request deduplication
+ * Fetch agents from the API with NEW backend architecture
+ * UPDATED to work with the new in-memory caching backend system
+ * 
+ * @param {Object} params - All parameters in a single object
+ * @param {string} params.searchQuery - Search query string
+ * @param {string} params.category - Category filter
+ * @param {string} params.filter - Sort/filter option
+ * @param {number} params.limit - Number of results per page
+ * @param {number} params.offset - Pagination offset
+ * @param {number} params.priceMin - Minimum price filter
+ * @param {number} params.priceMax - Maximum price filter
+ * @param {number} params.rating - Minimum rating filter
+ * @param {string} params.tags - Comma-separated list of tags
+ * @param {string} params.features - Comma-separated list of features
+ * @param {string} params.verified - Verification status filter
+ * @param {string} params.featured - Featured status filter
+ * @param {string} params.complexity - Complexity filter
+ * @param {string} params.lastVisibleId - For cursor-based pagination
+ * @param {boolean} params.bypassCache - Whether to bypass cache
+ * @returns {Promise<Object>} Response with agents array and metadata
  */
-export const fetchAgents = async (
-  category = 'All',
-  filter = 'Hot & New',
-  lastVisibleId = null,
-  options = {}
-) => {
+export const fetchAgents = async (params = {}) => {
   try {
-    // Extract options or use defaults
     const {
+      searchQuery,
+      category = 'All',
+      filter = 'Hot & New',
       limit = 50,
-      priceRange = { min: 0, max: 1000 },
-      rating = 0,
-      tags = [],
-      features = [],
-      search = '',
-      timestamp = Date.now(),
+      offset = 0,
+      priceMin,
+      priceMax,
+      rating,
+      tags,
+      features,
+      verified,
+      featured,
+      complexity,
+      lastVisibleId,
       bypassCache = false
-    } = options;
+    } = params;
     
-    // Create query params for API
-    const params = new URLSearchParams();
+    console.log('🚀 fetchAgents called with NEW backend architecture:', params);
     
-    // 🚀 NEW REDIS-FIRST ARCHITECTURE: Dual-Mode API calls
+    // Create query params for the NEW backend API
+    const queryParams = new URLSearchParams();
     
-    // MODE 1: Category View - Fetch ALL agents in category for client-side filtering
-    if (category !== 'All' && !search && !lastVisibleId) {
-      console.log(`🏷️ MODE 1: Category browsing for "${category}" - fetching all agents for client-side filtering`);
-      
-      params.append('category', category);
-      // No limit for category view - get all agents in category for Fuse.js
-      
-      // Add cache busting if needed
-      if (bypassCache) {
-        params.append('_t', timestamp);
-      }
-      
-      const url = `/api/agents?${params.toString()}`;
-      console.log(`[API] Category Mode - URL: ${url}`);
-      
-      const response = await api.get(url);
-      const responseData = response.data;
-      
-      // Handle Redis-First response format
-      const agents = responseData.agents || [];
-      const fromCache = responseData.fromCache || false;
-      const totalCount = responseData.totalCount || agents.length;
-      
-      console.log(`✅ MODE 1: Received ${agents.length} agents for category "${category}" (fromCache: ${fromCache}, totalCount: ${totalCount})`);
-      
-      // Return format for client-side filtering
-      return {
-        agents: agents,
-        pagination: {
-          hasMore: false, // No pagination in category mode
-          lastVisibleId: null,
-          limit: agents.length,
-          currentPage: 1,
-          totalItems: totalCount,
-          totalPages: 1
-        },
-        total: totalCount,
-        fromCache: fromCache,
-        mode: 'category' // Indicator for frontend
-      };
+    // Core parameters
+    if (searchQuery && searchQuery.trim()) {
+      queryParams.append('searchQuery', searchQuery.trim());
     }
     
-    // MODE 2: All Categories/Search View - Server-side search and pagination
-    console.log(`🔍 MODE 2: Search/All view - server-side processing`);
+    queryParams.append('category', category);
+    queryParams.append('filter', filter);
+    queryParams.append('limit', limit.toString());
+    queryParams.append('offset', offset.toString());
     
-    params.append('category', category);
-    params.append('filter', filter);
-    params.append('limit', limit);
+    // Filter parameters - send as individual parameters
+    if (priceMin !== undefined && priceMin !== null && priceMin > 0) {
+      queryParams.append('priceMin', priceMin.toString());
+    }
+    if (priceMax !== undefined && priceMax !== null && priceMax < 1000) {
+      queryParams.append('priceMax', priceMax.toString());
+    }
+    if (rating !== undefined && rating !== null && rating > 0) {
+      queryParams.append('rating', rating.toString());
+    }
+    if (tags && tags.length > 0) {
+      queryParams.append('tags', typeof tags === 'string' ? tags : tags.join(','));
+    }
+    if (features && features.length > 0) {
+      queryParams.append('features', typeof features === 'string' ? features : features.join(','));
+    }
+    if (verified !== undefined) {
+      queryParams.append('verified', verified.toString());
+    }
+    if (featured !== undefined) {
+      queryParams.append('featured', featured.toString());
+    }
+    if (complexity) {
+      queryParams.append('complexity', complexity);
+    }
     
-    // Add cursor-based pagination
+    // Pagination parameters
     if (lastVisibleId) {
-      params.append('lastVisibleId', lastVisibleId);
+      queryParams.append('lastVisibleId', lastVisibleId);
     }
     
-    // Add search query for server-side processing
-    if (search) {
-      params.append('searchQuery', search);
-    }
-    
-    // Add filter params for server-side processing
-    if (priceRange?.min > 0) params.append('priceMin', priceRange.min);
-    if (priceRange?.max < 1000) params.append('priceMax', priceRange.max);
-    if (rating > 0) params.append('rating', rating);
-    
-    // Join arrays for API consumption
-    if (tags && tags.length > 0) params.append('tags', tags.join(','));
-    if (features && features.length > 0) params.append('features', features.join(','));
-    
-    // Add cache busting if needed
+    // Cache control
     if (bypassCache) {
-      params.append('_t', timestamp);
+      queryParams.append('_t', Date.now().toString());
     }
     
-    // Create a cache key from the params
-    const cacheKey = createCacheKey(params);
+    const url = `/api/agents?${queryParams.toString()}`;
+    console.log(`[API] NEW Backend URL: ${url}`);
     
-    // Check if we already have a cached response that's not expired
-    if (!bypassCache && requestCache.has(cacheKey)) {
-      const { data, expiry } = requestCache.get(cacheKey);
-      if (expiry > Date.now()) {
-        console.log('Using cached agents data:', data.agents?.length || data.length, 'agents');
-        return data;
-      } else {
-        // Remove expired cache entry
-        requestCache.delete(cacheKey);
+    const response = await api.get(url);
+    const responseData = response.data;
+    
+    console.log(`✅ NEW Backend Response:`, {
+      agentsCount: responseData?.agents?.length || 0,
+      fromCache: responseData?.fromCache,
+      totalCount: responseData?.totalCount,
+      hasMore: responseData?.hasMore,
+      mode: responseData?.mode
+    });
+    
+    // Return the response in the expected format
+    return {
+      agents: responseData.agents || [],
+      totalCount: responseData.totalCount || responseData.agents?.length || 0,
+      hasMore: responseData.hasMore || false,
+      lastVisibleId: responseData.lastVisibleId || null,
+      fromCache: responseData.fromCache || false,
+      mode: responseData.mode || 'search',
+      // Backward compatibility fields
+      total: responseData.totalCount || responseData.agents?.length || 0,
+      pagination: {
+        hasMore: responseData.hasMore || false,
+        lastVisibleId: responseData.lastVisibleId || null
       }
-    }
+    };
     
-    // Check if there's already a request in flight for this exact query
-    if (pendingRequests.has(cacheKey)) {
-      console.log('Request already in flight, waiting for existing request to complete');
-      return pendingRequests.get(cacheKey);
-    }
-    
-    // Create the promise for this request
-    const url = `/api/agents?${params.toString()}`;
-    console.log(`[API] Search/All Mode - URL: ${url}`);
-    
-    // Create promise for the API request
-    const requestPromise = (async () => {
-      // Fetch from backend API
-      const response = await api.get(url);
-      console.log('Successfully fetched agents from API:', response.data);
-      
-      // Handle Redis-First response format
-      const responseData = response.data;
-      
-      // Extract data from new backend response format
-      const agents = responseData.agents || [];
-      const lastVisibleId = responseData.lastVisibleId || null;
-      const fromCache = responseData.fromCache || false;
-      const total = responseData.totalCount || responseData.total || agents.length;
-      
-      // Validate agents to ensure they exist and have valid IDs
-      const validAgents = agents.filter(agent => {
-        return agent && (agent.id || agent._id) && typeof (agent.id || agent._id) === 'string';
-      });
-      
-      if (validAgents.length !== agents.length) {
-        console.warn(`Filtered out ${agents.length - validAgents.length} invalid agents from results`);
-      }
-      
-      console.log(`✅ MODE 2: Received ${validAgents.length} agents (fromCache: ${fromCache}, hasMore: ${!!lastVisibleId})`);
-      
-      // Create response object that matches what the store expects
-      const finalResponse = {
-        agents: validAgents,
-        pagination: {
-          hasMore: !!lastVisibleId, // More data available if lastVisibleId exists
-          lastVisibleId: lastVisibleId,
-          limit: limit,
-          currentPage: Math.floor((validAgents.length / limit)) + 1,
-          totalItems: total,
-          totalPages: Math.ceil(total / limit)
-        },
-        total,
-        fromCache,
-        mode: 'search' // Indicator for frontend
-      };
-      
-      // Cache the response
-      requestCache.set(cacheKey, {
-        data: finalResponse,
-        expiry: Date.now() + CACHE_EXPIRY
-      });
-      
-      // Remove from pending requests
-      pendingRequests.delete(cacheKey);
-      
-      return finalResponse;
-    })();
-    
-    // Store the promise in pending requests map
-    pendingRequests.set(cacheKey, requestPromise);
-    
-    // Return the promise
-    return requestPromise;
   } catch (error) {
-    console.error('Error fetching agents from API:', error);
-    // Return empty response structure on error
+    console.error('Error in fetchAgents with NEW backend:', error);
+    
+    // Return empty response instead of throwing
     return {
       agents: [],
+      totalCount: 0,
+      hasMore: false,
+      lastVisibleId: null,
+      fromCache: false,
+      mode: 'error',
+      total: 0,
       pagination: {
         hasMore: false,
-        lastVisibleId: null,
-        limit: options.limit || 50,
-        currentPage: 1,
-        totalItems: 0,
-        totalPages: 0
-      },
-      total: 0,
-      fromCache: false,
-      mode: 'error'
+        lastVisibleId: null
+      }
     };
   }
 };
@@ -670,7 +516,6 @@ export const toggleAgentLike = async (agentId) => {
   }
 };
 
-
 // Add agent to wishlist
 export const addToWishlist = async (agentId) => {
   try {
@@ -695,11 +540,7 @@ export const removeFromWishlist = async (agentId) => {
   }
 };
 
-// /**
-//  * Toggle wishlist status for an agent (add or remove)
-//  * @param {string} agentId - ID of the agent to toggle wishlist status for
-//  * @returns {Promise<Object>} - Response with success status and updated wishlist information
-//  */
+// Toggle wishlist status for an agent (add or remove)
 export const toggleWishlist = async (agentId) => {
   try {
     const response = await api.post('/api/wishlists/toggle', { agentId });
@@ -1185,6 +1026,3 @@ export const recordAgentDownload = async (agentId) => {
   };
   
   // Add this helper function before the fetchAgents export
-const createCacheKey = (params) => {
-  return params.toString();
-};
