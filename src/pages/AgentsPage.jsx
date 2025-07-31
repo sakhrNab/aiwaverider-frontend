@@ -633,18 +633,18 @@ const Agents = () => {
                           ${darkMode ? 'text-gray-500' : 'text-gray-400'}
                           transition-all duration-300 group-hover:opacity-100
                         `}>
-                          <kbd className={`
+                          {/* <kbd className={`
                             px-1.5 py-0.5 rounded text-xs font-mono
                             ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
                           `}>
                             {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}
-                          </kbd>
-                          <kbd className={`
+                          </kbd> */}
+                          {/* <kbd className={`
                             px-1.5 py-0.5 rounded text-xs font-mono
                             ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
                           `}>
                             K
-                          </kbd>
+                          </kbd> */}
                         </div>
                       )}
                       
