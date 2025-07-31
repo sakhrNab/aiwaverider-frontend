@@ -157,28 +157,26 @@ const FeaturedAgentCard = memo(({ agent }) => {
 
   // Format price display
   const formattedPrice = useMemo(() => {
-    // Check if agent is free
-    if (agent.isFree) return <span className="featured-card__price--free">Free</span>;
-    if (agent.price === 0) return <span className="featured-card__price--free">Free</span>;
+    // First check if agent is marked as free
+    if (agent.isFree || agent.price === 0) return <span className="free-price">Free</span>;
     
-    // Check price details object if available
+    // Check if we have price details object
     if (agent.priceDetails) {
       const { basePrice, discountedPrice, currency } = agent.priceDetails;
       const currencySymbol = getCurrencySymbol(currency);
       
+      // If price is 0, it's free
       if (basePrice === 0 || discountedPrice === 0) {
-        return <span className="featured-card__price--free">Free</span>;
+        return <span className="free-price">Free</span>;
       }
       
+      // If there's a discount, show both prices
       if (discountedPrice !== undefined && discountedPrice < basePrice) {
         return (
-          <div className="featured-card__price-display">
-            <span className="featured-card__price-original">{currencySymbol}{basePrice.toFixed(2)}</span>
-            <span className="featured-card__price-discounted">{currencySymbol}{discountedPrice.toFixed(2)}</span>
-            <span className="featured-card__discount-badge">
-              {Math.round((1 - discountedPrice / basePrice) * 100)}% OFF
-            </span>
-          </div>
+          <>
+            <span className="original-price">{currencySymbol}{basePrice.toFixed(2)}</span>
+            <span className="discounted-price">{currencySymbol}{discountedPrice.toFixed(2)}</span>
+          </>
         );
       }
       
@@ -190,19 +188,26 @@ const FeaturedAgentCard = memo(({ agent }) => {
     // Handle string or number price
     if (agent.price !== undefined) {
       if (typeof agent.price === 'number') {
-        return agent.price === 0 ? <span className="featured-card__price--free">Free</span> : `$${agent.price.toFixed(2)}`;
+        return agent.price === 0 ? <span className="free-price">Free</span> : `$${agent.price.toFixed(2)}`;
       }
-      if (agent.price === 'Free' || agent.price === '0') {
-        return <span className="featured-card__price--free">Free</span>;
-      }
-      return agent.price;
+      return agent.price; // Return as is if it's a string
     }
     
-    // Default fallback - be transparent about unknown price
+    // Default fallback
     return 'Price unavailable';
   }, [agent.isFree, agent.price, agent.priceDetails]);
-    
-  // Memoize other frequently used values
+
+  // Check if agent is free to conditionally show add to cart button
+  const isFreeAgent = useMemo(() => {
+    return agent.isFree || 
+           agent.price === 0 || 
+           agent.price === '0' || 
+           agent.price === 'Free' || 
+           agent.price === 'free' || 
+           (agent.priceDetails && (agent.priceDetails.basePrice === 0 || agent.priceDetails.discountedPrice === 0));
+  }, [agent.isFree, agent.price, agent.priceDetails]);
+
+  // Derive and memoize the essential properties to prevent unnecessary calculations
   const title = useMemo(() => agent.title || agent.name || 'AI Assistant', [agent.title, agent.name]);
   const description = useMemo(() => agent.description, [agent.description]);
   const creatorName = useMemo(() => agent.creator?.name || agent.creator?.id || "AI Labs", [agent.creator]);
@@ -236,14 +241,16 @@ const FeaturedAgentCard = memo(({ agent }) => {
               {isWishlisted ? <FaHeart /> : <FaRegHeart />}
             </button> */}
             
-            {/* Add to cart button */}
-            <button 
-              className="featured-card__cart-button"
-              onClick={handleAddToCart}
-              title="Add to cart"
-            >
-              <FaPlus />
-            </button>
+            {/* Add to cart button - only show for paid agents */}
+            {!isFreeAgent && (
+              <button 
+                className="featured-card__cart-button"
+                onClick={handleAddToCart}
+                title="Add to cart"
+              >
+                <FaPlus />
+              </button>
+            )}
           </div>
           
           {/* Badges */}

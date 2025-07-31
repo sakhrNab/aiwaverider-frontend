@@ -6,6 +6,109 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
+/* Responsive agents page container */
+@media (max-width: 1200px) {
+  .agents-page {
+    max-width: 100%;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .agents-page {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .agents-page {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 375px) {
+  .agents-page {
+    padding: 6px;
+  }
+}
+
+/* Floating Search Improvements */
+/* Floating Search Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes floatSearch {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Apply animations */
+.animate-slideUp {
+  animation: slideUp 0.5s ease-out;
+}
+
+.animate-floatSearch {
+  animation: floatSearch 3s ease-in-out infinite;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* Ensure floating search stays at highest z-index */
+.floating-search-overlay {
+  position: fixed !important;
+  top: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
+  width: 100% !important;
+  max-width: 48rem !important;
+  padding: 0 1rem !important;
+  pointer-events: auto !important;
+}
+
+/* Prevent any element from overlapping floating search */
+.floating-search-overlay * {
+  z-index: inherit !important;
+}
+
 /* Search section */
 .search-section {
   margin-bottom: 24px;
@@ -45,8 +148,34 @@
   margin-bottom: 48px;
 }
 
+/* Responsive main content */
+@media (max-width: 768px) {
+  .agents-main-content {
+    margin-bottom: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .agents-main-content {
+    margin-bottom: 24px;
+  }
+}
+
 .page-header {
   margin-bottom: 24px;
+}
+
+/* Responsive page header */
+@media (max-width: 768px) {
+  .page-header {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    margin-bottom: 16px;
+  }
 }
 
 .page-title {
@@ -56,17 +185,78 @@
   margin: 0;
 }
 
+/* Responsive page title */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 375px) {
+  .page-title {
+    font-size: 20px;
+  }
+}
+
 .content-container {
   display: flex;
   gap: 24px;
+}
+
+/* Responsive content container */
+@media (max-width: 1024px) {
+  .content-container {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-container {
+    gap: 12px;
+  }
 }
 
 .sidebar-container {
   flex: 0 0 250px;
 }
 
+/* Responsive sidebar */
+@media (max-width: 1024px) {
+  .sidebar-container {
+    flex: 0 0 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-container {
+    flex: none;
+    width: 100%;
+  }
+}
+
 .main-content {
   flex: 1;
+  min-width: 0; /* Prevent overflow issues */
+}
+
+/* Ensure main content is responsive */
+@media (max-width: 768px) {
+  .main-content {
+    width: 100%;
+  }
 }
 
 /* Filter bar */
@@ -112,10 +302,12 @@
 /* Agent grid */
 .marketplace-agents-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
   width: 100%;
   margin-bottom: 24px; /* Consistent bottom margin */
+  padding: 0; /* Remove any default padding */
+  box-sizing: border-box; /* Ensure proper box model */
 }
 
 /* Virtualized grid container */
@@ -198,19 +390,27 @@
   font-size: 16px;
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
+.loader {
+  width: 50px;
+  height: 50px;
   border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top: 3px solid #4a4de7;
   border-radius: 50%;
-  border-top-color: #1c1d1f;
   animation: spin 1s linear infinite;
-  margin-right: 10px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* Responsive floating search */
+@media (max-width: 768px) {
+  .floating-search-overlay {
+    max-width: calc(100vw - 2rem) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-search-overlay {
+    max-width: calc(100vw - 1rem) !important;
+    padding: 0 0.5rem !important;
+  }
 }
 
 /* Responsive */
@@ -238,8 +438,8 @@
 
 @media (max-width: 1041px) {
   .marketplace-agents-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
   }
   
   .page-title {
@@ -259,7 +459,8 @@
   }
   
   .marketplace-agents-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
   }
 }
 
@@ -269,8 +470,8 @@
   }
   
   .marketplace-agents-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
   }
   
   .filter-bar {
@@ -486,7 +687,7 @@
   }
   
   .marketplace-agents-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
   }
 }
@@ -624,8 +825,10 @@
 /* Agent grid layout */
 .marketplace-agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+  margin-bottom: 24px; /* Consistent bottom margin */
 }
 
 /* Agent card styling */
@@ -1203,8 +1406,8 @@
 
 @media (max-width: 768px) {
   .marketplace-agents-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
   }
 
   .filter-search-container {
@@ -1274,7 +1477,7 @@
 @media (max-width: 480px) {
   .marketplace-agents-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 16px;
   }
 
   .agent-card {
@@ -1668,67 +1871,122 @@
 .pagination {
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
+  align-items: center;
   margin-top: 2rem;
+  gap: 0.5rem;
+}
+
+.pagination-container {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .pagination-button {
-  background: rgba(var(--card-bg-rgb), 0.5);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: var(--text-color);
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
-.pagination-button:hover {
-  background: rgba(var(--card-bg-rgb), 0.8);
-  border-color: var(--primary-color);
+.pagination-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .pagination-button.active {
-  background: var(--primary-color);
+  background: rgba(79, 209, 197, 0.8);
+  border-color: rgba(79, 209, 197, 1);
   color: white;
-  border-color: transparent;
+  font-weight: 600;
 }
 
 .pagination-button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-/* Responsive adjustments */
+.pagination-button:disabled:hover {
+  transform: none;
+}
+
+/* Results summary styling */
+.results-summary {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.results-summary select {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.results-summary select option {
+  background: rgba(30, 30, 30, 0.95);
+  color: white;
+}
+
+/* Responsive pagination */
 @media (max-width: 768px) {
-  .agents-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  .pagination-button {
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
   }
   
-  .hero-banner {
-    padding: 1.5rem;
+  .results-summary {
+    flex-direction: column;
+    gap: 0.5rem;
   }
   
-  .hero-banner h1 {
-    font-size: 2rem;
+  .results-summary .flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
   
-  .hero-banner p {
-    font-size: 1rem;
+  .results-summary .flex:last-child {
+    flex-direction: row;
+    align-items: center;
   }
 }
 
 @media (max-width: 480px) {
-  .agents-grid {
-    grid-template-columns: 1fr;
+  .pagination-button {
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+    padding: 0.25rem;
   }
   
-  .filters-container {
-    flex-direction: column;
-    align-items: stretch;
+  .pagination-container {
+    padding: 0.75rem;
   }
   
-  .filter-tag {
-    text-align: center;
+  .pagination-container .flex {
+    flex-wrap: wrap;
+    gap: 0.25rem;
   }
 }
 
@@ -2025,4 +2283,356 @@
 .refresh-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Load More Pagination */
+.load-more-container {
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.load-more-button {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 200px;
+  min-height: 50px;
+}
+
+.load-more-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.load-more-button:hover::before {
+  left: 100%;
+}
+
+.load-more-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.5);
+}
+
+/* Animation for loading spinner in Load More button */
+@keyframes loadMoreSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.load-more-container .animate-spin {
+  animation: loadMoreSpin 1s linear infinite;
+}
+
+/* Responsive adjustments for Load More */
+@media (max-width: 768px) {
+  .load-more-button {
+    min-width: 180px;
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .load-more-button {
+    min-width: 160px;
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  
+  .load-more-container .text-sm {
+    font-size: 12px;
+  }
+}
+
+/* Ensure proper container behavior on mobile */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive container adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .container {
+    padding: 0 0.25rem;
+  }
+}
+
+/* Ensure agents container is properly responsive */
+.agents-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* Responsive agents container */
+@media (max-width: 768px) {
+  .agents-container {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .agents-container {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .agents-container {
+    padding: 0.25rem;
+  }
+}
+
+/* Ensure grid container is fully responsive */
+.marketplace-agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+  margin-bottom: 24px; /* Consistent bottom margin */
+  padding: 0; /* Remove any default padding */
+  box-sizing: border-box; /* Ensure proper box model */
+}
+
+/* Comprehensive responsive grid with improved breakpoints */
+@media (max-width: 1400px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 22px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 992px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .marketplace-agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .marketplace-agents-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 375px) {
+  .marketplace-agents-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* iPhone SE and smaller devices */
+@media (max-width: 320px) {
+  .marketplace-agents-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+/* Mobile-specific header optimizations - cleaner approach */
+/* Compact header on mobile devices */
+@media (max-width: 768px) {
+  /* Reduce header padding significantly */
+  .relative.backdrop-blur-sm {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  /* Compact main title */
+  h2.text-5xl {
+    font-size: 1.75rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Reduce subtitle size */
+  p.text-lg {
+    font-size: 0.9rem !important;
+  }
+  
+  /* Compact booking button */
+  a.px-8.py-4 {
+    padding: 0.5rem 1rem !important;
+  }
+  
+  /* Reduce page header section */
+  .page-header-3d {
+    margin-bottom: 1rem !important;
+  }
+  
+  .page-header-3d .relative {
+    padding: 1rem !important;
+  }
+  
+  /* Compact "Master AI Agents" section */
+  h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Hide decorative floating elements for cleaner mobile view */
+  .animate-float-slow,
+  .animate-float,
+  .animate-spin-slow {
+    display: none !important;
+  }
+  
+  /* Reduce glass effect padding */
+  .glass-effect {
+    padding: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Even more compact for small screens */
+  .relative.backdrop-blur-sm {
+    padding: 0.75rem 0.5rem !important;
+  }
+  
+  h2.text-5xl {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  p.text-lg {
+    font-size: 0.8rem !important;
+  }
+  
+  a.px-8.py-4 {
+    padding: 0.4rem 0.8rem !important;
+  }
+  
+  a.px-8.py-4 span {
+    font-size: 0.75rem !important;
+  }
+  
+  .page-header-3d {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .page-header-3d .relative {
+    padding: 0.75rem !important;
+  }
+  
+  h1 {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .glass-effect {
+    padding: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+}
+
+/* Optimize containers for mobile */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  .max-w-6xl {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+  
+  .max-w-6xl {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+}
+
+/* Booking button styling moved to PageHeader.css */
+
+/* Ensure 2rem margin-top is maintained across all devices */
+.container.mx-auto.mt-8,
+.booking-header-container.mt-8 {
+  margin-top: 2rem !important;
+}
+
+/* Responsive margin-top maintenance */
+@media (max-width: 768px) {
+  .container.mx-auto.mt-8,
+  .booking-header-container.mt-8 {
+    margin-top: 2rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .container.mx-auto.mt-8,
+  .booking-header-container.mt-8 {
+    margin-top: 2rem !important;
+  }
+}
+
+@media (max-width: 375px) {
+  .container.mx-auto.mt-8,
+  .booking-header-container.mt-8 {
+    margin-top: 2rem !important;
+  }
+}
+
+@media (max-width: 320px) {
+  .container.mx-auto.mt-8,
+  .booking-header-container.mt-8 {
+    margin-top: 2rem !important;
+  }
 } 

@@ -24,7 +24,8 @@ import {
   FaUserCog,
   FaUserShield,
   FaChevronDown,
-  FaVideo
+  FaVideo,
+  FaLightbulb
 } from 'react-icons/fa';
 import { MdKeyboardArrowDown } from 'react-icons/md';
 import './Header.css'; // Import custom Header CSS
@@ -320,17 +321,33 @@ const Header = ({ openSignUpModal }) => {
             </li>
             <li className="nav-item flex items-center">
               <div className="relative group">
-                <Link 
-                  to="/ai-tools" 
+                <button 
                   className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
                   aria-label="AI Tools & Prompts"
+                  aria-expanded="false"
                 >
                   <FaTools className="mr-1.5" /> 
                   <div className="flex flex-col items-start">
                     <span>AI Tools</span>
                     <span className="text-xs mt-[-2px] text-blue-200">& Prompts</span>
                   </div>
-                </Link>
+                  <MdKeyboardArrowDown className="ml-1 text-xs" />
+                </button>
+                {/* Dropdown Menu */}
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border border-gray-200 dark:border-gray-700">
+                  <Link 
+                    to="/ai-tools" 
+                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
+                  >
+                    <FaTools className="mr-2 inline" /> AI Tools
+                  </Link>
+                  <Link 
+                    to="/prompts" 
+                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg"
+                  >
+                    <FaLightbulb className="mr-2 inline" /> Prompts
+                  </Link>
+                </div>
               </div>
               <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
                 <FaCircle />
@@ -564,11 +581,16 @@ const Header = ({ openSignUpModal }) => {
                   className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaTools className="mr-3" /> 
-                  <div className="flex flex-col items-start">
-                    <span>AI Tools</span>
-                    <span className="text-xs text-gray-500">Prompts</span>
-                  </div>
+                  <FaTools className="mr-3" /> AI Tools
+                </Link>
+              </li>
+              <li className="mobile-nav-item">
+                <Link
+                  to="/prompts"
+                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FaLightbulb className="mr-3" /> Prompts
                 </Link>
               </li>
               <li className="mobile-nav-item">

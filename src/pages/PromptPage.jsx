@@ -46,7 +46,7 @@ const PromptPage = () => {
               setPrompt(tool);
             } else {
               setError('This is not a prompt tool');
-              setTimeout(() => navigate('/ai-tools'), 3000);
+              setTimeout(() => navigate('/prompts'), 3000);
             }
           } else {
             setError('Failed to load prompt data');
@@ -70,13 +70,13 @@ const PromptPage = () => {
               
               console.log('Firestore direct access succeeded:', formattedTool);
               
-              // Check if this is a prompt type tool
-              if (formattedTool.keyword?.toLowerCase().includes('prompt')) {
-                setPrompt(formattedTool);
-              } else {
-                setError('This is not a prompt tool');
-                setTimeout(() => navigate('/ai-tools'), 3000);
-              }
+                              // Check if this is a prompt type tool
+                if (formattedTool.keyword?.toLowerCase().includes('prompt')) {
+                  setPrompt(formattedTool);
+                } else {
+                  setError('This is not a prompt tool');
+                  setTimeout(() => navigate('/prompts'), 3000);
+                }
             } else {
               console.error('Document does not exist in Firestore');
               
@@ -92,7 +92,7 @@ const PromptPage = () => {
                   setPrompt(localPrompt);
                 } else {
                   setError('This is not a prompt tool');
-                  setTimeout(() => navigate('/ai-tools'), 3000);
+                  setTimeout(() => navigate('/prompts'), 3000);
                 }
               } else {
                 setError('Prompt not found. Please check the ID and try again.');
@@ -113,7 +113,7 @@ const PromptPage = () => {
                 setPrompt(localPrompt);
               } else {
                 setError('This is not a prompt tool');
-                setTimeout(() => navigate('/ai-tools'), 3000);
+                setTimeout(() => navigate('/prompts'), 3000);
               }
             } else {
               // All fallbacks failed
@@ -170,10 +170,10 @@ const PromptPage = () => {
           
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <button 
-              onClick={() => navigate('/ai-tools')} 
+              onClick={() => navigate('/prompts')} 
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              Back to AI Tools
+              Back to Prompts
             </button>
             
             <button
@@ -194,10 +194,10 @@ const PromptPage = () => {
         <div className="text-center">
           <p>No prompt found with this ID.</p>
           <button 
-            onClick={() => navigate('/ai-tools')} 
+            onClick={() => navigate('/prompts')} 
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
-            Back to AI Tools
+            Back to Prompts
           </button>
         </div>
       </div>
@@ -209,11 +209,11 @@ const PromptPage = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Back button */}
         <button 
-          onClick={() => navigate('/ai-tools')} 
+          onClick={() => navigate('/prompts')} 
           className="mb-4 flex items-center text-blue-600 hover:text-blue-800 transition-colors"
         >
           <FaArrowLeft className="mr-2" />
-          Back to AI Tools
+          Back to Prompts
         </button>
         
         {/* Admin edit button */}

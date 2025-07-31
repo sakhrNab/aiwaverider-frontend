@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { FaStar, FaHeart, FaRegHeart, FaPlus } from 'react-icons/fa';
+import { FaStar, FaHeart, FaRegHeart, FaPlus, FaDownload } from 'react-icons/fa';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { addToWishlist, removeFromWishlist } from '../../api/marketplace/agentApi';
@@ -9,9 +9,73 @@ import { toast } from 'react-toastify';
 import { fixPlaceholderUrl, generatePlaceholderImage } from '../../utils/imageUtils';
 import '../../styles/MarketplaceAgentCard.css';
 
-// Default fallback images using placehold.co for better reliability
-const DEFAULT_IMAGE = generatePlaceholderImage({ text: 'Agent Image' });
-const DEFAULT_ICON = generatePlaceholderImage({ text: 'AI', width: 200, height: 200 });
+// Helper function to create responsive SVG placeholders at module level
+const createResponsivePlaceholder = (text, width = 300, height = 200) => {
+  const maxLineLength = 25; // Maximum characters per line
+  const padding = 20; // Padding from edges
+  
+  // Split text into words and create lines
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = '';
+  
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (testLine.length <= maxLineLength) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        // Handle very long words by breaking them
+        lines.push(word.substring(0, maxLineLength));
+        currentLine = word.substring(maxLineLength);
+      }
+    }
+  }
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  // Calculate font size based on number of lines and total text length
+  const totalChars = text.length;
+  let fontSize;
+  
+  if (totalChars <= 10) {
+    fontSize = 24;
+  } else if (totalChars <= 20) {
+    fontSize = 20;
+  } else if (totalChars <= 30) {
+    fontSize = 16;
+  } else if (totalChars <= 50) {
+    fontSize = 14;
+  } else {
+    fontSize = 12;
+  }
+  
+  // Adjust font size based on number of lines
+  if (lines.length > 3) {
+    fontSize = Math.max(10, fontSize - 2);
+  }
+  
+  // Calculate line spacing
+  const lineHeight = fontSize * 1.2;
+  const totalTextHeight = lines.length * lineHeight;
+  const startY = (height - totalTextHeight) / 2 + fontSize;
+  
+  // Generate SVG text elements for each line
+  const textElements = lines.map((line, index) => {
+    const y = startY + (index * lineHeight);
+    return `%3Ctext x='${width/2}' y='${y}' font-family='Arial, sans-serif' font-size='${fontSize}' font-weight='500' text-anchor='middle' fill='%23ffffff'%3E${encodeURIComponent(line)}%3C/text%3E`;
+  }).join('');
+  
+  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 ${width} ${height}'%3E%3Cdefs%3E%3ClinearGradient id='grad1' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%233498db;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%232980b9;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='${width}' height='${height}' fill='url(%23grad1)'/%3E${textElements}%3C/svg%3E`;
+};
+
+// Default fallback images using responsive text placeholders
+const DEFAULT_IMAGE = createResponsivePlaceholder('Agent Image');
+const DEFAULT_ICON = createResponsivePlaceholder('AI', 200, 200);
 
 // Currency symbol helper function
 const getCurrencySymbol = (currency) => {
@@ -29,6 +93,18 @@ const formatRating = (rating) => {
   return typeof rating === 'number' ? rating.toFixed(1) : parseFloat(rating).toFixed(1);
 };
 
+// Format large numbers (downloads) for display
+const formatCount = (count) => {
+  if (!count || count === 0) return '0';
+  if (count >= 1000000) {
+    return (count / 1000000).toFixed(1) + 'M';
+  }
+  if (count >= 1000) {
+    return (count / 1000).toFixed(1) + 'K';
+  }
+  return count.toString();
+};
+
 const AgentCard = memo(({ agent }) => {
   const [isWishlisted, setIsWishlisted] = useState(agent.isWishlisted || false);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +112,71 @@ const AgentCard = memo(({ agent }) => {
   const [aspectRatio, setAspectRatio] = useState(null);
   const imageRef = useRef(null);
   const { addToCart } = useCart();
+  
+  // Helper function to calculate responsive text size and handle wrapping
+  const generateResponsiveSVG = useCallback((text, width = 300, height = 200) => {
+    const maxLineLength = 25; // Maximum characters per line
+    const padding = 20; // Padding from edges
+    const maxWidth = width - (padding * 2);
+    
+    // Split text into words and create lines
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      if (testLine.length <= maxLineLength) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          // Handle very long words by breaking them
+          lines.push(word.substring(0, maxLineLength));
+          currentLine = word.substring(maxLineLength);
+        }
+      }
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    
+    // Calculate font size based on number of lines and total text length
+    const totalChars = text.length;
+    let fontSize;
+    
+    if (totalChars <= 10) {
+      fontSize = 24;
+    } else if (totalChars <= 20) {
+      fontSize = 20;
+    } else if (totalChars <= 30) {
+      fontSize = 16;
+    } else if (totalChars <= 50) {
+      fontSize = 14;
+    } else {
+      fontSize = 12;
+    }
+    
+    // Adjust font size based on number of lines
+    if (lines.length > 3) {
+      fontSize = Math.max(10, fontSize - 2);
+    }
+    
+    // Calculate line spacing
+    const lineHeight = fontSize * 1.2;
+    const totalTextHeight = lines.length * lineHeight;
+    const startY = (height - totalTextHeight) / 2 + fontSize;
+    
+    // Generate SVG text elements for each line
+    const textElements = lines.map((line, index) => {
+      const y = startY + (index * lineHeight);
+      return `%3Ctext x='${width/2}' y='${y}' font-family='Arial, sans-serif' font-size='${fontSize}' font-weight='500' text-anchor='middle' fill='%23ffffff'%3E${encodeURIComponent(line)}%3C/text%3E`;
+    }).join('');
+    
+    return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 ${width} ${height}'%3E%3Cdefs%3E%3ClinearGradient id='grad1' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%233498db;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%232980b9;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='${width}' height='${height}' fill='url(%23grad1)'/%3E${textElements}%3C/svg%3E`;
+  }, []);
   
   // Handle image load to determine aspect ratio
   const handleImageLoad = useCallback(() => {
@@ -85,10 +226,10 @@ const AgentCard = memo(({ agent }) => {
       return fixPlaceholderUrl(agent.image.url);
     }
     
-    // Generate a custom placeholder with the agent name
+    // Generate a custom placeholder with the agent name using responsive text
     const name = agent.name || agent.title || 'Agent';
-    return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%233498db'/%3E%3Ctext x='150' y='100' font-family='Arial' font-size='16' text-anchor='middle' dominant-baseline='middle' fill='%23ffffff'%3E${encodeURIComponent(name)}%3C/text%3E%3C/svg%3E`;
-  }, [agent.imageUrl, agent.image, agent.name, agent.title, imageError]);
+    return generateResponsiveSVG(name, 300, 200);
+  }, [agent.imageUrl, agent.image, agent.name, agent.title, imageError, generateResponsiveSVG]);
 
   // Handle add to cart
   const handleAddToCart = useCallback((e) => {
@@ -188,6 +329,16 @@ const AgentCard = memo(({ agent }) => {
     return 'Price unavailable';
   }, [agent.isFree, agent.price, agent.priceDetails]);
 
+  // Check if agent is free to conditionally show add to cart button
+  const isFreeAgent = React.useMemo(() => {
+    return agent.isFree || 
+           agent.price === 0 || 
+           agent.price === '0' || 
+           agent.price === 'Free' || 
+           agent.price === 'free' || 
+           (agent.priceDetails && (agent.priceDetails.basePrice === 0 || agent.priceDetails.discountedPrice === 0));
+  }, [agent.isFree, agent.price, agent.priceDetails]);
+
   // Handle image loading errors
   const handleImageError = useCallback(() => {
     console.log(`Image error for agent: ${agent.id}`);
@@ -200,6 +351,9 @@ const AgentCard = memo(({ agent }) => {
   const creatorName = React.useMemo(() => agent.creator?.name || "Unknown Creator", [agent.creator]);
   const rating = React.useMemo(() => agent.rating?.average ? formatRating(agent.rating.average) : null, [agent.rating]);
   const ratingCount = React.useMemo(() => agent.rating?.count || 0, [agent.rating]);
+
+  // Download count for the download icon
+  const downloadCount = React.useMemo(() => agent.downloadCount || 0, [agent.downloadCount]);
 
   return (
     <Link to={`/agents/${agent.id}`} className="marketplace-agent-card-link">
@@ -232,13 +386,16 @@ const AgentCard = memo(({ agent }) => {
                 {isWishlisted ? <FaHeart /> : <FaRegHeart />}
               </button>
               
-              <button
-                className="marketplace-cart-button"
-                onClick={handleAddToCart}
-                aria-label="Add to cart"
-              >
-                <FaPlus />
-              </button>
+              {/* Only show add to cart button for paid agents */}
+              {!isFreeAgent && (
+                <button
+                  className="marketplace-cart-button"
+                  onClick={handleAddToCart}
+                  aria-label="Add to cart"
+                >
+                  <FaPlus />
+                </button>
+              )}
             </div>
             
             {/* Badges */}
@@ -249,7 +406,7 @@ const AgentCard = memo(({ agent }) => {
 
           {/* Card content */}
           <div className="marketplace-agent-content">
-            <h3 className="marketplace-agent-title">{title}</h3>
+            <h3 className="marketplace-agent-title" title={title}>{title}</h3>
             <p className="marketplace-agent-description">{description}</p>
             
             <div className="marketplace-agent-creator">
@@ -267,6 +424,14 @@ const AgentCard = memo(({ agent }) => {
                 <span className="marketplace-no-rating">No ratings yet</span>
               )}
             </div>
+
+            {/* Download count with icon - now as separate section */}
+            {downloadCount > 0 && (
+              <div className="marketplace-download-section">
+                <FaDownload className="marketplace-download-icon" />
+                <span className="marketplace-download-count">{formatCount(downloadCount)}</span>
+              </div>
+            )}
             
             <div className="marketplace-agent-price">
               {formattedPrice}

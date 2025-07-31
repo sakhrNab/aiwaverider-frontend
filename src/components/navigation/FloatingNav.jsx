@@ -52,7 +52,7 @@ const FloatingNav = ({ scrollRefs = {} }) => {
   }, [windowWidth]);
 
   const openDiscord = useCallback(() => {
-    window.open('https://discord.com/channels/1377544516579491891/1377544516579491894', '_blank');
+    window.open('https://discord.gg/PNqBfZcm', '_blank');
     if (windowWidth < 640) setExpanded(false); // Auto-collapse after selection on mobile
   }, [windowWidth]);
 

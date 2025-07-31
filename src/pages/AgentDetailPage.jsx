@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaArrowLeft, FaArrowRight, FaThumbsUp, FaComment, FaShare, FaCheckCircle, FaShoppingCart, FaTrash } from 'react-icons/fa';
+import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaComment, FaShare, FaCheckCircle, FaShoppingCart, FaTrash } from 'react-icons/fa';
 import { 
   toggleWishlist, 
   toggleAgentLike,
@@ -1261,7 +1261,7 @@ const AgentDetail = () => {
     
     // First ensure the store is loaded with initial data, but only if we need it
     // This prevents the redundant 'agents?' API call when we only need a single agent
-    if (allAgents.length === 0 && !isStoreLoading) {
+    if ((!allAgents || allAgents.length === 0) && !(isStoreLoading || false)) {
       // Only load all agents if we're not directly accessing a specific agent
       // or if we've already tried to load this agent directly and failed
       const shouldLoadAllAgents = loadAttempt.current > 0 || !agentId;
@@ -1448,11 +1448,11 @@ const AgentDetail = () => {
           console.log(`Cached agent data for ${agentId} in localStorage`);
           
           // Also update the store with this agent if it's not already there
-          const existingAgent = allAgents.find(a => a.id === agentId || a._id === agentId);
+          const existingAgent = (allAgents || []).find(a => a.id === agentId || a._id === agentId);
           if (!existingAgent) {
             console.log('Adding agent to store for future reference');
             // Add the agent to the store without replacing existing agents
-            setAllAgents([...allAgents, data]);
+            setAllAgents([...(allAgents || []), data]);
           }
         } catch (cacheError) {
           console.warn('Failed to cache agent data:', cacheError);
@@ -2215,7 +2215,10 @@ const AgentDetail = () => {
     
     try {
       setLoading(true);
+      console.log('Starting download process for agent:', agentId);
+      
       const downloadResult = await downloadFreeAgent(agentId);
+      console.log('Download API result:', downloadResult);
       
       if (downloadResult.success) {
         // If the response includes the updated agent data, use it
@@ -2266,86 +2269,217 @@ const AgentDetail = () => {
           icon: "✅"
         });
         
-        // If we have a download URL, download it
-        if (downloadResult.downloadUrl) {
+        // If we have a download URL, download it - check multiple possible locations
+        let downloadUrl = downloadResult.downloadUrl || 
+                         downloadResult.agent?.downloadUrl || 
+                         downloadResult.agent?.fileUrl || 
+                         downloadResult.agent?.jsonFile?.url;
+        
+        console.log('Checking for download URL in response:', {
+          topLevel: downloadResult.downloadUrl,
+          agentDownloadUrl: downloadResult.agent?.downloadUrl,
+          agentFileUrl: downloadResult.agent?.fileUrl,
+          jsonFileUrl: downloadResult.agent?.jsonFile?.url,
+          finalUrl: downloadUrl
+        });
+        
+        if (downloadUrl) {
           try {
-            // Create a more robust download function with fallbacks
-            const downloadFile = async () => {
+            console.log('Download URL found:', downloadUrl);
+            
+            // Check if this is a Google Cloud Storage URL that will have CORS issues
+            const isGoogleStorage = downloadUrl.includes('storage.googleapis.com') || downloadUrl.includes('firebasestorage.app');
+            
+            if (isGoogleStorage) {
+              // Method 1: Use backend proxy to avoid CORS issues
+              console.log('Using backend proxy for Google Storage download to avoid CORS');
+              
               try {
-                // First try the proxy approach
-                const proxyUrl = `/api/agents/${agentId}/download-file?url=${encodeURIComponent(downloadResult.downloadUrl)}`;
-                console.log('Attempting to download via proxy:', proxyUrl);
+                // Create a proxy download URL through our backend
+                const proxyUrl = `/api/agents/${agentId}/download-file`;
                 
-                // Create a hidden iframe to trigger the download
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                document.body.appendChild(iframe);
+                // Use the browser's default download mechanism
+                const link = document.createElement('a');
+                link.href = proxyUrl;
                 
-                // Set up a timeout to detect if download fails
-                let downloadStarted = false;
-                const timeoutId = setTimeout(() => {
-                  if (!downloadStarted) {
-                    console.log('Proxy download timed out, trying fallback method');
-                    // Try direct link as fallback
-                    window.open(downloadResult.downloadUrl, '_blank');
-                    showToast('info', 'Using fallback download method...', {
-                      autoClose: 3000
-                    });
-                  }
-                }, 5000);
+                // Extract filename
+                const urlParts = downloadUrl.split('/');
+                let filename = urlParts[urlParts.length - 1];
+                if (filename.includes('?')) {
+                  filename = filename.split('?')[0];
+                }
+                if (!filename || !filename.includes('.')) {
+                  filename = `${agent.title || 'agent'}.json`;
+                }
                 
-                // Set the iframe source to the proxy URL
-                iframe.src = proxyUrl;
-                downloadStarted = true;
+                // Ensure filename has proper extension
+                if (!filename.endsWith('.json')) {
+                  filename = filename.replace(/\.[^/.]+$/, '') + '.json';
+                }
                 
-                // Clean up the iframe after a delay
+                link.download = filename;
+                link.style.display = 'none';
+                
+                // Important: Add to DOM for compatibility
+                document.body.appendChild(link);
+                link.click();
+                
+                // Clean up after a short delay
                 setTimeout(() => {
-                  clearTimeout(timeoutId);
-                  if (iframe.parentNode) {
-                    document.body.removeChild(iframe);
-                  }
-                }, 10000);
+                  document.body.removeChild(link);
+                }, 100);
                 
-                showToast('success', '📥 File download initiated', {
+                console.log('Download initiated via backend proxy');
+                showToast('success', '📥 Download started! Check your downloads folder.', {
                   autoClose: 3000
                 });
-              } catch (error) {
-                console.error('Download via proxy failed:', error);
                 
-                // Fallback: Try direct download
-                console.log('Trying direct download as fallback');
-                window.open(downloadResult.downloadUrl, '_blank');
-                
-                showToast('info', 'Using alternative download method...', {
-                  autoClose: 3000
-                });
+              } catch (proxyError) {
+                console.error('Backend proxy download failed:', proxyError);
+                throw new Error('Backend proxy download failed');
               }
-            };
+              
+            } else {
+              // Method 2: For non-Google Storage URLs, try direct fetch
+              console.log('Attempting direct download for non-Google Storage URL');
+              
+              const response = await fetch(downloadUrl, {
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'omit',
+                headers: {
+                  'Accept': 'application/json, application/octet-stream, */*'
+                }
+              });
+              
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+              }
+              
+              console.log('Fetch successful, creating blob for download');
+              
+              // Get the response as text first to ensure proper handling
+              const responseText = await response.text();
+              
+              // Force download by creating blob with application/octet-stream MIME type
+              const blob = new Blob([responseText], { 
+                type: 'application/octet-stream' // Force download instead of display
+              });
+              
+              // Force download by creating object URL and programmatic click
+              const url = window.URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              
+              // Extract and clean filename
+              const urlParts = downloadUrl.split('/');
+              let filename = urlParts[urlParts.length - 1];
+              if (filename.includes('?')) {
+                filename = filename.split('?')[0];
+              }
+              if (!filename || !filename.includes('.')) {
+                filename = `${agent.title || 'agent'}.json`;
+              }
+              
+              // Ensure filename has proper extension
+              if (!filename.endsWith('.json')) {
+                filename = filename.replace(/\.[^/.]+$/, '') + '.json';
+              }
+              
+              link.download = filename;
+              link.style.display = 'none';
+              
+              document.body.appendChild(link);
+              link.click();
+              
+              // Clean up after a short delay
+              setTimeout(() => {
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+              }, 100);
+              
+              console.log('Download completed successfully via direct fetch');
+              showToast('success', '📥 File downloaded successfully!', {
+                autoClose: 3000
+              });
+            }
             
-            // Start the download process
-            await downloadFile();
+          } catch (fetchError) {
+            console.error('Primary download method failed:', fetchError);
             
-          } catch (error) {
-            console.error('All download methods failed:', error);
-            showToast('error', `Download failed. Please try again later.`, {
-              icon: "❌",
-              autoClose: 5000
-            });
+            // Method 3: Final fallback - Open in new window with instructions
+            try {
+              console.log('Using final fallback method - opening download URL');
+              
+              // Create a temporary link element
+              const link = document.createElement('a');
+              link.href = downloadUrl;
+              
+              // Extract filename
+              const urlParts = downloadUrl.split('/');
+              let filename = urlParts[urlParts.length - 1];
+              if (filename.includes('?')) {
+                filename = filename.split('?')[0];
+              }
+              if (!filename || !filename.includes('.')) {
+                filename = `${agent.title || 'agent'}.json`;
+              }
+              
+              link.download = filename;
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+              link.style.display = 'none';
+              
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              showToast('info', '📥 Download link opened in new tab. If the file displays instead of downloading, right-click and select "Save As..." to download the file manually.', {
+                autoClose: 12000
+              });
+              
+            } catch (finalError) {
+              console.error('All download methods failed:', finalError);
+              
+              // Show the download URL to user as absolute last resort
+              showToast('warning', '⚠️ Automatic download failed due to browser security restrictions. Here is the direct download link: ' + downloadUrl + ' - Please copy and paste this URL in a new tab to download the file.', {
+                autoClose: 15000
+              });
+            }
           }
         } else {
-          // Show a message if no direct URL is available
-          showToast('info', 'Download processed. If download doesn\'t start automatically, check your email.', {
-            autoClose: 5000
+          // No download URL provided
+          console.warn('No download URL provided in response');
+          showToast('warning', '⚠️ Download processed but no file URL provided. Please check your email or contact support.', {
+            autoClose: 8000
           });
         }
       } else {
-        throw new Error(downloadResult.message || 'Download failed');
+        // API returned unsuccessful response
+        const errorMessage = downloadResult.error || downloadResult.message || 'Download failed';
+        console.error('Download API returned error:', errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error downloading free agent:', error);
-      showToast('error', `❌ Download failed: ${error.message || 'Unknown error'}`, {
+      
+      // Provide more specific error messages
+      let userMessage = '❌ Download failed. ';
+      if (error.message.includes('CORS')) {
+        userMessage += 'Cross-origin request blocked. Please try again or contact support.';
+      } else if (error.message.includes('Network')) {
+        userMessage += 'Network error. Please check your connection and try again.';
+      } else if (error.message.includes('404')) {
+        userMessage += 'File not found. Please contact support.';
+      } else if (error.message.includes('403')) {
+        userMessage += 'Access denied. Please ensure you are signed in and try again.';
+      } else {
+        userMessage += error.message || 'Unknown error occurred.';
+      }
+      
+      showToast('error', userMessage, {
         icon: "❌",
-        autoClose: 5000
+        autoClose: 8000
       });
     } finally {
       setLoading(false);

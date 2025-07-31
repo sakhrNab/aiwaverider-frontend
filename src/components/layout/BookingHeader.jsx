@@ -46,7 +46,7 @@ const BookingHeader = () => {
   const headerText = getHeaderText();
 
   return (
-    <div className="booking-header-container glass-effect">
+    <div className="booking-header-container glass-effect mt-8">
       <div className="booking-header-content">
         <div className="booking-text">
           <h2 className="booking-title">{headerText.title}</h2>
@@ -61,7 +61,7 @@ const BookingHeader = () => {
               className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-full font-semibold flex items-center heartbeat-pulse"
             >
               <FaCalendarAlt className="mr-2" />
-              Book a FREE Consultation Session
+              <span className="booking-text-content">Book a FREE Consultation Session</span>
               <FaArrowRight className="ml-2" />
             </a>
           </div>
