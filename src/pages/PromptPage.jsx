@@ -1,18 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaEdit, FaArrowLeft, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
+import { FaEdit, FaArrowLeft, FaSpinner, FaExclamationTriangle, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { fetchPromptById, togglePromptLike } from '../api/marketplace/promptsApi';
 import './PromptPage.css';
 import PageTitle from '../components/common/PageTitle';
 import DOMPurify from 'dompurify';
-// Import Firebase for direct Firestore access as fallback
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../utils/firebase';
-
-// Import useAIToolsStore for local storage fallback
-import useAIToolsStore from '../store/useAIToolsStore';
+import { toast } from 'react-toastify';
 
 const PromptPage = () => {
   const { id } = useParams();
@@ -22,9 +17,9 @@ const PromptPage = () => {
   const [prompt, setPrompt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Get tools from the local store for fallback
-  const { tools } = useAIToolsStore();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [likingInProgress, setLikingInProgress] = useState(false);
 
   useEffect(() => {
     const fetchPrompt = async () => {
@@ -34,96 +29,30 @@ const PromptPage = () => {
         
         console.log(`Fetching prompt with ID: ${id}`);
         
-        try {
-          // First attempt: Try the API endpoint
-          console.log('Attempting to fetch via API...');
-          const response = await axios.get(`/api/ai-tools/${id}`);
+        // Fetch prompt using the new prompts API
+        const promptData = await fetchPromptById(id);
+        
+        if (promptData) {
+          setPrompt(promptData);
+          setLikeCount(promptData.likeCount || 0);
           
-          if (response.data.success && response.data.data) {
-            // Check if this is a prompt type tool
-            const tool = response.data.data;
-            if (tool.keyword?.toLowerCase().includes('prompt')) {
-              setPrompt(tool);
-            } else {
-              setError('This is not a prompt tool');
-              setTimeout(() => navigate('/prompts'), 3000);
-            }
-          } else {
-            setError('Failed to load prompt data');
+          // Check if current user has liked this prompt
+          if (user && promptData.likes && Array.isArray(promptData.likes)) {
+            setIsLiked(promptData.likes.includes(user.uid));
           }
-        } catch (apiError) {
-          console.error('API fetch error:', apiError);
-          
-          // Second attempt: Try direct Firestore access as fallback
-          console.log('API failed, attempting direct Firestore access...');
-          try {
-            // Get the document directly from Firestore
-            const docRef = doc(db, 'ai_tools', id);
-            const docSnap = await getDoc(docRef);
-            
-            if (docSnap.exists()) {
-              const toolData = docSnap.data();
-              const formattedTool = {
-                id: docSnap.id,
-                ...toolData
-              };
-              
-              console.log('Firestore direct access succeeded:', formattedTool);
-              
-                              // Check if this is a prompt type tool
-                if (formattedTool.keyword?.toLowerCase().includes('prompt')) {
-                  setPrompt(formattedTool);
-                } else {
-                  setError('This is not a prompt tool');
-                  setTimeout(() => navigate('/prompts'), 3000);
-                }
-            } else {
-              console.error('Document does not exist in Firestore');
-              
-              // Third attempt: Try local store data as final fallback
-              console.log('Firestore failed, checking local store data...');
-              const localPrompt = tools.find(tool => tool.id === id);
-              
-              if (localPrompt) {
-                console.log('Found prompt in local store:', localPrompt);
-                
-                // Check if this is a prompt type tool
-                if (localPrompt.keyword?.toLowerCase().includes('prompt')) {
-                  setPrompt(localPrompt);
-                } else {
-                  setError('This is not a prompt tool');
-                  setTimeout(() => navigate('/prompts'), 3000);
-                }
-              } else {
-                setError('Prompt not found. Please check the ID and try again.');
-              }
-            }
-          } catch (firestoreError) {
-            console.error('Firestore direct access error:', firestoreError);
-            
-            // Third attempt: Try local store data as final fallback
-            console.log('Firestore failed, checking local store data...');
-            const localPrompt = tools.find(tool => tool.id === id);
-            
-            if (localPrompt) {
-              console.log('Found prompt in local store:', localPrompt);
-              
-              // Check if this is a prompt type tool
-              if (localPrompt.keyword?.toLowerCase().includes('prompt')) {
-                setPrompt(localPrompt);
-              } else {
-                setError('This is not a prompt tool');
-                setTimeout(() => navigate('/prompts'), 3000);
-              }
-            } else {
-              // All fallbacks failed
-              setError('Error loading prompt data. All attempts failed.');
-            }
-          }
+        } else {
+          setError('Prompt not found. Please check the ID and try again.');
         }
       } catch (err) {
-        console.error('Unhandled error in fetch process:', err);
-        setError('An unexpected error occurred. Please try again later.');
+        console.error('Error fetching prompt:', err);
+        
+        if (err.response?.status === 404) {
+          setError('Prompt not found. Please check the ID and try again.');
+        } else if (err.response?.status === 500) {
+          setError('Server error occurred. Please try again later.');
+        } else {
+          setError('Error loading prompt data. Please try again later.');
+        }
       } finally {
         setLoading(false);
       }
@@ -132,10 +61,43 @@ const PromptPage = () => {
     if (id) {
       fetchPrompt();
     }
-  }, [id, navigate]);
+  }, [id, user]);
 
   const handleEditClick = () => {
     navigate(`/admin/prompts/${id}`);
+  };
+
+  const handleLikeToggle = async () => {
+    if (!user) {
+      toast.error('Please log in to like prompts');
+      return;
+    }
+
+    if (likingInProgress) return;
+
+    try {
+      setLikingInProgress(true);
+      
+      const result = await togglePromptLike(id);
+      
+      if (result.success) {
+        setIsLiked(result.data.isLiked);
+        setLikeCount(result.data.likeCount);
+        
+        if (result.data.isLiked) {
+          toast.success('Prompt liked!');
+        } else {
+          toast.success('Prompt unliked');
+        }
+      } else {
+        toast.error('Failed to update like status');
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Failed to update like status');
+    } finally {
+      setLikingInProgress(false);
+    }
   };
 
   if (loading) {
@@ -231,11 +193,51 @@ const PromptPage = () => {
           {/* Header with title and category */}
           <div className="mb-6">
             <PageTitle title={prompt.title} />  
-            {prompt.category && (
-              <div className="category-badge inline-block px-3 py-1 rounded-full text-sm font-medium">
-                {prompt.category}
+            <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center gap-4">
+                {prompt.category && (
+                  <div className="category-badge inline-block px-3 py-1 rounded-full text-sm font-medium">
+                    {prompt.category}
+                  </div>
+                )}
+                {prompt.tags && prompt.tags.length > 0 && (
+                  <div className="flex gap-2">
+                    {prompt.tags.slice(0, 3).map((tag, index) => (
+                      <span 
+                        key={index}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+              
+              {/* Like button */}
+              {user && (
+                <button
+                  onClick={handleLikeToggle}
+                  disabled={likingInProgress}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    isLiked 
+                      ? 'bg-red-500 text-white hover:bg-red-600' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  } ${likingInProgress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isLiked ? <FaHeart /> : <FaRegHeart />}
+                  <span>{likeCount}</span>
+                </button>
+              )}
+              
+              {/* Show like count even if user is not logged in */}
+              {!user && likeCount > 0 && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <FaHeart className="text-red-500" />
+                  <span>{likeCount}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Image if available */}
@@ -255,9 +257,27 @@ const PromptPage = () => {
             <p className="text-lg">{prompt.description}</p>
           </div>
 
+          {/* Keywords if available */}
+          {prompt.keywords && prompt.keywords.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-xl font-bold mb-3">Keywords</h3>
+              <div className="flex flex-wrap gap-2">
+                {prompt.keywords.map((keyword, index) => (
+                  <span 
+                    key={index}
+                    className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full"
+                  >
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Main content from additionalHTML */}
           {prompt.additionalHTML && (
             <div className="prompt-content">
+              <h3 className="text-xl font-bold mb-3">Prompt Content</h3>
               <div 
                 className="rich-text-content" 
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(prompt.additionalHTML) }}
@@ -276,6 +296,29 @@ const PromptPage = () => {
               >
                 Visit Prompt Source
               </a>
+            </div>
+          )}
+
+          {/* Prompt metadata */}
+          {(prompt.createdAt || prompt.viewCount || prompt.downloadCount) && (
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                {prompt.createdAt && (
+                  <div>
+                    <strong>Created:</strong> {new Date(prompt.createdAt.seconds ? prompt.createdAt.seconds * 1000 : prompt.createdAt).toLocaleDateString()}
+                  </div>
+                )}
+                {prompt.viewCount !== undefined && (
+                  <div>
+                    <strong>Views:</strong> {prompt.viewCount}
+                  </div>
+                )}
+                {prompt.downloadCount !== undefined && (
+                  <div>
+                    <strong>Downloads:</strong> {prompt.downloadCount}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
