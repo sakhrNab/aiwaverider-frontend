@@ -67,7 +67,7 @@ const ContactPage = () => {
                   <div>
                     <span className="font-medium text-gray-600">Business Phone:</span>
                     <p>
-                      <a href="tel:+995558950430" className={`text-lg ${darkMode ? 'text-green-400' : 'text-green-600'} hover:underline`}>
+                      <a href="tel:+995 558950430" className={`text-lg ${darkMode ? 'text-green-400' : 'text-green-600'} hover:underline`}>
                         +995 558950430
                       </a>
                     </p>
