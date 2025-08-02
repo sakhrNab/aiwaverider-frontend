@@ -804,7 +804,7 @@ const Checkout = () => {
           ...(userEmail && userEmail.includes('@') ? { email: userEmail } : {}) // Only include email if valid
         },
         creditorInfo: {
-          name: 'AI Wave Rider Ltd',
+          name: 'AI Waverider Digital Services',
           iban: 'DE89370400440532013000', // Your company's IBAN
           bic: 'DEUTDEDBXXX' // Your company's BIC
         },

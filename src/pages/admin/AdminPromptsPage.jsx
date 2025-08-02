@@ -9,42 +9,17 @@ import {
   FaExclamationCircle, 
   FaCalendarAlt,
   FaSpinner,
-  FaChevronDown
+  FaHeart,
+  FaEye,
+  FaDownload
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminSidebar from '../../components/admin/AdminSidebar';
+import { deletePrompt, refreshPromptsCache } from '../../api/marketplace/promptsApi';
+import usePromptsStore from '../../store/usePromptsStore';
 import './AdminPromptsPage.css';
-
-// Mock data for demonstration
-const MOCK_PROMPTS = [
-  {
-    id: 1,
-    title: 'Welcome Email',
-    description: 'A warm welcome email for new users',
-    category: 'Marketing',
-    createdAt: '2023-05-15T10:30:00Z',
-    updatedAt: '2023-05-15T10:30:00Z'
-  },
-  {
-    id: 2,
-    title: 'Product Announcement',
-    description: 'Template for announcing new product features',
-    category: 'Product',
-    createdAt: '2023-05-10T14:20:00Z',
-    updatedAt: '2023-05-10T14:20:00Z'
-  },
-  {
-    id: 3,
-    title: 'Customer Support Follow-up',
-    description: 'Template for following up with customers after support tickets',
-    category: 'Support',
-    createdAt: '2023-05-05T09:15:00Z',
-    updatedAt: '2023-05-05T09:15:00Z'
-  },
-];
 
 const AdminPromptsPage = () => {
   const navigate = useNavigate();
@@ -54,57 +29,63 @@ const AdminPromptsPage = () => {
     email: 'admin@example.com'
   };
 
-  const [prompts, setPrompts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Use the prompts store
+  const {
+    prompts,
+    isLoading: loading,
+    error,
+    isLoaded,
+    categories,
+    totalCount,
+    currentPage,
+    totalPages,
+    pageSize,
+    searchQuery,
+    filters,
+    startListening,
+    stopListening,
+    setSearchQuery,
+    setFilters,
+    setPage,
+    setPageSize,
+    forceRefresh
+  } = usePromptsStore();
 
   // Categories for prompts
   const CATEGORIES = [
-    'Latest Tech',
     'AI Prompts',
-    'Creative Writing',
+    'ChatGPT Prompts',
+    'AI Art Generator', 
     'Coding Assistant',
-    'Image Generation',
+    'Business Plan',
+    'Creative Writing',
     'Marketing',
-    'Business',
+    'Productivity',
     'Education',
-    'Research'
+    'Content Creation'
   ];
 
-  // Fetch prompts from AI tools collection where keyword contains 'prompt'
+  // Initialize the prompts store when component mounts
   useEffect(() => {
-    const fetchPrompts = async () => {
-      try {
-        setLoading(true);
-        // In a real app, you would fetch from your API:
-        // const response = await axios.get('/api/prompts');
-        // setPrompts(response.data);
-        
-        // Using mock data for now
-        setPrompts(MOCK_PROMPTS);
-        setError('');
-      } catch (err) {
-        console.error('Error fetching prompts:', err);
-        setError('Failed to load prompts. Please try again later.');
-        // Fallback to mock data in case of error
-        setPrompts(MOCK_PROMPTS);
-      } finally {
-        setLoading(false);
-      }
+    startListening();
+    
+    return () => {
+      stopListening();
     };
+  }, [startListening, stopListening]);
 
-    fetchPrompts();
-  }, []);
-
-  // Filter prompts based on search term and category
+  // Filter prompts based on local search term and category
   const filteredPrompts = prompts.filter(prompt => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
       prompt.title.toLowerCase().includes(searchLower) ||
-      (prompt.description && prompt.description.toLowerCase().includes(searchLower));
+      (prompt.description && prompt.description.toLowerCase().includes(searchLower)) ||
+      (prompt.keywords && prompt.keywords.some(kw => kw.toLowerCase().includes(searchLower)));
     
     const matchesCategory = 
       categoryFilter === 'All' || 
@@ -115,23 +96,12 @@ const AdminPromptsPage = () => {
 
   // Handle create new prompt
   const handleCreatePrompt = () => {
-    // In a real app, navigate to create form
-    // navigate('/admin/prompts/new');
-    
-    // For demo, just show a toast
-    toast.info('Create new prompt clicked');
+    navigate('/admin/prompts/new');
   };
 
   // Handle edit prompt
   const handleEditPrompt = (id) => {
-    // In a real app, navigate to edit form
-    // navigate(`/admin/prompts/edit/${id}`);
-    
-    // For demo, just show a toast
-    const prompt = prompts.find(p => p.id === id);
-    if (prompt) {
-      toast.info(`Editing prompt: ${prompt.title}`);
-    }
+    navigate(`/admin/prompts/${id}`);
   };
 
   // Handle delete prompt
@@ -139,21 +109,21 @@ const AdminPromptsPage = () => {
     setConfirmDelete(prompt);
   };
 
-  // const cancelDelete = () => {
-  //   setConfirmDelete(null);
-  // };
-
   const handleDeletePrompt = async () => {
     if (!confirmDelete) return;
 
     try {
-      // In a real app, call the API
-      // await axios.delete(`/api/prompts/${confirmDelete.id}`);
+      const result = await deletePrompt(confirmDelete.id);
       
-      // For demo, just remove from local state
-      setPrompts(prompts.filter(p => p.id !== confirmDelete.id));
-      setConfirmDelete(null);
-      toast.success('Prompt deleted successfully');
+      if (result.success) {
+        setConfirmDelete(null);
+        toast.success('Prompt deleted successfully');
+        // Refresh the prompts data
+        forceRefresh();
+      } else {
+        toast.error(result.error || 'Failed to delete prompt');
+        setConfirmDelete(null);
+      }
     } catch (err) {
       console.error('Error deleting prompt:', err);
       toast.error('Failed to delete prompt');
@@ -166,7 +136,22 @@ const AdminPromptsPage = () => {
     setConfirmDelete(null);
   };
 
-  if (loading && prompts.length === 0) {
+  // Handle cache refresh
+  const handleRefreshCache = async () => {
+    try {
+      setRefreshing(true);
+      await refreshPromptsCache();
+      await forceRefresh();
+      toast.success('Prompts cache refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing cache:', error);
+      toast.error('Failed to refresh cache');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  if (loading && !isLoaded) {
     return (
       <div className="admin-prompts-page p-6">
         <div className="flex justify-center items-center h-64">
@@ -185,8 +170,23 @@ const AdminPromptsPage = () => {
         {/* Header */}
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-900">Manage Prompts</h1>
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-semibold text-gray-900">Manage Prompts</h1>
+              {totalCount > 0 && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                  {totalCount} total
+                </span>
+              )}
+            </div>
             <div className="flex items-center space-x-4">
+              <button 
+                onClick={handleRefreshCache}
+                disabled={refreshing}
+                className="text-gray-600 hover:text-gray-900 disabled:opacity-50"
+                title="Refresh cache"
+              >
+                <FaSpinner className={refreshing ? 'animate-spin' : ''} size={20} />
+              </button>
               <button className="text-gray-600 hover:text-gray-900">
                 <FaBell size={20} />
               </button>
@@ -264,7 +264,12 @@ const AdminPromptsPage = () => {
             <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
               <FaInbox className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">No prompts</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by creating a new prompt.</p>
+              <p className="mt-1 text-sm text-gray-500">
+                {searchTerm || categoryFilter !== 'All' 
+                  ? 'No prompts match your current filters.'
+                  : 'Get started by creating a new prompt.'
+                }
+              </p>
               <div className="mt-6">
                 <button
                   onClick={handleCreatePrompt}
@@ -291,7 +296,7 @@ const AdminPromptsPage = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-blue-600">
                         <span className="text-white text-4xl font-bold">
                           {prompt.title?.charAt(0).toUpperCase() || 'P'}
                         </span>
@@ -301,28 +306,69 @@ const AdminPromptsPage = () => {
                   
                   {/* Prompt content */}
                   <div className="p-4">
-                    <div className="flex items-start justify-between">
-                      <h3 className="text-base font-medium text-gray-900 mb-1 line-clamp-1">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-base font-medium text-gray-900 line-clamp-1">
                         {prompt.title}
                       </h3>
+                      {prompt.isFeatured && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mb-2">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {prompt.category || 'General'}
                       </span>
+                      {prompt.tags && prompt.tags.slice(0, 2).map((tag, index) => (
+                        <span key={index} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {tag}
+                        </span>
+                      ))}
                     </div>
                     
                     <p className="mt-1 text-sm text-gray-500 line-clamp-2">
                       {prompt.description || 'No description available.'}
                     </p>
                     
+                    {/* Stats */}
+                    <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center space-x-4">
+                        {prompt.likeCount > 0 && (
+                          <span className="flex items-center">
+                            <FaHeart className="mr-1 h-3 w-3 text-red-500" />
+                            {prompt.likeCount}
+                          </span>
+                        )}
+                        {prompt.viewCount > 0 && (
+                          <span className="flex items-center">
+                            <FaEye className="mr-1 h-3 w-3" />
+                            {prompt.viewCount}
+                          </span>
+                        )}
+                        {prompt.downloadCount > 0 && (
+                          <span className="flex items-center">
+                            <FaDownload className="mr-1 h-3 w-3" />
+                            {prompt.downloadCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
                     <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
                       <div className="flex items-center text-sm text-gray-500">
                         <FaCalendarAlt className="mr-1.5 h-4 w-4 text-gray-400" />
                         <span>
-                          {new Date(prompt.createdAt).toLocaleDateString('en-US', {
+                          {prompt.createdAt ? new Date(
+                            prompt.createdAt.seconds ? 
+                            prompt.createdAt.seconds * 1000 : 
+                            prompt.createdAt
+                          ).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric'
-                          })}
+                          }) : 'Unknown'}
                         </span>
                       </div>
                       <div className="flex space-x-2">
@@ -351,7 +397,7 @@ const AdminPromptsPage = () => {
           {/* Delete confirmation modal */}
           {confirmDelete && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
                 <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
                 <p className="mb-6">
                   Are you sure you want to delete "{confirmDelete.title}"? This action cannot be undone.
@@ -359,13 +405,13 @@ const AdminPromptsPage = () => {
                 <div className="flex justify-end gap-4">
                   <button
                     onClick={cancelDelete}
-                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
+                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleDeletePrompt}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                   >
                     Delete
                   </button>

@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSave, FaSpinner, FaUpload, FaTimes } from 'react-icons/fa';
-import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../contexts/AuthContext';
 import RichTextEditor from '../../components/editor/RichTextEditor';
 import './AdminPromptEditPage.css';
-import { auth } from '../../utils/firebase';
 import AdminLayout from '../../components/layout/AdminLayout';
+import { 
+  fetchPromptById, 
+  createPrompt, 
+  updatePrompt 
+} from '../../api/marketplace/promptsApi';
 
 const AdminPromptEditPage = () => {
   const { id } = useParams();
@@ -21,9 +24,12 @@ const AdminPromptEditPage = () => {
   const [description, setDescription] = useState('');
   const [link, setLink] = useState('');
   const [category, setCategory] = useState('');
-  const [keyword, setKeyword] = useState('prompt'); // Default to 'prompt' but allow customization
+  const [keywords, setKeywords] = useState([]);
+  const [keywordInput, setKeywordInput] = useState('');
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState('');
   const [additionalHTML, setAdditionalHTML] = useState('');
-  const [image, setImage] = useState(null);
+  const [isFeatured, setIsFeatured] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,15 +38,16 @@ const AdminPromptEditPage = () => {
   
   // Categories for prompts
   const CATEGORIES = [
-    'Latest Tech',
     'AI Prompts',
-    'Creative Writing',
+    'ChatGPT Prompts',
+    'AI Art Generator', 
     'Coding Assistant',
-    'Image Generation',
+    'Business Plan',
+    'Creative Writing',
     'Marketing',
-    'Business',
+    'Productivity',
     'Education',
-    'Research'
+    'Content Creation'
   ];
 
   // Fetch prompt data if editing an existing prompt
@@ -50,16 +57,17 @@ const AdminPromptEditPage = () => {
     const fetchPromptData = async () => {
       try {
         setInitialLoading(true);
-        const response = await axios.get(`/api/ai-tools/${id}`);
+        const promptData = await fetchPromptById(id);
         
-        if (response.data.success) {
-          const promptData = response.data.data;
+        if (promptData) {
           setTitle(promptData.title || '');
           setDescription(promptData.description || '');
           setLink(promptData.link || '');
           setCategory(promptData.category || '');
-          setKeyword(promptData.keyword || 'prompt'); // Get keyword from response
+          setKeywords(promptData.keywords || []);
+          setTags(promptData.tags || []);
           setAdditionalHTML(promptData.additionalHTML || '');
+          setIsFeatured(promptData.isFeatured || false);
           if (promptData.image) {
             setImagePreview(promptData.image);
           }
@@ -106,6 +114,38 @@ const AdminPromptEditPage = () => {
     }
   };
 
+  // Handle adding keywords
+  const handleAddKeyword = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const keyword = keywordInput.trim();
+      if (keyword && !keywords.includes(keyword)) {
+        setKeywords([...keywords, keyword]);
+        setKeywordInput('');
+      }
+    }
+  };
+
+  const removeKeyword = (index) => {
+    setKeywords(keywords.filter((_, i) => i !== index));
+  };
+
+  // Handle adding tags
+  const handleAddTag = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const tag = tagInput.trim();
+      if (tag && !tags.includes(tag)) {
+        setTags([...tags, tag]);
+        setTagInput('');
+      }
+    }
+  };
+
+  const removeTag = (index) => {
+    setTags(tags.filter((_, i) => i !== index));
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -119,121 +159,43 @@ const AdminPromptEditPage = () => {
       setLoading(true);
       setError(null);
       
-      // For debugging - display what we're sending
-      console.log('Submitting prompt with data:', {
+      // Prepare prompt data
+      const promptData = {
         title,
         description,
-        link,
-        keyword,
-        category,
-        additionalHTML: additionalHTML ? `${additionalHTML.substring(0, 50)}...` : null,
+        link: link || '',
+        category: category || '',
+        keywords: keywords || [],
+        tags: tags || [],
+        additionalHTML: additionalHTML || '',
+        isFeatured: isFeatured
+      };
+      
+      console.log('Submitting prompt with data:', {
+        ...promptData,
+        additionalHTML: promptData.additionalHTML ? `${promptData.additionalHTML.substring(0, 50)}...` : null,
         hasImageFile: !!imageFile
       });
       
-      // Prepare form data for multipart/form-data request (for image upload)
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('description', description);
-      formData.append('link', link || 'https://example.com'); // Ensure link is never empty as API requires it
-      formData.append('keyword', keyword); // Use the custom keyword value
-      formData.append('category', category || ''); // Ensure category is at least an empty string
-      formData.append('additionalHTML', additionalHTML || '');
-      
-      if (imageFile) {
-        formData.append('image', imageFile);
-        console.log('Adding image file:', imageFile.name, imageFile.type, imageFile.size);
-      }
-      
-      // Get Firebase auth token
-      let token = null;
-      try {
-        token = await auth.currentUser?.getIdToken(true);
-        console.log('Retrieved Firebase token successfully');
-      } catch (tokenError) {
-        console.error('Error getting Firebase token:', tokenError);
-      }
-      
-      if (!token) {
-        toast.error('Authentication required. Please log in again.');
-        setLoading(false);
-        return;
-      }
-      
-      // Determine if we should use absolute or relative URL based on environment
-      const baseUrl = import.meta.env.VITE_PROXY_TARGET || 'http://localhost:4000';
-      const apiUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-      console.log(`Using API base URL: ${apiUrl}`);
-      
-      let response;
+      let result;
       if (isNewPrompt) {
-        // Create new prompt - try direct URL first
-        const endpoint = `/api/ai-tools`;
-        console.log(`Making POST request to: ${endpoint}`);
-        
-        try {
-          response = await axios.post(endpoint, formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              'Authorization': `Bearer ${token}`
-            }
-          });
-        } catch (directError) {
-          console.error('Direct API request failed:', directError);
-          console.log('Attempting with absolute URL as fallback');
-          
-          // Fallback to absolute URL if direct request fails
-          response = await axios.post(`${apiUrl}/api/ai-tools`, formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              'Authorization': `Bearer ${token}`
-            }
-          });
-        }
+        result = await createPrompt(promptData, imageFile);
+        toast.success('Prompt created successfully');
       } else {
-        // Update existing prompt
-        const endpoint = `/api/ai-tools/${id}`;
-        console.log(`Making PUT request to: ${endpoint}`);
-        
-        try {
-          response = await axios.put(endpoint, formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              'Authorization': `Bearer ${token}`
-            }
-          });
-        } catch (directError) {
-          console.error('Direct API request failed:', directError);
-          console.log('Attempting with absolute URL as fallback');
-          
-          // Fallback to absolute URL if direct request fails
-          response = await axios.put(`${apiUrl}/api/ai-tools/${id}`, formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              'Authorization': `Bearer ${token}`
-            }
-          });
-        }
+        result = await updatePrompt(id, promptData, imageFile);
+        toast.success('Prompt updated successfully');
       }
       
-      if (response.data.success) {
-        toast.success(isNewPrompt ? 'Prompt created successfully' : 'Prompt updated successfully');
+      if (result) {
         navigate('/admin/prompts');
-      } else {
-        // Handle API error response
-        const errorMsg = response.data.error || 'Failed to save prompt';
-        console.error('API returned error:', response.data);
-        setError(errorMsg);
-        toast.error(errorMsg);
       }
     } catch (err) {
       console.error('Error saving prompt:', err);
       
-      // Display detailed error information
       let errorMessage = 'Error saving prompt. Please try again.';
       let detailedError = null;
       
       if (err.response) {
-        // The request was made and the server responded with a status code outside of 2xx range
         errorMessage = `Server error: ${err.response.status} ${err.response.statusText}`;
         detailedError = {
           status: err.response.status,
@@ -243,22 +205,18 @@ const AdminPromptEditPage = () => {
         };
         console.error('Response error details:', detailedError);
       } else if (err.request) {
-        // The request was made but no response was received
         errorMessage = 'No response received from server. Please check your network connection.';
         console.error('Request was made but no response received:', err.request);
       } else {
-        // Something happened in setting up the request that triggered an Error
         errorMessage = `Request setup error: ${err.message}`;
         console.error('Error setting up request:', err.message);
       }
       
-      // Set the detailed error for display in the UI
       setError({
         message: errorMessage,
         details: detailedError || err.message
       });
       
-      // Show a toast with a simplified error message
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -341,29 +299,6 @@ const AdminPromptEditPage = () => {
               </div>
               
               <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2">Keyword</label>
-                <input
-                  type="text"
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  placeholder="Enter keyword (e.g., prompt, tool, generator)"
-                />
-                <p className="text-sm text-gray-500 mt-1">Used for categorization and search. Default: 'prompt'</p>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2">External Link</label>
-                <input
-                  type="text"
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  placeholder="https://example.com"
-                />
-              </div>
-              
-              <div className="mb-4">
                 <label className="block text-gray-700 font-medium mb-2">Category</label>
                 <select
                   value={category}
@@ -377,6 +312,30 @@ const AdminPromptEditPage = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-gray-700 font-medium mb-2">External Link</label>
+                <input
+                  type="text"
+                  value={link}
+                  onChange={(e) => setLink(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  placeholder="https://example.com"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={isFeatured}
+                    onChange={(e) => setIsFeatured(e.target.checked)}
+                    className="mr-2"
+                  />
+                  <span className="text-gray-700 font-medium">Featured Prompt</span>
+                </label>
+                <p className="text-sm text-gray-500 mt-1">Featured prompts appear in the featured section</p>
               </div>
               
               <div className="mb-4">
@@ -415,6 +374,75 @@ const AdminPromptEditPage = () => {
                       alt="Preview"
                       className="w-full max-w-md h-auto rounded-md"
                     />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Keywords and Tags */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold mb-4">Keywords & Tags</h2>
+              
+              <div className="mb-4">
+                <label className="block text-gray-700 font-medium mb-2">Keywords</label>
+                <input
+                  type="text"
+                  value={keywordInput}
+                  onChange={(e) => setKeywordInput(e.target.value)}
+                  onKeyDown={handleAddKeyword}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  placeholder="Type keyword and press Enter or comma"
+                />
+                <p className="text-sm text-gray-500 mt-1">Press Enter or comma to add keywords</p>
+                {keywords.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {keywords.map((keyword, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                      >
+                        {keyword}
+                        <button
+                          type="button"
+                          onClick={() => removeKeyword(index)}
+                          className="ml-2 text-blue-600 hover:text-blue-800"
+                        >
+                          <FaTimes className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-gray-700 font-medium mb-2">Tags</label>
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleAddTag}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  placeholder="Type tag and press Enter or comma"
+                />
+                <p className="text-sm text-gray-500 mt-1">Press Enter or comma to add tags</p>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(index)}
+                          className="ml-2 text-green-600 hover:text-green-800"
+                        >
+                          <FaTimes className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>
