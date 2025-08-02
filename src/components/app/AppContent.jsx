@@ -11,6 +11,7 @@ import CookieConsent from '../common/CookieConsent';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import ErrorBoundary from '../common/ErrorBoundary';
 import PageTitle from '../common/PageTitle';
+import useScrollToTop from '../../hooks/useScrollToTop';
 
 const AppContent = () => {
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
@@ -23,6 +24,9 @@ const AppContent = () => {
   const openSignUpModal = () => setIsSignUpModalOpen(true);
   const closeSignUpModal = () => setIsSignUpModalOpen(false);
   
+  // Use custom hook for robust scroll restoration
+  useScrollToTop();
+
   // Update page title based on current route
   useEffect(() => {
     const pathToTitle = {
