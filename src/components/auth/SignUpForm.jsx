@@ -36,7 +36,7 @@ const SignUp = ({ isOpen, onClose }) => {
   const modalRef = useRef(null);
   const isModalView = isOpen !== undefined;
   const shouldRender = isModalView ? isOpen : true;
-  const { signInUser } = useContext(AuthContext);
+  const { signInUser, handleSignupData } = useContext(AuthContext);
 
   // Calculate password strength with more detailed scoring
   const calculatePasswordStrength = useCallback((password) => {
@@ -120,6 +120,54 @@ const SignUp = ({ isOpen, onClose }) => {
     setFocusedField('');
   };
 
+  // NEW: Handle successful signup response
+  const handleSuccessfulSignup = useCallback(async (result, method = 'email') => {
+    try {
+      console.log('[SignUp] Processing successful signup:', result);
+      
+      // Handle the signup response data
+      if (result.user || result.profile) {
+        const userData = result.user || result.profile;
+        
+        // Store user data for AuthContext
+        if (signInUser) {
+          signInUser(userData);
+        }
+        
+        // Handle signup data for immediate use
+        if (handleSignupData) {
+          handleSignupData(result);
+        }
+        
+        // Show success message
+        const successMessage = result.message || 
+          (method === 'social' ? '🎉 Welcome aboard! Your account has been created successfully!' : 
+           '🎉 Welcome aboard! Your account has been created successfully!');
+           
+        toast.success(successMessage, {
+          theme: darkMode ? 'dark' : 'light',
+          position: "top-center",
+          autoClose: 3000,
+        });
+        
+        // Wait a moment to ensure auth state is updated before navigating
+        setTimeout(() => {
+          navigate('/', { replace: true });
+          if (isModalView) {
+            handleClose();
+          }
+        }, 100);
+      }
+    } catch (err) {
+      console.error('[SignUp] Error handling successful signup:', err);
+      // Still navigate on success even if there was an error processing the response
+      navigate('/', { replace: true });
+      if (isModalView) {
+        handleClose();
+      }
+    }
+  }, [signInUser, handleSignupData, darkMode, navigate, isModalView, handleClose]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -155,18 +203,11 @@ const SignUp = ({ isOpen, onClose }) => {
         confirmPassword: formData.password, // Same as password since we removed confirm field
       };
 
-      const { user } = await signUp(signupData);
+      console.log('[SignUp] Attempting email signup:', { email: signupData.email, username });
+      const result = await signUp(signupData);
       
-      if (user) {
-        toast.success('🎉 Welcome aboard! Your account has been created successfully!', {
-          theme: darkMode ? 'dark' : 'light',
-          position: "top-center",
-          autoClose: 3000,
-        });
-        navigate('/', { replace: true });
-        if (isModalView) {
-          handleClose();
-        }
+      if (result && (result.user || result.firebaseUser)) {
+        await handleSuccessfulSignup(result, 'email');
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -201,24 +242,12 @@ const SignUp = ({ isOpen, onClose }) => {
     setIsLoading(true);
     
     try {
+      console.log('[SignUp] Attempting Google signup');
       const result = await signUpWithGoogle();
-      if (result.firebaseUser) {
-        console.log('Google signup backend response:', result.backendResponse);
-        
-        if (result.backendResponse && result.backendResponse.message) {
-          toast.success(`🎉 ${result.backendResponse.message}`, {
-            theme: darkMode ? 'dark' : 'light',
-            position: "top-center",
-          });
-        } else {
-          toast.success('🎉 Welcome! Your account has been created with Google!', {
-            theme: darkMode ? 'dark' : 'light',
-            position: "top-center",
-          });
-        }
-        
-        navigate('/', { replace: true });
-        if (isModalView) handleClose();
+      
+      if (result && result.firebaseUser) {
+        console.log('[SignUp] Google signup successful:', result);
+        await handleSuccessfulSignup(result, 'social');
       }
     } catch (error) {
       console.error("Google Sign-up Error:", error);
@@ -243,24 +272,12 @@ const SignUp = ({ isOpen, onClose }) => {
     setIsLoading(true);
     
     try {
+      console.log('[SignUp] Attempting Microsoft signup');
       const result = await signUpWithMicrosoft();
-      if (result.firebaseUser) {
-        console.log('Microsoft signup backend response:', result.backendResponse);
-        
-        if (result.backendResponse && result.backendResponse.message) {
-          toast.success(`🎉 ${result.backendResponse.message}`, {
-            theme: darkMode ? 'dark' : 'light',
-            position: "top-center",
-          });
-        } else {
-          toast.success('🎉 Welcome! Your account has been created with Microsoft!', {
-            theme: darkMode ? 'dark' : 'light',
-            position: "top-center",
-          });
-        }
-        
-        navigate('/', { replace: true });
-        if (isModalView) handleClose();
+      
+      if (result && result.firebaseUser) {
+        console.log('[SignUp] Microsoft signup successful:', result);
+        await handleSuccessfulSignup(result, 'social');
       }
     } catch (error) {
       console.error("Microsoft Sign-up Error:", error);
@@ -339,7 +356,7 @@ const SignUp = ({ isOpen, onClose }) => {
         {/* First Name */}
         <div className="form-group">
           <label htmlFor="firstName" className="form-label">
-            Full Name
+            First Name
           </label>
           <input
             type="text"
