@@ -44,7 +44,10 @@ export const chatApi = {
       return {
         success: true,
         message: data.message || data.response || data.reply || 'No response content',
-        data
+        data: {
+          showBookingButton: data.showBookingButton || false,
+          ...data
+        }
       };
     } catch (error) {
       console.error('Error in chat API:', error);
@@ -55,8 +58,11 @@ export const chatApi = {
           error.message.includes('Network request failed'))) {
         return {
           success: true, // Return success to prevent UI error
-          message: "I'm currently having trouble connecting to my knowledge base. Please check your internet connection or try again later. In the meantime, you can browse our website for information about AI Waverider's services and offerings.",
-          isFallback: true
+          message: "I'm currently having trouble connecting to my knowledge base. Please check your internet connection or try again later. In the meantime, you can browse our website for information about AI Waverider's AI business training programs and services.",
+          isFallback: true,
+          data: {
+            showBookingButton: false
+          }
         };
       }
       
@@ -64,7 +70,10 @@ export const chatApi = {
       return {
         success: false,
         message: error.message || 'Failed to get response from chat API',
-        error
+        error,
+        data: {
+          showBookingButton: false
+        }
       };
     }
   },
@@ -106,6 +115,39 @@ export const chatApi = {
       return {
         success: false,
         message: error.response?.data?.message || error.message || 'Failed to clear chat history',
+        error
+      };
+    }
+  },
+
+  /**
+   * Test the chat API connection
+   * @returns {Promise} - Promise that resolves to the connection status
+   */
+  testConnection: async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/chat/health`, {
+        method: 'GET',
+        headers: await getAuthHeaders(),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Health check failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return {
+        success: true,
+        status: data.status || 'healthy',
+        message: data.message || 'Chat API is working properly'
+      };
+    } catch (error) {
+      console.error('Error testing chat API connection:', error);
+      return {
+        success: false,
+        status: 'error',
+        message: error.message || 'Failed to connect to chat API',
         error
       };
     }
