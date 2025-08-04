@@ -6,12 +6,13 @@
 
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import unipayService from './unipayService';
 
 // API URL from environment or fallback
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 /**
- * Process a digital wallet payment (Apple Pay or Google Pay)
+ * Process a digital wallet payment (Apple Pay or Google Pay) through UniPay
  * @param {string} walletType - The type of wallet ('apple' or 'google')
  * @param {Object} paymentData - The payment data from the wallet
  * @param {Object} orderDetails - Order details including amount, currency, items
@@ -20,22 +21,41 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
  */
 export const processWalletPayment = async (walletType, paymentData, orderDetails, email) => {
   try {
-    const endpoint = walletType === 'apple' 
-      ? '/api/payments/process-apple-pay'
-      : '/api/payments/process-google-pay';
+    console.log(`Processing ${walletType} Pay payment through UniPay`);
     
-    const response = await axios.post(endpoint, {
-      paymentData,
-      orderDetails,
-      email
-    });
-    
-    return response.data;
+    if (walletType === 'google') {
+      // Process Google Pay through UniPay
+      const result = await unipayService.processGooglePay({
+        paymentData,
+        amount: orderDetails.amount,
+        currency: orderDetails.currency || 'USD',
+        email,
+        items: orderDetails.items || [],
+        metadata: {
+          source: 'google_pay_wallet',
+          orderId: orderDetails.orderId || `order_${Date.now()}`
+        }
+      });
+      
+      return {
+        success: result.success,
+        paymentId: result.paymentId,
+        orderId: result.orderId,
+        status: result.status,
+        transactionId: result.transactionId,
+        provider: 'unipay'
+      };
+    } else if (walletType === 'apple') {
+      // Apple Pay - for future implementation through UniPay
+      throw new Error('Apple Pay through UniPay is not yet implemented');
+    } else {
+      throw new Error(`Unsupported wallet type: ${walletType}`);
+    }
   } catch (error) {
     console.error(`${walletType} Pay payment processing failed:`, error);
     
     // Standardize the error format
-    const errorMessage = error.response?.data?.message || error.message || 'Payment processing failed';
+    const errorMessage = error.message || 'Payment processing failed';
     throw new Error(errorMessage);
   }
 };
@@ -92,17 +112,22 @@ export const handlePaymentError = (error, paymentMethod, onError) => {
 };
 
 /**
- * Get available payment methods based on country code
+ * Get available payment methods based on country code through UniPay
  * @param {string} countryCode - Two-letter country code
  * @returns {Promise<Object>} - Available payment methods
  */
 export const getPaymentMethodsForCountry = async (countryCode) => {
   try {
-    const response = await axios.get(`${API_URL}/api/payments/methods?country=${countryCode}`);
-    return response.data;
+    const methods = await unipayService.getPaymentMethods(countryCode);
+    return methods;
   } catch (error) {
-    console.error('Error fetching payment methods:', error);
-    return { error: error.message };
+    console.error('Error fetching UniPay payment methods:', error);
+    return { 
+      success: false,
+      error: error.message,
+      methods: ['card', 'paypal', 'google_pay'], // Default fallback
+      countryCode
+    };
   }
 };
 
@@ -134,13 +159,9 @@ export const getCurrencyForCountry = (countryCode) => {
 export const PAYMENT_METHODS = {
   CARD: 'card',
   PAYPAL: 'paypal',
-  IDEAL: 'ideal',
   SEPA: 'sepa',
-  UPI: 'upi',
-  APPLE_PAY: 'apple_pay',
   GOOGLE_PAY: 'google_pay',
-  CRYPTO: 'crypto',
-  AFTERPAY: 'afterpay',
+  APPLE_PAY: 'apple_pay', // For future implementation
 };
 
 /**
