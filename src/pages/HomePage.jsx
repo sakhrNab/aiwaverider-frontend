@@ -737,7 +737,7 @@ const HomePage = () => {
             {/* Option 2: Exit This Page */}
             <div className="bg-white rounded-3xl shadow-xl p-10 border-2 border-gray-100 transform transition-transform hover:scale-105">
               <h3 className="text-3xl font-bold mb-8">
-                <span className="text-gray-900">Option 2:</span> <span className="text-gray-500">Go It Alone</span>
+                <span className="text-gray-900">Option 2:</span> <span className="text-gray-500">Do It Alone</span>
                     </h3>
               
               <div className="space-y-6">

@@ -777,6 +777,7 @@ input[type="text"]:focus {
   border-radius: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  min-height: 120px;
 }
 
 .ai-tool-card:hover {
@@ -836,6 +837,15 @@ input[type="text"]:focus {
   
   .ai-tool-title {
     font-size: 1rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.3;
+    max-height: 2.6em;
+    margin: 0 0 0.5rem 0;
+    word-wrap: break-word;
+    hyphens: auto;
   }
   
   .ai-tool-description {
@@ -863,6 +873,15 @@ input[type="text"]:focus {
   
   .ai-tool-title {
     font-size: 0.9rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.3;
+    max-height: 2.6em;
+    margin: 0 0 0.5rem 0;
+    word-wrap: break-word;
+    hyphens: auto;
   }
   
   .ai-tool-description {
@@ -889,6 +908,9 @@ input[type="text"]:focus {
 .ai-tool-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .ai-tool-title {
@@ -896,10 +918,17 @@ input[type="text"]:focus {
   font-size: 1.125rem;
   color: rgba(255, 255, 255, 0.9);
   transition: color 0.3s ease;
-  margin: 0;
-  white-space: nowrap;
+  margin: 0 0 0.5rem 0;
+  white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+  max-height: 2.6em;
+  word-wrap: break-word;
+  hyphens: auto;
 }
 
 .ai-tool-card:hover .ai-tool-title {

@@ -44,6 +44,7 @@ const useAIToolsStore = create((set, get) => ({
         // If cache is valid and not expired, use it without fetching
         const isCacheValid = !get().isCacheExpired(cachedData.timestamp);
         
+        // No filtering needed - backend already returns only AI tools
         set({
           tools: cachedData.tools,
           isLoaded: true,
@@ -123,6 +124,7 @@ const useAIToolsStore = create((set, get) => ({
       if (!skipCache) {
         const cachedData = get().loadFromCache();
         if (cachedData && !get().isCacheExpired(cachedData.timestamp)) {
+          // No filtering needed - cached data already contains only AI tools
           set({
             tools: cachedData.tools,
             isLoaded: true,
@@ -141,16 +143,18 @@ const useAIToolsStore = create((set, get) => ({
       if (isOnline) {
         try {
           // Use aiToolsService to fetch tools when online
-          // The forceRefresh parameter will be true when skipCache is true
+          // The API already returns only AI tools (no prompts), so no filtering needed
           toolsData = await getAllAITools(skipCache);
-          console.log('Fetched AI tools from API (online)');
+          
+          console.log(`Fetched AI tools from API (online): ${toolsData.length} tools`);
         } catch (error) {
           console.error('Error fetching from API, falling back to offline data:', error);
           // If API fetch fails, try to load from IndexedDB
           const offlineData = await get().loadFromIndexedDB();
           if (offlineData && offlineData.length > 0) {
+            // No filtering needed - IndexedDB already contains only AI tools
             toolsData = offlineData;
-            console.log('Loaded from IndexedDB after API failure');
+            console.log('Loaded from IndexedDB after API failure:', toolsData.length);
           }
         }
       } else {
@@ -158,6 +162,7 @@ const useAIToolsStore = create((set, get) => ({
         console.log('Device is offline, using IndexedDB data');
         const offlineData = await get().loadFromIndexedDB();
         if (offlineData && offlineData.length > 0) {
+          // No filtering needed - IndexedDB already contains only AI tools
           toolsData = offlineData;
           set({ error: 'Currently in offline mode. Data may not be up to date.' });
         }
@@ -165,7 +170,7 @@ const useAIToolsStore = create((set, get) => ({
 
       // If we couldn't get data from either source
       if (!toolsData || toolsData.length === 0) {
-        console.log('No data available from any source, showing empty state');
+        console.log('No AI tools data available from any source, showing empty state');
         set({
           isLoading: false,
           error: isOnline ? 'Failed to load AI tools data' : 'No offline data available'
@@ -203,7 +208,7 @@ const useAIToolsStore = create((set, get) => ({
         }
       });
 
-      // Update the cache
+      // Update the cache - now only saving pure AI tools data
       get().saveToCache(toolsData);
       console.log('Fetched AI tools from API:', toolsData.length);
       
@@ -224,7 +229,7 @@ const useAIToolsStore = create((set, get) => ({
     try {
       // Don't update cache if tools array is empty
       if (!tools || tools.length === 0) {
-        console.log('Skipping cache update - no tools to cache');
+        console.log('Skipping cache update - no AI tools to cache');
         return;
       }
       
@@ -250,7 +255,7 @@ const useAIToolsStore = create((set, get) => ({
       // Also save to IndexedDB for offline support
       get().saveToIndexedDB(tools);
       
-      console.log(`Updated cache with ${tools.length} tools`);
+      console.log(`Updated AI tools cache with ${tools.length} tools`);
     } catch (error) {
       console.error('Error saving AI tools to cache:', error);
     }
@@ -295,7 +300,7 @@ const useAIToolsStore = create((set, get) => ({
         
         // Handle transaction completion
         transaction.oncomplete = () => {
-          console.log(`Saved ${tools.length} tools to IndexedDB for offline use`);
+          console.log(`Saved ${tools.length} AI tools to IndexedDB for offline use`);
         };
         
         // Handle transaction errors
@@ -315,7 +320,7 @@ const useAIToolsStore = create((set, get) => ({
   
   // Load from IndexedDB when offline
   loadFromIndexedDB: () => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       try {
         // Check if IndexedDB is supported
         if (!window.indexedDB) {
@@ -349,21 +354,19 @@ const useAIToolsStore = create((set, get) => ({
           getAllRequest.onsuccess = () => {
             const tools = getAllRequest.result;
             if (tools && tools.length > 0) {
-              console.log(`Loaded ${tools.length} tools from IndexedDB (offline)`);
+              console.log(`Loaded ${tools.length} AI tools from IndexedDB (offline)`);
               resolve(tools);
             } else {
               resolve(null);
             }
           };
           
-          getAllRequest.onerror = (error) => {
-            console.error('Error loading from IndexedDB:', error);
+          getAllRequest.onerror = () => {
             resolve(null);
           };
         };
         
-        request.onerror = (error) => {
-          console.error('Error opening IndexedDB:', error);
+        request.onerror = () => {
           resolve(null);
         };
       } catch (error) {

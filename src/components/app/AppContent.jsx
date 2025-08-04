@@ -1,4 +1,3 @@
-// src/components/AppContent.jsx
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import '../../styles/globals.css'; // Tailwind global styles
@@ -12,6 +11,7 @@ import CookieConsent from '../common/CookieConsent';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import ErrorBoundary from '../common/ErrorBoundary';
 import PageTitle from '../common/PageTitle';
+import useScrollToTop from '../../hooks/useScrollToTop';
 
 const AppContent = () => {
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
@@ -24,12 +24,16 @@ const AppContent = () => {
   const openSignUpModal = () => setIsSignUpModalOpen(true);
   const closeSignUpModal = () => setIsSignUpModalOpen(false);
   
+  // Use custom hook for robust scroll restoration
+  useScrollToTop();
+
   // Update page title based on current route
   useEffect(() => {
     const pathToTitle = {
       '/': 'AI Waverider - AI Agents & Tools Marketplace',
       '/agents': 'AI Agents - AI Waverider',
       '/ai-tools': 'AI Tools - AI Waverider',
+      '/prompts': 'AI Prompts - AI Waverider',
       '/about': 'About Us - AI Waverider',
       '/videos': 'Videos - AI Waverider',
       '/latest-tech': 'Latest Technology - AI Waverider',
@@ -49,7 +53,30 @@ const AppContent = () => {
       '/checkout/success': 'Order Success - AI Waverider'
     };
 
-    const currentTitle = pathToTitle[location.pathname] || 'AI Waverider';
+    // Handle dynamic routes
+    let currentTitle = pathToTitle[location.pathname];
+    
+    // Handle prompt detail pages
+    if (!currentTitle && location.pathname.startsWith('/prompts/')) {
+      currentTitle = 'Prompt Details - AI Waverider';
+    }
+    
+    // Handle admin routes
+    if (!currentTitle && location.pathname.startsWith('/admin')) {
+      if (location.pathname.includes('/prompts')) {
+        currentTitle = 'Admin - Manage Prompts - AI Waverider';
+      } else if (location.pathname.includes('/ai-tools')) {
+        currentTitle = 'Admin - Manage AI Tools - AI Waverider';
+      } else {
+        currentTitle = 'Admin Panel - AI Waverider';
+      }
+    }
+    
+    // Default fallback
+    if (!currentTitle) {
+      currentTitle = 'AI Waverider';
+    }
+    
     setPageTitle(currentTitle);
     
     // Also update the document title directly for better SEO
