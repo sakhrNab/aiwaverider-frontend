@@ -33,7 +33,7 @@ import '../../styles/animations.css'; // Import animations
 import { motion, AnimatePresence } from 'framer-motion'; // For subtle animations
 
 const Header = ({ openSignUpModal }) => {
-  const { user, signOut } = useContext(AuthContext);
+  const { user, signOut, loading } = useContext(AuthContext);
   const { cart, itemCount } = useCart();
   const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
@@ -228,6 +228,35 @@ const Header = ({ openSignUpModal }) => {
   // Toggle profile dropdown
   const toggleProfileDropdown = () => {
     setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
+  // Helper function to get user display name
+  const getUserDisplayName = () => {
+    if (!user) return null;
+    return user.displayName || user.firstName || user.email?.split('@')[0] || 'User';
+  };
+
+  // Helper function to get user avatar
+  const getUserAvatar = () => {
+    if (!user) return null;
+    
+    if (user.photoURL && user.photoURL !== '/default-avatar.png') {
+      return user.photoURL;
+    }
+    
+    return null;
+  };
+
+  // Helper function to get user initials
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    
+    const displayName = getUserDisplayName();
+    if (displayName && displayName.length > 0) {
+      return displayName.charAt(0).toUpperCase();
+    }
+    
+    return user.email?.charAt(0).toUpperCase() || 'U';
   };
 
   return (
@@ -428,14 +457,28 @@ const Header = ({ openSignUpModal }) => {
               className="profile-btn flex items-center space-x-1 hover:bg-gray-100/10 rounded-full transition-all duration-200"
               aria-label="Profile options"
               aria-expanded={profileDropdownOpen}
+              disabled={loading}
             >
               {/* Profile Image/Avatar */}
               <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-indigo-300/50 hover:border-indigo-300 transition-colors duration-200 flex items-center justify-center">
-                {user && user.photoURL ? (
-                  <img src={user.photoURL || '/default-avatar.png'} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                {loading ? (
+                  <div className="w-full h-full bg-gradient-to-r from-gray-400 to-gray-500 flex items-center justify-center text-xs text-white font-medium animate-pulse">
+                    <FaUser />
+                  </div>
+                ) : user && getUserAvatar() ? (
+                  <img 
+                    src={getUserAvatar()} 
+                    alt={getUserDisplayName() || 'User'} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.warn('[Header] Profile image failed to load:', e.target.src);
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-xs text-white font-medium">
-                    {user ? (user.displayName?.charAt(0) || user.email?.charAt(0) || 'U') : <FaUser />}
+                    {user ? getUserInitials() : <FaUser />}
                   </div>
                 )}
               </div>
@@ -456,7 +499,7 @@ const Header = ({ openSignUpModal }) => {
                       {/* User Info */}
                       <div className="px-4 py-3 border-b border-gray-200/10 text-center">
                         <div className="font-medium text-white truncate">
-                          {user.displayName || user.email?.split('@')[0] || 'User'}
+                          {getUserDisplayName()}
                         </div>
                         <div className="text-xs text-gray-300 truncate">{user.email}</div>
                       </div>
@@ -624,20 +667,6 @@ const Header = ({ openSignUpModal }) => {
                   <FaInfoCircle className="mr-3" /> About
                 </Link>
               </li>
-              {/* <li className="mobile-nav-item">
-                <Link
-                  to="/checkout"
-                  className="block px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-teal-600 flex items-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <FaShoppingCart className="mr-3" /> Cart {itemCount > 0 ? `(${itemCount})` : ''}
-                </Link>
-              </li> */}
-              
-              {/* Removed Dark/Light mode toggle from mobile menu as it's now always visible in header */}
-              
-              {/* Mobile-only auth options */}
-
             </ul>
           </nav>
         </div>

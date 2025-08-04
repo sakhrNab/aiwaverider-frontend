@@ -95,6 +95,34 @@ export const AuthProvider = ({ children }) => {
     }
   }, [getCacheKey]);
 
+  // NEW: Function to handle signup data and set user immediately
+  const handleSignupData = useCallback((signupResponse) => {
+    try {
+      console.log('[AuthContext] Processing signup response:', signupResponse);
+      
+      if (signupResponse && (signupResponse.user || signupResponse.profile)) {
+        const userData = signupResponse.user || signupResponse.profile;
+        const uid = userData.uid;
+        
+        // Cache the profile data immediately
+        setInCache('profile', uid, userData);
+        
+        // Store user info temporarily for auth state change handler
+        const userInfo = {
+          ...userData,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('currentUserInfo', JSON.stringify(userInfo));
+        
+        console.log('[AuthContext] Stored signup data for immediate use');
+        return userData;
+      }
+    } catch (err) {
+      console.error('[AuthContext] Error processing signup data:', err);
+    }
+    return null;
+  }, [setInCache]);
+
   // Fetch user profile with improved caching
   const fetchUserProfile = useCallback(async (uid, force = false) => {
     try {
@@ -189,7 +217,7 @@ export const AuthProvider = ({ children }) => {
           console.log('[AuthContext] Auth state change detected - User signed in:', firebaseUser.email);
           const { uid, email } = firebaseUser;
           
-          // Check for any potentially saved info from the sign-in process
+          // Check for any potentially saved info from the sign-in/signup process
           let currentUserInfo = null;
           try {
             const savedUserInfo = localStorage.getItem('currentUserInfo');
@@ -199,6 +227,8 @@ export const AuthProvider = ({ children }) => {
               if (parsedInfo.uid === uid && (Date.now() - parsedInfo.timestamp) < 5 * 60 * 1000) {
                 currentUserInfo = parsedInfo;
                 console.log('[AuthContext] Found recent sign-in data for current user');
+                // Clean up the temporary storage
+                localStorage.removeItem('currentUserInfo');
               } else {
                 // Remove stale data
                 localStorage.removeItem('currentUserInfo');
@@ -213,80 +243,95 @@ export const AuthProvider = ({ children }) => {
             const idToken = await firebaseUser.getIdToken(true);
             localStorage.setItem('authToken', idToken);
             console.log('[AuthContext] Firebase token refreshed and stored');
-            
-            // Add extra debugging for the token
-            try {
-              const tokenPayload = JSON.parse(atob(idToken.split('.')[1]));
-              console.log('[AuthContext] Token exp:', new Date(tokenPayload.exp * 1000).toLocaleString());
-              console.log('[AuthContext] Token iat:', new Date(tokenPayload.iat * 1000).toLocaleString());
-              console.log('[AuthContext] Token auth_time:', new Date(tokenPayload.auth_time * 1000).toLocaleString());
-            } catch (e) {
-              console.error('[AuthContext] Could not decode token for debugging:', e);
-            }
           } catch (tokenError) {
             console.error('[AuthContext] Error getting Firebase token:', tokenError);
           }
           
-          // For new sign-ins, always clear all caches for this user to ensure we get fresh data
-          if (currentUserInfo) {
-            console.log('[AuthContext] This appears to be a new sign-in, clearing all caches');
-            clearCache('profile', uid);
-          }
+          // Priority 1: Use signup/signin data if available (most recent and complete)
+          let userProfile = currentUserInfo;
+          let needsFreshData = false;
           
-          // Try to get profile from Firestore directly (faster than API call)
-          let userProfile = null;
-          let needsFreshData = true;
-          
-          try {
-            console.log('[AuthContext] Fetching user profile from Firestore');
-            const userDoc = await db.collection('users').doc(uid).get();
-            if (userDoc.exists) {
-              userProfile = userDoc.data();
-              // Cache this data with a fresh timestamp
-              setInCache('profile', uid, userProfile);
-              needsFreshData = false;
-              console.log('[AuthContext] Found user profile in Firestore');
-            } else {
-              console.warn('[AuthContext] No user profile found in Firestore');
+          if (userProfile) {
+            console.log('[AuthContext] Using recent signup/signin data');
+            setInCache('profile', uid, userProfile);
+          } else {
+            // Priority 2: Try to get profile from Firestore directly (faster than API call)
+            try {
+              console.log('[AuthContext] Fetching user profile from Firestore');
+              
+              // Add a small delay to allow backend processing to complete
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              const userDoc = await db.collection('users').doc(uid).get();
+              if (userDoc.exists) {
+                userProfile = userDoc.data();
+                // Cache this data with a fresh timestamp
+                setInCache('profile', uid, userProfile);
+                console.log('[AuthContext] Found user profile in Firestore');
+              } else {
+                console.warn('[AuthContext] No user profile found in Firestore');
+                
+                // Wait a bit longer and try again (for new signups)
+                console.log('[AuthContext] Retrying Firestore lookup after delay...');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const retryDoc = await db.collection('users').doc(uid).get();
+                if (retryDoc.exists) {
+                  userProfile = retryDoc.data();
+                  setInCache('profile', uid, userProfile);
+                  console.log('[AuthContext] Found user profile in Firestore on retry');
+                } else {
+                  console.warn('[AuthContext] Still no user profile found after retry');
+                  needsFreshData = true;
+                }
+              }
+            } catch (dbErr) {
+              console.error('[AuthContext] Error fetching from Firestore:', dbErr);
+              needsFreshData = true;
             }
-          } catch (dbErr) {
-            console.error('[AuthContext] Error fetching from Firestore:', dbErr);
-            needsFreshData = true;
-          }
 
-          // Only use cached data as a last resort if Firestore lookup failed
-          if (!userProfile) {
-            userProfile = getFromCache('profile', uid);
-            if (userProfile) {
-              console.log('[AuthContext] Using cached profile as fallback');
-              needsFreshData = true; // Still mark as needing fresh data
+            // Priority 3: Use cached data as fallback if Firestore lookup failed
+            if (!userProfile) {
+              userProfile = getFromCache('profile', uid);
+              if (userProfile) {
+                console.log('[AuthContext] Using cached profile as fallback');
+                needsFreshData = true; // Still mark as needing fresh data
+              }
             }
           }
 
           // Set user with available data
-          setUser({
+          const finalUserData = {
             uid,
             email,
             displayName: userProfile?.displayName || firebaseUser.displayName || email.split('@')[0],
             photoURL: userProfile?.photoURL || firebaseUser.photoURL || '/default-avatar.png',
             role: userProfile?.role || 'authenticated',
             ...(userProfile || {})
-          });
+          };
           
-          // If we need fresh data, fetch it in the background
-          if (needsFreshData) {
+          setUser(finalUserData);
+          
+          // If we need fresh data and don't have recent signup data, fetch it in the background
+          if (needsFreshData && !currentUserInfo) {
             console.log('[AuthContext] Fetching fresh profile data in background');
-            fetchUserProfile(uid).then(freshProfile => {
-              if (freshProfile) {
-                setUser(prev => ({ ...prev, ...freshProfile }));
-              }
-            }).catch(err => {
-              console.error('[AuthContext] Background profile fetch error:', err);
-            });
+            
+            // Add delay before API call to give backend time to process
+            setTimeout(() => {
+              fetchUserProfile(uid).then(freshProfile => {
+                if (freshProfile) {
+                  setUser(prev => ({ ...prev, ...freshProfile }));
+                }
+              }).catch(err => {
+                console.error('[AuthContext] Background profile fetch error:', err);
+              });
+            }, 3000); // 3 second delay
           }
         } else {
           setUser(null);
           clearCache();
+          // Clean up temporary storage on logout
+          localStorage.removeItem('currentUserInfo');
         }
       } catch (err) {
         console.error('[AuthContext] Error in auth state change:', err);
@@ -305,11 +350,33 @@ export const AuthProvider = ({ children }) => {
       await auth.signOut();
       setUser(null);
       clearCache();
+      // Clean up temporary storage
+      localStorage.removeItem('currentUserInfo');
+      localStorage.removeItem('authToken');
     } catch (err) {
       console.error('[AuthContext] Error signing out:', err);
       setError(err.message);
     }
   }, [clearCache]);
+
+  // Sign in user with profile data (for use by auth functions)
+  const signInUser = useCallback((userData) => {
+    try {
+      console.log('[AuthContext] Sign in user called with data:', userData);
+      
+      if (userData && userData.uid) {
+        // Store the user data for the auth state change handler
+        const userInfo = {
+          ...userData,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('currentUserInfo', JSON.stringify(userInfo));
+        console.log('[AuthContext] Stored user info for auth state change');
+      }
+    } catch (err) {
+      console.error('[AuthContext] Error in signInUser:', err);
+    }
+  }, []);
 
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
@@ -320,8 +387,10 @@ export const AuthProvider = ({ children }) => {
     fetchUserProfile,
     updateUserProfile,
     signOut,
+    signInUser, // NEW: Add signInUser function
+    handleSignupData, // NEW: Add handleSignupData function
     clearProfileCache: (uid) => clearCache('profile', uid)
-  }), [user, loading, error, fetchUserProfile, updateUserProfile, signOut, clearCache]);
+  }), [user, loading, error, fetchUserProfile, updateUserProfile, signOut, signInUser, handleSignupData, clearCache]);
 
   return (
     <AuthContext.Provider value={contextValue}>

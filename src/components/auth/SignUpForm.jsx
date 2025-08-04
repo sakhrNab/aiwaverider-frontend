@@ -3,192 +3,94 @@
 import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import ReactPhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
-import './signup.css'; // Import the signup.css
-import { signUp, signUpWithGoogle, signUpWithMicrosoft } from '../../api/auth/authApi'; // Import auth functions
-import { uploadProfileImage } from '../../api/user/profileApi'; // Import profile functions
-import { AuthContext } from '../../contexts/AuthContext'; // Import AuthContext
+import './signup.css';
+import { signUp, signUpWithGoogle, signUpWithMicrosoft } from '../../api/auth/authApi';
+import { AuthContext } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext'; // Import theme context
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle, faMicrosoft } from '@fortawesome/free-brands-svg-icons';
-import debounce from 'lodash.debounce';
+import { faEye, faEyeSlash, faStar } from '@fortawesome/free-solid-svg-icons';
 import { validateEmail } from '../../utils/emailValidator';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
-// Define PasswordRequirements outside of SignUp for effective memoization
-const PasswordRequirements = React.memo(({ validation }) => (
-  <div className="text-sm text-gray-700 dark:text-gray-300 mt-2 space-y-1">
-    <p>
-      <span className={validation.hasLength ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-        {validation.hasLength ? '✓' : '✗'}
-      </span>{' '}
-      At least 8 characters
-    </p>
-    <p>
-      <span className={validation.hasUpper ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-        {validation.hasUpper ? '✓' : '✗'}
-      </span>{' '}
-      At least one uppercase letter
-    </p>
-    <p>
-      <span className={validation.hasLower ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-        {validation.hasLower ? '✓' : '✗'}
-      </span>{' '}
-      At least one lowercase letter
-    </p>
-    <p>
-      <span className={validation.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-        {validation.hasNumber ? '✓' : '✗'}
-      </span>{' '}
-      At least one number
-    </p>
-    <p>
-      <span className={validation.hasSpecial ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-        {validation.hasSpecial ? '✓' : '✗'}
-      </span>{' '}
-      At least one special character (@$!%*?&)
-    </p>
-    <p>
-      <span className={validation.passwordsMatch ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-        {validation.passwordsMatch ? '✓' : '✗'}
-      </span>{' '}
-      Passwords match
-    </p>
-  </div>
-));
-
-PasswordRequirements.propTypes = {
-  validation: PropTypes.shape({
-    hasLength: PropTypes.bool.isRequired,
-    hasUpper: PropTypes.bool.isRequired,
-    hasLower: PropTypes.bool.isRequired,
-    hasNumber: PropTypes.bool.isRequired,
-    hasSpecial: PropTypes.bool.isRequired,
-    passwordsMatch: PropTypes.bool.isRequired,
-  }).isRequired,
-};
-
-// Define PasswordInput outside of SignUp and memoize it
-const PasswordInput = React.memo(({ password, onChange, validation }) => (
-  <div className="form-group">
-    <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-    <input
-      type="password"
-      id="password"
-      name="password"
-      required
-      aria-required="true"
-      value={password}
-      onChange={onChange}
-      className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-      placeholder="Enter your password"
-    />
-    <PasswordRequirements validation={validation} />
-  </div>
-));
-
-PasswordInput.propTypes = {
-  password: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  validation: PropTypes.shape({
-    hasLength: PropTypes.bool.isRequired,
-    hasUpper: PropTypes.bool.isRequired,
-    hasLower: PropTypes.bool.isRequired,
-    hasNumber: PropTypes.bool.isRequired,
-    hasSpecial: PropTypes.bool.isRequired,
-  }).isRequired,
-};
-
 const SignUp = ({ isOpen, onClose }) => {
-  // Define a default no-op function to prevent errors when onClose is undefined
   const noop = () => {};
-
   const handleClose = isOpen !== undefined ? onClose : noop;
+  const { darkMode } = useTheme(); // Get current theme
 
   const [formData, setFormData] = useState({
-    username: '',
     firstName: '',
-    lastName: '',
     email: '',
-    phoneNumber: '',
     password: '',
-    confirmPassword: '',
   });
+
   const [error, setError] = useState('');
-  const [passwordValidation, setPasswordValidation] = useState({
-    isValid: false,
-    hasLength: false,
-    hasUpper: false,
-    hasLower: false,
-    hasNumber: false,
-    hasSpecial: false,
-    passwordsMatch: false,
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
   const [emailError, setEmailError] = useState('');
-  const [emailWarning, setEmailWarning] = useState('');
+  const [focusedField, setFocusedField] = useState('');
+  
   const navigate = useNavigate();
   const modalRef = useRef(null);
-  const [profileImage, setProfileImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-
-  // If isOpen is undefined, that means we're on /sign-up as a "page" rather than a modal.
   const isModalView = isOpen !== undefined;
-
-  // Decide if the SignUp component should render.
-  // - If it's a modal scenario, only render if `isOpen` is true.
-  // - If it's a normal page scenario, always render.
   const shouldRender = isModalView ? isOpen : true;
-  const { signInUser } = useContext(AuthContext);
+  const { signInUser, handleSignupData } = useContext(AuthContext);
 
+  // Calculate password strength with more detailed scoring
+  const calculatePasswordStrength = useCallback((password) => {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++; // Bonus for longer passwords
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    return Math.min(strength, 5); // Cap at 5
+  }, []);
+
+  const getStrengthData = (strength) => {
+    switch (strength) {
+      case 0:
+      case 1:
+        return { class: 'strength-weak', text: 'Weak', textClass: 'strength-weak-text' };
+      case 2:
+        return { class: 'strength-fair', text: 'Fair', textClass: 'strength-fair-text' };
+      case 3:
+      case 4:
+        return { class: 'strength-good', text: 'Good', textClass: 'strength-good-text' };
+      case 5:
+        return { class: 'strength-strong', text: 'Strong', textClass: 'strength-strong-text' };
+      default:
+        return { class: 'strength-weak', text: 'Weak', textClass: 'strength-weak-text' };
+    }
+  };
+
+  // Handle modal outside click
   useEffect(() => {
-    if (!isModalView) return; // If this is a normal page view, skip the outside-click logic
+    if (!isModalView) return;
 
-    // Close the modal if clicking outside
     const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
         handleClose();
       }
     };
 
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape') {
+        handleClose();
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscapeKey);
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [handleClose, isModalView]);
-
-  // Update the validatePassword function to not trigger re-renders
-  const validatePassword = useCallback((password, confirmPassword) => {
-    const validation = {
-      hasLength: password.length >= 8,
-      hasUpper: /[A-Z]/.test(password),
-      hasLower: /[a-z]/.test(password),
-      hasNumber: /\d/.test(password),
-      hasSpecial: /[@$!%*?&]/.test(password),
-      passwordsMatch: password === confirmPassword,
-    };
-    validation.isValid = validation.hasLength && 
-                        validation.hasUpper && 
-                        validation.hasLower && 
-                        validation.hasNumber && 
-                        validation.hasSpecial &&
-                        validation.passwordsMatch;
-    setPasswordValidation(validation);
-  }, []);
-
-  // Use debounce for password validation
-  const debouncedValidatePassword = useCallback(
-    debounce((password, confirmPassword) => validatePassword(password, confirmPassword), 100),
-    [validatePassword]
-  );
-
-  // Clean up debounce on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      debouncedValidatePassword.cancel();
-    };
-  }, [debouncedValidatePassword]);
 
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -197,532 +99,445 @@ const SignUp = ({ isOpen, onClose }) => {
       [name]: value,
     }));
     
-    if (name === 'password' || name === 'confirmPassword') {
-      const newFormData = {
-        ...formData,
-        [name]: value
-      };
-      debouncedValidatePassword(
-        name === 'password' ? value : newFormData.password,
-        name === 'confirmPassword' ? value : newFormData.confirmPassword
-      );
+    if (name === 'password') {
+      setPasswordStrength(calculatePasswordStrength(value));
     }
-  }, [debouncedValidatePassword, formData]);
-
-  const handlePhoneChange = (value) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      phoneNumber: value,
-    }));
-  };
+  }, [calculatePasswordStrength]);
 
   const handleEmailChange = (e) => {
     const { value } = e.target;
     const validation = validateEmail(value);
     
     setEmailError(validation.isValid ? '' : validation.message);
-    setEmailWarning(validation.warning || '');
-    
     handleInputChange(e);
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImage(file);
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleFocus = (fieldName) => {
+    setFocusedField(fieldName);
   };
+
+  const handleBlur = () => {
+    setFocusedField('');
+  };
+
+  // NEW: Handle successful signup response
+  const handleSuccessfulSignup = useCallback(async (result, method = 'email') => {
+    try {
+      console.log('[SignUp] Processing successful signup:', result);
+      
+      // Handle the signup response data
+      if (result.user || result.profile) {
+        const userData = result.user || result.profile;
+        
+        // Store user data for AuthContext
+        if (signInUser) {
+          signInUser(userData);
+        }
+        
+        // Handle signup data for immediate use
+        if (handleSignupData) {
+          handleSignupData(result);
+        }
+        
+        // Show success message
+        const successMessage = result.message || 
+          (method === 'social' ? '🎉 Welcome aboard! Your account has been created successfully!' : 
+           '🎉 Welcome aboard! Your account has been created successfully!');
+           
+        toast.success(successMessage, {
+          theme: darkMode ? 'dark' : 'light',
+          position: "top-center",
+          autoClose: 3000,
+        });
+        
+        // Wait a moment to ensure auth state is updated before navigating
+        setTimeout(() => {
+          navigate('/', { replace: true });
+          if (isModalView) {
+            handleClose();
+          }
+        }, 100);
+      }
+    } catch (err) {
+      console.error('[SignUp] Error handling successful signup:', err);
+      // Still navigate on success even if there was an error processing the response
+      navigate('/', { replace: true });
+      if (isModalView) {
+        handleClose();
+      }
+    }
+  }, [signInUser, handleSignupData, darkMode, navigate, isModalView, handleClose]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     try {
       // Validate email
       const emailValidation = validateEmail(formData.email);
       if (!emailValidation.isValid) {
         setError(emailValidation.message);
+        setIsLoading(false);
         return;
       }
 
-      // Validate password
-      if (!passwordValidation.isValid) {
-        setError('Please ensure your password meets all requirements');
+      // Validate password strength (at least fair)
+      if (passwordStrength < 2) {
+        setError('Please create a stronger password with at least 8 characters');
+        setIsLoading(false);
         return;
       }
 
-      // Attempt signup
-      const { user } = await signUp(formData);
+      // Generate username from email
+      const username = `user_${formData.email.split('@')[0]}_${Date.now().toString().slice(-4)}`;
+
+      // Prepare signup data with generated/default values
+      const signupData = {
+        username: username,
+        firstName: formData.firstName,
+        lastName: '', // Will be collected later in onboarding
+        email: formData.email,
+        phoneNumber: '', // Will be collected later in onboarding  
+        password: formData.password,
+        confirmPassword: formData.password, // Same as password since we removed confirm field
+      };
+
+      console.log('[SignUp] Attempting email signup:', { email: signupData.email, username });
+      const result = await signUp(signupData);
       
-      // Upload profile image if selected
-      if (profileImage && user) {
-        try {
-          await uploadProfileImage(profileImage);
-        } catch (imageError) {
-          console.error('Error uploading profile image:', imageError);
-          // Don't fail the signup if image upload fails
-          toast.error('Profile created but image upload failed');
-        }
-      }
-      
-      if (user) {
-        toast.success('Account created successfully!');
-        navigate('/');
-        if (isModalView) {
-          handleClose();
-        }
+      if (result && (result.user || result.firebaseUser)) {
+        await handleSuccessfulSignup(result, 'email');
       }
     } catch (error) {
       console.error('Signup error:', error);
       
-      // Handle Firebase specific errors
+      // Handle specific errors with better messaging
       switch (error.code) {
         case 'auth/email-already-in-use':
-          setError('An account with this email already exists');
+          setError('This email is already registered. Try signing in instead or use a different email.');
           break;
         case 'auth/invalid-email':
           setError('Please enter a valid email address');
           break;
         case 'auth/weak-password':
-          setError('Password is too weak. Please follow the password requirements');
+          setError('Please create a stronger password with at least 8 characters');
+          break;
+        case 'auth/network-request-failed':
+          setError('Network error. Please check your connection and try again.');
+          break;
+        case 'auth/too-many-requests':
+          setError('Too many attempts. Please wait a moment before trying again.');
           break;
         default:
-          setError(error.message || 'An unexpected error occurred during sign up');
+          setError(error.message || 'Something went wrong. Please try again or contact support.');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGoogleSignUp = async () => {
+    setError('');
+    setIsLoading(true);
+    
     try {
+      console.log('[SignUp] Attempting Google signup');
       const result = await signUpWithGoogle();
-      if (result.firebaseUser) {
-        // Check if we have a backend response
-        console.log('Google signup backend response:', result.backendResponse);
-        
-        // Check if the user was actually created in the database
-        if (result.backendResponse && result.backendResponse.message) {
-          toast.success(`${result.backendResponse.message}`);
-        } else {
-          toast.success('Successfully signed up with Google!');
-        }
-        
-        navigate('/', { replace: true });
-        if (isModalView) handleClose();
+      
+      if (result && result.firebaseUser) {
+        console.log('[SignUp] Google signup successful:', result);
+        await handleSuccessfulSignup(result, 'social');
       }
     } catch (error) {
       console.error("Google Sign-up Error:", error);
+      
       if (error.code === 'auth/popup-closed-by-user') {
-        toast.error('Sign-up popup was closed before completion');
-      } else if (error.response && error.response.data) {
-        // Display specific backend error if available
-        toast.error(`Google Sign-up failed: ${error.response.data.error || error.response.data.message || error.message}`);
-      } else {
-        toast.error(`Google Sign-up failed: ${error.message}`);
+        // Don't show error for user cancellation
+        return;
       }
+      
+      if (error.response && error.response.data) {
+        setError(`Google signup failed: ${error.response.data.error || error.response.data.message || error.message}`);
+      } else {
+        setError(`Google signup failed: ${error.message}`);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Microsoft sign-up
   const handleMicrosoftSignUp = async () => {
+    setError('');
+    setIsLoading(true);
+    
     try {
+      console.log('[SignUp] Attempting Microsoft signup');
       const result = await signUpWithMicrosoft();
-      if (result.firebaseUser) {
-        // Check if we have a backend response
-        console.log('Microsoft signup backend response:', result.backendResponse);
-        
-        // Check if the user was actually created in the database
-        if (result.backendResponse && result.backendResponse.message) {
-          toast.success(`${result.backendResponse.message}`);
-        } else {
-          toast.success('Successfully signed up with Microsoft!');
-        }
-        
-        navigate('/', { replace: true });
-        if (isModalView) handleClose();
+      
+      if (result && result.firebaseUser) {
+        console.log('[SignUp] Microsoft signup successful:', result);
+        await handleSuccessfulSignup(result, 'social');
       }
     } catch (error) {
       console.error("Microsoft Sign-up Error:", error);
+      
       if (error.code === 'auth/popup-closed-by-user') {
-        toast.error('Sign-up popup was closed before completion');
-      } else if (error.response && error.response.data) {
-        // Display specific backend error if available
-        toast.error(`Microsoft Sign-up failed: ${error.response.data.error || error.response.data.message || error.message}`);
-      } else {
-        toast.error(`Microsoft Sign-up failed: ${error.message}`);
+        // Don't show error for user cancellation
+        return;
       }
+      
+      if (error.response && error.response.data) {
+        setError(`Microsoft signup failed: ${error.response.data.error || error.response.data.message || error.message}`);
+      } else {
+        setError(`Microsoft signup failed: ${error.message}`);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // If we shouldn't render at all, return null
   if (!shouldRender) {
     return null;
   }
 
-  // Add error display to both modal and page layouts
-  const errorDisplay = error && (
-    <div className="text-red-500 text-center mb-4 p-2 bg-red-50 rounded">
-      {error}
-    </div>
-  );
+  const strengthData = getStrengthData(passwordStrength);
+  const isFormValid = formData.firstName && formData.email && formData.password && passwordStrength >= 2 && !emailError;
 
-  // Add profile image upload field to the form (add this before the Submit Button in both modal and page layouts)
-  const profileImageField = (
-    <div className="form-group">
-      <label htmlFor="profileImage" className="form-label">Profile Image (Optional)</label>
-      <input
-        type="file"
-        id="profileImage"
-        name="profileImage"
-        accept="image/*"
-        onChange={handleImageChange}
-        className="form-input"
-      />
-      {previewUrl && (
-        <div className="mt-2">
-          <img
-            src={previewUrl}
-            alt="Profile preview"
-            className="w-24 h-24 rounded-full object-cover"
-          />
+  // Shared form content
+  const formContent = (
+    <>
+      {/* Enhanced Header with stars */}
+      <div className="text-center mb-8">
+        <h1 className="modal-title">
+          <FontAwesomeIcon icon={faStar} className="mr-2" style={{ fontSize: '0.8em' }} />
+          Join Us Today
+          <FontAwesomeIcon icon={faStar} className="ml-2" style={{ fontSize: '0.8em' }} />
+        </h1>
+        <p className="modal-subtitle">Create your account in seconds ⚡</p>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="error-message">
+          {error}
         </div>
       )}
-    </div>
-  );
 
-  // ----- MODAL VIEW LAYOUT -----
-  if (isModalView) {
-    return (
-      <div className="modal-overlay">
-        <div
-          ref={modalRef}
-          className="modal-content"
+      {/* Social Login Buttons */}
+      <div className="social-buttons">
+        <button
+          onClick={handleGoogleSignUp}
+          disabled={isLoading}
+          className="social-button google-button"
+          aria-label="Sign up with Google"
         >
-          <h2 className="modal-title">Sign Up</h2>
-          {errorDisplay}
-          <form onSubmit={handleSubmit} className="signup-form">
-            {/* Username */}
-            <div className="form-group">
-              <label htmlFor="username" className="form-label">Username</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                required
-                aria-required="true"
-                value={formData.username}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Enter your username"
-              />
-            </div>
+          <FontAwesomeIcon icon={faGoogle} className="icon" />
+          Continue with Google
+        </button>
+        <button
+          onClick={handleMicrosoftSignUp}
+          disabled={isLoading}
+          className="social-button microsoft-button"
+          aria-label="Sign up with Microsoft"
+        >
+          <FontAwesomeIcon icon={faMicrosoft} className="icon" />
+          Continue with Microsoft
+        </button>
+      </div>
 
-            {/* First Name */}
-            <div className="form-group">
-              <label htmlFor="firstName" className="form-label">First Name</label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                required
-                aria-required="true"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Enter your first name"
-              />
-            </div>
+      {/* Fixed Divider */}
+      <div className="divider">
+        <span className="divider-text">or create account with email</span>
+      </div>
 
-            {/* Last Name */}
-            <div className="form-group">
-              <label htmlFor="lastName" className="form-label">Last Name</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                required
-                aria-required="true"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Enter your last name"
-              />
-            </div>
+      {/* Email Signup Form */}
+      <form onSubmit={handleSubmit} className="signup-form" noValidate>
+        {/* First Name */}
+        <div className="form-group">
+          <label htmlFor="firstName" className="form-label">
+            First Name
+          </label>
+          <input
+            type="text"
+            id="firstName"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleInputChange}
+            onFocus={() => handleFocus('firstName')}
+            onBlur={handleBlur}
+            className={`form-input ${focusedField === 'firstName' ? 'focused' : ''}`}
+            placeholder="Enter your first name"
+            required
+            disabled={isLoading}
+            autoComplete="given-name"
+          />
+        </div>
 
-            {/* Email Address */}
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                aria-required="true"
-                value={formData.email}
-                onChange={handleEmailChange}
-                className={`form-input ${emailError ? 'border-red-500' : emailWarning ? 'border-yellow-500' : ''}`}
-                placeholder="Enter your email"
-              />
-              {emailError && (
-                <p className="text-red-500 text-sm mt-1">{emailError}</p>
-              )}
-              {emailWarning && !emailError && (
-                <p className="text-yellow-500 text-sm mt-1">{emailWarning}</p>
-              )}
-            </div>
+        {/* Email */}
+        <div className="form-group">
+          <label htmlFor="email" className="form-label">
+            Email Address
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleEmailChange}
+            onFocus={() => handleFocus('email')}
+            onBlur={handleBlur}
+            className={`form-input ${focusedField === 'email' ? 'focused' : ''} ${emailError ? 'border-red-500' : ''}`}
+            placeholder="Enter your email"
+            required
+            disabled={isLoading}
+            autoComplete="email"
+          />
+          {emailError && (
+            <p className="text-red-500 text-sm mt-1">{emailError}</p>
+          )}
+        </div>
 
-            {/* Phone Number */}
-            <div className="form-group">
-              <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
-              <ReactPhoneInput
-                country="us"
-                value={formData.phoneNumber}
-                onChange={handlePhoneChange}
-                inputClass="phone-input-container"
-                placeholder="Enter your phone number"
-                searchable={true}
-              />
-            </div>
-
-            {/* Password */}
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                aria-required="true"
-                value={formData.password}
-                onChange={handleInputChange}
-                className={`form-input ${passwordValidation.isValid ? 'border-green-500' : ''}`}
-                placeholder="Enter your password"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                required
-                aria-required="true"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className={`form-input ${passwordValidation.passwordsMatch ? 'border-green-500' : 'border-red-500'}`}
-                placeholder="Confirm your password"
-              />
-              <PasswordRequirements validation={passwordValidation} />
-            </div>
-
-            {/* Profile Image */}
-            {profileImageField}
-
-            {/* Submit Button */}
-            <div className="button-group">
-              <button type="submit" className="button primary">
-                Sign Up
-              </button>
-              <button
-                type="button"
-                onClick={handleClose}
-                className="button secondary"
-                aria-label="Cancel sign up"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-
-          {/* Google and Microsoft Sign Up */}
-          <div className="mt-6 text-center">
+        {/* Password */}
+        <div className="form-group">
+          <label htmlFor="password" className="form-label">
+            Password
+          </label>
+          <div className="password-input-wrapper">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              onFocus={() => handleFocus('password')}
+              onBlur={handleBlur}
+              className={`form-input ${focusedField === 'password' ? 'focused' : ''}`}
+              placeholder="Create a strong password"
+              required
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
             <button
-              onClick={handleGoogleSignUp}
-              className="w-full py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-300 mb-4 flex items-center justify-center"
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="password-toggle"
+              disabled={isLoading}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              <FontAwesomeIcon icon={faGoogle} className="mr-2" />
-              Sign Up with Google
-            </button>
-            <button
-              onClick={handleMicrosoftSignUp}
-              className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 flex items-center justify-center"
-            >
-              <FontAwesomeIcon icon={faMicrosoft} className="mr-2" />
-              Sign Up with Microsoft
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
             </button>
           </div>
+          
+          {/* Password Strength Indicator */}
+          {formData.password && (
+            <div className="password-strength">
+              <div className="strength-bar">
+                <div className={`strength-fill ${strengthData.class}`}></div>
+              </div>
+              <div className={`strength-text ${strengthData.textClass}`}>
+                <span>Password strength: {strengthData.text}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Submit Button */}
+        <div className="button-group">
+          <button
+            type="submit"
+            disabled={!isFormValid || isLoading}
+            className="button primary"
+            aria-describedby={!isFormValid ? 'form-validation-help' : undefined}
+          >
+            {isLoading ? (
+              <>
+                <div className="loading-spinner"></div>
+                Creating Account...
+              </>
+            ) : (
+              'Create Account'
+            )}
+          </button>
+          
+          {isModalView && (
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={isLoading}
+              className="button secondary"
+              aria-label="Cancel signup"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+
+        {/* Hidden validation help text for screen readers */}
+        <div id="form-validation-help" className="sr-only">
+          Please fill in all required fields with valid information to continue.
+        </div>
+      </form>
+
+      {/* Terms */}
+      <p className="terms-text">
+        By creating an account, you agree to our{' '}
+        <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+        {' '}and{' '}
+        <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+      </p>
+
+      {/* Login Link */}
+      <p className="login-link">
+        Already have an account?{' '}
+        <a href="/sign-in" onClick={(e) => {
+          if (isModalView) {
+            e.preventDefault();
+            handleClose();
+            // Trigger sign in modal or navigate
+            navigate('/sign-in');
+          }
+        }}>
+          Sign in here
+        </a>
+      </p>
+
+      {/* Enhanced Trust Indicators */}
+      <div className="trust-indicators">
+        <div className="trust-grid">
+          <div className="trust-item">
+            <div className="trust-dot trust-green"></div>
+            SSL Secured
+          </div>
+          <div className="trust-item">
+            <div className="trust-dot trust-blue"></div>
+            GDPR Compliant
+          </div>
+          <div className="trust-item">
+            <div className="trust-dot trust-purple"></div>
+            No Spam Promise
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  // Modal View
+  if (isModalView) {
+    return (
+      <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="signup-title">
+        <div ref={modalRef} className="modal-content">
+          {formContent}
         </div>
       </div>
     );
   }
 
-  // ----- NORMAL PAGE VIEW LAYOUT ("/sign-up") -----
+  // Page View
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-lg p-8 rounded-lg w-full max-w-md">
-        <h2 className="modal-title text-center">Sign Up</h2>
-        {errorDisplay}
-        <form onSubmit={handleSubmit} className="signup-form">
-            {/* Username */}
-            <div className="form-group">
-              <label htmlFor="username" className="form-label">Username</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                required
-                aria-required="true"
-                value={formData.username}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Enter your username"
-              />
-            </div>
-
-            {/* First Name */}
-            <div className="form-group">
-              <label htmlFor="firstName" className="form-label">First Name</label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                required
-                aria-required="true"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Enter your first name"
-              />
-            </div>
-
-            {/* Last Name */}
-            <div className="form-group">
-              <label htmlFor="lastName" className="form-label">Last Name</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                required
-                aria-required="true"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Enter your last name"
-              />
-            </div>
-
-            {/* Email Address */}
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                aria-required="true"
-                value={formData.email}
-                onChange={handleEmailChange}
-                className={`form-input ${emailError ? 'border-red-500' : emailWarning ? 'border-yellow-500' : ''}`}
-                placeholder="Enter your email"
-              />
-              {emailError && (
-                <p className="text-red-500 text-sm mt-1">{emailError}</p>
-              )}
-              {emailWarning && !emailError && (
-                <p className="text-yellow-500 text-sm mt-1">{emailWarning}</p>
-              )}
-            </div>
-
-            {/* Phone Number */}
-            <div className="form-group">
-              <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
-              <ReactPhoneInput
-                country="us"
-                value={formData.phoneNumber}
-                onChange={handlePhoneChange}
-                inputClass="phone-input-container"
-                placeholder="Enter your phone number"
-                searchable={true}
-              />
-            </div>
-
-            {/* Password */}
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                aria-required="true"
-                value={formData.password}
-                onChange={handleInputChange}
-                className={`form-input ${passwordValidation.isValid ? 'border-green-500' : ''}`}
-                placeholder="Enter your password"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                required
-                aria-required="true"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className={`form-input ${passwordValidation.passwordsMatch ? 'border-green-500' : 'border-red-500'}`}
-                placeholder="Confirm your password"
-              />
-              <PasswordRequirements validation={passwordValidation} />
-            </div>
-
-            {/* Profile Image */}
-            {profileImageField}
-
-            {/* Submit Button */}
-            <div className="button-group">
-              <button type="submit" className="button primary">
-                Sign Up
-              </button>
-              {/* Cancel button is only rendered if it's a modal view */}
-              {isModalView && (
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="button secondary"
-                  aria-label="Cancel sign up"
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-        </form>
-
-        {/* Google and Microsoft Sign Up */}
-        <div className="mt-6 text-center">
-          <button
-            onClick={handleGoogleSignUp}
-            className="w-full py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-300 mb-4 flex items-center justify-center"
-          >
-            <FontAwesomeIcon icon={faGoogle} className="mr-2" />
-            Sign Up with Google
-          </button>
-          <button
-            onClick={handleMicrosoftSignUp}
-            className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 flex items-center justify-center"
-          >
-            <FontAwesomeIcon icon={faMicrosoft} className="mr-2" />
-            Sign Up with Microsoft
-          </button>
-        </div>
+    <div className="page-container">
+      <div className="page-content">
+        {formContent}
       </div>
     </div>
   );
@@ -735,7 +550,7 @@ SignUp.propTypes = {
 
 SignUp.defaultProps = {
   isOpen: undefined,
-  onClose: () => {}, // Default to no-op function
+  onClose: () => {},
 };
 
 export default SignUp;
