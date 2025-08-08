@@ -148,7 +148,10 @@ const FeaturedAgentCard = memo(({ agent }) => {
       
       // Add to cart
       addToCart(product);
-      toast.success('Added to cart');
+      toast.success('🛒 Added to cart!', {
+        autoClose: 3000,
+        position: "bottom-right"
+      });
     } catch (err) {
       console.error('Error adding to cart:', err);
       toast.error('Failed to add to cart');

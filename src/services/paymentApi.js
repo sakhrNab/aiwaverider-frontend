@@ -1,46 +1,36 @@
 /**
- * PAYMENT API SERVICE - MIGRATION TO PRODUCTION
- * =============================================
+ * PAYMENT API SERVICE - UNIPAY INTEGRATION
+ * ========================================
  * 
- * This file contains client-side payment API service functions.
- * To migrate from test to production environment, follow these steps:
+ * This file contains client-side payment API service functions integrated
+ * with UniPay (https://unipay.com/) - Georgian payment gateway with 
+ * international coverage.
  * 
- * 1. FRONTEND API KEYS
- *    - Update the publishable Stripe key in your .env.production file:
- *      VITE_STRIPE_PUBLISHABLE_KEY=pk_live_your_live_key
- *    - Update any other payment service public keys (PayPal client ID, etc.)
- *    - Ensure test keys are NEVER used in production environment
+ * MIGRATION TO UNIPAY COMPLETED:
+ * - All payment methods now go through UniPay
+ * - Supports: Credit Cards, SEPA, PayPal, Google Pay
+ * - 99.9% API uptime guarantee
+ * - International processing capabilities
  * 
- * 2. PAYMENT ENDPOINTS
- *    - Verify your API endpoints point to the production backend:
- *      - Ensure VITE_API_URL in .env.production points to your production API
- *      - Double-check that your API requests use the correct base URL
- *    - Update any hard-coded test endpoints that may exist in the code
+ * Environment Variables Required:
+ * - VITE_API_URL: Your backend API URL
+ * - VITE_UNIPAY_API_URL: UniPay API endpoint (optional, defaults to https://api.unipay.com)
+ * - VITE_UNIPAY_MERCHANT_ID: Your UniPay merchant ID
+ * - VITE_UNIPAY_PUBLIC_KEY: Your UniPay public key
  * 
- * 3. ERROR HANDLING
- *    - Enhance error handling to provide better user feedback in production
- *    - Implement graceful fallbacks when payment services are unavailable
- *    - Consider adding retry logic for intermittent failures
- *    - Ensure proper error reporting to monitoring tools
+ * Supported Payment Methods:
+ * - Credit/Debit Cards (Visa, Mastercard)
+ * - SEPA Transfers (EUR, EU countries)
+ * - PayPal Payments
+ * - Google Pay
  * 
- * 4. FRONTEND VALIDATION
- *    - Implement additional validation to minimize failed payment attempts
- *    - Ensure address validation is properly implemented for regions you serve
- *    - Verify that card validation provides helpful feedback to users
- * 
- * 5. PAYMENT METHOD SUPPORT
- *    - Verify that all payment methods shown in the UI are actually enabled in your
- *      Stripe dashboard and other payment provider accounts
- *    - Consider region-specific testing for international payment methods
- *    - Test mobile wallet integrations (Apple Pay, Google Pay) on actual devices
- * 
- * 6. ANALYTICS & MONITORING
- *    - Add conversion tracking for successful payments
- *    - Implement abandonment tracking for checkout funnels
- *    - Set up alerting for abnormal payment failure rates
+ * Pricing (from UniPay):
+ * - Domestic: 2.5% + 0.25 GEL
+ * - International: 3.0% + 0.35 GEL
  */
 
 import axios from 'axios';
+import unipayService from './unipayService';
 
 // Use environment variable for API URL
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
@@ -53,294 +43,174 @@ const api = axios.create({
   },
 });
 
-// Helper function to check API connectivity
+// Helper function to check UniPay API connectivity
 export const checkApiConnectivity = async () => {
   try {
-    console.log(`Checking API connectivity with ${API_URL}`);
+    console.log(`Checking UniPay API connectivity with ${API_URL}`);
     
-    // First try the test endpoint which should always work if routes are registered
-    try {
-      const testResponse = await fetch(`${API_URL}/api/payments/test`);
-      if (testResponse.ok) {
-        console.log('Basic test endpoint is responsive');
-      } else {
-        console.error(`Basic test endpoint failed: ${testResponse.status}`);
-      }
-    } catch (testError) {
-      console.error('Cannot connect to basic test endpoint:', testError);
+    // Use the UniPay service connectivity check
+    const result = await unipayService.checkConnectivity();
+    
+    if (result.ok) {
+      console.log('UniPay API connectivity test successful:', result.data);
+      return result;
+    } else {
+      console.error('UniPay API connectivity test failed:', result.error);
+      return result;
     }
-    
-    // Then try the full connectivity test
-    const response = await fetch(`${API_URL}/api/payments/test-connectivity`);
-    
-    if (!response.ok) {
-      console.error(`API connectivity test failed: ${response.status}`);
-      
-      // If we get a 404, the route might not be registered properly
-      if (response.status === 404) {
-        // Try a fallback to see if the backend is running at all
-        try {
-          const fallbackResponse = await fetch(`${API_URL}/api`);
-          if (fallbackResponse.ok) {
-            return { 
-              ok: false, 
-              error: `API endpoint not found (404) but server is running. Backend routes may not be properly registered.`,
-              fallbackOk: true
-            };
-          }
-        } catch (fallbackError) {
-          // Fallback also failed
-        }
-      }
-      
-      return { 
-        ok: false, 
-        error: `API returned status ${response.status}` 
-      };
-    }
-    
-    const data = await response.json();
-    console.log('API connectivity test results:', data);
-    
-    return { 
-      ok: true, 
-      data 
-    };
   } catch (error) {
-    console.error('API connectivity check failed:', error);
-    
-    // If we get a network error, the backend might not be running at all
-    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      return { 
-        ok: false, 
-        error: `Cannot connect to backend server at ${API_URL}. Is the server running?` 
-      };
-    }
+    console.error('UniPay API connectivity check failed:', error);
     
     return { 
       ok: false, 
-      error: error.message 
+      error: error.message || 'Failed to check UniPay connectivity'
     };
   }
 };
 
-// Helper to determine the correct payment endpoint based on method
-export const getPaymentMethodEndpoint = async (method = 'card', countryCode = 'US') => {
+// Helper to get supported payment methods from UniPay
+export const getPaymentMethodsForCountry = async (countryCode = 'US') => {
   try {
-    const response = await fetch(`${API_URL}/api/payments/payment-methods?countryCode=${countryCode}`);
-    
-    if (!response.ok) {
-      console.error(`Failed to get payment methods: ${response.status}`);
-      // Default fallbacks if the endpoint fails
-      return method === 'paypal' 
-        ? `${API_URL}/api/payments/create-paypal-order` 
-        : `${API_URL}/api/payments/create-stripe-checkout`;
-    }
-    
-    const data = await response.json();
-    console.log('Available payment methods:', data);
-    
-    // Find the method in the response
-    const methodName = method === 'sepa' ? 'sepa_debit' : method;
-    
-    if (data.methodDetails && data.methodDetails[methodName]) {
-      return `${API_URL}${data.methodDetails[methodName].endpoint}`;
-    }
-    
-    // Fallback to Stripe for most methods
-    return method === 'paypal' 
-      ? `${API_URL}/api/payments/create-paypal-order` 
-      : `${API_URL}/api/payments/create-stripe-checkout`;
+    const methods = await unipayService.getPaymentMethods(countryCode);
+    console.log('Available UniPay payment methods:', methods);
+    return methods;
   } catch (error) {
-    console.error('Error getting payment method endpoint:', error);
-    // Default fallbacks if the endpoint fails
-    return method === 'paypal' 
-      ? `${API_URL}/api/payments/create-paypal-order` 
-      : `${API_URL}/api/payments/create-stripe-checkout`;
+    console.error('Error getting UniPay payment methods:', error);
+    // Return default fallback methods
+    return {
+      success: false,
+      error: error.message,
+      methods: ['card', 'paypal', 'google_pay'],
+      countryCode
+    };
   }
 };
 
 /**
- * Create a PayPal order
+ * Create a PayPal payment through UniPay
  * @param {Object} data - Cart data including cartTotal and items
- * @returns {Promise<Object>} - PayPal order details with order ID
+ * @returns {Promise<Object>} - PayPal payment details with approval URL
  */
 export const createPayPalOrder = async (data) => {
   try {
-    const endpoint = await getPaymentMethodEndpoint('paypal');
-    console.log(`Attempting to create PayPal order at: ${endpoint}`);
+    console.log('Creating PayPal payment through UniPay');
     console.log('Request data:', JSON.stringify(data, null, 2));
     
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const paypalData = {
+      amount: data.cartTotal || data.amount,
+      currency: data.currency || 'USD',
+      email: data.email || '',
+      items: data.items || [],
+      metadata: {
+        orderId: data.orderId || `order_${Date.now()}`,
+        source: 'paypal_checkout',
+        ...data.metadata
       },
-      body: JSON.stringify(data),
-    });
+      successUrl: data.successUrl,
+      cancelUrl: data.cancelUrl
+    };
     
-    console.log('PayPal order response status:', response.status);
+    const result = await unipayService.createPaypalPayment(paypalData);
+    console.log('UniPay PayPal payment created successfully:', result);
     
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-        console.error('PayPal order error response:', errorData);
-      } catch (parseError) {
-        console.error('Failed to parse error response:', parseError);
-        const textError = await response.text();
-        console.error('Response text:', textError);
-        throw new Error(`Server returned ${response.status}: ${textError || 'No response body'}`);
-      }
-      throw new Error(errorData.error || `Failed to create PayPal order: ${response.status}`);
-    }
-    
-    const responseData = await response.json();
-    console.log('PayPal order created successfully:', responseData);
-    return responseData;
+    // Transform to match expected PayPal format
+    return {
+      success: result.success,
+      orderId: result.orderId,
+      paymentId: result.paymentId,
+      approvalUrl: result.approvalUrl,
+      provider: 'unipay',
+      status: result.status
+    };
   } catch (error) {
-    console.error('Error creating PayPal order:', error);
+    console.error('Error creating UniPay PayPal payment:', error);
     throw error;
   }
 };
 
 /**
- * Capture a PayPal payment after approval
- * @param {string} orderID - PayPal order ID to capture
- * @returns {Promise<Object>} - Capture details
+ * Get PayPal payment status (UniPay handles capture automatically)
+ * @param {string} paymentID - UniPay payment ID
+ * @param {Object} metadata - Additional metadata
+ * @returns {Promise<Object>} - Payment status details
  */
-export const capturePayPalPayment = async (orderID, metadata = {}) => {
+export const capturePayPalPayment = async (paymentID, metadata = {}) => {
   try {
-    // Try to get cart items from localStorage if not in metadata
-    if (!metadata.items) {
-      try {
-        const cartItems = localStorage.getItem('cartItems');
-        if (cartItems) {
-          metadata.items = cartItems;
-        }
-      } catch (err) {
-        console.warn('Could not retrieve cart items from localStorage', err);
-      }
+    console.log('Checking UniPay PayPal payment status:', paymentID);
+    
+    // For UniPay, PayPal payments are handled automatically
+    // We just need to check the status
+    const result = await unipayService.getPaymentStatus(paymentID, 'paypal');
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to get PayPal payment status');
     }
     
-    // Try to get user info from localStorage
-    if (!metadata.email) {
-      try {
-        const userData = localStorage.getItem('userData');
-        if (userData) {
-          const user = JSON.parse(userData);
-          metadata.email = user.email || '';
-          metadata.userId = user.id || user.uid || '';
-        }
-      } catch (err) {
-        console.warn('Could not retrieve user data from localStorage', err);
-      }
-    }
-    
-    // Generate a unique order ID for tracking
-    const generatedOrderId = metadata.orderId || 
-                             ('ORD-' + Date.now().toString().substring(6) + 
-                             Math.random().toString(36).substring(2, 8).toUpperCase());
-    
-    const response = await fetch(`${API_URL}/api/payments/capture-paypal-payment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        orderID,
-        metadata: {
-          ...metadata,
-          orderId: generatedOrderId,
-          payment_method: 'paypal',
-          order_id: generatedOrderId
-        }
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to capture PayPal payment');
-    }
-    
-    return await response.json();
+    // Transform to match expected PayPal capture format
+    return {
+      success: true,
+      paymentId: result.paymentId,
+      orderId: result.orderId || metadata.orderId,
+      status: result.status,
+      amount: result.amount,
+      currency: result.currency,
+      provider: 'unipay',
+      details: result.details
+    };
   } catch (error) {
-    console.error('Error capturing PayPal payment:', error);
+    console.error('Error checking UniPay PayPal payment status:', error);
     throw error;
   }
 };
 
 /**
- * Create a Stripe checkout session
- * @param {Object} data - Cart data including cartTotal, items, currency, and countryCode
- * @returns {Promise<Object>} - Stripe checkout session details with session URL
+ * Create a payment session through UniPay
+ * @param {Object} data - Cart data including cartTotal, items, currency, and paymentMethod
+ * @returns {Promise<Object>} - UniPay payment session details with checkout URL
  */
 export const createStripeCheckout = async (data) => {
   try {
-    // Determine if we're dealing with SEPA or iDEAL
+    // Determine payment method - default to card if not specified
     const paymentMethod = data.paymentMethodTypes && data.paymentMethodTypes.length > 0 
       ? data.paymentMethodTypes[0] 
       : 'card';
     
-    const endpoint = await getPaymentMethodEndpoint(paymentMethod, data.countryCode);
+    console.log('Creating UniPay payment session');
+    console.log('UniPay request data:', JSON.stringify(data, null, 2));
     
-    console.log(`Attempting to create Stripe checkout session at: ${endpoint}`);
-    console.log('Stripe request data:', JSON.stringify(data, null, 2));
+    const paymentData = {
+      amount: data.cartTotal || data.amount,
+      currency: data.currency || 'USD',
+      paymentMethod,
+      items: data.items || [],
+      email: data.email || '',
+      metadata: {
+        orderId: data.orderId || `order_${Date.now()}`,
+        source: 'checkout_session',
+        countryCode: data.countryCode,
+        ...data.metadata
+      },
+      successUrl: data.successUrl || `${window.location.origin}/checkout/success`,
+      cancelUrl: data.cancelUrl || `${window.location.origin}/checkout`
+    };
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const result = await unipayService.createPayment(paymentData);
+    console.log('UniPay payment session created successfully:', result);
     
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      console.log('Stripe checkout response status:', response.status);
-      
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-          console.error('Stripe checkout error response:', errorData);
-          
-          // Better handling of detailed error information
-          if (errorData.details) {
-            console.error('Stripe error details:', errorData.details);
-          }
-          
-          // Enhanced error message with details if available
-          const errorMessage = errorData.error || `Failed to create Stripe checkout session: ${response.status}`;
-          throw new Error(errorMessage);
-        } catch (parseError) {
-          console.error('Failed to parse Stripe error response:', parseError);
-          const textError = await response.text();
-          console.error('Stripe response text:', textError);
-          throw new Error(`Server returned ${response.status}: ${textError || 'No response body'}`);
-        }
-      }
-      
-      const responseData = await response.json();
-      console.log('Stripe checkout session created successfully:', responseData);
-      return responseData;
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      
-      if (fetchError.name === 'AbortError') {
-        console.error('Request timed out after 15 seconds');
-        throw new Error('Request timed out. The server took too long to respond. Please try again.');
-      }
-      
-      throw fetchError;
-    }
+    // Transform to match expected checkout format
+    return {
+      success: result.success,
+      sessionId: result.paymentId,
+      paymentId: result.paymentId,
+      orderId: result.orderId,
+      url: result.checkoutUrl || result.paymentUrl,
+      checkoutUrl: result.checkoutUrl,
+      status: result.status,
+      provider: 'unipay',
+      expiresAt: result.expiresAt
+    };
   } catch (error) {
-    console.error('Error creating Stripe checkout session:', error);
+    console.error('Error creating UniPay payment session:', error);
     throw error;
   }
 };

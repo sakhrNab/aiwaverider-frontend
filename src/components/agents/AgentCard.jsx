@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { FaStar, FaHeart, FaRegHeart, FaPlus, FaDownload } from 'react-icons/fa';
+import { FaStar, FaHeart, FaRegHeart, FaPlus, FaTag } from 'react-icons/fa';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { addToWishlist, removeFromWishlist } from '../../api/marketplace/agentApi';
@@ -8,7 +8,7 @@ import { useCart } from '../../contexts/CartContext';
 import { toast } from 'react-toastify';
 import { fixPlaceholderUrl, generatePlaceholderImage } from '../../utils/imageUtils';
 import '../../styles/MarketplaceAgentCard.css';
-
+import n8nWorkflowImg from '../../assets/n8nworkflow.png';
 // Helper function to create responsive SVG placeholders at module level
 const createResponsivePlaceholder = (text, width = 300, height = 200) => {
   const maxLineLength = 25; // Maximum characters per line
@@ -93,17 +93,78 @@ const formatRating = (rating) => {
   return typeof rating === 'number' ? rating.toFixed(1) : parseFloat(rating).toFixed(1);
 };
 
-// Format large numbers (downloads) for display
-const formatCount = (count) => {
-  if (!count || count === 0) return '0';
-  if (count >= 1000000) {
-    return (count / 1000000).toFixed(1) + 'M';
-  }
-  if (count >= 1000) {
-    return (count / 1000).toFixed(1) + 'K';
-  }
-  return count.toString();
+// Helper function to get category colors
+const getCategoryColor = (category) => {
+  const colors = {
+    'Productivity': '#10B981',
+    'Business': '#3B82F6', 
+    'Marketing': '#F59E0B',
+    'Analytics': '#8B5CF6',
+    'Communication': '#06B6D4',
+    'Content': '#EF4444',
+    'E-commerce': '#F97316',
+    'Social': '#EC4899',
+    'Development': '#6366F1',
+    'Design': '#84CC16'
+  };
+  return colors[category] || '#6B7280';
 };
+
+// Helper function to check if agent is free
+const isFreeAgent = (agent) => {
+  if (!agent) return true; // Default to free if no agent
+  
+  // Check for explicit isFree flag
+  if (agent.isFree === true) return true;
+  
+  // Check for zero or free in the direct price field
+  if (agent.price === 0 || 
+      agent.price === '0' || 
+      agent.price === 'Free' || 
+      agent.price === 'free' || 
+      agent.price === '$0' ||
+      agent.price === undefined || 
+      agent.price === null ||
+      agent.price === '') {
+    return true;
+  }
+  
+  // Check for free in formatted price string
+  if (typeof agent.price === 'string' && 
+      (agent.price.toLowerCase().includes('free') || 
+       agent.price === '$0' || 
+       agent.price === '0' || 
+       agent.price.trim() === '')) {
+    return true;
+  }
+  
+  // Check priceDetails object
+  if (agent.priceDetails) {
+    if (agent.priceDetails.isFree === true) return true;
+    if (agent.priceDetails.basePrice === 0) return true;
+    if (agent.priceDetails.basePrice === '0') return true;
+    if (agent.priceDetails.basePrice === undefined) return true;
+    if (agent.priceDetails.discountedPrice === 0) return true;
+    if (agent.priceDetails.discountedPrice === '0') return true;
+  }
+  
+  return false;
+};
+
+// Category Badge Component
+const CategoryBadge = React.memo(({ category, small = false }) => {
+  return (
+    <span 
+      className={`marketplace-category-badge ${small ? 'small' : ''}`}
+      style={{ backgroundColor: getCategoryColor(category) }}
+    >
+      <FaTag className="marketplace-category-icon" />
+      {category}
+    </span>
+  );
+});
+
+CategoryBadge.displayName = 'CategoryBadge';
 
 const AgentCard = memo(({ agent }) => {
   const [isWishlisted, setIsWishlisted] = useState(agent.isWishlisted || false);
@@ -217,9 +278,9 @@ const AgentCard = memo(({ agent }) => {
     }
     
     // Check for different possible image URL locations in the agent object
-    // if (agent.imageUrl && typeof agent.imageUrl === 'string') {
-    //   return fixPlaceholderUrl(agent.imageUrl);
-    // }
+    if (agent.imageUrl && typeof agent.imageUrl === 'string') {
+      return n8nWorkflowImg; //fixPlaceholderUrl(agent.imageUrl);
+    }
     
     // Check if image info exists in a nested structure
     if (agent.image && agent.image.url) {
@@ -256,7 +317,10 @@ const AgentCard = memo(({ agent }) => {
       
       // Add to cart
       addToCart(product);
-      toast.success('Added to cart');
+      toast.success('🛒 Added to cart!', {
+        autoClose: 3000,
+        position: "bottom-right"
+      });
     } catch (err) {
       console.error('Error adding to cart:', err);
       toast.error('Failed to add to cart');
@@ -286,7 +350,9 @@ const AgentCard = memo(({ agent }) => {
   // Format the price for display - optimized with enhanced memoization
   const formattedPrice = React.useMemo(() => {
     // First check if agent is marked as free
-    if (agent.isFree || agent.price === 0) return <span className="free-price">Free</span>;
+    if (isFreeAgent(agent)) {
+      return <span className="free-price">Free</span>;
+    }
     
     // Check if we have price details object
     if (agent.priceDetails) {
@@ -327,17 +393,7 @@ const AgentCard = memo(({ agent }) => {
     
     // Default fallback - be transparent when price is unknown
     return 'Price unavailable';
-  }, [agent.isFree, agent.price, agent.priceDetails]);
-
-  // Check if agent is free to conditionally show add to cart button
-  const isFreeAgent = React.useMemo(() => {
-    return agent.isFree || 
-           agent.price === 0 || 
-           agent.price === '0' || 
-           agent.price === 'Free' || 
-           agent.price === 'free' || 
-           (agent.priceDetails && (agent.priceDetails.basePrice === 0 || agent.priceDetails.discountedPrice === 0));
-  }, [agent.isFree, agent.price, agent.priceDetails]);
+  }, [agent.isFree, agent.priceDetails, agent.price]);
 
   // Handle image loading errors
   const handleImageError = useCallback(() => {
@@ -352,8 +408,25 @@ const AgentCard = memo(({ agent }) => {
   const rating = React.useMemo(() => agent.rating?.average ? formatRating(agent.rating.average) : null, [agent.rating]);
   const ratingCount = React.useMemo(() => agent.rating?.count || 0, [agent.rating]);
 
-  // Download count for the download icon
-  const downloadCount = React.useMemo(() => agent.downloadCount || 0, [agent.downloadCount]);
+  // Get agent categories - handle both old single category and new multiple categories
+  const agentCategories = React.useMemo(() => {
+    // New categories array format
+    if (agent.categories && Array.isArray(agent.categories)) {
+      return agent.categories;
+    }
+    
+    // Legacy single category format
+    if (agent.category && typeof agent.category === 'string') {
+      return [agent.category];
+    }
+    
+    return [];
+  }, [agent.categories, agent.category]);
+
+  // Show only the first 2-3 categories to avoid overcrowding
+  const displayCategories = React.useMemo(() => {
+    return agentCategories.slice(0, 3);
+  }, [agentCategories]);
 
   return (
     <Link to={`/agents/${agent.id}`} className="marketplace-agent-card-link">
@@ -387,7 +460,7 @@ const AgentCard = memo(({ agent }) => {
               </button>
               
               {/* Only show add to cart button for paid agents */}
-              {!isFreeAgent && (
+              {!isFreeAgent(agent) && (
                 <button
                   className="marketplace-cart-button"
                   onClick={handleAddToCart}
@@ -406,7 +479,23 @@ const AgentCard = memo(({ agent }) => {
 
           {/* Card content */}
           <div className="marketplace-agent-content">
-            <h3 className="marketplace-agent-title" title={title}>{title}</h3>
+            <div className="marketplace-agent-header">
+              <h3 className="marketplace-agent-title" title={title}>{title}</h3>
+              
+              {/* Categories Display - moved to same line as title */}
+              {displayCategories.length > 0 && (
+                <div className="marketplace-agent-categories">
+                  {displayCategories.map((category) => (
+                    <CategoryBadge 
+                      key={category} 
+                      category={category} 
+                      small={true}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            
             <p className="marketplace-agent-description">{description}</p>
             
             <div className="marketplace-agent-creator">
@@ -436,6 +525,26 @@ const AgentCard = memo(({ agent }) => {
             <div className="marketplace-agent-price">
               {formattedPrice}
             </div>
+            
+            {/* Business Value Preview - show only for paid agents to justify the price */}
+            {/* {!isFreeAgent(agent) && agent.businessValue && (
+              <div className="marketplace-business-value-preview">
+                <span className="marketplace-value-label">Value: </span>
+                <span className="marketplace-value-text">
+                  {agent.businessValue.replace(/"/g, '').substring(0, 60)}
+                  {agent.businessValue.length > 60 ? '...' : ''}
+                </span>
+              </div>
+            )} */}
+            
+            {/* Deliverables count */}
+            {agent.deliverables && Array.isArray(agent.deliverables) && agent.deliverables.length > 0 && (
+              <div className="marketplace-deliverables-count">
+                <span className="marketplace-files-count">
+                  📦 {agent.deliverables.length} file{agent.deliverables.length !== 1 ? 's' : ''} included
+                </span>
+              </div>
+            )}
             
             {agent.version && 
               <div className="marketplace-agent-version">v{agent.version}</div>
