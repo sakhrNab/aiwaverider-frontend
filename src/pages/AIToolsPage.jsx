@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { FaExternalLinkAlt, FaSearch, FaTimes, FaSync } from 'react-icons/fa';
 import PageHeader from '../components/layout/PageHeader';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './AIToolsPage.css';
 import { useTheme } from '../contexts/ThemeContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { HashLoader } from 'react-spinners';
 import { createSvgDataUri } from '../utils/imageUtils';
 import { getToolColor } from '../api/marketplace/aiToolsApi';
-import '../styles/animations.css'; // Import animations
+import '../styles/animations.css';
 import useAIToolsStore from '../store/useAIToolsStore';
 
 // Import icons
@@ -27,7 +27,6 @@ const themeClasses = "bg-gradient-to-br from-[#4158D0] via-[#C850C0] to-[#FFCC70
 
 // Setup icon map for fallbacks
 const iconMap = {
-  "Prompt": promptIcon,
   "Text Effects": textEffectsIcon,
   "Relight": relightIcon,
   "Hedra": hedraIcon,
@@ -38,7 +37,7 @@ const iconMap = {
   "default": defaultAiIcon
 };
 
-// Available default tags if none are found in the database
+// Available default tags for AI tools (no prompt-related tags)
 const defaultAvailableTags = [
   'All',
   'Free tools',
@@ -51,7 +50,10 @@ const defaultAvailableTags = [
   'Digital Influencer',
   'Video Editing',
   'Viral Video Hacks',
-  'Organization'
+  'Organization',
+  'Design',
+  'Audio',
+  'Automation'
 ];
 
 // Create a cache for images
@@ -94,12 +96,10 @@ const AITools = () => {
   const formatLink = (link) => {
     if (!link) return '#';
     
-    // Check if the link already has http:// or https:// prefix
     if (link.startsWith('http://') || link.startsWith('https://')) {
       return link;
     }
     
-    // Otherwise, add https:// prefix
     return `https://${link}`;
   };
 
@@ -110,24 +110,19 @@ const AITools = () => {
     
     // Determine aspect ratio
     if (naturalHeight > naturalWidth * 1.2) {
-      // Portrait image (taller than wide)
       img.setAttribute('data-aspect', 'portrait');
       img.classList.add('portrait-image');
     } else if (naturalWidth > naturalHeight * 1.2) {
-      // Landscape image (wider than tall)
       img.setAttribute('data-aspect', 'landscape');
       img.classList.add('landscape-image');
     } else {
-      // Roughly square image
       img.setAttribute('data-aspect', 'square');
       img.classList.add('square-image');
     }
     
-    // Remove loading state
     img.classList.remove('img-loading');
     img.classList.add('img-loaded');
     
-    // Add to cache
     if (img.src && !img.src.startsWith('data:')) {
       imageCache.set(img.src, {
         timestamp: Date.now(),
@@ -144,31 +139,23 @@ const AITools = () => {
   // Handle image error with better fallback strategy
   const handleImageError = useCallback((e, tool) => {
     const img = e.target;
-    
-    // Prevent infinite loops by removing the error handler
     img.onerror = null;
     
-    // First try the fallback specific to this tool's name
     const toolName = tool.title?.split(' ')[0];
-    const fallbackIcon = iconMap[toolName] || iconMap[tool.keyword];
+    const fallbackIcon = iconMap[toolName] || iconMap[tool.keyword] || iconMap["default"];
     
     if (fallbackIcon) {
       console.log(`Image load error for ${tool.title}, using icon fallback`);
       img.src = fallbackIcon;
     } else {
-      // Generate SVG fallback if no icon is available
       console.log(`Image load error for ${tool.title}, generating SVG fallback`);
       
-      // Get the appropriate color based on the tool name
       const bgColor = getToolColor(tool.title);
-      const textColor = 'ffffff'; // Default white
-      
-      // Get text to display (use the full name if it fits, otherwise first word or initial)
+      const textColor = 'ffffff';
       const displayText = tool.title ? 
         (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) : 
         'AI';
       
-      // Use the utility function to create the SVG data URI
       img.src = createSvgDataUri({
         text: displayText,
         width: 300,
@@ -184,7 +171,6 @@ const AITools = () => {
     img.classList.add('img-loaded');
     img.classList.add('square-image');
     
-    // Mark as failed in cache to avoid repeated attempts
     if (tool.image) {
       imageCache.set(tool.image, {
         timestamp: Date.now(),
@@ -196,7 +182,6 @@ const AITools = () => {
 
   // Helper function to get image URL with proper caching
   const getImageUrl = useCallback((tool) => {
-    // More comprehensive check for invalid image values
     if (!tool.image || 
         tool.image === '/uploads/undefined' || 
         tool.image.includes('/undefined') || 
@@ -204,18 +189,14 @@ const AITools = () => {
       return null;
     }
     
-    // Check if image is a full URL or a relative path
     let imageUrl = tool.image;
     if (imageUrl.startsWith('/')) {
-      // For local development, prepend the API base URL
       const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4000';
       imageUrl = `${apiBase}${imageUrl}`;
     }
     
-    // Check cache
     if (imageCache.has(imageUrl)) {
       const cacheEntry = imageCache.get(imageUrl);
-      // If cache entry is marked as failed, return the fallback
       if (!cacheEntry.loaded && cacheEntry.fallback) {
         return cacheEntry.fallback;
       }
@@ -224,7 +205,7 @@ const AITools = () => {
     return imageUrl;
   }, []);
 
-  // Extract unique tags from AI tools only (exclude prompts)
+  // Extract unique tags from AI tools (store already filters out prompts)
   const extractTags = useCallback((toolsData) => {
     if (!toolsData || toolsData.length === 0) {
       return defaultAvailableTags;
@@ -233,88 +214,43 @@ const AITools = () => {
     const allTags = ['All'];
     const tagSet = new Set();
     
-    // Filter out prompts first
-    const aiToolsOnly = toolsData.filter(tool => {
-      return !tool.keyword?.toLowerCase().includes('prompt') &&
-             !tool.title?.toLowerCase().includes('prompt') &&
-             !tool.category?.toLowerCase().includes('prompt');
-    });
-    
-    aiToolsOnly.forEach(tool => {
-      // Add category as tag if exists
+    // Tools data from store is already filtered to exclude prompts
+    toolsData.forEach(tool => {
       if (tool.category) {
         tagSet.add(tool.category);
       }
       
-      // Add all tags from tool.tags array if it exists
       if (Array.isArray(tool.tags)) {
         tool.tags.forEach(tag => tag && tagSet.add(tag));
       }
     });
     
-    // Convert Set to Array and prepend 'All'
     const uniqueTags = [...tagSet];
     return [...allTags, ...uniqueTags];
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Manually clear localStorage cache to force fresh data fetch
-      localStorage.removeItem('ai_tools_cache');
-      localStorage.removeItem('ai_tools_cache_timestamp');
-      
-      // Force refresh by passing true parameter
-      const fetchedTools = await aiToolsService.getAllAITools(true);
-      
-      if (fetchedTools && fetchedTools.length > 0) {
-        setTools(fetchedTools);
-        
-        // Extract unique tags from the tools
-        const toolTags = extractTags(fetchedTools);
-        setTags(toolTags);
-      } else {
-        setTools([]);
-        // Set default tags if no tools are available
-        setTags(defaultAvailableTags);
-      }
-    } catch (err) {
-      console.error('Error fetching AI tools:', err);
-      setError('Failed to load AI tools. Please try again later.');
-      // Set default tags when there's an error
-      setTags(defaultAvailableTags);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    // Start the Firestore listener when component mounts
+    // Start the listener when component mounts
     startListening();
     
     // Clear image cache every hour
     const cacheInterval = setInterval(() => {
-      // Remove cache entries older than 1 hour
       const now = Date.now();
       imageCache.forEach((value, key) => {
-        if (now - value.timestamp > 3600000) { // 1 hour in milliseconds
+        if (now - value.timestamp > 3600000) {
           imageCache.delete(key);
         }
       });
       setImageCacheTimestamp(now);
-    }, 3600000); // Check every hour
+    }, 3600000);
     
-    // Clean up listener and interval when component unmounts
     return () => {
       clearInterval(cacheInterval);
       stopListening();
     };
-  }, []);
+  }, [startListening, stopListening]);
 
   const handleRetry = () => {
-    // Use the forceRefresh function from the Zustand store
     forceRefresh();
   };
 
@@ -328,19 +264,10 @@ const AITools = () => {
     }
   }, [tools, extractTags]);
 
-  // Filter tools to only show AI tools (exclude prompts)
-  const aiToolsOnly = tools.filter(tool => {
-    // Exclude anything that contains "prompt" in keyword, title, or category
-    return !tool.keyword?.toLowerCase().includes('prompt') &&
-           !tool.title?.toLowerCase().includes('prompt') &&
-           !tool.category?.toLowerCase().includes('prompt');
-  });
-
-  // Apply filters first (search and tags) - only on AI tools
-  const filteredTools = aiToolsOnly.filter((tool) => {
+  // Apply search and tag filters to tools (store already excludes prompts)
+  const filteredTools = tools.filter((tool) => {
     const titleMatch = tool.title.toLowerCase().includes(searchTerm.toLowerCase());
     const descriptionMatch = tool.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    // Add keyword search functionality
     const keywordMatch = tool.keyword?.toLowerCase().includes(searchTerm.toLowerCase());
     const tagMatch = selectedTag === '' || selectedTag === 'All' || 
                     tool.category === selectedTag || 
@@ -353,7 +280,6 @@ const AITools = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setCurrentPageSize] = useState(12);
   
-  // Calculate pagination based on filtered data
   const totalItems = filteredTools.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
@@ -384,7 +310,7 @@ const AITools = () => {
     setCurrentPage(1);
   }, [searchTerm, selectedTag]);
 
-  // Recalculate current page when page size changes to ensure we don't exceed total pages
+  // Recalculate current page when page size changes
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(totalPages);
@@ -393,13 +319,11 @@ const AITools = () => {
 
   // Helper function to get the appropriate image for a tool
   const getToolImage = useCallback((tool) => {
-    // First check if the tool has an image URL from the database
     const imageUrl = getImageUrl(tool);
     if (imageUrl) {
       return imageUrl;
     }
     
-    // Try to get an icon based on the tool's name or keyword
     const toolName = tool.title?.split(' ')[0];
     if (iconMap[toolName]) {
       return iconMap[toolName];
@@ -407,18 +331,16 @@ const AITools = () => {
     if (iconMap[tool.keyword]) {
       return iconMap[tool.keyword];
     }
+    if (iconMap["default"]) {
+      return iconMap["default"];
+    }
     
-    // Always use SVG data URIs to avoid external image loading issues
-    // Get the appropriate color based on the tool name
     const bgColor = getToolColor(tool.title);
-    const textColor = 'ffffff'; // Default white
-    
-    // Get text to display (use the full name if it fits, otherwise first word)
+    const textColor = 'ffffff';
     const displayText = tool.title ? 
       (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) : 
       'AI Tool';
     
-    // Use the utility function to create the SVG data URI
     return createSvgDataUri({
       text: displayText,
       width: 300,
@@ -427,10 +349,9 @@ const AITools = () => {
       textColor,
       fontSize: 24
     });
-  }, []); // getToolColor, createSvgDataUri are stable imports; iconMap is a stable module constant
+  }, [getImageUrl]);
 
-  // Use the new loader component
-  if (loading) {
+  if (loading && !isLoaded) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-b from-gray-900 to-blue-900">
         <div className="mb-8">
@@ -448,11 +369,10 @@ const AITools = () => {
 
   return (
     <div className={`min-h-screen pb-16 ${darkMode ? "dark bg-[#2D1846]" : "bg-gray-50"} ${themeClasses}`}>
-      {/* Use centralized PageHeader component */}
       <PageHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto mt-8">
-          {/* Page header using global class */}
+          {/* Page header */}
           <div className="page-header-3d">
             <div className="absolute inset-0 bg-pattern opacity-30"></div>
             <div className="relative z-10">
@@ -468,7 +388,6 @@ const AITools = () => {
             </div>
           </div>
 
-          {/* Error state - Loading handled above */}
           {error ? (
             <div className="text-center py-12 glass-effect rounded-2xl p-6">
               <p className="text-red-400 text-lg mb-4">{error}</p>
@@ -481,7 +400,7 @@ const AITools = () => {
             </div>
           ) : (
             <>
-              {/* Search input with better positioning - using class-based approach */}
+              {/* Search input */}
               <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <div className="flex w-full md:w-auto gap-3">
                   <div className="relative flex-1 md:flex-auto" id="ai-tools-search">
@@ -518,8 +437,8 @@ const AITools = () => {
                 </div>
               </div>
 
-              {/* Tags filter - using global filter-tags-container */}
-              {aiToolsOnly.length > 0 && (
+              {/* Tags filter */}
+              {tools.length > 0 && (
                 <div className="filter-tags-container">
                   <button
                     onClick={() => setSelectedTag('')}
@@ -529,7 +448,7 @@ const AITools = () => {
                   </button>
                   {tags
                     .filter(tag => tag !== 'All')
-                    .sort((a, b) => a.localeCompare(b)) // Sort tags alphabetically
+                    .sort((a, b) => a.localeCompare(b))
                     .map((tag) => (
                     <button
                       key={tag}
@@ -542,8 +461,8 @@ const AITools = () => {
                 </div>
               )}
 
-              {/* Tools Container - Enhanced with glass effect */}
-              {aiToolsOnly.length > 0 ? (
+              {/* Tools Container */}
+              {tools.length > 0 ? (
                 <div className="glass-effect rounded-3xl p-6 shadow-xl transform transition-transform duration-700 hover:scale-[1.01]">
                   <div className="content-grid">
                     {filteredTools.length === 0 ? (
@@ -551,50 +470,17 @@ const AITools = () => {
                         <p className="text-white/70">No tools match your search criteria. Try adjusting your filters.</p>
                       </div>
                     ) : (
-                      // Always show paginated tools (they're already filtered)
                       paginatedTools.map((tool, index) => {
-                        // Get valid image URL or fallback
-                        // Inlined logic to determine toolImageSrc, preferring iconMap then SVG fallback
-                        let toolImageSrc;
-                        const toolName = tool.title?.split(' ')[0];
-                        if (iconMap[toolName]) {
-                          toolImageSrc = iconMap[toolName];
-                        } else if (tool.keyword && iconMap[tool.keyword]) {
-                          toolImageSrc = iconMap[tool.keyword];
-                        } else {
-                          const bgColor = getToolColor(tool.title);
-                          const textColor = 'ffffff';
-                          const displayText = tool.title ? 
-                            (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) :
-                            'AI Tool';
-                          toolImageSrc = createSvgDataUri({
-                            text: displayText,
-                            width: 300,
-                            height: 200,
-                            bgColor,
-                            textColor,
-                            fontSize: 24
-                          });
-                        }
-                        
-                        // Create a card wrapper for AI tools (no prompts)
-                        const CardWrapper = ({ children }) => {
-                          return (
-                            <a
-                              key={tool.id || `tool-${index}`}
-                              href={formatLink(tool.url || tool.link)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ai-tool-card glass-effect animate-fade-in shimmer-effect"
-                              style={{ animationDelay: `${index * 100}ms` }}
-                            >
-                              {children}
-                            </a>
-                          );
-                        };
+                        const toolImageSrc = getToolImage(tool);
                         
                         return (
-                          <CardWrapper key={tool.id || `tool-${index}`}>
+                          <a
+                            key={tool.id || `tool-${index}`}
+                            href={formatLink(tool.url || tool.link)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ai-tool-card glass-effect stable-card"
+                          >
                             <div className="tool-icon-container">
                               <img 
                                 src={toolImageSrc}
@@ -625,16 +511,15 @@ const AITools = () => {
                                 ))}
                               </div>
                             </div>
-                          </CardWrapper>
+                          </a>
                         );
                       })
                     )}
                   </div>
                   
-                  {/* Pagination Controls - Always show for navigation and page size options */}
+                  {/* Pagination Controls */}
                   {filteredTools.length > 0 && (
                     <div className="flex justify-center items-center mt-8 pagination-controls">
-                      {/* Navigation buttons - only show when multiple pages */}
                       {totalPages > 1 && (
                         <>
                           <button
@@ -677,7 +562,6 @@ const AITools = () => {
                         </>
                       )}
                       
-                      {/* Page size selector - always show */}
                       <div className="flex items-center">
                         <span className="text-white/80 mr-2">Show:</span>
                         <select
@@ -710,13 +594,14 @@ const AITools = () => {
                   <p className="text-white/70 mb-4">No AI tools found in the database.</p>
                   <p className="text-white/50 mb-6">AI tools need to be added by an administrator.</p>
                   
-                  {/* Admin-only button */}
-                  <a 
-                    href="/admin/ai-tools"
-                    className="px-6 py-3 bg-gradient-to-r from-purple-500/60 to-pink-500/60 rounded-lg text-white font-medium hover:from-purple-500/80 hover:to-pink-500/80 transition-all duration-300"
-                  >
-                    Go to Admin Panel
-                  </a>
+                  {isAdmin && (
+                    <a 
+                      href="/admin/ai-tools"
+                      className="px-6 py-3 bg-gradient-to-r from-purple-500/60 to-pink-500/60 rounded-lg text-white font-medium hover:from-purple-500/80 hover:to-pink-500/80 transition-all duration-300"
+                    >
+                      Go to Admin Panel
+                    </a>
+                  )}
                 </div>
               )}
             </>
@@ -728,4 +613,3 @@ const AITools = () => {
 };
 
 export default AITools;
- 

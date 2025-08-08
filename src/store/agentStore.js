@@ -1,8 +1,8 @@
+// src/store/agentStore.js
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { fetchAgents, getAgentsCount } from '../api/marketplace/agentApi'; //fetchWishlists
 import { fixPlaceholderUrl } from '../utils/imageUtils';
-import freeSearchService from '../services/freeSearchService';
 
 // Helper to fix any via.placeholder.com URLs at runtime
 const fixPlaceholderUrls = (agents) => {
@@ -412,7 +412,7 @@ const useAgentStore = create(
         set({ tagCounts: tagCount, featureCounts: featureCount });
       },
       
-      // Apply filters and search with intelligent dual-mode operation
+      // Apply filters and search with NEW backend architecture
       applyFilters: async (resetPagination = true) => {
         const state = get();
         const { 
@@ -426,7 +426,7 @@ const useAgentStore = create(
           pagination
         } = state;
         
-        console.log('🔍 ApplyFilters: Starting with simplified architecture');
+        console.log('🔍 ApplyFilters: Starting with NEW backend architecture');
         console.log('🔍 Parameters:', {
           category: selectedCategory,
           filter: selectedFilter,
@@ -443,29 +443,37 @@ const useAgentStore = create(
           
           const lastVisibleId = resetPagination ? null : pagination.lastVisibleId;
           
-          // 🔧 SIMPLIFIED: Always use server-side processing with proper parameters
+          // 🔧 NEW BACKEND ARCHITECTURE: Send proper parameters
           const apiParams = {
+            // Core parameters
+            searchQuery: searchQuery?.trim() || undefined, // Use searchQuery instead of search
+            category: selectedCategory,
+            filter: selectedFilter,
             limit: pagination.pageSize,
-            priceRange: selectedPrice,  // Backend will convert this properly now
+            offset: resetPagination ? 0 : (pagination.currentPage - 1) * pagination.pageSize,
+            
+            // Filter parameters - now sent as individual parameters
+            priceMin: selectedPrice?.min > 0 ? selectedPrice.min : undefined,
+            priceMax: selectedPrice?.max < 1000 ? selectedPrice.max : undefined,
             rating: selectedRating > 0 ? selectedRating : undefined,
-            tags: selectedTags,
-            features: selectedFeatures,
-            search: searchQuery?.trim() || undefined
+            tags: selectedTags?.length > 0 ? selectedTags.join(',') : undefined,
+            features: selectedFeatures?.length > 0 ? selectedFeatures.join(',') : undefined,
+            
+            // Additional parameters
+            lastVisibleId: lastVisibleId,
+            bypassCache: false
           };
           
-          console.log('🔍 API Parameters:', apiParams);
+          console.log('🔍 NEW Backend API Parameters:', apiParams);
           
-          const response = await fetchAgents(
-            selectedCategory,
-            selectedFilter,
-            lastVisibleId,
-            apiParams
-          );
+          // Call the updated fetchAgents function with new parameters
+          const response = await fetchAgents(apiParams);
           
-          console.log('🔍 API Response:', {
+          console.log('🔍 NEW Backend API Response:', {
             agentsCount: response?.agents?.length || 0,
             fromCache: response?.fromCache,
-            total: response?.total,
+            total: response?.totalCount,
+            hasMore: response?.hasMore,
             mode: response?.mode
           });
 
@@ -498,15 +506,15 @@ const useAgentStore = create(
             pagination: {
               currentPage: resetPagination ? 1 : pagination.currentPage + 1,
               pageSize: pagination.pageSize,
-              totalItems: response.total || fixedAgents.length,
-              totalPages: Math.ceil((response.total || fixedAgents.length) / pagination.pageSize),
-              hasMore: response.pagination?.hasMore || false,
-              lastVisibleId: response.pagination?.lastVisibleId || null,
+              totalItems: response.totalCount || fixedAgents.length,
+              totalPages: Math.ceil((response.totalCount || fixedAgents.length) / pagination.pageSize),
+              hasMore: response.hasMore || false,
+              lastVisibleId: response.lastVisibleId || null,
               isLoadingMore: false
             }
           });
           
-          console.log('✅ Store updated successfully');
+          console.log('✅ Store updated successfully with NEW backend architecture');
           
         } catch (error) {
           console.error('Error in applyFilters:', error);
@@ -547,20 +555,25 @@ const useAgentStore = create(
           
           if (currentLoadId !== requestId) return;
           
-          console.log('🚀 Loading initial data');
+          console.log('🚀 Loading initial data with NEW backend architecture');
           
-          // Load first page of agents
-          const response = await fetchAgents('All', 'Hot & New', null, { 
+          // Load first page of agents using new parameters
+          const apiParams = {
+            category: 'All',
+            filter: 'Hot & New',
             limit: get().pagination.pageSize,
+            offset: 0,
             bypassCache: forceRefresh
-          });
+          };
+          
+          const response = await fetchAgents(apiParams);
           
           if (currentLoadId !== requestId) return;
           
           // Extract response data
           const agentsResponse = response.agents || [];
           const fromCache = response.fromCache || false;
-          const total = response.total || agentsResponse.length;
+          const total = response.totalCount || agentsResponse.length;
           
           console.log(`✅ Received ${agentsResponse.length} agents (fromCache: ${fromCache}, total: ${total})`);
           
@@ -599,8 +612,8 @@ const useAgentStore = create(
               pageSize: currentPageSize,
               totalItems: total,
               totalPages: Math.ceil(total / currentPageSize),
-              hasMore: response.pagination?.hasMore || false,
-              lastVisibleId: response.pagination?.lastVisibleId || null,
+              hasMore: response.hasMore || false,
+              lastVisibleId: response.lastVisibleId || null,
               isLoadingMore: false
             }
           });
@@ -640,18 +653,18 @@ const useAgentStore = create(
         return recommendedAgents.slice(0, limit);
       },
 
-      // Load more agents using cursor-based pagination
-      loadMore: async () => {
+      // Load more agents using cursor-based pagination - RENAMED to match component usage
+      loadMoreAgents: async () => {
         const state = get();
         const { pagination, selectedCategory, selectedFilter, selectedPrice, selectedRating, selectedTags, selectedFeatures, searchQuery } = state;
         
         // Don't load if already loading or no more data
         if (pagination.isLoadingMore || !pagination.hasMore) {
-          console.log('📋 LoadMore: Skipping - already loading or no more data', { isLoadingMore: pagination.isLoadingMore, hasMore: pagination.hasMore });
+          console.log('📋 LoadMoreAgents: Skipping - already loading or no more data', { isLoadingMore: pagination.isLoadingMore, hasMore: pagination.hasMore });
           return;
         }
         
-        console.log('📋 LoadMore: Loading next page with lastVisibleId:', pagination.lastVisibleId);
+        console.log('📋 LoadMoreAgents: Loading next page with lastVisibleId:', pagination.lastVisibleId);
         
         // Set loading state
         set({
@@ -663,20 +676,27 @@ const useAgentStore = create(
         
         try {
           // Call API with cursor-based pagination using same parameters as applyFilters
-          const response = await fetchAgents(selectedCategory, selectedFilter, pagination.lastVisibleId, {
+          const apiParams = {
+            searchQuery: searchQuery?.trim() || undefined,
+            category: selectedCategory,
+            filter: selectedFilter,
             limit: pagination.pageSize,
-            priceRange: selectedPrice,  // Consistent with applyFilters
+            offset: pagination.currentPage * pagination.pageSize, // Calculate offset from current page
+            priceMin: selectedPrice?.min > 0 ? selectedPrice.min : undefined,
+            priceMax: selectedPrice?.max < 1000 ? selectedPrice.max : undefined,
             rating: selectedRating > 0 ? selectedRating : undefined,
-            tags: selectedTags,
-            features: selectedFeatures,
-            search: searchQuery || undefined
-          });
+            tags: selectedTags?.length > 0 ? selectedTags.join(',') : undefined,
+            features: selectedFeatures?.length > 0 ? selectedFeatures.join(',') : undefined,
+            lastVisibleId: pagination.lastVisibleId
+          };
+          
+          const response = await fetchAgents(apiParams);
           
           if (response && response.agents && response.agents.length > 0) {
             // Fix placeholder URLs for new agents
             const newFixedAgents = fixPlaceholderUrls(response.agents);
             
-            console.log(`✅ LoadMore: Received ${newFixedAgents.length} more agents (fromCache: ${response.fromCache})`);
+            console.log(`✅ LoadMoreAgents: Received ${newFixedAgents.length} more agents (fromCache: ${response.fromCache})`);
             
             // Append new agents to existing ones
             const updatedAgents = [...state.agents, ...newFixedAgents];
@@ -687,22 +707,22 @@ const useAgentStore = create(
               pagination: {
                 ...pagination,
                 currentPage: pagination.currentPage + 1,
-                hasMore: response.pagination?.hasMore || false,
-                lastVisibleId: response.pagination?.lastVisibleId || null,
+                hasMore: response.hasMore || false,
+                lastVisibleId: response.lastVisibleId || null,
                 isLoadingMore: false,
-                totalItems: response.total || state.pagination.totalItems
+                totalItems: response.totalCount || state.pagination.totalItems
               }
             });
             
-            console.log('🔍 LoadMore pagination update:', {
+            console.log('🔍 LoadMoreAgents pagination update:', {
               newCurrentPage: pagination.currentPage + 1,
-              newHasMore: response.pagination?.hasMore || false,
-              newLastVisibleId: response.pagination?.lastVisibleId || null,
+              newHasMore: response.hasMore || false,
+              newLastVisibleId: response.lastVisibleId || null,
               totalAgentsNow: updatedAgents.length,
-              totalItems: response.total || state.pagination.totalItems
+              totalItems: response.totalCount || state.pagination.totalItems
             });
           } else {
-            console.log('📋 LoadMore: No more agents received');
+            console.log('📋 LoadMoreAgents: No more agents received');
             set({
               pagination: {
                 ...pagination,
@@ -712,7 +732,7 @@ const useAgentStore = create(
             });
           }
         } catch (error) {
-          console.error('Error in loadMore:', error);
+          console.error('Error in loadMoreAgents:', error);
           set({
             pagination: {
               ...pagination,
@@ -778,4 +798,4 @@ const useAgentStore = create(
   )
 );
 
-export default useAgentStore; 
+export default useAgentStore;

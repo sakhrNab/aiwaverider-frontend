@@ -31,7 +31,7 @@ window.preloadAgentData = async (force = false) => {
   try {
     console.log('Preloading agent data (called manually)');
     const agentStore = useAgentStore.getState();
-    const currentAgents = agentStore.allAgents;
+    const currentAgents = agentStore.allAgents || [];
     if (force || currentAgents.length === 0) {
       await agentStore.loadInitialData(force);
       console.log('Agent data preloaded successfully');

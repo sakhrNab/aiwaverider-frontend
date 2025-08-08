@@ -1,578 +1,537 @@
-import firebase from 'firebase/compat/app';
+// src/api/auth/authApi.js
+
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  OAuthProvider,
+  sendPasswordResetEmail,
+  confirmPasswordReset as firebaseConfirmPasswordReset,
+  verifyPasswordResetCode as firebaseVerifyPasswordResetCode,
+  browserPopupRedirectResolver
+} from 'firebase/auth';
 import { auth } from '../../utils/firebase';
-import { api, API_URL, clearTokenCache } from '../core/apiConfig';
+import { api, API_URL } from '../core/apiConfig';
 
-// Create Session using Axios
-export const createSession = async (user) => {
-  try {
-    const token = await user.getIdToken(true);
-    const response = await api.post('/api/auth/session', { idToken: token });
-    return response.data;
-  } catch (error) {
-    console.error('Error creating session:', error);
-    throw error;
-  }
-};
+// Initialize providers
+const googleProvider = new GoogleAuthProvider();
+const microsoftProvider = new OAuthProvider('microsoft.com');
 
-// Sign Out User
-export const signOutUser = async () => {
-  try {
-    clearTokenCache(); // Clear token cache
-    const response = await api.post('/api/auth/signout');
-    return { success: true, message: response.data.message || 'Signed out successfully' };
-  } catch (error) {
-    console.error('Error during sign out:', error);
-    return { success: true, message: 'Signed out locally' };
-  }
-};
+// Configure Google provider
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
 
-// Sign Up with Email and Password
-export const signUp = async (userData) => {
-  try {
-    const { email, password } = userData;
-    // Create user in Firebase Authentication
-    const firebaseResult = await auth.createUserWithEmailAndPassword(email, password);
-    const firebaseUser = firebaseResult.user;
-    
-    // Update Firebase profile with display name
-    await firebaseUser.updateProfile({
-      displayName: `${userData.firstName} ${userData.lastName}`
-    });
-    
-    // Prepare user data for the backend (excluding password)
-    const backendUserData = {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-      username: userData.username,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      phoneNumber: userData.phoneNumber,
-      displayName: firebaseUser.displayName
-    };
-    
-    console.log('Sending user data to backend:', backendUserData);
-    
-    // Send user data to backend and wait for response
-    const response = await api.post('/api/auth/signup', backendUserData);
-    
-    console.log('Backend signup response:', response.data);
-    
-    // Save user data directly to Firestore
-    try {
-      await firebase.firestore().collection('users').doc(firebaseUser.uid).set({
-        ...backendUserData,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      console.log('User data saved to Firestore database');
-    } catch (firestoreError) {
-      console.error('Error saving user to Firestore:', firestoreError);
-      // Continue even if Firestore save fails - don't throw an error
-    }
-    
-    // Wait a moment to ensure the data is saved
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Refresh the ID token to ensure server can properly authenticate subsequent requests
-    const token = await firebaseUser.getIdToken(true);
-    localStorage.setItem('authToken', token);
-    
-    return { user: firebaseUser, backendResponse: response.data };
-  } catch (error) {
-    console.error('Error during sign up:', error);
-    throw error;
-  }
-};
+// Configure Microsoft provider
+microsoftProvider.addScope('email');
+microsoftProvider.addScope('profile');
 
-// Sign In with Email and Password
-export const signIn = async (credentials) => {
+/**
+ * Register backend user after Firebase signup
+ */
+const registerBackendUser = async (firebaseUser, additionalData = {}) => {
   try {
-    console.log('Starting sign-in process with email/password...');
+    console.log('[AuthAPI] Registering backend user for:', firebaseUser.email);
     
-    // First, try to sign out the current user to clear any existing sessions
-    try {
-      await auth.signOut();
-      console.log('Signed out previous user');
-    } catch (signOutError) {
-      console.warn('Could not sign out current user:', signOutError);
-      // Continue anyway - this is just a precaution
-    }
-    
-    // Aggressively clear ALL cached auth data
-    clearTokenCache(); // Clear API tokens
-    localStorage.removeItem('authToken'); // Clear auth token
-    localStorage.removeItem('userProfile'); // Clear user profile
-    
-    // Clear ANY cache that might be related to auth or user data
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (
-          key.includes('auth') || 
-          key.includes('user') || 
-          key.includes('profile') || 
-          key.includes('token') || 
-          key.includes('firebase')
-        )) {
-        keysToRemove.push(key);
-      }
-    }
-    
-    console.log(`Clearing ${keysToRemove.length} cached items:`, keysToRemove);
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-    
-    // Clear IndexedDB Firebase data if possible
-    try {
-      indexedDB.deleteDatabase('firebaseLocalStorageDb');
-      console.log('Cleared Firebase IndexedDB cache');
-    } catch (idbError) {
-      console.warn('Could not clear IndexedDB:', idbError);
-    }
-    
-    // Now proceed with the actual sign in
-    const { usernameOrEmail, password } = credentials;
-    let email = usernameOrEmail;
-    const isEmail = usernameOrEmail.includes('@');
-    if (!isEmail) {
-      const response = await api.get(`/api/auth/get-email/${usernameOrEmail}`);
-      email = response.data.email;
-    }
-    
-    console.log(`Signing in with email: ${email}`);
-    
-    // Sign in with Firebase
-    const result = await auth.signInWithEmailAndPassword(email, password);
-    if (!result.user) {
-      throw new Error('No user data returned from Firebase');
-    }
-    
-    console.log(`Successfully signed in user: ${result.user.email} (${result.user.uid})`);
-    
-    // Get the fresh token
-    const token = await result.user.getIdToken(true);
-    localStorage.setItem('authToken', token);
-    console.log('New auth token generated and stored');
-    
-    // Try to get user from Firestore to ensure we have the full profile
-    try {
-      const userDoc = await firebase.firestore().collection('users').doc(result.user.uid).get();
-      if (userDoc.exists) {
-        console.log('Found user data in Firestore for current user');
-        const firestoreData = userDoc.data();
-        
-        // Store current user info to local storage with timestamp to prevent stale data
-        localStorage.setItem('currentUserInfo', JSON.stringify({
-          uid: result.user.uid,
-          email: result.user.email,
-          timestamp: Date.now()
-        }));
-        
-        // Return merged data to ensure we have the complete profile
-        return { 
-          firebaseUser: result.user,
-          profile: firestoreData
-        };
-      } else {
-        console.warn('No Firestore data found for this user, creating a new profile');
-        
-        // If no data found, create a minimal profile in Firestore
-        const newProfile = {
-          uid: result.user.uid,
-          email: result.user.email,
-          displayName: result.user.displayName || result.user.email.split('@')[0],
-          photoURL: result.user.photoURL || '/default-avatar.png',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await firebase.firestore().collection('users').doc(result.user.uid).set(newProfile);
-        console.log('Created new user profile in Firestore');
-        
-        return {
-          firebaseUser: result.user,
-          profile: newProfile
-        };
-      }
-    } catch (firestoreError) {
-      console.error('Error fetching/saving user from Firestore:', firestoreError);
-      // Continue without throwing - just use the firebaseUser
-    }
-    
-    return { firebaseUser: result.user };
-  } catch (error) {
-    console.error('Error signing in:', error);
-    throw error;
-  }
-};
-
-// Check network connectivity
-const checkNetworkConnectivity = async () => {
-  // First check if navigator.onLine is false, which is a quick but not always reliable check
-  if (!navigator.onLine) {
-    console.error('Network is offline according to navigator.onLine');
-    return {
-      online: false,
-      error: 'Your device appears to be offline. Please check your internet connection.'
-    };
-  }
-  
-  // Try to fetch a small resource from Google to verify Google services are accessible
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-    
-    const response = await fetch('https://www.google.com/favicon.ico', {
-      method: 'HEAD',
-      mode: 'no-cors',
-      cache: 'no-cache',
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    return { online: true };
-  } catch (error) {
-    console.error('Network connectivity check failed:', error);
-    
-    // Determine the type of network error
-    let errorMessage = 'Unable to connect to authentication services. ';
-    
-    if (error.name === 'AbortError') {
-      errorMessage += 'The connection timed out. ';
-    } else if (error.message && error.message.includes('ECONNREFUSED')) {
-      errorMessage += 'Connection was refused. ';
-    } else if (error.message && error.message.includes('ENOTFOUND')) {
-      errorMessage += 'DNS lookup failed. ';
-    }
-    
-    errorMessage += 'Please check your internet connection, firewall settings, or try using a different network.';
-    
-    return {
-      online: false,
-      error: errorMessage
-    };
-  }
-};
-
-// Sign In with Google
-export const signInWithGoogle = async () => {
-  try {
-    console.log('Starting Google sign-in process');
-    
-    // Check network connectivity first
-    const networkStatus = await checkNetworkConnectivity();
-    if (!networkStatus.online) {
-      console.error('Network connectivity issue detected before Google sign-in');
-      return { 
-        canceled: false,
-        error: true,
-        network: false,
-        message: networkStatus.error
-      };
-    }
-    
-    const auth = firebase.auth();
-    const provider = new firebase.auth.GoogleAuthProvider();
-    
-    // Add additional scopes as needed
-    provider.addScope('profile');
-    provider.addScope('email');
-    
-    // Add this line to force account selection dialog
-    provider.setCustomParameters({ prompt: 'select_account' });
-    
-    // Sign in with popup
-    const result = await auth.signInWithPopup(provider);
-    
-    // Get the user from the result
-    const { user } = result;
-    console.log('Google sign-in successful for user:', user.email);
-    
-    // Get the raw ID token directly from Firebase
-    const idToken = await user.getIdToken(true);
-    console.log('Got fresh ID token');
-    
-    // Store the token in localStorage for subsequent requests
-    localStorage.setItem('authToken', idToken);
-    console.log('Token stored in localStorage');
-    
-    // Send the token to your backend to verify and create/update the user
-    try {
-      // Use a direct fetch to avoid the axios interceptor for this initial verification
-      const verifyResponse = await fetch(`${API_URL}/api/auth/verify-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}` // Add the Bearer prefix
-        },
-        body: JSON.stringify({
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          uid: user.uid,
-          providerData: user.providerData
-        })
-      });
-      
-      // Log the request for debugging
-      console.log('Sending verification request with auth header:', `Bearer ${idToken.substring(0, 10)}...`);
-      
-      if (!verifyResponse.ok) {
-        const errorText = await verifyResponse.text();
-        let errorData;
-        try {
-          // Try to parse as JSON
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          // If not JSON, use the text
-          errorData = errorText;
-        }
-        console.error('Backend verification failed:', errorData);
-        throw new Error(`Backend verification failed: ${verifyResponse.status} ${typeof errorData === 'object' ? JSON.stringify(errorData) : errorData}`);
-      }
-      
-      const userData = await verifyResponse.json();
-      console.log('User verified with backend:', userData);
-      
-      // Store user data to local storage for UI purposes
-      localStorage.setItem('userProfile', JSON.stringify({
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        ...userData
-      }));
-      
-      return userData;
-    } catch (verifyError) {
-      console.error('Error verifying user with backend:', verifyError);
-      
-      // Even if backend verification fails, return the Firebase user
-      // so the UI can show something
-      return {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        isVerified: false,
-        error: verifyError.message
-      };
-    }
-  } catch (error) {
-    // Check if the user closed the popup
-    if (error.code === 'auth/popup-closed-by-user') {
-      console.log('User closed the Google sign-in popup - this is a normal user action');
-      // Return a specific object instead of throwing an error
-      return { 
-        canceled: true,
-        code: 'auth/popup-closed-by-user',
-        message: 'Sign-in canceled by user'
-      };
-    }
-    
-    console.error('Error signing in with Google:', error);
-    throw error;
-  }
-};
-
-// Google Sign-Up (using signInWithPopup; let AuthContext create user)
-export const signUpWithGoogle = async () => {
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    const result = await auth.signInWithPopup(provider);
-    const user = result.user;
-    
-    if (!user) {
-      throw new Error('No user data returned from Google Sign-Up');
-    }
-    
-    // Get profile image URL from Google
-    const photoURL = user.photoURL;
-    
-    // Extract first and last name from displayName
-    const firstName = user.displayName?.split(' ')[0] || '';
-    const lastName = user.displayName?.split(' ').slice(1).join(' ') || '';
+    // Get the ID token for authentication
+    const idToken = await firebaseUser.getIdToken();
     
     // Prepare user data for backend
     const userData = {
-      uid: user.uid,
-      email: user.email,
-      username: `user_${user.uid.slice(0, 8)}`,
-      firstName: firstName,
-      lastName: lastName,
-      displayName: user.displayName,
-      photoURL: photoURL,
-      provider: 'google'
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      displayName: firebaseUser.displayName || additionalData.displayName || firebaseUser.email.split('@')[0],
+      photoURL: firebaseUser.photoURL || additionalData.photoURL || '',
+      firstName: additionalData.firstName || firebaseUser.displayName?.split(' ')[0] || firebaseUser.email.split('@')[0],
+      lastName: additionalData.lastName || firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+      username: additionalData.username || `user_${firebaseUser.email.split('@')[0]}_${Date.now().toString().slice(-4)}`,
+      phoneNumber: firebaseUser.phoneNumber || additionalData.phoneNumber || ''
     };
     
-    console.log('Sending Google user data to backend:', userData);
+    console.log('[AuthAPI] Sending backend registration request with data:', userData);
     
-    // Send user data to backend and wait for response
-    const response = await api.post('/api/auth/signup', userData);
-    console.log('Backend signup response for Google user:', response.data);
+    // Call backend signup endpoint with increased timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
     
-    // Wait a moment to ensure the data is saved
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Refresh the ID token
-    const token = await user.getIdToken(true);
-    localStorage.setItem('authToken', token);
-    
-    return { 
-      firebaseUser: user,
-      photoURL,
-      backendResponse: response.data
-    };
-  } catch (error) {
-    console.error('Error in Google sign up:', error);
-    throw error;
-  }
-};
-
-// Sign Up with Microsoft
-export const signUpWithMicrosoft = async () => {
-  try {
-    const provider = new firebase.auth.OAuthProvider('microsoft.com');
-    provider.setCustomParameters({ prompt: 'select_account' });
-    const result = await auth.signInWithPopup(provider);
-    const user = result.user;
-    const token = await user.getIdToken();
-    
-    // Get profile image URL from Microsoft
-    const photoURL = user.photoURL;
-    
-    const userData = {
-      uid: user.uid,
-      email: user.email,
-      username: `user_${user.uid.slice(0, 8)}`,
-      firstName: user.displayName?.split(' ')[0] || '',
-      lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
-      displayName: user.displayName,
-      photoURL,
-      provider: 'microsoft'
-    };
-    
-    const response = await api.post('/api/auth/signup', userData);
-    return { 
-      firebaseUser: user,
-      photoURL 
-    };
-  } catch (error) {
-    console.error('Error in Microsoft sign up:', error);
-    throw error;
-  }
-};
-
-// Sign In with Microsoft
-export const signInWithMicrosoft = async () => {
-  try {
-    console.log('Starting Microsoft sign-in process');
-    
-    // Check network connectivity first
-    const networkStatus = await checkNetworkConnectivity();
-    if (!networkStatus.online) {
-      console.error('Network connectivity issue detected before Microsoft sign-in');
-      return { 
-        canceled: false,
-        error: true,
-        network: false,
-        message: networkStatus.error
-      };
-    }
-    
-    const auth = firebase.auth();
-    const provider = new firebase.auth.OAuthProvider('microsoft.com');
-    
-    // Sign in with popup
-    const result = await auth.signInWithPopup(provider);
-    
-    // Get the user from the result
-    const { user } = result;
-    console.log('Microsoft sign-in successful for user:', user.email);
-    
-    // Get the raw ID token directly from Firebase
-    const idToken = await user.getIdToken(true);
-    console.log('Got fresh ID token');
-    
-    // Store the token in localStorage for subsequent requests
-    localStorage.setItem('authToken', idToken);
-    console.log('Token stored in localStorage');
-    
-    // Send the token to your backend to verify and create/update the user
     try {
-      // Use a direct fetch to avoid the axios interceptor for this initial verification
-      const verifyResponse = await fetch(`${API_URL}/api/auth/verify-user`, {
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}` // Add the Bearer prefix
+          'Authorization': `Bearer ${idToken}`
         },
-        body: JSON.stringify({
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          uid: user.uid,
-          providerData: user.providerData
-        })
+        body: JSON.stringify(userData),
+        signal: controller.signal
       });
       
-      // Log the request for debugging
-      console.log('Sending verification request with auth header:', `Bearer ${idToken.substring(0, 10)}...`);
+      clearTimeout(timeoutId);
       
-      if (!verifyResponse.ok) {
-        const errorText = await verifyResponse.text();
-        let errorData;
-        try {
-          // Try to parse as JSON
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          // If not JSON, use the text
-          errorData = errorText;
-        }
-        console.error('Backend verification failed:', errorData);
-        throw new Error(`Backend verification failed: ${verifyResponse.status} ${typeof errorData === 'object' ? JSON.stringify(errorData) : errorData}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[AuthAPI] Backend registration failed:', response.status, errorData);
+        throw new Error(errorData.error || `Backend registration failed: ${response.status}`);
       }
       
-      const userData = await verifyResponse.json();
-      console.log('User verified with backend:', userData);
+      const backendResponse = await response.json();
+      console.log('[AuthAPI] Backend registration successful:', backendResponse);
       
-      // Store user data to local storage for UI purposes
-      localStorage.setItem('userProfile', JSON.stringify({
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        ...userData
-      }));
+      // Ensure we have complete profile data in the response
+      const profileData = backendResponse.user || backendResponse.profile || {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: userData.displayName,
+        photoURL: userData.photoURL,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        username: userData.username,
+        role: 'authenticated'
+      };
       
-      return userData;
-    } catch (verifyError) {
-      console.error('Error verifying user with backend:', verifyError);
-      
-      // Even if backend verification fails, return the Firebase user
-      // so the UI can show something
       return {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        isVerified: false,
-        error: verifyError.message
+        firebaseUser,
+        backendResponse,
+        user: profileData,
+        profile: profileData // Ensure profile data is available
+      };
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Registration request timed out. Please try again.');
+      }
+      
+      throw fetchError;
+    }
+  } catch (error) {
+    console.error('[AuthAPI] Error registering backend user:', error);
+    
+    // Return partial success with Firebase user data as fallback
+    const fallbackUser = {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      displayName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+      photoURL: firebaseUser.photoURL || '',
+      firstName: additionalData.firstName || firebaseUser.displayName?.split(' ')[0] || firebaseUser.email.split('@')[0],
+      lastName: additionalData.lastName || firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+      role: 'authenticated',
+      username: additionalData.username || `user_${firebaseUser.email.split('@')[0]}_${Date.now().toString().slice(-4)}`
+    };
+    
+    return {
+      firebaseUser,
+      backendResponse: null,
+      error: error.message,
+      user: fallbackUser,
+      profile: fallbackUser
+    };
+  }
+};
+
+/**
+ * Sign up with email and password
+ */
+export const signUp = async (userData) => {
+  try {
+    console.log('[AuthAPI] Starting email signup process for:', userData.email);
+    
+    // Validate required fields
+    if (!userData.email || !userData.password) {
+      throw new Error('Email and password are required');
+    }
+    
+    if (!userData.firstName) {
+      throw new Error('First name is required');
+    }
+    
+    // Create Firebase user
+    const userCredential = await createUserWithEmailAndPassword(
+      auth, 
+      userData.email, 
+      userData.password
+    );
+    
+    const firebaseUser = userCredential.user;
+    console.log('[AuthAPI] Firebase user created successfully:', firebaseUser.uid);
+    
+    // Store auth token immediately
+    const idToken = await firebaseUser.getIdToken();
+    localStorage.setItem('authToken', idToken);
+    
+    // Register with backend
+    const result = await registerBackendUser(firebaseUser, {
+      firstName: userData.firstName,
+      lastName: userData.lastName || '',
+      username: userData.username,
+      phoneNumber: userData.phoneNumber || ''
+    });
+    
+    console.log('[AuthAPI] Email signup completed successfully');
+    return result;
+  } catch (error) {
+    console.error('[AuthAPI] Email signup error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Sign up with Google
+ */
+export const signUpWithGoogle = async () => {
+  try {
+    console.log('[AuthAPI] Starting Google signup process');
+    
+    // Use browserPopupRedirectResolver to fix popup issues
+    const result = await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
+    const firebaseUser = result.user;
+    
+    console.log('[AuthAPI] Google Firebase user created:', firebaseUser.uid);
+    
+    // Store auth token immediately
+    const idToken = await firebaseUser.getIdToken();
+    localStorage.setItem('authToken', idToken);
+    
+    // Register with backend
+    const backendResult = await registerBackendUser(firebaseUser, {
+      displayName: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL
+    });
+    
+    console.log('[AuthAPI] Google signup completed successfully');
+    return backendResult;
+  } catch (error) {
+    console.error('[AuthAPI] Google signup error:', error);
+    
+    // Enhanced error handling for common popup issues
+    if (error.code === 'auth/popup-blocked') {
+      throw new Error('Popup was blocked by browser. Please allow popups and try again.');
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      throw new Error('Popup was closed. Please try again.');
+    } else if (error.code === 'auth/unauthorized-domain') {
+      throw new Error('This domain is not authorized. Please contact support.');
+    } else if (error.code === 'auth/operation-not-allowed') {
+      throw new Error('Google sign-in is not enabled. Please contact support.');
+    }
+    
+    throw error;
+  }
+};
+
+/**
+ * Sign up with Microsoft
+ */
+export const signUpWithMicrosoft = async () => {
+  try {
+    console.log('[AuthAPI] Starting Microsoft signup process');
+    
+    // Use browserPopupRedirectResolver to fix popup issues
+    const result = await signInWithPopup(auth, microsoftProvider, browserPopupRedirectResolver);
+    const firebaseUser = result.user;
+    
+    console.log('[AuthAPI] Microsoft Firebase user created:', firebaseUser.uid);
+    
+    // Store auth token immediately
+    const idToken = await firebaseUser.getIdToken();
+    localStorage.setItem('authToken', idToken);
+    
+    // Register with backend
+    const backendResult = await registerBackendUser(firebaseUser, {
+      displayName: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL
+    });
+    
+    console.log('[AuthAPI] Microsoft signup completed successfully');
+    return backendResult;
+  } catch (error) {
+    console.error('[AuthAPI] Microsoft signup error:', error);
+    
+    // Enhanced error handling for common popup issues
+    if (error.code === 'auth/popup-blocked') {
+      throw new Error('Popup was blocked by browser. Please allow popups and try again.');
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      throw new Error('Popup was closed. Please try again.');
+    } else if (error.code === 'auth/unauthorized-domain') {
+      throw new Error('This domain is not authorized. Please contact support.');
+    } else if (error.code === 'auth/operation-not-allowed') {
+      throw new Error('Microsoft sign-in is not enabled. Please contact support.');
+    }
+    
+    throw error;
+  }
+};
+
+/**
+ * Sign in with email and password
+ */
+export const signIn = async (email, password) => {
+  try {
+    console.log('[AuthAPI] Starting email sign in for:', email);
+    
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+    
+    // Store auth token
+    const idToken = await firebaseUser.getIdToken();
+    localStorage.setItem('authToken', idToken);
+    
+    console.log('[AuthAPI] Email sign in successful:', firebaseUser.uid);
+    
+    // Create session with backend
+    try {
+      const response = await api.post('/api/auth/create-session', { idToken });
+      console.log('[AuthAPI] Backend session created:', response.data);
+      
+      return {
+        firebaseUser,
+        backendResponse: response.data,
+        user: response.data.user,
+        profile: response.data.user
+      };
+    } catch (sessionError) {
+      console.warn('[AuthAPI] Failed to create backend session:', sessionError);
+      
+      // Return Firebase user data as fallback
+      return {
+        firebaseUser,
+        user: {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+          photoURL: firebaseUser.photoURL || '',
+          role: 'authenticated'
+        }
       };
     }
   } catch (error) {
-    // Check if the user closed the popup
-    if (error.code === 'auth/popup-closed-by-user') {
-      console.log('User closed the Microsoft sign-in popup - this is a normal user action');
-      // Return a specific object instead of throwing an error
-      return { 
-        canceled: true,
-        code: 'auth/popup-closed-by-user',
-        message: 'Sign-in canceled by user'
-      };
-    }
-    
-    console.error('Error signing in with Microsoft:', error);
+    console.error('[AuthAPI] Email sign in error:', error);
     throw error;
   }
-}; 
+};
+
+/**
+ * Sign in with Google
+ */
+export const signInWithGoogle = async () => {
+  try {
+    console.log('[AuthAPI] Starting Google sign in');
+    
+    const result = await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
+    const firebaseUser = result.user;
+    
+    // Store auth token
+    const idToken = await firebaseUser.getIdToken();
+    localStorage.setItem('authToken', idToken);
+    
+    console.log('[AuthAPI] Google sign in successful:', firebaseUser.uid);
+    
+    // Create session with backend
+    try {
+      const response = await api.post('/api/auth/create-session', { idToken });
+      console.log('[AuthAPI] Backend session created:', response.data);
+      
+      return {
+        firebaseUser,
+        backendResponse: response.data,
+        user: response.data.user,
+        profile: response.data.user
+      };
+    } catch (sessionError) {
+      console.warn('[AuthAPI] Failed to create backend session:', sessionError);
+      
+      // Return Firebase user data as fallback
+      return {
+        firebaseUser,
+        user: {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+          photoURL: firebaseUser.photoURL || '',
+          role: 'authenticated'
+        }
+      };
+    }
+  } catch (error) {
+    console.error('[AuthAPI] Google sign in error:', error);
+    
+    // Enhanced error handling
+    if (error.code === 'auth/popup-blocked') {
+      throw new Error('Popup was blocked by browser. Please allow popups and try again.');
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      throw new Error('Popup was closed. Please try again.');
+    } else if (error.code === 'auth/unauthorized-domain') {
+      throw new Error('This domain is not authorized. Please contact support.');
+    }
+    
+    throw error;
+  }
+};
+
+/**
+ * Sign in with Microsoft
+ */
+export const signInWithMicrosoft = async () => {
+  try {
+    console.log('[AuthAPI] Starting Microsoft sign in');
+    
+    const result = await signInWithPopup(auth, microsoftProvider, browserPopupRedirectResolver);
+    const firebaseUser = result.user;
+    
+    // Store auth token
+    const idToken = await firebaseUser.getIdToken();
+    localStorage.setItem('authToken', idToken);
+    
+    console.log('[AuthAPI] Microsoft sign in successful:', firebaseUser.uid);
+    
+    // Create session with backend
+    try {
+      const response = await api.post('/api/auth/create-session', { idToken });
+      console.log('[AuthAPI] Backend session created:', response.data);
+      
+      return {
+        firebaseUser,
+        backendResponse: response.data,
+        user: response.data.user,
+        profile: response.data.user
+      };
+    } catch (sessionError) {
+      console.warn('[AuthAPI] Failed to create backend session:', sessionError);
+      
+      // Return Firebase user data as fallback
+      return {
+        firebaseUser,
+        user: {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+          photoURL: firebaseUser.photoURL || '',
+          role: 'authenticated'
+        }
+      };
+    }
+  } catch (error) {
+    console.error('[AuthAPI] Microsoft sign in error:', error);
+    
+    // Enhanced error handling
+    if (error.code === 'auth/popup-blocked') {
+      throw new Error('Popup was blocked by browser. Please allow popups and try again.');
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      throw new Error('Popup was closed. Please try again.');
+    } else if (error.code === 'auth/unauthorized-domain') {
+      throw new Error('This domain is not authorized. Please contact support.');
+    }
+    
+    throw error;
+  }
+};
+
+/**
+ * Sign out user
+ */
+export const signOut = async () => {
+  try {
+    console.log('[AuthAPI] Starting sign out process');
+    
+    // Sign out from Firebase
+    await auth.signOut();
+    
+    // Clear local storage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUserInfo');
+    localStorage.removeItem('profile_data');
+    
+    // Call backend signout
+    try {
+      await api.post('/api/auth/signout');
+      console.log('[AuthAPI] Backend signout successful');
+    } catch (backendError) {
+      console.warn('[AuthAPI] Backend signout failed:', backendError);
+      // Continue with signout even if backend fails
+    }
+    
+    console.log('[AuthAPI] Sign out completed successfully');
+  } catch (error) {
+    console.error('[AuthAPI] Sign out error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Send password reset email
+ */
+export const resetPassword = async (email) => {
+  try {
+    console.log('[AuthAPI] Sending password reset email to:', email);
+    await sendPasswordResetEmail(auth, email);
+    console.log('[AuthAPI] Password reset email sent successfully');
+  } catch (error) {
+    console.error('[AuthAPI] Password reset error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Confirm password reset
+ */
+export const confirmPasswordReset = async (oobCode, newPassword) => {
+  try {
+    console.log('[AuthAPI] Confirming password reset');
+    await firebaseConfirmPasswordReset(auth, oobCode, newPassword);
+    console.log('[AuthAPI] Password reset confirmed successfully');
+  } catch (error) {
+    console.error('[AuthAPI] Password reset confirmation error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Verify password reset code
+ */
+export const verifyPasswordResetCode = async (oobCode) => {
+  try {
+    console.log('[AuthAPI] Verifying password reset code');
+    const email = await firebaseVerifyPasswordResetCode(auth, oobCode);
+    console.log('[AuthAPI] Password reset code verified for:', email);
+    return email;
+  } catch (error) {
+    console.error('[AuthAPI] Password reset code verification error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Verify user token with backend
+ */
+export const verifyUser = async () => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('No authenticated user');
+    }
+    
+    const idToken = await user.getIdToken();
+    const response = await api.get('/api/auth/verify', {
+      headers: {
+        'Authorization': `Bearer ${idToken}`
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('[AuthAPI] User verification error:', error);
+    throw error;
+  }
+};
+
+export default {
+  signUp,
+  signUpWithGoogle,
+  signUpWithMicrosoft,
+  signIn,
+  signInWithGoogle,
+  signInWithMicrosoft,
+  signOut,
+  resetPassword,
+  confirmPasswordReset,
+  verifyPasswordResetCode,
+  verifyUser
+};

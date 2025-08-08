@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaTimes, FaPaperPlane, FaRedo } from 'react-icons/fa';
+import { FaTimes, FaPaperPlane, FaRedo, FaCalendarAlt } from 'react-icons/fa';
 import chatIcon from '../../assets/chat-icon.jpg';
 import chatApi from '../../api/chat/chatApi';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -10,7 +10,8 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([
     { 
       role: 'assistant', 
-      content: 'Hi there! 👋 I can help you navigate the AI Waverider website and answer questions about our offerings. How can I assist you today?' 
+      content: 'Hi there! 👋 I can help you navigate the AI Waverider website and answer questions about our AI business training programs. How can I assist you today?',
+      showBookingButton: false
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
@@ -40,6 +41,18 @@ const ChatBot = () => {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const handleBookingClick = () => {
+    // Open Calendly in a new window/tab
+    window.open('https://calendly.com/aiwaverider/strategy-call', '_blank', 'width=800,height=600');
+    
+    // Add a message to the chat confirming the action
+    setMessages(prevMessages => [...prevMessages, {
+      role: 'assistant',
+      content: 'Perfect! I\'ve opened our booking page for you. You can schedule your free 30-minute strategy call with Sakhr Al-Absi there. If the window didn\'t open, you can also visit: https://calendly.com/aiwaverider/strategy-call',
+      showBookingButton: false
+    }]);
   };
 
   const retryLastMessage = () => {
@@ -75,10 +88,11 @@ const ChatBot = () => {
         throw new Error(response.message || 'Failed to get response from chat API');
       }
       
-      // Add assistant response to chat
+      // Add assistant response to chat with booking button info
       setMessages(prevMessages => [...prevMessages, { 
         role: 'assistant', 
-        content: response.message || 'I\'m not sure how to respond to that.'
+        content: response.message || 'I\'m not sure how to respond to that.',
+        showBookingButton: response.data?.showBookingButton || false
       }]);
       setHasError(false);
     } catch (error) {
@@ -87,7 +101,8 @@ const ChatBot = () => {
         ...prevMessages, 
         { 
           role: 'error', 
-          content: 'Sorry, I encountered an error: ' + error.message
+          content: 'Sorry, I encountered an error: ' + error.message,
+          showBookingButton: false
         }
       ]);
       setHasError(true);
@@ -99,7 +114,7 @@ const ChatBot = () => {
   const sendMessage = async () => {
     if (inputMessage.trim() === '') return;
     
-    const userMessage = { role: 'user', content: inputMessage };
+    const userMessage = { role: 'user', content: inputMessage, showBookingButton: false };
     
     // Add user message to chat
     setMessages(prevMessages => [...prevMessages, userMessage]);
@@ -155,6 +170,23 @@ const ChatBot = () => {
     boxShadow: message.role === 'user' 
       ? (darkMode ? '0 2px 8px rgba(59, 130, 246, 0.3)' : '0 2px 8px rgba(79, 209, 197, 0.3)')
       : 'none'
+  });
+
+  const getBookingButtonStyle = () => ({
+    backgroundColor: '#10b981',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '8px 16px',
+    marginTop: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)'
   });
 
   const getInputStyle = () => ({
@@ -253,25 +285,45 @@ const ChatBot = () => {
           {/* Chat Messages */}
           <div style={getMessagesContainerStyle()}>
             {messages.map((message, index) => (
-              <div key={index} style={getMessageStyle(message)}>
-                {message.content}
-                {message.role === 'error' && (
+              <div key={index} style={{ alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div style={getMessageStyle(message)}>
+                  {message.content}
+                  {message.role === 'error' && (
+                    <button
+                      onClick={retryLastMessage}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'white',
+                        cursor: 'pointer',
+                        marginTop: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '14px',
+                        padding: '0'
+                      }}
+                    >
+                      <FaRedo /> Retry
+                    </button>
+                  )}
+                </div>
+                {/* Show booking button if the message indicates it should be shown */}
+                {message.showBookingButton && message.role === 'assistant' && (
                   <button
-                    onClick={retryLastMessage}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'white',
-                      cursor: 'pointer',
-                      marginTop: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      fontSize: '14px',
-                      padding: '0'
+                    onClick={handleBookingClick}
+                    style={getBookingButtonStyle()}
+                    onMouseOver={(e) => {
+                      e.target.style.backgroundColor = '#059669';
+                      e.target.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.backgroundColor = '#10b981';
+                      e.target.style.transform = 'translateY(0)';
                     }}
                   >
-                    <FaRedo /> Retry
+                    <FaCalendarAlt />
+                    Book Free Strategy Call
                   </button>
                 )}
               </div>
@@ -407,4 +459,4 @@ const ChatBot = () => {
   );
 };
 
-export default ChatBot; 
+export default ChatBot;

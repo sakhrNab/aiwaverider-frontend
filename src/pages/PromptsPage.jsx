@@ -7,9 +7,9 @@ import { useTheme } from '../contexts/ThemeContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { HashLoader } from 'react-spinners';
 import { createSvgDataUri } from '../utils/imageUtils';
-import { getToolColor } from '../api/marketplace/aiToolsApi';
+import { getPromptColor } from '../api/marketplace/promptsApi';
 import '../styles/animations.css'; // Import animations
-import useAIToolsStore from '../store/useAIToolsStore';
+import usePromptsStore from '../store/usePromptsStore';
 
 // Import icons
 import promptIcon from '../assets/ai-tools/prompt-icon.svg';
@@ -38,22 +38,6 @@ const iconMap = {
   "default": defaultAiIcon
 };
 
-// Available default tags for prompts only
-const defaultAvailableTags = [
-  'All',
-  'Free prompts',
-  'Writing',
-  'Creative',
-  'Business',
-  'Marketing',
-  'Social Media',
-  'Content Creation',
-  'Copywriting',
-  'Storytelling',
-  'Productivity',
-  'Education'
-];
-
 // Create a cache for images
 const imageCache = new Map();
 
@@ -61,34 +45,34 @@ const PromptsPage = () => {
   const { darkMode } = useTheme();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTag, setSelectedTag] = useState('');
-  const [tags, setTags] = useState(['All']);
   const [imageCacheTimestamp, setImageCacheTimestamp] = useState(Date.now());
   
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
   
-  // Use the Zustand store for tools data and loading state
+  // Use the Prompts Zustand store
   const {
-    tools,
+    prompts,
     isLoading: loading,
     error,
     isLoaded,
     startListening,
     stopListening,
     forceRefresh,
-    lastRefreshed
-  } = useAIToolsStore(state => ({
-    tools: state.tools,
-    isLoading: state.isLoading,
-    error: state.error,
-    isLoaded: state.isLoaded,
-    startListening: state.startListening,
-    stopListening: state.stopListening,
-    forceRefresh: state.forceRefresh,
-    lastRefreshed: state.lastRefreshed
-  }));
+    lastRefreshed,
+    categories,
+    currentPage,
+    totalPages,
+    totalCount,
+    pageSize,
+    hasMore,
+    searchQuery,
+    filters,
+    setSearchQuery,
+    setFilters,
+    setPage,
+    setPageSize
+  } = usePromptsStore();
 
   // Helper function to ensure links have proper format
   const formatLink = (link) => {
@@ -142,30 +126,30 @@ const PromptsPage = () => {
   };
 
   // Handle image error with better fallback strategy
-  const handleImageError = useCallback((e, tool) => {
+  const handleImageError = useCallback((e, prompt) => {
     const img = e.target;
     
     // Prevent infinite loops by removing the error handler
     img.onerror = null;
     
-    // First try the fallback specific to this tool's name
-    const toolName = tool.title?.split(' ')[0];
-    const fallbackIcon = iconMap[toolName] || iconMap[tool.keyword];
+    // First try the fallback specific to this prompt's category
+    const promptCategory = prompt.category?.split(' ')[0];
+    const fallbackIcon = iconMap[promptCategory] || iconMap["Prompt"];
     
     if (fallbackIcon) {
-      console.log(`Image load error for ${tool.title}, using icon fallback`);
+      console.log(`Image load error for ${prompt.title}, using icon fallback`);
       img.src = fallbackIcon;
     } else {
       // Generate SVG fallback if no icon is available
-      console.log(`Image load error for ${tool.title}, generating SVG fallback`);
+      console.log(`Image load error for ${prompt.title}, generating SVG fallback`);
       
-      // Get the appropriate color based on the tool name
-      const bgColor = getToolColor(tool.title);
+      // Get the appropriate color based on the prompt title/category
+      const bgColor = getPromptColor(prompt.title);
       const textColor = 'ffffff'; // Default white
       
       // Get text to display (use the full name if it fits, otherwise first word or initial)
-      const displayText = tool.title ? 
-        (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) : 
+      const displayText = prompt.title ? 
+        (prompt.title.length > 15 ? prompt.title.split(' ')[0] : prompt.title) : 
         'Prompt';
       
       // Use the utility function to create the SVG data URI
@@ -185,8 +169,8 @@ const PromptsPage = () => {
     img.classList.add('square-image');
     
     // Mark as failed in cache to avoid repeated attempts
-    if (tool.image) {
-      imageCache.set(tool.image, {
+    if (prompt.image) {
+      imageCache.set(prompt.image, {
         timestamp: Date.now(),
         loaded: false,
         fallback: img.src
@@ -195,17 +179,17 @@ const PromptsPage = () => {
   }, []);
 
   // Helper function to get image URL with proper caching
-  const getImageUrl = useCallback((tool) => {
+  const getImageUrl = useCallback((prompt) => {
     // More comprehensive check for invalid image values
-    if (!tool.image || 
-        tool.image === '/uploads/undefined' || 
-        tool.image.includes('/undefined') || 
-        tool.image === '') {
+    if (!prompt.image || 
+        prompt.image === '/uploads/undefined' || 
+        prompt.image.includes('/undefined') || 
+        prompt.image === '') {
       return null;
     }
     
     // Check if image is a full URL or a relative path
-    let imageUrl = tool.image;
+    let imageUrl = prompt.image;
     if (imageUrl.startsWith('/')) {
       // For local development, prepend the API base URL
       const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4000';
@@ -224,74 +208,8 @@ const PromptsPage = () => {
     return imageUrl;
   }, []);
 
-  // Extract unique tags from prompts only
-  const extractTags = useCallback((toolsData) => {
-    if (!toolsData || toolsData.length === 0) {
-      return defaultAvailableTags;
-    }
-    
-    const allTags = ['All'];
-    const tagSet = new Set();
-    
-    // Filter for prompts only
-    const promptsOnly = toolsData.filter(tool => 
-      tool.keyword?.toLowerCase().includes('prompt') ||
-      tool.title?.toLowerCase().includes('prompt') ||
-      tool.category?.toLowerCase().includes('prompt')
-    );
-    
-    promptsOnly.forEach(tool => {
-      // Add category as tag if exists
-      if (tool.category) {
-        tagSet.add(tool.category);
-      }
-      
-      // Add all tags from tool.tags array if it exists
-      if (Array.isArray(tool.tags)) {
-        tool.tags.forEach(tag => tag && tagSet.add(tag));
-      }
-    });
-    
-    // Convert Set to Array and prepend 'All'
-    const uniqueTags = [...tagSet];
-    return [...allTags, ...uniqueTags];
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Manually clear localStorage cache to force fresh data fetch
-      localStorage.removeItem('ai_tools_cache');
-      localStorage.removeItem('ai_tools_cache_timestamp');
-      
-      // Force refresh by passing true parameter
-      const fetchedTools = await aiToolsService.getAllAITools(true);
-      
-      if (fetchedTools && fetchedTools.length > 0) {
-        setTools(fetchedTools);
-        
-        // Extract unique tags from the tools
-        const toolTags = extractTags(fetchedTools);
-        setTags(toolTags);
-      } else {
-        setTools([]);
-        // Set default tags if no tools are available
-        setTags(defaultAvailableTags);
-      }
-    } catch (err) {
-      console.error('Error fetching AI tools:', err);
-      setError('Failed to load prompts. Please try again later.');
-      // Set default tags when there's an error
-      setTags(defaultAvailableTags);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    // Start the Firestore listener when component mounts
+    // Start the prompts listener when component mounts
     startListening();
     
     // Clear image cache every hour
@@ -311,111 +229,44 @@ const PromptsPage = () => {
       clearInterval(cacheInterval);
       stopListening();
     };
-  }, []);
+  }, [startListening, stopListening]);
 
-  const handleRetry = () => {
-    // Use the forceRefresh function from the Zustand store
-    forceRefresh();
+  // Handle search input changes
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
   };
 
-  // Update tags whenever tools change
-  useEffect(() => {
-    if (tools && tools.length > 0) {
-      const extractedTags = extractTags(tools);
-      setTags(extractedTags);
-    } else {
-      setTags(defaultAvailableTags);
-    }
-  }, [tools, extractTags]);
-
-  // Filter tools to only show prompts (exclude AI tools)
-  const promptsOnly = tools.filter(tool => {
-    // Only include items that contain "prompt" in keyword, title, or category
-    return tool.keyword?.toLowerCase().includes('prompt') ||
-           tool.title?.toLowerCase().includes('prompt') ||
-           tool.category?.toLowerCase().includes('prompt');
-  });
-
-  // Apply filters first (search and tags) - only on prompts
-  const filteredTools = promptsOnly.filter((tool) => {
-    const titleMatch = tool.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const descriptionMatch = tool.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    // Add keyword search functionality
-    const keywordMatch = tool.keyword?.toLowerCase().includes(searchTerm.toLowerCase());
-    const tagMatch = selectedTag === '' || selectedTag === 'All' || 
-                    tool.category === selectedTag || 
-                    (tool.tags && tool.tags.includes(selectedTag));
-    
-    return (titleMatch || descriptionMatch || keywordMatch) && tagMatch;
-  });
-
-  // Create pagination for filtered prompts
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setCurrentPageSize] = useState(12);
-  
-  // Calculate pagination based on filtered data
-  const totalItems = filteredTools.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedTools = filteredTools.slice(startIndex, endIndex);
-
-  const pagination = {
-    currentPage,
-    pageSize,
-    totalItems,
-    totalPages,
-    hasMore: currentPage < totalPages
+  // Handle filter changes
+  const handleFilterChange = (filterType, value) => {
+    setFilters({ [filterType]: value });
   };
 
-  const setPage = (page) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  };
-
-  const setPageSize = (size) => {
-    const newPageSize = Math.max(4, Math.min(size, 100));
-    setCurrentPageSize(newPageSize);
-    const newTotalPages = Math.ceil(totalItems / newPageSize);
-    setCurrentPage(Math.min(currentPage, newTotalPages));
-  };
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedTag]);
-
-  // Recalculate current page when page size changes to ensure we don't exceed total pages
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages);
-    }
-  }, [pageSize, totalPages, currentPage]);
-
-  // Helper function to get the appropriate image for a tool
-  const getToolImage = useCallback((tool) => {
-    // First check if the tool has an image URL from the database
-    const imageUrl = getImageUrl(tool);
+  // Helper function to get the appropriate image for a prompt
+  const getPromptImage = useCallback((prompt) => {
+    // First check if the prompt has an image URL from the database
+    const imageUrl = getImageUrl(prompt);
     if (imageUrl) {
       return imageUrl;
     }
     
-    // Try to get an icon based on the tool's name or keyword
-    const toolName = tool.title?.split(' ')[0];
-    if (iconMap[toolName]) {
-      return iconMap[toolName];
+    // Try to get an icon based on the prompt's category
+    const promptCategory = prompt.category?.split(' ')[0];
+    if (iconMap[promptCategory]) {
+      return iconMap[promptCategory];
     }
-    if (iconMap[tool.keyword]) {
-      return iconMap[tool.keyword];
+    if (iconMap["Prompt"]) {
+      return iconMap["Prompt"];
     }
     
     // Always use SVG data URIs to avoid external image loading issues
-    // Get the appropriate color based on the tool name
-    const bgColor = getToolColor(tool.title);
+    // Get the appropriate color based on the prompt title/category
+    const bgColor = getPromptColor(prompt.title || prompt.category);
     const textColor = 'ffffff'; // Default white
     
     // Get text to display (use the full name if it fits, otherwise first word)
-    const displayText = tool.title ? 
-      (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) :
+    const displayText = prompt.title ? 
+      (prompt.title.length > 15 ? prompt.title.split(' ')[0] : prompt.title) :
       'Prompt';
     
     // Use the utility function to create the SVG data URI
@@ -427,10 +278,10 @@ const PromptsPage = () => {
       textColor,
       fontSize: 24
     });
-  }, []); // getToolColor, createSvgDataUri are stable imports; iconMap is a stable module constant
+  }, [getImageUrl]);
 
   // Use the new loader component
-  if (loading) {
+  if (loading && !isLoaded) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-b from-gray-900 to-blue-900">
         <div className="mb-8">
@@ -473,7 +324,7 @@ const PromptsPage = () => {
             <div className="text-center py-12 glass-effect rounded-2xl p-6">
               <p className="text-red-400 text-lg mb-4">{error}</p>
               <button 
-                onClick={handleRetry}
+                onClick={handleRefresh}
                 className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 text-white transition-all"
               >
                 Try Again
@@ -484,20 +335,20 @@ const PromptsPage = () => {
               {/* Search input with better positioning - using class-based approach */}
               <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <div className="flex w-full md:w-auto gap-3">
-                  <div className="relative flex-1 md:flex-auto" id="ai-tools-search">
+                  <div className="relative flex-1 md:flex-auto" id="prompts-search">
                     <input
                       type="text"
                       placeholder="Search prompts..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      value={searchQuery}
+                      onChange={handleSearchChange}
                       className="search-input w-full md:w-72 px-4 py-3 pr-10 rounded-xl bg-white/10 backdrop-blur-md text-white shadow-lg"
                     />
                     <FaSearch className="search-icon absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70" />
-                    {searchTerm && (
+                    {searchQuery && (
                       <button 
                         type="button" 
                         className="search-clear-button" 
-                        onClick={() => setSearchTerm('')}
+                        onClick={() => setSearchQuery('')}
                         aria-label="Clear search"
                       >
                         <FaTimes />
@@ -519,155 +370,113 @@ const PromptsPage = () => {
               </div>
 
               {/* Tags filter - using global filter-tags-container */}
-              {promptsOnly.length > 0 && (
+              {categories.length > 0 && (
                 <div className="filter-tags-container">
                   <button
-                    onClick={() => setSelectedTag('')}
-                    className={`filter-button ${selectedTag === '' ? 'active' : ''}`}
+                    onClick={() => handleFilterChange('category', 'All')}
+                    className={`filter-button ${filters.category === 'All' ? 'active' : ''}`}
                   >
                     All
                   </button>
-                  {tags
-                    .filter(tag => tag !== 'All')
-                    .sort((a, b) => a.localeCompare(b)) // Sort tags alphabetically
-                    .map((tag) => (
+                  {categories
+                    .filter(cat => cat.name !== 'All')
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((category) => (
                     <button
-                      key={tag}
-                      onClick={() => setSelectedTag(tag)}
-                      className={`filter-button ${selectedTag === tag ? 'active' : ''}`}
+                      key={category.name}
+                      onClick={() => handleFilterChange('category', category.name)}
+                      className={`filter-button ${filters.category === category.name ? 'active' : ''}`}
                     >
-                      {tag}
+                      {category.name} ({category.count})
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* Tools Container - Enhanced with glass effect */}
-              {promptsOnly.length > 0 ? (
+              {/* Prompts Container - Enhanced with glass effect */}
+              {prompts.length > 0 ? (
                 <div className="glass-effect rounded-3xl p-6 shadow-xl transform transition-transform duration-700 hover:scale-[1.01]">
                   <div className="content-grid">
-                    {filteredTools.length === 0 ? (
-                      <div className="col-span-2 text-center py-12">
-                        <p className="text-white/70">No prompts match your search criteria. Try adjusting your filters.</p>
-                      </div>
-                    ) : (
-                      // Always show paginated tools (they're already filtered)
-                      paginatedTools.map((tool, index) => {
-                        // Get valid image URL or fallback
-                        // Inlined logic to determine toolImageSrc, preferring iconMap then SVG fallback
-                        let toolImageSrc;
-                        const toolName = tool.title?.split(' ')[0];
-                        if (iconMap[toolName]) {
-                          toolImageSrc = iconMap[toolName];
-                        } else if (tool.keyword && iconMap[tool.keyword]) {
-                          toolImageSrc = iconMap[tool.keyword];
-                        } else {
-                          const bgColor = getToolColor(tool.title);
-                          const textColor = 'ffffff';
-                          const displayText = tool.title ? 
-                            (tool.title.length > 15 ? tool.title.split(' ')[0] : tool.title) :
-                            'Prompt';
-                          toolImageSrc = createSvgDataUri({
-                            text: displayText,
-                            width: 300,
-                            height: 200,
-                            bgColor,
-                            textColor,
-                            fontSize: 24
-                          });
-                        }
-                        
-                        // Check if the tool has 'prompt' in its keyword
-                        const isPromptTool = tool.keyword?.toLowerCase().includes('prompt');
-                        
-                        // Create a card wrapper based on the tool type
-                        const CardWrapper = ({ children }) => {
-                          if (isPromptTool) {
-                            return (
-                              <div 
-                                key={tool.id || `tool-${index}`}
-                                onClick={() => navigate(`/prompts/${tool.id}`)}
-                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect cursor-pointer"
-                                style={{ animationDelay: `${index * 100}ms` }}
-                              >
-                                {children}
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <a
-                                key={tool.id || `tool-${index}`}
-                                href={formatLink(tool.url || tool.link)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="ai-tool-card glass-effect animate-fade-in shimmer-effect"
-                                style={{ animationDelay: `${index * 100}ms` }}
-                              >
-                                {children}
-                              </a>
-                            );
-                          }
-                        };
-                        
-                        return (
-                          <CardWrapper key={tool.id || `tool-${index}`}>
-                            <div className="tool-icon-container">
-                              <img 
-                                src={toolImageSrc}
-                                alt={tool.title} 
-                                className="img-loading w-full h-full object-cover" 
-                                onLoad={handleImageLoad}
-                                onError={(e) => handleImageError(e, tool)}
-                                loading="lazy"
-                              />
+                    {prompts.map((prompt, index) => {
+                      // Get valid image URL or fallback
+                      const promptImageSrc = getPromptImage(prompt);
+                      
+                      return (
+                        <div 
+                          key={prompt.id || `prompt-${index}`}
+                          onClick={() => navigate(`/prompts/${prompt.id}`)}
+                          className="ai-tool-card glass-effect stable-card cursor-pointer"
+                        >
+                          <div className="tool-icon-container">
+                            <img 
+                              src={promptImageSrc}
+                              alt={prompt.title} 
+                              className="img-loading w-full h-full object-cover" 
+                              onLoad={handleImageLoad}
+                              onError={(e) => handleImageError(e, prompt)}
+                              loading="lazy"
+                            />
+                          </div>
+                          <div className="ai-tool-content">
+                            <div className="flex justify-between items-center">
+                              <h3 className="ai-tool-title">{prompt.title}</h3>
+                              <FaLightbulb className="text-yellow-400 text-lg" />
                             </div>
-                            <div className="ai-tool-content">
-                              <div className="flex justify-between items-center">
-                                <h3 className="ai-tool-title">{tool.title}</h3>
-                                {isPromptTool ? (
-                                  <FaLightbulb className="text-yellow-400 text-lg" />
-                                ) : (
-                                  <FaExternalLinkAlt className="external-link-icon" />
-                                )}
-                              </div>
-                              <p className="ai-tool-description">{tool.description}</p>
-                              <div className="ai-tool-tags">
-                                <span className="ai-tool-primary-tag">
-                                  {tool.category || tool.keyword || 'Prompt'}
+                            <p className="ai-tool-description">{prompt.description}</p>
+                            <div className="ai-tool-tags">
+                              <span className="ai-tool-primary-tag">
+                                {prompt.category || 'Prompt'}
+                              </span>
+                              {prompt.tags?.slice(0, 2).map((tag, tagIndex) => (
+                                <span 
+                                  key={tagIndex} 
+                                  className="ai-tool-secondary-tag"
+                                >
+                                  {tag}
                                 </span>
-                                {tool.tags?.slice(0, 2).map((tag, tagIndex) => (
-                                  <span 
-                                    key={tagIndex} 
-                                    className="ai-tool-secondary-tag"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
+                              ))}
+                              {prompt.likeCount > 0 && (
+                                <span className="ai-tool-secondary-tag">
+                                  ❤️ {prompt.likeCount}
+                                </span>
+                              )}
                             </div>
-                          </CardWrapper>
-                        );
-                      })
-                    )}
+                            {prompt.link && (
+                              <div className="mt-2">
+                                <a
+                                  href={formatLink(prompt.link)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-blue-400 hover:text-blue-300 flex items-center"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Visit Source <FaExternalLinkAlt className="ml-1 text-xs" />
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                   
                   {/* Pagination Controls - Always show for navigation and page size options */}
-                  {filteredTools.length > 0 && (
+                  {totalCount > 0 && (
                     <div className="flex justify-center items-center mt-8 pagination-controls">
                       {/* Navigation buttons - only show when multiple pages */}
                       {totalPages > 1 && (
                         <>
                           <button
                             onClick={() => setPage(1)}
-                            disabled={pagination.currentPage === 1}
+                            disabled={currentPage === 1}
                             className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             First
                           </button>
                           
                           <button
-                            onClick={() => setPage(pagination.currentPage - 1)}
-                            disabled={pagination.currentPage === 1}
+                            onClick={() => setPage(currentPage - 1)}
+                            disabled={currentPage === 1}
                             className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             &laquo; Prev
@@ -675,21 +484,21 @@ const PromptsPage = () => {
                           
                           <div className="flex items-center mx-4">
                             <span className="text-white/80">Page</span>
-                            <span className="mx-2 px-3 py-1 bg-white/20 rounded-md text-white font-medium">{pagination.currentPage}</span>
-                            <span className="text-white/80">of {pagination.totalPages}</span>
+                            <span className="mx-2 px-3 py-1 bg-white/20 rounded-md text-white font-medium">{currentPage}</span>
+                            <span className="text-white/80">of {totalPages}</span>
                           </div>
                           
                           <button
-                            onClick={() => setPage(pagination.currentPage + 1)}
-                            disabled={pagination.currentPage === pagination.totalPages}
+                            onClick={() => setPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
                             className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Next &raquo;
                           </button>
                           
                           <button
-                            onClick={() => setPage(pagination.totalPages)}
-                            disabled={pagination.currentPage === pagination.totalPages}
+                            onClick={() => setPage(totalPages)}
+                            disabled={currentPage === totalPages}
                             className="px-3 py-2 rounded-lg bg-white/10 backdrop-blur-md hover:bg-white/20 text-white shadow-lg transition-all duration-300 mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Last
@@ -701,7 +510,7 @@ const PromptsPage = () => {
                       <div className="flex items-center">
                         <span className="text-white/80 mr-2">Show:</span>
                         <select
-                          value={pagination.pageSize}
+                          value={pageSize}
                           onChange={(e) => setPageSize(Number(e.target.value))}
                           className="px-2 py-1 rounded-md bg-white/10 backdrop-blur-md text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 [&>option]:bg-gray-800 [&>option]:text-white"
                         >
@@ -711,7 +520,7 @@ const PromptsPage = () => {
                         </select>
                         {totalPages === 1 && (
                           <span className="ml-3 text-white/60 text-sm">
-                            (Showing all {filteredTools.length} items)
+                            (Showing all {totalCount} items)
                           </span>
                         )}
                       </div>
@@ -731,12 +540,14 @@ const PromptsPage = () => {
                   <p className="text-white/50 mb-6">Prompts need to be added by an administrator.</p>
                   
                   {/* Admin-only button */}
-                  <a 
-                    href="/admin/ai-tools"
-                    className="px-6 py-3 bg-gradient-to-r from-purple-500/60 to-pink-500/60 rounded-lg text-white font-medium hover:from-purple-500/80 hover:to-pink-500/80 transition-all duration-300"
-                  >
-                    Go to Admin Panel
-                  </a>
+                  {isAdmin && (
+                    <a 
+                      href="/admin/prompts"
+                      className="px-6 py-3 bg-gradient-to-r from-purple-500/60 to-pink-500/60 rounded-lg text-white font-medium hover:from-purple-500/80 hover:to-pink-500/80 transition-all duration-300"
+                    >
+                      Go to Admin Panel
+                    </a>
+                  )}
                 </div>
               )}
             </>
@@ -747,4 +558,4 @@ const PromptsPage = () => {
   );
 };
 
-export default PromptsPage; 
+export default PromptsPage;
