@@ -12,6 +12,7 @@ import tazProfileImg from '../assets/taz-profile.jpg';
 import simpleToSellImg from '../assets/simple-to-sell.png';
 import savingTimeImg from '../assets/saving-time.png';
 import makingAiEasyImg from '../assets/making-ai-easy.png';
+import aiSurferHeroImg from '../assets/ai-surfer-hero2.png';
 
 const HomePage = () => {
   const [loading, setLoading] = useState(true);
@@ -148,10 +149,10 @@ const HomePage = () => {
             </div>
             <div className="lg:w-1/2">
               <img 
-                src="/ai-surfer-hero.png" 
+                src={aiSurferHeroImg} 
                 alt="AI Waverider" 
                 className="rounded-lg shadow-2xl w-full max-w-lg mx-auto transform hover:-translate-y-2 transition-transform duration-300" 
-                onError={(e) => { e.target.src = 'https://placehold.co/800x600/blue/white?text=AI+Wave+Rider'; }}
+                onError={(e) => { e.target.src = 'https://placehold.co/800x600/blue/white?text=AI+Waverider'; }}
               />
             </div>
           </div>
