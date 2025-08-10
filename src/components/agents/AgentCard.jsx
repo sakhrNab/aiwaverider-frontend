@@ -513,14 +513,6 @@ const AgentCard = memo(({ agent }) => {
                 <span className="marketplace-no-rating">No ratings yet</span>
               )}
             </div>
-
-            {/* Download count with icon - now as separate section */}
-            {downloadCount > 0 && (
-              <div className="marketplace-download-section">
-                <FaDownload className="marketplace-download-icon" />
-                <span className="marketplace-download-count">{formatCount(downloadCount)}</span>
-              </div>
-            )}
             
             <div className="marketplace-agent-price">
               {formattedPrice}
