@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import '../../styles/globals.css'; // Tailwind global styles
 import Header from '../layout/Header';
+import AgentHeader from '../layout/AgentHeader';
 import Footer from '../layout/Footer';
 import SignUp from '../auth/SignUpForm';
+import SignIn from '../auth/SignInForm';
 import AppRoutes from '../../routes/routes.jsx';
 import ChatBot from '../common/ChatBot';
 import BackToTop from '../common/BackToTop';
@@ -15,14 +17,18 @@ import useScrollToTop from '../../hooks/useScrollToTop';
 
 const AppContent = () => {
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
   const location = useLocation();
   const [pageTitle, setPageTitle] = useState('');
+  const [prefillEmail, setPrefillEmail] = useState('');
 
   // Check if Vercel Analytics should be enabled
   const isVercelAnalyticsEnabled = import.meta.env.VITE_VERCEL_ANALYTICS_ENABLED === 'true';
 
   const openSignUpModal = () => setIsSignUpModalOpen(true);
   const closeSignUpModal = () => setIsSignUpModalOpen(false);
+  const openSignInModal = () => setIsSignInModalOpen(true);
+  const closeSignInModal = () => setIsSignInModalOpen(false);
   
   // Use custom hook for robust scroll restoration
   useScrollToTop();
@@ -85,25 +91,39 @@ const AppContent = () => {
 
   // Add event listener for opening signup modal from anywhere in the app
   useEffect(() => {
-    const handleOpenSignUpModal = () => {
+    const handleOpenSignUpModal = (e) => {
+      const incomingEmail = e && e.detail && e.detail.email ? e.detail.email : '';
+      if (incomingEmail) {
+        setPrefillEmail(incomingEmail);
+      }
       openSignUpModal();
+    };
+    const handleOpenSignInModal = () => {
+      openSignInModal();
     };
     
     document.addEventListener('open-signup-modal', handleOpenSignUpModal);
+    document.addEventListener('open-signin-modal', handleOpenSignInModal);
     
     return () => {
       document.removeEventListener('open-signup-modal', handleOpenSignUpModal);
+      document.removeEventListener('open-signin-modal', handleOpenSignInModal);
     };
   }, []);
 
+  const isAgentsRoute = location.pathname === '/agents' || /^\/agents\//.test(location.pathname);
+
   return (
     <>
-      {/* Update page title and browser history entry */}
       <PageTitle title={pageTitle} />
       
       <ErrorBoundary>
         <div className="flex flex-col min-h-screen">
-          <Header openSignUpModal={openSignUpModal} />
+          {isAgentsRoute ? (
+            <AgentHeader openSignUpModal={openSignUpModal} />
+          ) : (
+            <Header openSignUpModal={openSignUpModal} isFixedOnHome={location.pathname === '/' && !isAgentsRoute} />
+          )}
 
           <div className="flex-grow">
             <AppRoutes />
@@ -111,17 +131,17 @@ const AppContent = () => {
 
           <Footer />
 
-          {/* Show SignUp modal if not on /sign-up */}
           {location.pathname !== '/sign-up' && (
-            <SignUp isOpen={isSignUpModalOpen} onClose={closeSignUpModal} />
+            <SignUp isOpen={isSignUpModalOpen} onClose={closeSignUpModal} prefillEmail={prefillEmail} redirectPath={location.pathname} />
+          )}
+          {location.pathname !== '/sign-in' && (
+            <SignIn isOpen={isSignInModalOpen} onClose={closeSignInModal} redirectPath={location.pathname} />
           )}
 
-          {/* Cookie Consent Banner - Required for GDPR/Legal Compliance */}
           <CookieConsent />
         </div>
       </ErrorBoundary>
       
-      {/* Only load Vercel Analytics if properly configured */}
       {isVercelAnalyticsEnabled && <VercelAnalytics />}
       
       <ChatBot />
