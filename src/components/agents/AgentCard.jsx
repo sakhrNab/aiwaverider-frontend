@@ -518,7 +518,7 @@ const AgentCard = memo(({ agent }) => {
               {formattedPrice}
             </div>
             
-            {/* Business Value Preview - show only for paid agents to justify the price */}
+          {/* Business Value Preview - show only for paid agents to justify the price */}
             {/* {!isFreeAgent(agent) && agent.businessValue && (
               <div className="marketplace-business-value-preview">
                 <span className="marketplace-value-label">Value: </span>

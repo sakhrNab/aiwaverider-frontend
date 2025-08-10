@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { FaHome, FaQuestion, FaUserFriends, FaCalendarAlt, FaBars, FaTimes, FaDiscord } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { FaHome, FaQuestion, FaUserFriends, FaCalendarAlt, FaDiscord, FaBars, FaTimes } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import './FloatingNav.css'; 
@@ -9,52 +9,67 @@ const FloatingNav = ({ scrollRefs = {} }) => {
   const [expanded, setExpanded] = useState(false);
   const { darkMode } = useTheme();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const prevScrollYRef = useRef(window.scrollY);
+  const panelRef = useRef(null);
 
   // Handle scroll visibility
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 500) {
-        setVisible(true);
-      } else {
+      const currentY = window.scrollY;
+      const prevY = prevScrollYRef.current;
+      const scrollingUp = currentY < prevY;
+      prevScrollYRef.current = currentY;
+
+      const scrolledPastThreshold = currentY > 500;
+      // Hide when near bottom (last 200px)
+      const nearBottom = (window.innerHeight + currentY) >= (document.documentElement.scrollHeight - 200);
+
+      if (scrollingUp) {
         setVisible(false);
+      } else {
+        setVisible(scrolledPastThreshold && !nearBottom);
       }
     };
-    window.addEventListener('scroll', handleScroll);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Initial check
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close mobile panel on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
+        setExpanded(false);
+      }
+    };
+    if (expanded) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [expanded]);
 
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
       if (window.innerWidth >= 640) {
-        setExpanded(false); // Auto-collapse on larger screens
+        setExpanded(false);
       }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const toggleExpanded = useCallback(() => {
-    setExpanded(prev => !prev);
-  }, []);
-
   const scrollTo = useCallback((ref) => {
     if (scrollRefs[ref]?.current) {
       scrollRefs[ref].current.scrollIntoView({ behavior: 'smooth' });
-      if (windowWidth < 640) setExpanded(false); // Auto-collapse after selection on mobile
+      if (windowWidth < 640) setExpanded(false);
     }
   }, [scrollRefs, windowWidth]);
 
-  const openCalendly = useCallback(() => {
-    window.open('https://calendly.com/aiwaverider8/30min', '_blank');
-    if (windowWidth < 640) setExpanded(false); // Auto-collapse after selection on mobile
-  }, [windowWidth]);
-
-  const openDiscord = useCallback(() => {
-    window.open('https://discord.gg/PNqBfZcm', '_blank');
-    if (windowWidth < 640) setExpanded(false); // Auto-collapse after selection on mobile
-  }, [windowWidth]);
+  const isMobile = windowWidth < 640;
+  const iconClass = isMobile ? 'text-base' : 'text-lg';
+  const containerPositionClass = 'inset-x-0 mx-auto';
 
   return (
     <AnimatePresence>
@@ -64,123 +79,155 @@ const FloatingNav = ({ scrollRefs = {} }) => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 50, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed bottom-8 sm:bottom-6 md:bottom-5 lg:bottom-4 inset-x-0 mx-auto z-50 floating-nav-container"
+          className={`fixed bottom-8 sm:bottom-6 md:bottom-5 lg:bottom-4 ${containerPositionClass} z-50 floating-nav-container`}
           style={{
-            maxWidth: '95vw',
-            width: windowWidth < 640 ? (expanded ? '90%' : 'auto') : 'max-content',
+            maxWidth: isMobile ? '92vw' : '95vw',
+            width: 'max-content',
           }}
         >
-          {/* Mobile Toggle Button - Only visible on small screens */}
-          {windowWidth < 640 && (
-            <button 
-              onClick={toggleExpanded}
-              className={`absolute -top-4 left-1/2 transform -translate-x-1/2 z-10 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} rounded-full p-2 shadow-lg border ${darkMode ? 'border-indigo-700' : 'border-indigo-200'}`}
-              aria-label={expanded ? "Collapse navigation" : "Expand navigation"}
+          {/* Mobile: Collapsed pill */}
+          {isMobile && !expanded && (
+            <button
+              onClick={() => setExpanded(true)}
+              className={`floating-nav-collapsed ${darkMode ? 'bg-gray-800/95 border-indigo-700 text-white' : 'bg-white/95 border-indigo-200 text-gray-800'}
+                rounded-full flex items-center justify-center gap-2`}
+              aria-label="Open navigation menu"
             >
-              {expanded ? <FaTimes /> : <FaBars />}
+              <FaBars className="text-base" />
+              <span className="text-sm font-semibold">Menu</span>
             </button>
           )}
 
-          {/* Main Navigation Container */}
-          <div
-            className={`
-              ${darkMode ? 'bg-gray-800' : 'bg-white'}
-              rounded-full shadow-2xl border-2
-              ${darkMode ? 'border-indigo-700' : 'border-indigo-200'}
-              ${windowWidth < 640 
-                ? expanded 
-                  ? 'py-5 px-4 flex flex-col items-stretch gap-3 rounded-2xl' 
-                  : 'py-3 px-3 flex justify-center items-center rounded-full' 
-                : 'py-2 px-4 flex flex-row flex-wrap items-center justify-center gap-1 md:gap-2'}
-              transition-all duration-300 ease-in-out
-            `}
-            style={{
-              boxSizing: 'border-box',
-              width: windowWidth < 640 && !expanded ? 'auto' : '100%',
-            }}
-          >
-            {/* Collapsed state on mobile shows just one button */}
-            {windowWidth < 640 && !expanded ? (
-              <button
-                onClick={toggleExpanded}
-                className={`floating-nav-button ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center justify-center rounded-full`}
-                aria-label="Expand navigation"
-              >
-                <span className="text-xs font-medium">Menu</span>
-              </button>
-            ) : (
-              /* Expanded state (always shown on larger screens) */
-              <>
+          {/* Mobile: Expanded panel */}
+          {isMobile && expanded && (
+            <div ref={panelRef} className={`floating-nav-panel ${darkMode ? 'bg-gray-800/95 border-indigo-700' : 'bg-white/95 border-indigo-200'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <span className={`text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Quick Navigation</span>
+                <button
+                  onClick={() => setExpanded(false)}
+                  aria-label="Close navigation"
+                  className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${darkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-700'}`}
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2">
                 <button
                   onClick={() => scrollTo('top')}
-                  className={`floating-nav-button ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'} 
-                    py-2 px-3 rounded-full flex items-center justify-center md:justify-start
-                    ${windowWidth < 640 ? 'w-full' : ''}
-                    transition-colors duration-200`}
-                  aria-label="Home"
+                  className={`floating-nav-button w-full ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'} 
+                    py-2 px-3 rounded-full flex items-center justify-start transition-colors duration-200`}
                 >
-                  <FaHome className="text-lg" />
-                  <span className="text-sm font-medium ml-2">Home</span>
+                  <FaHome className="mr-2" />
+                  <span className="text-sm font-medium">Home</span>
                 </button>
-
-                {windowWidth >= 640 && <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>}
-
                 <button
                   onClick={() => scrollTo('obstacles')}
-                  className={`floating-nav-button ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'} 
-                    py-2 px-3 rounded-full flex items-center justify-center md:justify-start
-                    ${windowWidth < 640 ? 'w-full' : ''}
-                    transition-colors duration-200`}
-                  aria-label="Obstacles"
+                  className={`floating-nav-button w-full ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'} 
+                    py-2 px-3 rounded-full flex items-center justify-start transition-colors duration-200`}
                 >
-                  <FaQuestion className="text-lg" />
-                  <span className="text-sm font-medium ml-2">Obstacles</span>
+                  <FaQuestion className="mr-2" />
+                  <span className="text-sm font-medium">Obstacles</span>
                 </button>
-
-                {windowWidth >= 640 && <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>}
-
                 <button
                   onClick={() => scrollTo('whoItsFor')}
-                  className={`floating-nav-button ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'} 
-                    py-2 px-3 rounded-full flex items-center justify-center md:justify-start
-                    ${windowWidth < 640 ? 'w-full' : ''}
-                    transition-colors duration-200`}
-                  aria-label="Who It's For"
+                  className={`floating-nav-button w-full ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'} 
+                    py-2 px-3 rounded-full flex items-center justify-start transition-colors duration-200`}
                 >
-                  <FaUserFriends className="text-lg" />
-                  <span className="text-sm font-medium ml-2">Who It's For</span>
+                  <FaUserFriends className="mr-2" />
+                  <span className="text-sm font-medium">Who It's For</span>
                 </button>
-
-                {windowWidth >= 640 && <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>}
-
                 <button
-                  onClick={openDiscord}
-                  className={`floating-nav-button ${darkMode ? 'bg-purple-600 hover:bg-purple-700 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 border-purple-400'} text-white border-2
-                    py-2 px-3 rounded-full flex items-center justify-center md:justify-start
-                    ${windowWidth < 640 ? 'w-full' : ''}
-                    transition-colors duration-200 shadow-lg hover:shadow-xl`}
-                  aria-label="Join Community"
+                  onClick={() => window.open('https://discord.gg/PNqBfZcm', '_blank')}
+                  className={`floating-nav-button w-full ${darkMode ? 'bg-purple-600 hover:bg-purple-700 border-purple-500 text-white' : 'bg-purple-500 hover:bg-purple-600 border-purple-400 text-white'} 
+                    border-2 py-2 px-3 rounded-full flex items-center justify-start transition-colors duration-200 shadow-lg hover:shadow-xl`}
                 >
-                  <FaDiscord className="text-lg" />
-                  <span className="text-sm font-medium ml-2">Join Community</span>
+                  <FaDiscord className="mr-2" />
+                  <span className="text-sm font-medium">Join Community</span>
                 </button>
-
-                {windowWidth >= 640 && <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>}
-
                 <button
-                  onClick={openCalendly}
-                  className={`floating-nav-button bg-blue-600 hover:bg-blue-700 text-white 
-                    py-2 px-3 rounded-full flex items-center justify-center md:justify-start
-                    ${windowWidth < 640 ? 'w-full' : ''}
-                    transition-colors duration-200`}
-                  aria-label="Get Consultation"
+                  onClick={() => window.open('https://calendly.com/aiwaverider8/30min', '_blank')}
+                  className={`floating-nav-button w-full bg-blue-600 hover:bg-blue-700 text-white 
+                    py-2 px-3 rounded-full flex items-center justify-start transition-colors duration-200`}
                 >
-                  <FaCalendarAlt className="text-lg" />
-                  <span className="text-sm font-medium ml-2">Get Consultation</span>
+                  <FaCalendarAlt className="mr-2" />
+                  <span className="text-sm font-medium">Get Consultation</span>
                 </button>
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
+
+          {/* Desktop/tablet: Full horizontal nav */}
+          {!isMobile && (
+            <div
+              className={`
+                ${darkMode ? 'bg-gray-800' : 'bg-white'}
+                rounded-full shadow-2xl border-2
+                ${darkMode ? 'border-indigo-700' : 'border-indigo-200'}
+                py-2 px-4 flex flex-row flex-wrap items-center justify-center gap-1 md:gap-2
+                transition-all duration-300 ease-in-out
+              `}
+              style={{ boxSizing: 'border-box' }}
+            >
+              <button
+                onClick={() => scrollTo('top')}
+                className={`floating-nav-button ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'} 
+                  py-2 px-3 rounded-full flex items-center justify-center md:justify-start transition-colors duration-200`}
+                aria-label="Home"
+              >
+                <span className={iconClass}><FaHome /></span>
+                <span className="text-sm font-medium ml-2">Home</span>
+              </button>
+
+              <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+
+              <button
+                onClick={() => scrollTo('obstacles')}
+                className={`floating-nav-button ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'} 
+                  py-2 px-3 rounded-full flex items-center justify-center md:justify-start transition-colors duration-200`}
+                aria-label="Obstacles"
+              >
+                <span className={iconClass}><FaQuestion /></span>
+                <span className="text-sm font-medium ml-2">Obstacles</span>
+              </button>
+
+              <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+
+              <button
+                onClick={() => scrollTo('whoItsFor')}
+                className={`floating-nav-button ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'} 
+                  py-2 px-3 rounded-full flex items-center justify-center md:justify-start transition-colors duration-200`}
+                aria-label="Who It's For"
+              >
+                <span className={iconClass}><FaUserFriends /></span>
+                <span className="text-sm font-medium ml-2">Who It's For</span>
+              </button>
+
+              <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+
+              <button
+                onClick={() => window.open('https://discord.gg/PNqBfZcm', '_blank')}
+                className={`floating-nav-button ${darkMode ? 'bg-purple-600 hover:bg-purple-700 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 border-purple-400'} text-white border-2
+                  py-2 px-3 rounded-full flex items-center justify-center md:justify-start transition-colors duration-200 shadow-lg hover:shadow-xl`}
+                aria-label="Join Community"
+              >
+                <span className={iconClass}><FaDiscord /></span>
+                <span className="text-sm font-medium ml-2">Join Community</span>
+              </button>
+
+              <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+
+              <button
+                onClick={() => window.open('https://calendly.com/aiwaverider8/30min', '_blank')}
+                className={`floating-nav-button bg-blue-600 hover:bg-blue-700 text-white 
+                  py-2 px-3 rounded-full flex items-center justify-center md:justify-start transition-colors duration-200`}
+                aria-label="Get Consultation"
+              >
+                <span className={iconClass}><FaCalendarAlt /></span>
+                <span className="text-sm font-medium ml-2">Get Consultation</span>
+              </button>
+            </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

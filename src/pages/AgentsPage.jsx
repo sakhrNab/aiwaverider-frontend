@@ -1,6 +1,7 @@
 //src/pages/AgentsPage.js
-import React, { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, Link } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
 import CategoryNav from '../components/agents/CategoryNav';
 import FeaturedAgents from '../components/agents/FeaturedAgents';
 import FilterSidebar from '../components/agents/FilterSidebar';
@@ -8,6 +9,7 @@ import AgentCard from '../components/agents/AgentCard';
 import { useTheme } from '../contexts/ThemeContext';
 import {FaArrowRight, FaExclamationTriangle, FaBars, FaTimes, FaFilter, FaSync } from 'react-icons/fa';
 import PageHeader from '../components/layout/PageHeader';
+// import AgentHeader from '../components/layout/AgentHeader';
 import { HashLoader } from 'react-spinners';
 import useAgentStore from '../store/agentStore';
 import './AgentsPage.css';
@@ -19,6 +21,7 @@ const themeClasses = "bg-gradient-to-br from-[#4158D0] via-[#C850C0] to-[#FFCC70
 const Agents = () => {
   const location = useLocation();
   const { darkMode } = useTheme();
+  const { user } = React.useContext(AuthContext);
   
   // Get state from Zustand store
   const { 
@@ -54,9 +57,9 @@ const Agents = () => {
   } = useAgentStore();
 
   // Local UI states  
-  const [mobileFiltersOpen, setMobileFiltersOpen] = React.useState(false);
-  const [mobileOptionsOpen, setMobileOptionsOpen] = React.useState(false);
-  const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Add a ref for the agents container
   const agentsContainerRef = useRef(null);
@@ -68,8 +71,8 @@ const Agents = () => {
   const searchInputRef = useRef(null);
   const mainSearchBarRef = useRef(null);
   const resultsRef = useRef(null);
-  const [isSearchFloating, setIsSearchFloating] = React.useState(false);
-  const [localSearchQuery, setLocalSearchQuery] = React.useState(searchQuery || '');
+  const [isSearchFloating, setIsSearchFloating] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '');
 
   // Keyboard shortcut for search focus (Ctrl+K or Cmd+K)
   useEffect(() => {
@@ -416,24 +419,132 @@ const Agents = () => {
 
   return (
     <div className={`min-h-screen pb-16 ${darkMode ? "dark bg-[#2D1846]" : "bg-gray-50"} ${themeClasses}`}>
-      {/* Use centralized PageHeader component */}
-      <PageHeader />
-      
+
       <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 mt-8">
         <div className="max-w-6xl mx-auto">
-          {/* Enhanced 3D Header */}
-          <div className="page-header-3d mb-6 sm:mb-8">
-            <div className="absolute inset-0 bg-pattern opacity-30"></div>
-            <div className="relative z-10 p-4 sm:p-6">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 tracking-tight">
+          {/* Enhanced Hero Section with Lead Magnet */}
+          <div className="hero-section mb-6 sm:mb-8">
+            <div className="relative overflow-hidden bg-pattern opacity-30"></div>
+            <div className="hero-content glass-effect relative z-10 p-6 sm:p-8 lg:p-10">
+              {/* Main Hero Content */}
+              <div className="max-w-4xl mx-auto text-center">
+                {/* Badge/Announcement */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-400/30 backdrop-blur-sm">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className={`text-sm font-medium ${darkMode ? 'text-green-300' : 'text-green-200'}`}>
+                    🚀 Limited Time: 100% Free
+                  </span>
+                </div>
+
+                {/* Main Headline */}
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 tracking-tight leading-tight">
                 <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-yellow-200 text-transparent bg-clip-text">
-                  Master AI Agents
+                    Get 100's of Free n8n Workflows
+                  </span>
+                  <br />
+                  <span className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+                    to Automate Your Business
                 </span>
               </h1>
-              <p className="text-white/80 text-base sm:text-lg mb-2">
-                Discover and automate your repetitive tasks
-              </p>
-              <div className="w-16 sm:w-20 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mt-3 sm:mt-4 rounded-full"></div>
+
+                {/* Subheadline */}
+                <p className={`text-lg sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed ${
+                  darkMode ? 'text-white/90' : 'text-white/85'
+                }`}>
+                  Start automating outreach, content repurposing, and creator workflows today — 
+                  <span className="font-semibold text-yellow-200"> no coding required</span>. 
+                  Enter your email and download now.
+                </p>
+
+                {/* Centralized Auth CTAs - hidden if user is signed in */}
+                {!user && (
+                  <div className="max-w-2xl mx-auto mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
+                      className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-500/50 whitespace-nowrap`}
+                    >
+                      Sign Up to Get Free Workflows
+                    </button>
+                    <button
+                      onClick={() => document.dispatchEvent(new CustomEvent('open-signin-modal'))}
+                      className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${darkMode ? 'bg-gray-800/60 text-white border border-gray-700/60 hover:bg-gray-700/70' : 'bg-white/20 text-white border border-white/30 hover:bg-white/30'} backdrop-blur-sm shadow-lg`}
+                    >
+                      Sign In
+                    </button>
+                  </div>
+                )}
+
+                {/* Trust Indicators */}
+                <div className="flex flex-wrap justify-center items-center gap-6 mt-2 mb-2 text-sm text-white/70">
+                  <div className="flex items-center gap-1">
+                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Instant Download</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>No Spam, Ever</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>100% Free</span>
+                  </div>
+                </div>
+
+                {/* Social Proof / Benefits */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
+                  <div className={`
+                    p-4 rounded-xl backdrop-blur-sm border
+                    ${darkMode 
+                      ? 'bg-white/5 border-white/10' 
+                      : 'bg-white/10 border-white/20'
+                    }
+                  `}>
+                    <div className="text-3xl mb-2">🚀</div>
+                    <h3 className="font-semibold text-white mb-1">Outreach Automation</h3>
+                    <p className="text-sm text-white/70">Email sequences, social media posting, lead nurturing workflows</p>
+                  </div>
+                  
+                  <div className={`
+                    p-4 rounded-xl backdrop-blur-sm border
+                    ${darkMode 
+                      ? 'bg-white/5 border-white/10' 
+                      : 'bg-white/10 border-white/20'
+                    }
+                  `}>
+                    <div className="text-3xl mb-2">🔄</div>
+                    <h3 className="font-semibold text-white mb-1">Content Repurposing</h3>
+                    <p className="text-sm text-white/70">Transform one piece of content into multiple formats automatically</p>
+                  </div>
+                  
+                  <div className={`
+                    p-4 rounded-xl backdrop-blur-sm border
+                    ${darkMode 
+                      ? 'bg-white/5 border-white/10' 
+                      : 'bg-white/10 border-white/20'
+                    }
+                  `}>
+                    <div className="text-3xl mb-2">⭐</div>
+                    <h3 className="font-semibold text-white mb-1">Creator Workflows</h3>
+                    <p className="text-sm text-white/70">Schedule posts, manage communities, track analytics seamlessly</p>
+                  </div>
+                </div>
+
+                {/* Decorative Element */}
+                <div className="w-20 sm:w-24 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mt-8 sm:mt-10 rounded-full mx-auto"></div>
+              </div>
+
+              {/* Background Pattern Overlay */}
+              <div className="absolute inset-0 bg-pattern opacity-20 pointer-events-none"></div>
+              
+              {/* Floating Elements for Visual Interest */}
+              <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-xl animate-pulse hidden lg:block"></div>
+              <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-r from-pink-400/20 to-yellow-400/20 rounded-full blur-xl animate-pulse hidden lg:block"></div>
             </div>
           </div>
 
@@ -623,29 +734,6 @@ const Agents = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
-                      )}
-                      
-                      {/* Keyboard Shortcut Hint */}
-                      {!localSearchQuery && (
-                        <div className={`
-                          absolute right-24 top-1/2 transform -translate-y-1/2 
-                          hidden sm:flex items-center space-x-1 text-xs
-                          ${darkMode ? 'text-gray-500' : 'text-gray-400'}
-                          transition-all duration-300 group-hover:opacity-100
-                        `}>
-                          {/* <kbd className={`
-                            px-1.5 py-0.5 rounded text-xs font-mono
-                            ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
-                          `}>
-                            {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}
-                          </kbd> */}
-                          {/* <kbd className={`
-                            px-1.5 py-0.5 rounded text-xs font-mono
-                            ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
-                          `}>
-                            K
-                          </kbd> */}
-                        </div>
                       )}
                       
                       {/* Search glow effect when active */}

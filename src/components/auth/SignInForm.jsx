@@ -1,18 +1,22 @@
 // src/components/SignIn.jsx
 
 import React, { useState, useContext, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { signIn, signInWithGoogle, signInWithMicrosoft } from '../../api/auth/authApi';
 
 import { toast } from 'react-toastify';
 import { getLockInfo, setLockInfo, clearLockInfo } from '../../utils/lockManager';
+import './signup.css';
 
-const SignIn = () => {
+const SignIn = ({ isOpen, onClose, redirectPath }) => {
   const [formData, setFormData] = useState({
     usernameOrEmail: '',
     password: '',
   });
+  const noop = () => {};
+  const handleClose = isOpen !== undefined ? onClose : noop;
   const [error, setError] = useState(null);
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
@@ -25,6 +29,8 @@ const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [networkIssue, setNetworkIssue] = useState(false);
   const [showNetworkGuide, setShowNetworkGuide] = useState(false);
+  const isModalView = isOpen !== undefined;
+  const shouldRender = isModalView ? isOpen : true;
 
   useEffect(() => {
     // Clean up timer on unmount
@@ -114,7 +120,7 @@ const SignIn = () => {
         await updateUserProfile(data.firebaseUser.uid, data.firebaseUser);
         
         toast.success('Successfully signed in!');
-        setTimeout(() => navigate('/', { replace: true }), 100);
+        setTimeout(() => navigate(redirectPath || '/', { replace: true }), 100);
       }
     } catch (error) {
       console.error('Sign-in error:', error);
@@ -201,7 +207,7 @@ const SignIn = () => {
         }
         
         // Navigate to home page
-        setTimeout(() => navigate('/', { replace: true }), 100);
+        setTimeout(() => navigate(redirectPath || '/', { replace: true }), 100);
       } else {
         toast.error('Could not retrieve user information from Google');
       }
@@ -268,7 +274,7 @@ const SignIn = () => {
         }
         
         // Navigate to home page
-        setTimeout(() => navigate('/', { replace: true }), 100);
+        setTimeout(() => navigate(redirectPath || '/', { replace: true }), 100);
       } else {
         toast.error('Could not retrieve user information from Microsoft');
       }
@@ -357,139 +363,145 @@ const SignIn = () => {
     </div>
   );
 
+  const formContent = (
+    <>
+      <h2 className="modal-title">Sign In</h2>
+      <p className="modal-subtitle">Welcome back! Continue to your account.</p>
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <div>
+          <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Username or Email
+          </label>
+          <input
+            type="text"
+            id="usernameOrEmail"
+            name="usernameOrEmail"
+            value={formData.usernameOrEmail}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+                     text-gray-900 dark:text-white 
+                     bg-white dark:bg-gray-700
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     placeholder-gray-400 dark:placeholder-gray-500"
+            placeholder="Enter your username or email"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Password
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+                     text-gray-900 dark:text-white 
+                     bg-white dark:bg-gray-700
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     placeholder-gray-400 dark:placeholder-gray-500"
+            placeholder="Enter your password"
+            required
+          />
+          {showTips && <PasswordHint />}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLocked || isLoading}
+          className="w-full py-2 sm:py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 
+                   text-white text-sm sm:text-base font-semibold rounded-md shadow-sm transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          {isLoading ? 'Signing in...' : 'Sign In'}
+        </button>
+
+        <div className="relative my-4 sm:my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
+          <div className="relative flex justify-center text-xs sm:text-sm">
+            <span className="px-2 bg-white dark:bg-gray-800 font-bold text-gray-500 dark:text-gray-400">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <button type="button" onClick={handleGoogleSignIn} disabled={isLoading} className="flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
+            Google
+          </button>
+          <button type="button" onClick={handleMicrosoftSignIn} disabled={isLoading} className="flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft" className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
+            Microsoft
+          </button>
+        </div>
+
+        {!isLocked && (
+          <p className="modal-footer-note">
+            Don't have an account?{' '}
+            <a href="/sign-up" className="modal-footer-link">Sign Up</a>
+          </p>
+        )}
+
+        {isLocked && timeLeft && (
+          <div className="mt-4 text-center text-xs sm:text-sm text-red-600 dark:text-red-400">
+            Account is locked. Please try again in {timeLeft}
+          </div>
+        )}
+
+        {networkIssue && (
+          <div className="mt-4 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-md">
+            <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200">{networkIssue}</p>
+          </div>
+        )}
+      </form>
+      {showNetworkGuide && (<NetworkGuide />)}
+    </>
+  );
+
+  if (!shouldRender) return null;
+
+  if (isModalView) {
+    return (
+      <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="signin-title">
+        <div className="modal-content">
+          <button type="button" aria-label="Close" onClick={handleClose} className="modal-close-btn">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          {formContent}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-[90%] sm:max-w-md mx-auto p-4 sm:p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md">
-        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center text-gray-800 dark:text-white">Sign In</h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-          <div>
-            <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Username or Email
-            </label>
-            <input
-              type="text"
-              id="usernameOrEmail"
-              name="usernameOrEmail"
-              value={formData.usernameOrEmail}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
-                       text-gray-900 dark:text-white 
-                       bg-white dark:bg-gray-700
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                       placeholder-gray-400 dark:placeholder-gray-500"
-              placeholder="Enter your username or email"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
-                       text-gray-900 dark:text-white 
-                       bg-white dark:bg-gray-700
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                       placeholder-gray-400 dark:placeholder-gray-500"
-              placeholder="Enter your password"
-              required
-            />
-            {showTips && <PasswordHint />}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLocked || isLoading}
-            className="w-full py-2 sm:py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 
-                     text-white text-sm sm:text-base font-semibold rounded-md shadow-sm transition-colors
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </button>
-
-          <div className="relative my-4 sm:my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-xs sm:text-sm">
-              <span className="px-2 bg-gray-100 font-bold dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isLoading}
-              className="flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 
-                       rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 
-                       bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600
-                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
-              Google
-            </button>
-
-            <button
-              type="button"
-              onClick={handleMicrosoftSignIn}
-              disabled={isLoading}
-              className="flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 
-                       rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 
-                       bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600
-                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft" className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
-              Microsoft
-            </button>
-          </div>
-
-          {!isLocked && (
-            <p className="mt-4 font-bold text-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
-              <a href="/sign-up" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                Sign Up
-              </a>
-            </p>
-          )}
-
-          {isLocked && timeLeft && (
-            <div className="mt-4 text-center text-xs sm:text-sm text-red-600 dark:text-red-400">
-              Account is locked. Please try again in {timeLeft}
-            </div>
-          )}
-
-          {networkIssue && (
-            <div className="mt-4 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-md">
-              <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200">
-                {networkIssue}
-              </p>
-            </div>
-          )}
-        </form>
-
-        {showNetworkGuide && (
-          <NetworkGuide />
-        )}
+        {formContent}
+         
       </div>
     </div>
   );
 };
 
-// Update the PasswordHint component to be dark mode compatible
-const PasswordHint = () => (
-  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-    Password must contain at least 8 characters, including uppercase, lowercase, number and special character (@$!%*?&)
-  </div>
-);
+SignIn.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  redirectPath: PropTypes.string,
+};
+
+SignIn.defaultProps = {
+  isOpen: undefined,
+  onClose: () => {},
+  redirectPath: '/',
+};
 
 export default SignIn;
