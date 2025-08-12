@@ -350,7 +350,7 @@ const useAgentStore = create(
             }
             } else {
               othersTagCount++;
-            }
+          }
           
           // Existing tags array logic remains
           let hasValidTag = false;

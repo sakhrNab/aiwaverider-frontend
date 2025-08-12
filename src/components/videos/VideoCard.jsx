@@ -429,7 +429,7 @@ const VideoCard = ({ video, onPlay, className = '' }) => {
           </h3>
 
           {/* Author */}
-          {video.authorName && (
+          {(video.authorName || video.authorUser) && (
             <div className={`
               flex items-center space-x-2 text-xs
               ${darkMode ? 'text-gray-400' : 'text-gray-600'}
@@ -438,7 +438,17 @@ const VideoCard = ({ video, onPlay, className = '' }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               <span className="truncate">{video.authorName}</span>
+              {video.authorUser && (
+                <span className="truncate opacity-70">@{video.authorUser}</span>
+              )}
             </div>
+          )}
+
+          {/* Description (clamped) */}
+          {video.description && (
+            <p className={`text-xs line-clamp-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {video.description}
+            </p>
           )}
 
           {/* Stats */}

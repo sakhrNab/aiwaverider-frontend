@@ -158,8 +158,8 @@ class VideosService {
         }
       });
       
-      console.log('Video added successfully:', response.data);
-      return response.data;
+      console.log('Video added successfully:', response);
+      return response;
     } catch (error) {
       console.error('=== Error adding video ===');
       console.error('Error object:', error);
@@ -206,10 +206,31 @@ class VideosService {
           'X-Admin-Token': adminToken
         }
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error refreshing video stats:', error);
       throw new Error(`Failed to refresh video stats: ${error.message}`);
+    }
+  }
+
+  /**
+   * Delete a video (Admin only)
+   * @param {string} videoId - Video document ID
+   * @returns {Promise<Object>} API response
+   */
+  static async deleteVideo(videoId) {
+    try {
+      const adminToken = await getAdminToken();
+      if (!adminToken) {
+        throw new Error('Authentication required. Please log in as an admin.');
+      }
+      const response = await apiClient.delete(`${API.URL}/api/videos/${videoId}`, {
+        headers: { 'X-Admin-Token': adminToken }
+      });
+      return response;
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      throw new Error(error.message || 'Failed to delete video');
     }
   }
 
