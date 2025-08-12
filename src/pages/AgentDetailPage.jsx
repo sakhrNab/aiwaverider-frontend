@@ -4,13 +4,10 @@ import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaComment, 
 import { 
   toggleWishlist, 
   toggleAgentLike,
-  getAgentReviews,
-  addAgentReview,
-  deleteAgentReview,
-  checkCanReviewAgent,
   downloadFreeAgent,
   fetchAgentById,
-  getUserLikeStatus
+  getUserLikeStatus,
+  addAgentReview
 } from '../api/marketplace/agentApi.js';
 import { useCart } from '../contexts/CartContext.jsx';
 import { AuthContext } from '../contexts/AuthContext.jsx';
@@ -21,9 +18,6 @@ import DOMPurify from 'dompurify';
 import { toast } from 'react-toastify';
 import './AgentDetailPage.css';
 import n8nWorkflowImg from '../assets/n8nworkflow.png';
-import AgentHeader from '../components/layout/AgentHeader';
-
-
 
 // Helper function to format file size
 const formatFileSize = (bytes) => {
@@ -594,7 +588,7 @@ const EmptyReviewsState = ({ user, darkMode }) => {
 };
 
 // Enhanced Comment Section Component
-const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipExternalFetch = false }) => {
+const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipExternalFetch = false, onReviewAdded = () => {} }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [rating, setRating] = useState(5);
@@ -623,66 +617,14 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
       try {
         setIsLoadingComments(true);
         
-        if (existingReviews && Array.isArray(existingReviews) && existingReviews.length > 0) {
-          console.log('Using existing reviews from agent data:', existingReviews.length);
-          
-          const sortedReviews = [...existingReviews].sort((a, b) => {
-            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-          });
-          
+        if (existingReviews && Array.isArray(existingReviews)) {
+          const sortedReviews = [...existingReviews].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
           setComments(sortedReviews);
-          
-          if (onReviewsLoaded) {
-            console.log('Setting initial review count to:', sortedReviews.length);
-            onReviewsLoaded(sortedReviews.length);
-          }
-          
-          if (user) {
-            const userReview = sortedReviews.find(review => review.userId === user.uid);
-            setHasUserReviewed(!!userReview);
-          }
-        } else if (!skipExternalFetch) {
-          console.log(`No existing reviews, loading reviews for agent ${agentId}`);
-          try {
-            const response = await getAgentReviews(agentId, { 
-              skipCache: true, 
-              timestamp: Date.now() 
-            });
-            console.log('Received FRESH reviews from API:', response);
-            
-            if (response && Array.isArray(response)) {
-              const sortedReviews = response.sort((a, b) => {
-                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-              });
-              
-              setComments(sortedReviews);
-              
-              const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
-              updateStoreReviews(agentId, sortedReviews);
-              
-              if (onReviewsLoaded) {
-                console.log('Setting initial review count to:', sortedReviews.length);
-                onReviewsLoaded(sortedReviews.length);
-              }
-              
-              if (user) {
-                const userReview = sortedReviews.find(review => review.userId === user.uid);
-                setHasUserReviewed(!!userReview);
-              }
-            }
-          } catch (apiError) {
-            console.error('Error fetching reviews from API:', apiError);
-            setComments([]);
-            if (onReviewsLoaded) {
-              onReviewsLoaded(0);
-            }
-          }
+          if (onReviewsLoaded) onReviewsLoaded(sortedReviews.length);
+          if (user) setHasUserReviewed(!!sortedReviews.find(r => r.userId === user.uid));
         } else {
-          console.log('Skipping external fetch for reviews as requested');
           setComments([]);
-          if (onReviewsLoaded) {
-            onReviewsLoaded(0);
-          }
+          if (onReviewsLoaded) onReviewsLoaded(0);
         }
       } catch (err) {
         console.error('Error processing comments:', err);
@@ -691,20 +633,16 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
         setIsLoadingComments(false);
       }
     };
-    
     processReviews();
-    
     return () => {};
   }, [agentId, user, existingReviews, onReviewsLoaded]);
-  
-
   
   // Enhanced auth state management
   useEffect(() => {
     setPrevAuthState(!!user);
   }, [user, prevAuthState]);
 
-  // Enhanced eligibility checking
+  // Check eligibility to review: unauthenticated users cannot review; otherwise use local heuristics
   useEffect(() => {
     if (!user) {
       setCanReview(false);
@@ -712,213 +650,94 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
       setReviewEligibilityReason('Please sign in to share your experience');
       return;
     }
-    
-    const checkEligibility = async () => {
-      try {
-        const cacheKey = `review_eligibility_${agentId}_${user.uid}`;
-        let eligibilityResult = null;
-        
-        try {
-          const downloadKey = `agent_download_${agentId}_${user.uid}`;
-          const downloadRecord = localStorage.getItem(downloadKey);
-          
-          if (downloadRecord) {
-            eligibilityResult = {
-              canReview: true,
-              reason: 'You have downloaded this amazing agent'
-            };
-            
-            setCanReview(true);
-            setReviewEligibilityReason('You have downloaded this amazing agent');
-            setReviewEligibilityChecked(true);
-            console.log('User is eligible to review based on download record');
-            return;
-          }
-        } catch (downloadCheckError) {
-          console.warn('Error checking download record:', downloadCheckError);
-        }
-        
-        try {
-          const cachedEligibility = localStorage.getItem(cacheKey);
-          if (cachedEligibility) {
-            const parsedEligibility = JSON.parse(cachedEligibility);
-            const cacheTime = parsedEligibility._cacheTime || 0;
-            const now = Date.now();
-            
-            if (now - cacheTime < 30 * 60 * 1000) {
-              console.log(`Using cached review eligibility for agent ${agentId}`);
-              eligibilityResult = parsedEligibility;
-            } else {
-              console.log(`Review eligibility cache expired for agent ${agentId}`);
-            }
-          }
-        } catch (cacheError) {
-          console.warn('Error reading review eligibility from cache:', cacheError);
-        }
-        
-        if (!eligibilityResult) {
-          console.log(`Checking review eligibility via API for agent ${agentId}`);
-          eligibilityResult = await checkCanReviewAgent(agentId);
-          
-          try {
-            localStorage.setItem(cacheKey, JSON.stringify({
-              ...eligibilityResult,
-              _cacheTime: Date.now()
-            }));
-          } catch (e) {
-            console.warn('Failed to cache review eligibility:', e);
-          }
-        }
-        
-        setCanReview(eligibilityResult.canReview);
-        setReviewEligibilityReason(eligibilityResult.reason);
-        setReviewEligibilityChecked(true);
-        
-        console.log('Review eligibility result:', eligibilityResult);
-      } catch (err) {
-        console.error('Error checking review eligibility:', err);
+
+    // Admins can always review
+    const isAdminUser = user.roles?.includes('admin') || user.isAdmin || user.role === 'admin' || 
+                        user.email?.endsWith('@aiwaverider.com') || user.uid === '0pYyiwNXvSZdoRa1Smgj3sWWYsg1';
+    if (isAdminUser) {
+      setCanReview(true);
+      setReviewEligibilityChecked(true);
+      setReviewEligibilityReason('Admin user');
+      return;
+    }
+
+    // Already reviewed?
+    if (existingReviews && Array.isArray(existingReviews)) {
+      const already = existingReviews.some(r => r.userId === user.uid);
+      if (already) {
         setCanReview(false);
-        setReviewEligibilityReason('Error checking eligibility');
         setReviewEligibilityChecked(true);
+        setReviewEligibilityReason('You have already reviewed this agent');
+        return;
       }
-    };
-    
-    checkEligibility();
-  }, [user, agentId]);
+    }
+
+    // Local download/purchase heuristic
+    try {
+      const downloadKey = `agent_download_${agentId}_${user.uid}`;
+      const downloadRecord = localStorage.getItem(downloadKey);
+      if (downloadRecord) {
+        setCanReview(true);
+        setReviewEligibilityChecked(true);
+        setReviewEligibilityReason('You have downloaded this agent');
+        return;
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+
+    // Default: not eligible unless server-side persists a purchase record we mirror later
+    setCanReview(false);
+    setReviewEligibilityChecked(true);
+    setReviewEligibilityReason('Only users who downloaded or purchased can review');
+  }, [user, agentId, existingReviews]);
   
-  // Enhanced comment submission
+  // Submit review now only updates local state/store (no API call)
   const handleCommentSubmit = async (e) => {
-    e.preventDefault();
-    
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (!user) {
-      toast.info('Please sign in to share your valuable feedback', {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        icon: "👋"
-      });
+      setError('Please sign in to leave a review');
       return;
     }
-    
-    if (hasUserReviewed) {
-      toast.warning('You have already shared your thoughts about this agent', {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        icon: "⚠️"
-      });
-      return;
-    }
-    
-    if (!canReview) {
-      toast.warning(reviewEligibilityReason, {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        icon: "⚠️"
-      });
-      return;
-    }
-    
     if (!newComment.trim()) {
       setError('Please share your thoughts about this agent');
       return;
     }
-    
     setIsLoading(true);
     setError('');
-    
     try {
-      const commentData = {
-        content: newComment,
-        rating: rating,
-        verificationStatus: reviewEligibilityReason === 'Verified purchase' ? 'verified_purchase' : 
-                            reviewEligibilityReason === 'Downloaded agent' ? 'verified_download' : 
-                            reviewEligibilityReason === 'Admin user' ? 'admin' : 'unverified'
-      };
-      
-      console.log('Submitting review with data:', commentData);
-      const response = await addAgentReview(agentId, commentData);
-      console.log('Review submission response:', response);
-      
-      if (response.success) {
-        const addReviewToStore = useAgentStore.getState().addReviewToAgent;
-        
-        const newCommentObj = {
-          id: response.reviewId || `temp-${Date.now()}`,
-          content: newComment,
-          rating: rating,
-          createdAt: new Date().toISOString(),
-          userId: user.uid,
-          userName: user.displayName || user.email.split('@')[0]
-        };
-        
-        if (onReviewsLoaded) {
-          const newCount = comments.length + 1;
-          console.log('Immediately updating review count to:', newCount);
-          onReviewsLoaded(newCount);
-        }
-        
-        setComments(prevComments => [...prevComments, newCommentObj]);
-        addReviewToStore(agentId, newCommentObj);
-        
-        setNewComment('');
-        setRating(5);
-        setHasUserReviewed(true);
-        
-        toast.success('🎉 Thank you for your amazing review! Your feedback helps others discover great agents and helps us improve our offerings.', {
-          position: "bottom-right",
-          autoClose: 4000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          icon: "✅"
-        });
-        
-        localStorage.removeItem(`last_reviews_fetch_${agentId}`);
-        
-        setTimeout(async () => {
-          try {
-            const freshReviews = await getAgentReviews(agentId, { 
-              skipCache: true, 
-              timestamp: Date.now() 
-            });
-            
-            if (freshReviews && Array.isArray(freshReviews)) {
-              console.log(`Fetched ${freshReviews.length} fresh reviews after adding new review`);
-              setComments(freshReviews);
-              
-              const updateAgentReviews = useAgentStore.getState().updateAgentReviews;
-              updateAgentReviews(agentId, freshReviews);
-            }
-          } catch (refreshErr) {
-            console.error('Error refreshing reviews after submission:', refreshErr);
-          }
-        }, 500);
-      } else {
-        setError(response.error || 'Failed to add comment');
-        toast.error(response.error || 'Failed to add your review', {
-          position: "bottom-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          icon: "❌"
-        });
+      // Call secure backend endpoint
+      const resp = await addAgentReview(agentId, { content: newComment.trim(), rating });
+      if (!resp?.success) {
+        const msg = resp?.error || 'Failed to add review';
+        setError(msg);
+        toast.error(msg, { position: 'bottom-right' });
+        return;
       }
+      const newReview = resp.review || {
+        id: resp.reviewId || `temp-${Date.now()}`,
+        content: newComment.trim(),
+        rating,
+        createdAt: new Date().toISOString(),
+        userId: user.uid,
+        userName: user.displayName || user.email?.split('@')[0] || 'User'
+      };
+      setComments(prev => {
+        const updated = [...prev, newReview].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        return updated;
+      });
+      const addReviewToStore = useAgentStore.getState().addReviewToAgent;
+      addReviewToStore(agentId, newReview);
+      onReviewAdded(newReview, resp.reviewCount, resp.averageRating);
+      if (onReviewsLoaded) onReviewsLoaded((resp.reviewCount) || (comments.length + 1));
+      setNewComment('');
+      setRating(5);
+      setHasUserReviewed(true);
+      toast.success('Thank you for your review!', { position: 'bottom-right' });
     } catch (err) {
       console.error('Error adding comment:', err);
       setError('An error occurred while adding your review');
-      toast.error('❌ An error occurred while adding your review', {
-        position: "bottom-right",
-        autoClose: 3000,
-        icon: "❌"
-      });
+      toast.error('An error occurred while adding your review', { position: 'bottom-right' });
     } finally {
       setIsLoading(false);
     }
@@ -927,153 +746,33 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
   const formatDate = (dateString) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch (e) {
       console.error('Error formatting date:', e);
       return 'Invalid date';
     }
   };
   
-  // Enhanced delete review function
+  // Deleting a review: update local state/store only
   const handleDeleteReview = async (reviewId) => {
     const removeReviewFromStore = useAgentStore.getState().removeReviewFromAgent;
-    
     if (!isAdmin) {
-      toast.error('Only admins can delete reviews', {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        icon: "⛔"
-      });
+      toast.error('Only admins can delete reviews', { position: 'bottom-right', autoClose: 3000, icon: '⛔' });
       return;
     }
-    
     if (window.confirm('Are you sure you want to delete this review?')) {
       setIsDeleting(true);
       try {
-        const response = await deleteAgentReview(agentId, reviewId);
-        
-        if (response.success) {
-          console.log('Review deleted, forcing a complete refresh of all reviews from backend');
-          
-          localStorage.removeItem(`reviews_cache_${agentId}`);
-          localStorage.removeItem(`last_reviews_fetch_${agentId}`);
-          
-          const freshReviews = await getAgentReviews(agentId, { 
-            skipCache: true,
-            timestamp: Date.now() + Math.random()
-          });
-          
-          console.log(`Received ${freshReviews.length} fresh reviews after deletion`);
-          
-          const sortedReviews = freshReviews.sort((a, b) => {
-            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-          });
-          
-          setComments(sortedReviews);
-          
-          if (onReviewsLoaded) {
-            onReviewsLoaded(sortedReviews.length);
-          }
-          
-          let newRatingValue = 0;
-          if (sortedReviews.length > 0) {
-            const sum = sortedReviews.reduce((acc, comment) => acc + (parseFloat(comment.rating) || 0), 0);
-            newRatingValue = sum / sortedReviews.length;
-          }
-          
-          const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
-          updateStoreReviews(agentId, sortedReviews);
-          
-          toast.success(response.message || '✅ Review deleted successfully', {
-            position: "bottom-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            icon: "✅"
-          });
-          
-          console.log('Forcing immediate refresh of reviews from Firebase after deletion');
-          localStorage.removeItem(`last_reviews_fetch_${agentId}`);
-          
-          const fetchFreshReviews = async () => {
-            try {
-              const freshReviews = await getAgentReviews(agentId, { 
-                skipCache: true, 
-                timestamp: Date.now() 
-              });
-              
-              if (freshReviews && Array.isArray(freshReviews)) {
-                console.log(`Fetched ${freshReviews.length} fresh reviews from Firebase after deletion`);
-                
-                setComments(freshReviews);
-                
-                if (onReviewsLoaded) {
-                  onReviewsLoaded(freshReviews.length);
-                }
-                
-                if (user && user.uid) {
-                  const userHasReview = freshReviews.some(review => review.userId === user.uid);
-                  setHasUserReviewed(userHasReview);
-                }
-              }
+        setComments(prev => prev.filter(c => c.id !== reviewId));
+        removeReviewFromStore(agentId, reviewId);
+        if (onReviewsLoaded) onReviewsLoaded(Math.max(0, comments.length - 1));
             } catch (err) {
-              console.error('Error fetching fresh reviews after deletion:', err);
-            }
-          };
-          
-          fetchFreshReviews();
-        } else {
-          throw new Error(response.message || 'Failed to delete review');
-        }
-      } catch (err) {
-        console.error('Error deleting review:', err);
-        toast.error(`Error deleting review: ${err.message || 'Unknown error'}`, {
-          position: "bottom-right",
-          autoClose: 3000,
-          icon: "❌"
-        });
+        console.error('Error deleting comment:', err);
       } finally {
         setIsDeleting(false);
       }
     }
   };
-  
-  // Enhanced Auth Prompt component
-const AuthPrompt = () => (
-  <div className={`auth-prompt ${darkMode ? 'dark-mode' : ''}`}>
-    <div className={`auth-prompt-content ${darkMode ? 'dark-bg' : ''}`}>
-      <div className="auth-prompt-icon">
-        <FaComment className={`comment-icon ${darkMode ? 'text-gray-300' : ''}`} />
-      </div>
-      <h3>Join the Community!</h3>
-      <p>Sign in to share your experience and help others discover amazing AI agents. Your review makes a difference!</p>
-      <div className="auth-prompt-buttons" style={{ justifyContent: 'center' }}>
-        <button 
-          className={`auth-button signup-button ${darkMode ? 'dark-button' : ''}`} 
-          onClick={() => {
-            if (typeof window.openSignUpModal === 'function') {
-              window.openSignUpModal();
-            } else {
-              document.dispatchEvent(new CustomEvent('open-signup-modal'));
-            }
-          }}
-        >
-          Join Us
-        </button>
-      </div>
-    </div>
-  </div>
-);
   
   // Enhanced Eligibility Prompt
   const EligibilityPrompt = () => (
@@ -1089,7 +788,33 @@ const AuthPrompt = () => (
     </div>
   );
   
-
+  // Simple Auth Prompt component (ask user to sign in)
+const AuthPrompt = () => (
+  <div className={`auth-prompt ${darkMode ? 'dark-mode' : ''}`}>
+    <div className={`auth-prompt-content ${darkMode ? 'dark-bg' : ''}`}>
+      <div className="auth-prompt-icon">
+        <FaComment className={`comment-icon ${darkMode ? 'text-gray-300' : ''}`} />
+      </div>
+      <h3>Join the Community!</h3>
+        <p>Sign in to share your experience and help others discover amazing AI agents.</p>
+      <div className="auth-prompt-buttons" style={{ justifyContent: 'center' }}>
+        <button 
+          className={`auth-button signup-button ${darkMode ? 'dark-button' : ''}`} 
+          onClick={() => {
+            if (typeof window.openSignUpModal === 'function') {
+              window.openSignUpModal();
+            } else {
+              document.dispatchEvent(new CustomEvent('open-signup-modal'));
+            }
+          }}
+          style={{ whiteSpace: 'nowrap', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+            Sign In / Sign Up
+        </button>
+      </div>
+    </div>
+  </div>
+);
   
   return (
     <div className={`comments-section ${darkMode ? 'dark-mode' : ''}`}>
@@ -1548,7 +1273,7 @@ const AgentDetail = () => {
           data = await fetchAgentById(agentId, { 
             signal: abortController.signal,
             skipCache: true,
-            includeReviews: true,
+            includeReviews: !!user, // Only fetch reviews when user is authenticated
             timestamp: Date.now()
           });
           
@@ -1574,8 +1299,14 @@ const AgentDetail = () => {
           
           if (error.name === 'AbortError') {
             setError("Request timed out. Please try again later.");
+          } else if (err.response && err.response.status === 400) {
+            setError(`Invalid agent ID. Please check the URL and try again.`);
+          } else if (error.message && error.message.includes('Network')) {
+            setError('Network error. Please check your connection and try again.');
+            toast.error('Network error while loading agent. Please try again.', { position: 'bottom-right' });
           } else {
-            setError(error.message || "Failed to load agent data. Please try again later.");
+            setError(`There was a problem loading this product. Please try again later.`);
+            toast.error('Unexpected error while loading agent.', { position: 'bottom-right' });
           }
           
           setLoading(false);
@@ -1680,15 +1411,6 @@ const AgentDetail = () => {
         // Enhanced initial data setup
         if (sanitizedData.reviews && Array.isArray(sanitizedData.reviews)) {
           setReviewCount(sanitizedData.reviews.length);
-        } else {
-          try {
-            const reviews = await getAgentReviews(agentId);
-            if (reviews && Array.isArray(reviews)) {
-              setReviewCount(reviews.length);
-            }
-          } catch (err) {
-            console.warn('Could not fetch initial review count:', err);
-          }
         }
         
         if (sanitizedData.likes) {
@@ -1756,8 +1478,12 @@ const AgentDetail = () => {
           setError(`Agent with ID "${agentId}" not found. It may have been removed or doesn't exist.`);
         } else if (err.response && err.response.status === 400) {
           setError(`Invalid agent ID. Please check the URL and try again.`);
+        } else if (err.message && err.message.includes('Network')) {
+          setError('Network error. Please check your connection and try again.');
+          toast.error('Network error while loading agent. Please try again.', { position: 'bottom-right' });
         } else {
           setError(`There was a problem loading this product. Please try again later.`);
+          toast.error('Unexpected error while loading agent.', { position: 'bottom-right' });
         }
         setLoading(false);
         setDataLoaded(true);
@@ -1844,6 +1570,7 @@ const AgentDetail = () => {
           
           const agentData = await fetchAgentById(agentId, { 
             skipCache: shouldSkipCache,
+            includeReviews: false, // polling never fetches reviews
             signal: abortController.signal
           });
           
@@ -2548,7 +2275,7 @@ const AgentDetail = () => {
     return (
       <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
         <div className="loading-container fade-in">
-          <AgentHeader />
+          {/* <AgentHeader /> */}
           <div className="loading-spinner"></div>
           <h3>Loading Amazing Agent...</h3>
           <p>Preparing something special for you ✨</p>
@@ -2561,7 +2288,7 @@ const AgentDetail = () => {
   if (error || !agent) {
     return (
       <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
-        <AgentHeader />
+        {/* <AgentHeader /> */}
         <div className="error-container fade-in">
           <h2>Oops! Agent Not Found</h2>
           <p>{error || 'We couldn\'t find the agent you\'re looking for. It might have been moved or doesn\'t exist.'}</p>
@@ -2581,7 +2308,7 @@ const AgentDetail = () => {
 
   return (
     <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
-      <AgentHeader />
+      {/* <AgentHeader /> */}
       <div className="agent-detail-breadcrumb">
         <Link to="/">Home</Link> / <Link to="/agents">Agents</Link> / <span>{agent.title}</span>
       </div>
@@ -2898,6 +2625,21 @@ const AgentDetail = () => {
               existingReviews={agent.reviews || []} 
               onReviewsLoaded={(count) => setReviewCount(count)}
               skipExternalFetch={true}
+              onReviewAdded={(newReview, newCount, newAvg) => {
+                setAgent(prev => {
+                  const prevReviews = Array.isArray(prev?.reviews) ? prev.reviews : [];
+                  const merged = [...prevReviews, newReview];
+                  return {
+                    ...prev,
+                    reviews: merged,
+                    reviewCount: typeof newCount === 'number' ? newCount : merged.length,
+                    rating: {
+                      ...(prev?.rating || {}),
+                      average: typeof newAvg === 'number' ? newAvg : (merged.reduce((a, r) => a + (Number(r.rating) || 0), 0) / merged.length)
+                    }
+                  };
+                });
+              }}
             />
           </div>
         )}

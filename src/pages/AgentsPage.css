@@ -554,12 +554,29 @@
 /* Agent grid */
 .marketplace-agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
   width: 100%;
-  margin-bottom: 24px; /* Consistent bottom margin */
-  padding: 0; /* Remove any default padding */
-  box-sizing: border-box; /* Ensure proper box model */
+  margin-bottom: 24px;
+  padding: 0;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .marketplace-agents-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+}
+@media (max-width: 834px) {
+  .marketplace-agents-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+}
+@media (max-width: 640px) {
+  .marketplace-agents-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; padding: 0 8px; }
+}
+@media (max-width: 480px) {
+  .marketplace-agents-grid { grid-template-columns: 1fr; gap: 12px; padding: 0 8px; }
+}
+@media (max-width: 375px) {
+  .marketplace-agents-grid { grid-template-columns: 1fr; gap: 10px; padding: 0 6px; }
 }
 
 /* Virtualized grid container */
@@ -580,15 +597,14 @@
 .marketplace-agents-grid .marketplace-agent-image-container {
   position: relative;
   width: 100%;
-  padding-top: 56.25%; /* 16:9 aspect ratio */
+  aspect-ratio: 16/9; /* Maintain 16:9 across devices */
   overflow: hidden;
   background-color: #f5f5f5;
 }
 
 .marketplace-agents-grid .marketplace-agent-image {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1077,10 +1093,29 @@
 /* Agent grid layout */
 .marketplace-agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
   width: 100%;
-  margin-bottom: 24px; /* Consistent bottom margin */
+  margin-bottom: 24px;
+  padding: 0;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .marketplace-agents-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+}
+@media (max-width: 834px) {
+  .marketplace-agents-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+}
+@media (max-width: 640px) {
+  .marketplace-agents-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; padding: 0 8px; }
+}
+@media (max-width: 480px) {
+  .marketplace-agents-grid { grid-template-columns: 1fr; gap: 12px; padding: 0 8px; }
+}
+@media (max-width: 375px) {
+  .marketplace-agents-grid { grid-template-columns: 1fr; gap: 10px; padding: 0 6px; }
 }
 
 /* Agent card styling */
@@ -2698,12 +2733,29 @@
 /* Ensure grid container is fully responsive */
 .marketplace-agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
   width: 100%;
-  margin-bottom: 24px; /* Consistent bottom margin */
-  padding: 0; /* Remove any default padding */
-  box-sizing: border-box; /* Ensure proper box model */
+  margin-bottom: 24px;
+  padding: 0;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .marketplace-agents-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+}
+@media (max-width: 834px) {
+  .marketplace-agents-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+}
+@media (max-width: 640px) {
+  .marketplace-agents-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; padding: 0 8px; }
+}
+@media (max-width: 480px) {
+  .marketplace-agents-grid { grid-template-columns: 1fr; gap: 12px; padding: 0 8px; }
+}
+@media (max-width: 375px) {
+  .marketplace-agents-grid { grid-template-columns: 1fr; gap: 10px; padding: 0 6px; }
 }
 
 /* Comprehensive responsive grid with improved breakpoints */
@@ -2745,14 +2797,14 @@
 @media (max-width: 480px) {
   .marketplace-agents-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
 }
 
 @media (max-width: 375px) {
   .marketplace-agents-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 }
 
@@ -2923,4 +2975,26 @@
     margin-top: 2rem !important;
   }
 } 
+
+/* Ensure the marketplace section container never overflows horizontally */
+#marketplace-section {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 640px) {
+  #marketplace-section { padding-left: 8px; padding-right: 8px; }
+}
+@media (max-width: 375px) {
+  #marketplace-section { padding-left: 6px; padding-right: 6px; }
+}
+
+/* Safety: prevent any accidental horizontal bleed from the grid */
+.agents-container .marketplace-agents-grid {
+  overflow-x: clip;
+}
 

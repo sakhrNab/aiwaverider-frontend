@@ -17,7 +17,7 @@ const additionalStyles = `
 .marketplace-agent-card-link {
   text-decoration: none;
   color: inherit;
-  display: block;
+  display: contents;
   height: 100%;
   width: 100%;
   cursor: pointer;

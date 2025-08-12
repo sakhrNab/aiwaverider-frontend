@@ -1,36 +1,12 @@
 /**
- * PAYMENT API SERVICE - UNIPAY INTEGRATION
- * ========================================
- * 
- * This file contains client-side payment API service functions integrated
- * with UniPay (https://unipay.com/) - Georgian payment gateway with 
- * international coverage.
- * 
- * MIGRATION TO UNIPAY COMPLETED:
- * - All payment methods now go through UniPay
- * - Supports: Credit Cards, SEPA, PayPal, Google Pay
- * - 99.9% API uptime guarantee
- * - International processing capabilities
- * 
- * Environment Variables Required:
- * - VITE_API_URL: Your backend API URL
- * - VITE_UNIPAY_API_URL: UniPay API endpoint (optional, defaults to https://api.unipay.com)
- * - VITE_UNIPAY_MERCHANT_ID: Your UniPay merchant ID
- * - VITE_UNIPAY_PUBLIC_KEY: Your UniPay public key
- * 
- * Supported Payment Methods:
- * - Credit/Debit Cards (Visa, Mastercard)
- * - SEPA Transfers (EUR, EU countries)
- * - PayPal Payments
- * - Google Pay
- * 
- * Pricing (from UniPay):
- * - Domestic: 2.5% + 0.25 GEL
- * - International: 3.0% + 0.35 GEL
+ * PAYMENT API SERVICE - PAYPAL ONLY
+ * =================================
+ * - PayPal is the single payment provider
+ * - Frontend creates orders and captures via backend endpoints
  */
 
 import axios from 'axios';
-import unipayService from './unipayService';
+// import unipayService from './unipayService';
 
 // Use environment variable for API URL
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
@@ -43,122 +19,66 @@ const api = axios.create({
   },
 });
 
-// Helper function to check UniPay API connectivity
+// Helper function to check API connectivity (deprecated UniPay)
 export const checkApiConnectivity = async () => {
   try {
-    console.log(`Checking UniPay API connectivity with ${API_URL}`);
-    
-    // Use the UniPay service connectivity check
-    const result = await unipayService.checkConnectivity();
-    
-    if (result.ok) {
-      console.log('UniPay API connectivity test successful:', result.data);
-      return result;
-    } else {
-      console.error('UniPay API connectivity test failed:', result.error);
-      return result;
-    }
+    // Minimal connectivity check to backend payments health
+    const res = await api.get('/api/payments/health');
+    return { ok: true, data: res.data };
   } catch (error) {
-    console.error('UniPay API connectivity check failed:', error);
-    
-    return { 
-      ok: false, 
-      error: error.message || 'Failed to check UniPay connectivity'
-    };
+    return { ok: false, error: error.message };
   }
 };
 
-// Helper to get supported payment methods from UniPay
-export const getPaymentMethodsForCountry = async (countryCode = 'US') => {
-  try {
-    const methods = await unipayService.getPaymentMethods(countryCode);
-    console.log('Available UniPay payment methods:', methods);
-    return methods;
-  } catch (error) {
-    console.error('Error getting UniPay payment methods:', error);
-    // Return default fallback methods
-    return {
-      success: false,
-      error: error.message,
-      methods: ['card', 'paypal', 'google_pay'],
-      countryCode
-    };
-  }
+export const getPaymentMethodsForCountry = async () => {
+  // PayPal-only now
+  return { success: true, methods: ['paypal'] };
 };
 
 /**
- * Create a PayPal payment through UniPay
- * @param {Object} data - Cart data including cartTotal and items
- * @returns {Promise<Object>} - PayPal payment details with approval URL
+ * Create a PayPal order via backend direct integration
  */
 export const createPayPalOrder = async (data) => {
   try {
-    console.log('Creating PayPal payment through UniPay');
-    console.log('Request data:', JSON.stringify(data, null, 2));
-    
-    const paypalData = {
+    const payload = {
       amount: data.cartTotal || data.amount,
       currency: data.currency || 'USD',
-      email: data.email || '',
       items: data.items || [],
+      customerInfo: {
+        email: data.email || '',
+        userId: data.userId || null,
+      },
       metadata: {
         orderId: data.orderId || `order_${Date.now()}`,
         source: 'paypal_checkout',
         ...data.metadata
-      },
-      successUrl: data.successUrl,
-      cancelUrl: data.cancelUrl
+      }
     };
-    
-    const result = await unipayService.createPaypalPayment(paypalData);
-    console.log('UniPay PayPal payment created successfully:', result);
-    
-    // Transform to match expected PayPal format
-    return {
-      success: result.success,
-      orderId: result.orderId,
-      paymentId: result.paymentId,
-      approvalUrl: result.approvalUrl,
-      provider: 'unipay',
-      status: result.status
-    };
+
+    const res = await api.post('/api/payments/paypal/create-order', payload);
+    if (!res.data || !res.data.success) {
+      throw new Error(res.data?.error || 'Failed to create PayPal order');
+    }
+
+    return { id: res.data.id, orderId: res.data.orderId };
   } catch (error) {
-    console.error('Error creating UniPay PayPal payment:', error);
+    console.error('Error creating PayPal order:', error);
     throw error;
   }
 };
 
 /**
- * Get PayPal payment status (UniPay handles capture automatically)
- * @param {string} paymentID - UniPay payment ID
- * @param {Object} metadata - Additional metadata
- * @returns {Promise<Object>} - Payment status details
+ * Capture a PayPal payment via backend
  */
-export const capturePayPalPayment = async (paymentID, metadata = {}) => {
+export const capturePayPalPayment = async (orderID, metadata = {}) => {
   try {
-    console.log('Checking UniPay PayPal payment status:', paymentID);
-    
-    // For UniPay, PayPal payments are handled automatically
-    // We just need to check the status
-    const result = await unipayService.getPaymentStatus(paymentID, 'paypal');
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to get PayPal payment status');
+    const res = await api.post('/api/payments/paypal/capture', { orderID, metadata });
+    if (!res.data || !res.data.success) {
+      throw new Error(res.data?.error || 'Failed to capture PayPal payment');
     }
-    
-    // Transform to match expected PayPal capture format
-    return {
-      success: true,
-      paymentId: result.paymentId,
-      orderId: result.orderId || metadata.orderId,
-      status: result.status,
-      amount: result.amount,
-      currency: result.currency,
-      provider: 'unipay',
-      details: result.details
-    };
+    return res.data;
   } catch (error) {
-    console.error('Error checking UniPay PayPal payment status:', error);
+    console.error('Error capturing PayPal payment:', error);
     throw error;
   }
 };
@@ -194,20 +114,22 @@ export const createStripeCheckout = async (data) => {
       cancelUrl: data.cancelUrl || `${window.location.origin}/checkout`
     };
     
-    const result = await unipayService.createPayment(paymentData);
-    console.log('UniPay payment session created successfully:', result);
-    
-    // Transform to match expected checkout format
+    // This function is now UniPay-specific, so we'll keep it as is
+    // The original unipayService.createPayment call is removed
+    // If UniPay integration is removed, this function will need to be updated
+    // For now, we'll return a placeholder or throw an error if UniPay is not available
+    console.warn('createStripeCheckout is now UniPay-specific and requires UniPay integration.');
     return {
-      success: result.success,
-      sessionId: result.paymentId,
-      paymentId: result.paymentId,
-      orderId: result.orderId,
-      url: result.checkoutUrl || result.paymentUrl,
-      checkoutUrl: result.checkoutUrl,
-      status: result.status,
+      success: false,
+      message: 'UniPay integration is not fully implemented yet.',
+      sessionId: null,
+      paymentId: null,
+      orderId: null,
+      url: null,
+      checkoutUrl: null,
+      status: 'failed',
       provider: 'unipay',
-      expiresAt: result.expiresAt
+      expiresAt: null
     };
   } catch (error) {
     console.error('Error creating UniPay payment session:', error);
@@ -528,260 +450,6 @@ export const detectUserCountry = async () => {
   } catch (error) {
     console.error('Error detecting user country:', error);
     return 'US'; // Default to US if detection fails
-  }
-};
-
-/**
- * Validate Apple Pay merchant
- * @param {string} validationURL - The validation URL provided by Apple Pay
- * @returns {Promise<Object>} - Merchant session object from Apple
- */
-export const validateApplePayMerchant = async (validationURL) => {
-  try {
-    console.log('Validating Apple Pay merchant with URL:', validationURL);
-    
-    if (!validationURL) {
-      throw new Error('Missing validation URL');
-    }
-    
-    const response = await fetch(`${API_URL}/api/payments/validate-apple-pay-merchant`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ validationURL }),
-    });
-    
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-        console.error('Apple Pay validation error response:', errorData);
-      } catch (parseError) {
-        const textError = await response.text();
-        console.error('Response text:', textError);
-        throw new Error(`Server returned ${response.status}: ${textError || 'No response body'}`);
-      }
-      throw new Error(errorData.error || `Failed to validate Apple Pay merchant: ${response.status}`);
-    }
-    
-    const responseData = await response.json();
-    console.log('Apple Pay merchant validation successful:', responseData);
-    return responseData;
-  } catch (error) {
-    console.error('Error validating Apple Pay merchant:', error);
-    throw error;
-  }
-};
-
-/**
- * Process Google Pay payment
- * @param {Object} data - Payment data including paymentData, amount, currency, items, and email
- * @returns {Promise<Object>} - Payment processing result
- */
-export const processGooglePay = async (data) => {
-  try {
-    console.log('Processing Google Pay payment');
-    
-    if (!data || !data.paymentData) {
-      throw new Error('Missing payment data');
-    }
-    
-    // Enhance data with additional metadata for order processing
-    const enhancedData = { ...data };
-    
-    // Validate email
-    const email = data.email || '';
-    if (!email || !email.includes('@')) {
-      console.warn('Google Pay payment attempted without valid email', { emailProvided: !!email });
-    }
-    
-    // Try to get cart items from data or localStorage if not provided
-    if (!enhancedData.items || !enhancedData.items.length) {
-      try {
-        const storedItems = localStorage.getItem('cartItems');
-        if (storedItems) {
-          enhancedData.items = JSON.parse(storedItems);
-        }
-      } catch (err) {
-        console.error('Error retrieving cart from localStorage:', err);
-      }
-    }
-    
-    // Try to enhance metadata with user information
-    try {
-      // Ensure metadata object exists
-      enhancedData.metadata = enhancedData.metadata || {};
-      
-      const userId = localStorage.getItem('userId');
-      if (userId) {
-        enhancedData.metadata.userId = userId;
-        enhancedData.metadata.userEmail = email;
-      }
-      
-      // Store additional email in metadata to ensure it reaches the backend
-      if (email) {
-        enhancedData.metadata.email = email;
-      }
-    } catch (err) {
-      console.error('Error retrieving user data from localStorage:', err);
-    }
-    
-    // Generate a unique order ID for tracking
-    const generatedOrderId = 'ORD-' + Date.now().toString().substring(6) + 
-                             Math.random().toString(36).substring(2, 8).toUpperCase();
-    
-    enhancedData.metadata.orderId = generatedOrderId;
-    enhancedData.metadata.order_id = generatedOrderId;
-    enhancedData.metadata.payment_method = 'google_pay';
-    
-    // Create the orderDetails object
-    const orderDetails = {
-      amount: enhancedData.orderDetails?.amount || enhancedData.amount || enhancedData.cartTotal || 0,
-      currency: enhancedData.orderDetails?.currency || enhancedData.currency || 'USD',
-      items: enhancedData.orderDetails?.items || enhancedData.items || []
-    };
-    
-    // Convert items to JSON string if needed
-    if (enhancedData.items && Array.isArray(enhancedData.items)) {
-      enhancedData.metadata.items = JSON.stringify(enhancedData.items);
-    }
-    
-    console.log('Sending Google Pay request with data:', {
-      paymentData: 'REDACTED',
-      orderDetails,
-      email,
-      metadata: enhancedData.metadata
-    });
-    
-    const response = await fetch(`${API_URL}/api/payments/process-google-pay`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        paymentData: enhancedData.paymentData,
-        orderDetails,
-        email: email,
-        metadata: enhancedData.metadata
-      }),
-    });
-    
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-        console.error('Google Pay processing error response:', errorData);
-      } catch (parseError) {
-        const textError = await response.text();
-        console.error('Response text:', textError);
-        throw new Error(`Server returned ${response.status}: ${textError || 'No response body'}`);
-      }
-      throw new Error(errorData.error || `Failed to process Google Pay payment: ${response.status}`);
-    }
-    
-    const responseData = await response.json();
-    console.log('Google Pay payment processed successfully:', responseData);
-    return responseData;
-  } catch (error) {
-    console.error('Error processing Google Pay payment:', error);
-    throw error;
-  }
-};
-
-/**
- * Process Apple Pay payment
- * @param {Object} data - Payment data including payment object, amount, currency, items, and email
- * @returns {Promise<Object>} - Payment processing result
- */
-export const processApplePay = async (data) => {
-  try {
-    console.log('Processing Apple Pay payment');
-    
-    if (!data.payment || !data.payment.token) {
-      throw new Error('Missing payment token');
-    }
-    
-    // Enhance data with additional metadata for order processing
-    const enhancedData = { ...data };
-    
-    // Try to get cart items from data or localStorage if not provided
-    if (!enhancedData.items || enhancedData.items.length === 0) {
-      try {
-        const storedItems = localStorage.getItem('cartItems');
-        if (storedItems) {
-          enhancedData.items = JSON.parse(storedItems);
-        }
-      } catch (err) {
-        console.warn('Could not retrieve cart items from localStorage', err);
-      }
-    }
-    
-    // Try to get user info from localStorage
-    if (!enhancedData.metadata) enhancedData.metadata = {};
-    
-    try {
-      // Try to get user ID from localStorage
-      const userId = localStorage.getItem('userId');
-      if (userId) {
-        enhancedData.metadata.userId = userId;
-      }
-      
-      // Try to get user data from localStorage
-      const userData = localStorage.getItem('userData');
-      if (userData) {
-        const user = JSON.parse(userData);
-        if (!enhancedData.email && user.email) {
-          enhancedData.email = user.email;
-        }
-        if (!enhancedData.metadata.userId && (user.id || user.uid)) {
-          enhancedData.metadata.userId = user.id || user.uid;
-        }
-      }
-    } catch (err) {
-      console.warn('Could not retrieve user data from localStorage', err);
-    }
-    
-    // Generate a unique order ID for tracking
-    const generatedOrderId = 'ORD-' + Date.now().toString().substring(6) + 
-                             Math.random().toString(36).substring(2, 8).toUpperCase();
-    
-    enhancedData.metadata.orderId = generatedOrderId;
-    enhancedData.metadata.order_id = generatedOrderId;
-    enhancedData.metadata.payment_method = 'apple_pay';
-    
-    // Convert items to JSON string if needed
-    if (enhancedData.items && Array.isArray(enhancedData.items)) {
-      enhancedData.metadata.items = JSON.stringify(enhancedData.items);
-    }
-    
-    const response = await fetch(`${API_URL}/api/payments/process-apple-pay`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(enhancedData),
-    });
-    
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-        console.error('Apple Pay processing error response:', errorData);
-      } catch (parseError) {
-        const textError = await response.text();
-        console.error('Response text:', textError);
-        throw new Error(`Server returned ${response.status}: ${textError || 'No response body'}`);
-      }
-      throw new Error(errorData.error || `Failed to process Apple Pay payment: ${response.status}`);
-    }
-    
-    const responseData = await response.json();
-    console.log('Apple Pay payment processed successfully:', responseData);
-    return responseData;
-  } catch (error) {
-    console.error('Error processing Apple Pay payment:', error);
-    throw error;
   }
 };
 

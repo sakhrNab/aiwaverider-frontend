@@ -61,7 +61,7 @@ export const getAuthHeaders = async () => {
 export const getAgentById = async (agentId, options = {}) => {
   try {
     // Extract options with defaults
-    const { skipCache = true, includeReviews = true, timestamp = Date.now() } = options;
+    const { skipCache = true, includeReviews = false, timestamp = Date.now() } = options;
     
     // Build URL with query parameters to bust all caching layers
     let url = `/api/agents/${agentId}`;
@@ -136,47 +136,12 @@ export const deleteAgent = async (agentId) => {
 };
 
 // DEPRECATED: Reviews are now included in the agent data from fetchAgentById
-// This function is kept as a stub for backward compatibility
-export const getAgentReviews = async (agentId, options = {}) => {
-  console.log(`[API] DEPRECATED: getAgentReviews for agent ${agentId} - Reviews are already included in agent data`);
-  console.log('[API] To fix: Reviews should be accessed from the agent.reviews property directly');
-  
-  try {
-    // Set a localStorage item to prevent immediate refetches
-    localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
-    
-    // Return an empty array instead of making an API call
-    // The real reviews are already included in the agent data
-    return [];
-  } catch (error) {
-    console.error(`Error in getAgentReviews for agent ${agentId}:`, error);
-    return [];
-  }
-};
+// This function and related review mutation functions have been removed.
+// Access reviews via agent.reviews from agent payloads.
 
-// Add a review for an agent
-export const addAgentReview = async (agentId, reviewData) => {
-  try {
-    console.log(`[API] Adding review for agent ${agentId}:`, reviewData);
-    const response = await api.post(`/api/agents/${agentId}/reviews`, reviewData);
-    return response.data;
-  } catch (error) {
-    console.error(`Error adding review for agent ${agentId}:`, error);
-    throw error;
-  }
-};
+// Reviews are immutable via API. Read-only via embedded agent.reviews.
+// addAgentReview and deleteAgentReview have been removed.
 
-// Delete a review for an agent
-export const deleteAgentReview = async (agentId, reviewId) => {
-  try {
-    console.log(`[API] Deleting review ${reviewId} for agent ${agentId}`);
-    const response = await api.delete(`/api/agents/${agentId}/reviews/${reviewId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error deleting review ${reviewId} for agent ${agentId}:`, error);
-    throw error;
-  }
-};
 
 // Get agent categories
 export const getAgentCategories = async () => {
@@ -552,25 +517,6 @@ export const toggleWishlist = async (agentId) => {
 };
 
 /**
- * Check if a user can review an agent
- * @param {string} agentId - ID of the agent to check review eligibility for
- * @returns {Promise<Object>} - Response with eligibility status and reason
- */
-export const checkCanReviewAgent = async (agentId) => {
-  try {
-    console.log(`[API] Checking if user can review agent ${agentId}`);
-    const response = await api.get(`/api/agents/${agentId}/can-review`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error checking review eligibility for agent ${agentId}:`, error);
-    return {
-      canReview: false,
-      reason: error.message || 'Error checking eligibility'
-    };
-  }
-};
-
-/**
  * Get the total count of agents optionally filtered by category
  * @param {string} category - Optional category to filter by
  * @returns {Promise<number>} - Total count of agents
@@ -695,7 +641,7 @@ export const fetchAgentById = async (agentId, options = {}) => {
   try {
     const { 
       skipCache = false, 
-      includeReviews = true,
+      includeReviews = false,
       signal = null,
       timestamp = Date.now() 
     } = options;
@@ -803,20 +749,8 @@ export const fetchAgentById = async (agentId, options = {}) => {
             _cacheTime: Date.now()
           };
           
-          // If reviews array is empty and includeReviews is true, fetch reviews separately
-          if (includeReviews && (!responseData.reviews || (Array.isArray(responseData.reviews) && responseData.reviews.length === 0))) {
-            try {
-              console.log(`Agent data doesn't include reviews, fetching them separately for ${agentId}`);
-              const reviewsResponse = await api.get(`/api/agents/${agentId}/reviews`);
-              if (reviewsResponse.data && Array.isArray(reviewsResponse.data)) {
-                console.log(`Received ${reviewsResponse.data.length} reviews from separate API call`);
-                responseData.reviews = reviewsResponse.data;
-              }
-            } catch (reviewsError) {
-              console.warn(`Failed to fetch reviews separately: ${reviewsError.message}`);
-              // Keep the empty reviews array, don't fail the whole request
-            }
-          }
+                     // Reviews are expected to be embedded in agent data when requested.
+           // Never fetch reviews separately here to avoid unauthorized calls.
         } else if (response.data) {
           // Some APIs might return the data directly
           responseData = {
@@ -1026,3 +960,15 @@ export const recordAgentDownload = async (agentId) => {
   };
   
   // Add this helper function before the fetchAgents export
+
+// Secure: Add a review for an agent (server validates eligibility)
+export const addAgentReview = async (agentId, { content, rating }) => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await api.post(`/api/agents/${agentId}/reviews`, { content, rating }, { headers });
+    return response.data;
+  } catch (error) {
+    const message = error?.response?.data?.error || error.message || 'Failed to add review';
+    return { success: false, error: message };
+  }
+};

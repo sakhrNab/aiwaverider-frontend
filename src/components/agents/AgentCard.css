@@ -89,8 +89,8 @@
 
 /* Special handling for portrait (9:16) images */
 .marketplace-agent-image[data-aspect="portrait"] {
-  object-fit: contain;
-  background-color: #4a4de7; /* Same color as fallback images */
+  object-fit: cover; /* Always fill the container */
+  background-color: #4a4de7;
   padding: 0;
 }
 
@@ -329,6 +329,13 @@
   flex-wrap: wrap;
 }
 
+/* Prevent category badges from pushing layout out of bounds */
+.marketplace-agent-categories {
+  max-width: 100%;
+  flex-wrap: wrap;
+  overflow: hidden;
+}
+
 .marketplace-category-badge {
   display: inline-flex;
   align-items: center;
@@ -339,6 +346,11 @@
   font-weight: 600;
   color: white;
   text-decoration: none;
+  flex: 0 1 auto; /* allow shrinking */
+  min-width: 0;    /* allow ellipsis */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .marketplace-category-badge.small {
@@ -568,95 +580,30 @@
   }
 }
 
+/* Price container and variants (align with JSX class names) */
 .marketplace-agent-price {
-
-/* Download info styling - positioned on the right side of rating */
-.download-info {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #6a6f73;
-  font-size: 12px;
-}
-
-@media (max-width: 768px) {
-  .download-info {
-    font-size: 11px;
-    gap: 3px;
-  }
-}
-
-@media (max-width: 480px) {
-  .download-info {
-    font-size: 10px;
-    gap: 2px;
-  }
-}
-
-.download-icon {
-  color: #6a6f73;
-  font-size: 11px;
-}
-
-@media (max-width: 768px) {
-  .download-icon {
-    font-size: 10px;
-  }
-}
-
-@media (max-width: 480px) {
-  .download-icon {
-    font-size: 9px;
-  }
-}
-
-.agent-price {
->>>>>>> f9d32c5c0dbf7120b6d5ae81fdc2eb0727bfeee9
-  font-weight: 700;
-  font-size: 16px;
   margin-top: auto;
-  margin-bottom: 8px;
-  color: #1c1d1f;
 }
 
-/* Responsive price */
-@media (max-width: 768px) {
-  .marketplace-agent-price {
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .marketplace-agent-price {
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 375px) {
-  .marketplace-agent-price {
-    font-size: 13px;
-  }
-}
-
-.marketplace-free-price {
+.free-price {
   color: #10b981 !important;
   font-weight: 700;
 }
 
-.marketplace-price-display {
+.price-display {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.marketplace-original-price {
+.original-price {
   text-decoration: line-through;
   color: #9ca3af;
   font-size: 12px;
   font-weight: 400;
 }
 
-.marketplace-discounted-price {
+.discounted-price {
   color: #ef4444;
   font-weight: 700;
 }
@@ -827,4 +774,32 @@
   .marketplace-deliverables-count {
     margin-bottom: 6px;
   }
+}
+
+/* Fix broken styles due to merge markers by redefining price typography */
+.marketplace-agent-price, .agent-price {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #1c1d1f;
+}
+
+@media (max-width: 768px) {
+  .marketplace-agent-price, .agent-price { font-size: 15px; }
+}
+
+@media (max-width: 480px) {
+  .marketplace-agent-price, .agent-price { font-size: 14px; }
+}
+
+@media (max-width: 375px) {
+  .marketplace-agent-price, .agent-price { font-size: 13px; }
+}
+
+/* Responsive: make the link wrapper layout-neutral on small devices */
+@media (max-width: 834px) {
+  .marketplace-agent-card-link { display: contents !important; }
+}
+@media (max-width: 480px) {
+  .marketplace-agent-card-link { display: contents !important; }
 }
