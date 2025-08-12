@@ -57,44 +57,6 @@ export const checkApiHealth = async () => {
 };
 
 /**
- * Check Stripe availability
- * @returns {Promise<Object>} Health check result
- */
-export const checkStripeHealth = async () => {
-  if (!PAYMENT.STRIPE.PUBLIC_KEY) {
-    return {
-      name: 'Stripe',
-      status: STATUS.UNKNOWN,
-      message: 'Stripe not configured',
-      timestamp: new Date().toISOString()
-    };
-  }
-  
-  try {
-    // Call Stripe health check endpoint
-    const response = await apiClient.get(`${API.URL}/api/payments/providers/stripe/health`, {
-      timeout: 5000,
-      retries: 1,
-      tags: ['health-check', 'payment', 'stripe']
-    });
-    
-    return {
-      name: 'Stripe',
-      status: response.status === 'up' ? STATUS.OK : STATUS.WARNING,
-      message: response.message || 'Stripe health check completed',
-      timestamp: new Date().toISOString()
-    };
-  } catch (error) {
-    return {
-      name: 'Stripe',
-      status: STATUS.ERROR,
-      message: error.message || 'Stripe health check failed',
-      timestamp: new Date().toISOString()
-    };
-  }
-};
-
-/**
  * Check PayPal availability
  * @returns {Promise<Object>} Health check result
  */
