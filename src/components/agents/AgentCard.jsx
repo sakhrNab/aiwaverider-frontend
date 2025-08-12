@@ -446,7 +446,7 @@ const AgentCard = memo(({ agent }) => {
               // effect="blur"
               placeholderSrc={imageUrl}
               width="100%"
-              height={200}
+              sizes="(max-width: 480px) 100vw, (max-width: 834px) 50vw, 33vw"
               visibleByDefault={true}
             />
             <div className="marketplace-agent-card-actions">

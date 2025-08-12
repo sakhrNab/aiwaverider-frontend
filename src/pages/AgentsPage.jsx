@@ -353,6 +353,19 @@ const Agents = () => {
     }
   };
 
+  // Derive categories from loaded agents to avoid extra API calls
+  const categoriesFromAgents = React.useMemo(() => {
+    const set = new Set(['All']);
+    (agents || []).forEach(agent => {
+      if (Array.isArray(agent.categories)) {
+        agent.categories.forEach(cat => { if (cat && typeof cat === 'string') set.add(cat); });
+      } else if (typeof agent.category === 'string' && agent.category.trim()) {
+        set.add(agent.category.trim());
+      }
+    });
+    return Array.from(set);
+  }, [agents]);
+
   // Render the agent grid with appropriate filtering
   const renderAgentGrid = () => {
     const isMockData = agents.some(agent => 
@@ -603,6 +616,7 @@ const Agents = () => {
                 <CategoryNav 
                   selectedCategory={selectedCategory} 
                   onCategoryChange={handleCategoryChange} 
+                  categories={categoriesFromAgents}
                 />
               </div>
 

@@ -18,9 +18,8 @@ import useAgentStore from './store/agentStore';
 // PayPal initial options from config
 const paypalOptions = {
   "client-id": PAYMENT.PAYPAL.CLIENT_ID || "test",
-  currency: PAYMENT.PAYPAL.CURRENCY || "USD",
+  currency: PAYMENT.PAYMENT?.ALLOWED_CURRENCIES?.includes(PAYMENT.PAYPAL.CURRENCY) ? PAYMENT.PAYPAL.CURRENCY : 'USD',
   intent: PAYMENT.PAYPAL.INTENT || "capture",
-  "disable-funding": "paylater,venmo,credit",
 };
 
 // Module-scoped flag to track if global, one-time initialization has occurred.
