@@ -2299,7 +2299,6 @@ const AgentDetail = () => {
     return (
       <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
         <div className="loading-container fade-in">
-          {/* <AgentHeader /> */}
           <div className="loading-spinner"></div>
           <h3>Loading Amazing Agent...</h3>
           <p>Preparing something special for you ✨</p>
@@ -2312,7 +2311,6 @@ const AgentDetail = () => {
   if (error || !agent) {
     return (
       <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
-        {/* <AgentHeader /> */}
         <div className="error-container fade-in">
           <h2>Oops! Agent Not Found</h2>
           <p>{error || 'We couldn\'t find the agent you\'re looking for. It might have been moved or doesn\'t exist.'}</p>
@@ -2332,7 +2330,7 @@ const AgentDetail = () => {
 
   return (
     <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
-      {/* <AgentHeader /> */}
+    
       <div className="agent-detail-breadcrumb">
         <Link to="/">Home</Link> / <Link to="/agents">Agents</Link> / <span>{agent.title}</span>
       </div>
