@@ -141,7 +141,6 @@ export const runAllHealthChecks = async () => {
   
   const checks = await Promise.all([
     checkApiHealth(),
-    checkStripeHealth(),
     checkPayPalHealth(),
     checkSepaHealth()
   ]);
@@ -216,7 +215,6 @@ export const scheduleHealthChecks = (interval = 300000) => { // Default: 5 minut
 
 export default {
   checkApiHealth,
-  checkStripeHealth,
   checkPayPalHealth,
   checkSepaHealth,
   runAllHealthChecks,
