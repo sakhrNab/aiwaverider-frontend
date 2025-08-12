@@ -589,7 +589,7 @@ const EmptyReviewsState = ({ user, darkMode }) => {
 };
 
 // Enhanced Comment Section Component
-const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipExternalFetch = false, onReviewAdded = () => {} }) => {
+const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipExternalFetch = false, onReviewAdded = () => {}, onReviewDeleted = () => {} }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [rating, setRating] = useState(5);
@@ -766,18 +766,32 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
       try {
         const resp = await deleteAgentReview(agentId, reviewId);
         if (!resp?.success) {
-          const msg = resp?.error || 'Failed to delete review';
-          toast.error(msg, { position: 'bottom-right' });
+          const status = resp?.status ?? 0;
+          if (status === 404) {
+            toast.info('Review not found. It might have been deleted already.', { position: 'bottom-right' });
+            // Optimistically remove from UI anyway
+            setComments(prev => prev.filter(c => c.id !== reviewId && c._id !== reviewId));
+            removeReviewFromStore(agentId, reviewId);
+          } else if (status === 400) {
+            toast.error('Bad request while deleting review.', { position: 'bottom-right' });
+          } else if (status === 401) {
+            toast.error('You must be signed in to delete reviews.', { position: 'bottom-right' });
+          } else if (status === 403) {
+            toast.error('You are not allowed to delete this review.', { position: 'bottom-right' });
+          } else {
+            toast.error(resp?.error || 'Failed to delete review', { position: 'bottom-right' });
+          }
           setIsDeleting(false);
           return;
         }
         setComments(prev => prev.filter(c => c.id !== reviewId && c._id !== reviewId));
         removeReviewFromStore(agentId, reviewId);
+        onReviewDeleted(reviewId, resp.reviewCount, resp.averageRating);
         if (onReviewsLoaded) onReviewsLoaded(resp.reviewCount ?? Math.max(0, comments.length - 1));
         toast.success('Review deleted', { position: 'bottom-right' });
       } catch (err) {
         console.error('Error deleting comment:', err);
-        toast.error('An error occurred while deleting the review', { position: 'bottom-right' });
+        toast.error('An unexpected error occurred while deleting the review', { position: 'bottom-right' });
       } finally {
         setIsDeleting(false);
       }
@@ -2646,6 +2660,23 @@ const AgentDetail = () => {
                     rating: {
                       ...(prev?.rating || {}),
                       average: typeof newAvg === 'number' ? newAvg : (merged.reduce((a, r) => a + (Number(r.rating) || 0), 0) / merged.length)
+                    }
+                  };
+                });
+              }}
+              onReviewDeleted={(deletedId, newCount, newAvg) => {
+                setAgent(prev => {
+                  const prevReviews = Array.isArray(prev?.reviews) ? prev.reviews : [];
+                  const filtered = prevReviews.filter(r => r.id !== deletedId && r._id !== deletedId);
+                  const count = typeof newCount === 'number' ? newCount : filtered.length;
+                  const avg = typeof newAvg === 'number' ? newAvg : (count > 0 ? (filtered.reduce((a, r) => a + (Number(r.rating) || 0), 0) / count) : 0);
+                  return {
+                    ...prev,
+                    reviews: filtered,
+                    reviewCount: count,
+                    rating: {
+                      ...(prev?.rating || {}),
+                      average: avg
                     }
                   };
                 });
