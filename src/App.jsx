@@ -16,10 +16,18 @@ import { PAYMENT } from './config/config';
 import useAgentStore from './store/agentStore';
 
 // PayPal initial options from config
+const resolvedClientId = (() => {
+  const env = PAYMENT.PAYPAL.ENV;
+  if (env === 'live' && PAYMENT.PAYPAL.CLIENT_ID_LIVE) return PAYMENT.PAYPAL.CLIENT_ID_LIVE;
+  if (env === 'sandbox' && PAYMENT.PAYPAL.CLIENT_ID_SANDBOX) return PAYMENT.PAYPAL.CLIENT_ID_SANDBOX;
+  return PAYMENT.PAYPAL.CLIENT_ID || 'test';
+})();
+
 const paypalOptions = {
-  "client-id": PAYMENT.PAYPAL.CLIENT_ID || "test",
-  currency: PAYMENT.PAYMENT?.ALLOWED_CURRENCIES?.includes(PAYMENT.PAYPAL.CURRENCY) ? PAYMENT.PAYPAL.CURRENCY : 'USD',
+  "client-id": resolvedClientId,
+  currency: PAYMENT.ALLOWED_CURRENCIES?.includes(PAYMENT.PAYPAL.CURRENCY) ? PAYMENT.PAYPAL.CURRENCY : 'USD',
   intent: PAYMENT.PAYPAL.INTENT || "capture",
+  components: 'buttons',
 };
 
 // Module-scoped flag to track if global, one-time initialization has occurred.
