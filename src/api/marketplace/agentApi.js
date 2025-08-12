@@ -633,6 +633,7 @@ const AGENT_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache duration
  * @param {object} options - Additional options
  * @param {boolean} options.skipCache - Skip cache and force fetch from API
  * @param {boolean} options.includeReviews - Whether to include reviews in the response
+ * @param {boolean} options.includeUser - Whether to include user like status in the response
  * @param {AbortSignal} options.signal - AbortController signal for cancellation
  * @param {number} options.timestamp - Timestamp for cache busting
  * @returns {Promise<Object>} - Agent data
@@ -642,6 +643,7 @@ export const fetchAgentById = async (agentId, options = {}) => {
     const { 
       skipCache = false, 
       includeReviews = false,
+      includeUser = false,
       signal = null,
       timestamp = Date.now() 
     } = options;
@@ -655,7 +657,7 @@ export const fetchAgentById = async (agentId, options = {}) => {
     }
     
     // Create a cache key that includes any relevant options
-    const cacheKey = `agent_${agentId}_${includeReviews ? 'with_reviews' : 'no_reviews'}`;
+    const cacheKey = `agent:${agentId}:${includeReviews ? 'with_reviews' : 'no_reviews'}`;
     
     // Check for a pending request for this exact agent
     // This prevents duplicate requests when components mount simultaneously
@@ -682,7 +684,7 @@ export const fetchAgentById = async (agentId, options = {}) => {
           // Use cache if it's less than the cache duration old
           if (now - cacheTime < AGENT_CACHE_DURATION) {
             console.log(`Using cached data for agent ${agentId}`);
-            return parsedData;
+            return { ...parsedData, fromCache: true };
           } else {
             console.log(`Cache expired for agent ${agentId}, fetching fresh data`);
           }
@@ -722,6 +724,11 @@ export const fetchAgentById = async (agentId, options = {}) => {
     
     // Add timestamp for cache busting
     queryParams.append('_t', timestamp);
+
+    // Add includeUser param if specified
+    if (includeUser) {
+      queryParams.append('includeUser', 'true');
+    }
     
     // Complete endpoint with query params
     endpoint = `${endpoint}?${queryParams.toString()}`;
@@ -978,9 +985,10 @@ export const deleteAgentReview = async (agentId, reviewId) => {
   try {
     const headers = await getAuthHeaders();
     const response = await api.delete(`/api/agents/${agentId}/reviews/${reviewId}`, { headers });
-    return response.data;
+    return { ...response.data, status: response.status };
   } catch (error) {
+    const status = error?.response?.status ?? 0;
     const message = error?.response?.data?.error || error.message || 'Failed to delete review';
-    return { success: false, error: message };
+    return { success: false, error: message, status };
   }
 };
