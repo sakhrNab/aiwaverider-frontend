@@ -6,7 +6,7 @@ import { api } from '../core/apiConfig';
 export const initializeCheckout = async (agentId, planId) => {
   try {
     console.log(`[API] Initializing checkout for agent ${agentId} with plan ${planId}`);
-    const response = await api.post('/api/checkout/create-session', {
+    const response = await api.post('/api/payments/create-session', {
       agentId,
       planId
     });
@@ -20,7 +20,7 @@ export const initializeCheckout = async (agentId, planId) => {
 // Get customer's payment methods
 export const getPaymentMethods = async () => {
   try {
-    const response = await api.get('/api/checkout/payment-methods');
+    const response = await api.get('/api/payments/payment-methods');
     return response.data;
   } catch (error) {
     console.error('Error fetching payment methods:', error);

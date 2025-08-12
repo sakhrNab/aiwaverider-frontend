@@ -41,6 +41,12 @@ export const AUTH = {
 // Payment Configuration
 export const PAYMENT = {
   PAYPAL: {
+    // Explicit runtime environment selection for PayPal SDK
+    ENV: (import.meta.env.VITE_PAYPAL_ENV || (ENV.PROD ? 'live' : 'sandbox')).toLowerCase(),
+    // Optional separate client IDs for live and sandbox, with fallback to a generic client ID
+    CLIENT_ID_LIVE: import.meta.env.VITE_PAYPAL_CLIENT_ID_LIVE,
+    CLIENT_ID_SANDBOX: import.meta.env.VITE_PAYPAL_CLIENT_ID_SANDBOX,
+    // Backward compatible single client id (if provided)
     CLIENT_ID: import.meta.env.VITE_PAYPAL_CLIENT_ID,
     CURRENCY: 'USD',
     INTENT: 'capture'
