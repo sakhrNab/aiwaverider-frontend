@@ -972,3 +972,15 @@ export const addAgentReview = async (agentId, { content, rating }) => {
     return { success: false, error: message };
   }
 };
+
+// Secure: Delete a review for an agent (admin or owner)
+export const deleteAgentReview = async (agentId, reviewId) => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await api.delete(`/api/agents/${agentId}/reviews/${reviewId}`, { headers });
+    return response.data;
+  } catch (error) {
+    const message = error?.response?.data?.error || error.message || 'Failed to delete review';
+    return { success: false, error: message };
+  }
+};

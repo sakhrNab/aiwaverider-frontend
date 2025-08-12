@@ -7,7 +7,8 @@ import {
   downloadFreeAgent,
   fetchAgentById,
   getUserLikeStatus,
-  addAgentReview
+  addAgentReview,
+  deleteAgentReview
 } from '../api/marketplace/agentApi.js';
 import { useCart } from '../contexts/CartContext.jsx';
 import { AuthContext } from '../contexts/AuthContext.jsx';
@@ -763,11 +764,20 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
     if (window.confirm('Are you sure you want to delete this review?')) {
       setIsDeleting(true);
       try {
-        setComments(prev => prev.filter(c => c.id !== reviewId));
+        const resp = await deleteAgentReview(agentId, reviewId);
+        if (!resp?.success) {
+          const msg = resp?.error || 'Failed to delete review';
+          toast.error(msg, { position: 'bottom-right' });
+          setIsDeleting(false);
+          return;
+        }
+        setComments(prev => prev.filter(c => c.id !== reviewId && c._id !== reviewId));
         removeReviewFromStore(agentId, reviewId);
-        if (onReviewsLoaded) onReviewsLoaded(Math.max(0, comments.length - 1));
-            } catch (err) {
+        if (onReviewsLoaded) onReviewsLoaded(resp.reviewCount ?? Math.max(0, comments.length - 1));
+        toast.success('Review deleted', { position: 'bottom-right' });
+      } catch (err) {
         console.error('Error deleting comment:', err);
+        toast.error('An error occurred while deleting the review', { position: 'bottom-right' });
       } finally {
         setIsDeleting(false);
       }
