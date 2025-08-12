@@ -2996,5 +2996,5 @@
 /* Safety: prevent any accidental horizontal bleed from the grid */
 .agents-container .marketplace-agents-grid {
   overflow-x: clip;
-}
+} 
 

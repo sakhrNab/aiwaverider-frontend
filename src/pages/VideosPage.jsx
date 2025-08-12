@@ -110,7 +110,17 @@ const VideosPage = () => {
 
   // Check if user is admin
   const [userIsAdmin, setUserIsAdmin] = useState(false);
-  
+
+  // Auto-detect platform from URL
+  const detectPlatformFromUrl = (url) => {
+    if (!url) return null;
+    const u = url.toLowerCase();
+    if (u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+    if (u.includes('tiktok.com')) return 'tiktok';
+    if (u.includes('instagram.com')) return 'instagram';
+    return null;
+  };
+
   // Keyboard shortcut for search focus (Ctrl+K or Cmd+K)
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -276,13 +286,19 @@ const VideosPage = () => {
     setShowEditModal(true);
   };
 
-  // Handle form input changes
+  // Handle form input changes (with auto-detect for URL)
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setEditFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setEditFormData(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === 'originalUrl') {
+        const detected = detectPlatformFromUrl(value);
+        if (detected) {
+          next.platform = detected;
+        }
+      }
+      return next;
+    });
   };
 
   // Handle form submission

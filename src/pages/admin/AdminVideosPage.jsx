@@ -99,6 +99,18 @@ const AdminVideosPage = () => {
     }
   };
 
+  // Handle delete video
+  const handleDeleteVideo = async (videoId) => {
+    try {
+      await VideosService.deleteVideo(videoId);
+      toast.success('Video deleted');
+      fetchAllVideos();
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      toast.error(error.message || 'Failed to delete video');
+    }
+  };
+
   useEffect(() => {
     fetchAllVideos();
   }, []);
@@ -115,7 +127,7 @@ const AdminVideosPage = () => {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
-  };
+    };
 
   const formatNumber = (num) => {
     if (!num) return '0';
@@ -203,6 +215,13 @@ const AdminVideosPage = () => {
                           title="Refresh Stats"
                         >
                           Refresh
+                        </button>
+                        <button
+                          className="delete-btn"
+                          onClick={() => handleDeleteVideo(video.id)}
+                          title="Delete Video"
+                        >
+                          Delete
                         </button>
                       </div>
                     </td>
