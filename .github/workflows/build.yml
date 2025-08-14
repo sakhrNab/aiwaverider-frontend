@@ -50,6 +50,7 @@ jobs:
           echo "VITE_PAYPAL_CLIENT_ID_LIVE=${{ secrets.VITE_PAYPAL_CLIENT_ID_LIVE }}" >> .env.production
           echo "VITE_PAYPAL_CLIENT_ID_SANDBOX=${{ secrets.VITE_PAYPAL_CLIENT_ID_SANDBOX }}" >> .env.production
           echo "VITE_PAYPAL_ENV=${{ secrets.VITE_PAYPAL_ENV }}" >> .env.production
+          echo "VITE_PAYPAL_SUBS_PLAN_ID=${{ secrets.VITE_PAYPAL_SUBS_PLAN_ID }}" >> .env.production
           echo "VITE_GOOGLE_PAY_ENVIRONMENT=${{ secrets.VITE_GOOGLE_PAY_ENVIRONMENT }}" >> .env.production
           echo "VITE_GOOGLE_PAY_GATEWAY=${{ secrets.VITE_GOOGLE_PAY_GATEWAY }}" >> .env.production
           echo "VITE_MERCHANT_NAME=${{ secrets.VITE_MERCHANT_NAME }}" >> .env.production
