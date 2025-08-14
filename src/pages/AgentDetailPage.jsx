@@ -1,37 +1,83 @@
 import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaComment, FaShare, FaCheckCircle, FaShoppingCart, FaTrash } from 'react-icons/fa';
+import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaComment, FaShare, FaCheckCircle, FaShoppingCart, FaTrash, FaFileAlt, FaFileCode, FaTag, FaFilePdf, FaFileWord, FaFileExcel, FaFileArchive, FaFileImage, FaRocket, FaBolt, FaGem, FaLightbulb, FaShieldAlt, FaTrophy } from 'react-icons/fa';
 import { 
   toggleWishlist, 
   toggleAgentLike,
-  getAgentReviews,
-  addAgentReview,
-  deleteAgentReview,
-  checkCanReviewAgent,
   downloadFreeAgent,
-  incrementAgentDownloadCount,
-  recordAgentDownload,
   fetchAgentById,
-  getUserLikeStatus
-
+  getUserLikeStatus,
+  addAgentReview,
+  deleteAgentReview
 } from '../api/marketplace/agentApi.js';
 import { useCart } from '../contexts/CartContext.jsx';
 import { AuthContext } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
-import { trackProductView } from '../services/recommendationService.js';
 import { formatPrice } from '../utils/priceUtils.js';
 import useAgentStore from '../store/agentStore.js';
 import DOMPurify from 'dompurify';
 import { toast } from 'react-toastify';
 import './AgentDetailPage.css';
-// Add debug logger
-const debug = (message, data) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[AgentDetail] ${message}`, data);
-  }
+import n8nWorkflowImg from '../assets/n8nworkflow.png';
+
+// Helper function to format file size
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-// Star Rating Component
+// Helper function to get file icon
+const getFileIcon = (fileName, contentType) => {
+  if (fileName.endsWith('.json') || contentType === 'application/json') {
+    return <FaFileCode className="file-icon json" title="JSON File" />;
+  }
+  if (fileName.endsWith('.txt') || contentType === 'text/plain') {
+    return <FaFileAlt className="file-icon txt" title="Text File" />;
+  }
+  if (fileName.endsWith('.pdf') || contentType === 'application/pdf') {
+    return <FaFilePdf className="file-icon pdf" title="PDF File" />;
+  }
+  if (fileName.endsWith('.doc') || fileName.endsWith('.docx') || contentType?.includes('word')) {
+    return <FaFileWord className="file-icon doc" title="Word Document" />;
+  }
+  if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx') || contentType?.includes('excel')) {
+    return <FaFileExcel className="file-icon xls" title="Excel File" />;
+  }
+  if (fileName.endsWith('.zip') || fileName.endsWith('.rar') || contentType?.includes('zip')) {
+    return <FaFileArchive className="file-icon zip" title="Archive File" />;
+  }
+  if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || contentType?.includes('image')) {
+    return <FaFileImage className="file-icon image" title="Image File" />;
+  }
+  return <FaFileAlt className="file-icon default" title="File" />;
+};
+
+// Helper function to get category colors
+const getCategoryColor = (category) => {
+  const colors = {
+    'Productivity': '#10B981',
+    'Business': '#3B82F6', 
+    'Marketing': '#F59E0B',
+    'Analytics': '#8B5CF6',
+    'Communication': '#06B6D4',
+    'Content': '#EF4444',
+    'E-commerce': '#F97316',
+    'Social': '#EC4899',
+    'Development': '#6366F1',
+    'Design': '#84CC16',
+    'Automation': '#059669',
+    'AI/ML': '#7C3AED',
+    'Finance': '#DC2626',
+    'Healthcare': '#0891B2',
+    'Education': '#CA8A04'
+  };
+  return colors[category] || '#6B7280';
+};
+
+// Enhanced Star Rating Component
 const StarRating = ({ rating, onRatingChange, size = "large", interactive = false }) => {
   const ratingValue = Number(rating) || 0;
   const sizeClass = size === "small" ? "star-small" : "star-large";
@@ -49,11 +95,12 @@ const StarRating = ({ rating, onRatingChange, size = "large", interactive = fals
           key={star} 
           onClick={() => handleStarClick(star)}
           className={interactive ? 'star-clickable' : ''}
+          style={{ cursor: interactive ? 'pointer' : 'default' }}
         >
           {star <= ratingValue ? (
-            <FaStar className={`star-filled ${sizeClass}`} />
+            <FaStar className={`star-filled ${sizeClass}-filled`} />
           ) : (
-            <FaRegStar className={`star-empty ${sizeClass}`} />
+            <FaRegStar className={`star-empty ${sizeClass}-empty`} />
           )}
         </span>
       ))}
@@ -61,7 +108,7 @@ const StarRating = ({ rating, onRatingChange, size = "large", interactive = fals
   );
 };
 
-// Like Button Component
+// Enhanced Like Button Component
 const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
   const { user } = useContext(AuthContext);
   const { darkMode } = useTheme();
@@ -71,7 +118,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
   const [initialStateLoaded, setInitialStateLoaded] = useState(false);
   const checkIntervalRef = useRef(null);
 
-  // Replace the Firebase onSnapshot listeners with direct document fetches
+  // Enhanced initialization with better error handling
   useEffect(() => {
     // Initialize like count properly - handle array or number
     if (Array.isArray(initialLikes)) {
@@ -80,7 +127,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
       setLikeCount(initialLikes);
     }
     
-    // Check if the current user has liked this agent - only once, not with a listener
+    // Check if the current user has liked this agent
     if (user && agentId) {
       console.log(`Checking if user has liked agent. User ID: ${user.uid}, Agent ID: ${agentId}`);
       
@@ -93,7 +140,6 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
           }
           
           // Check if we already have the like status in the initialLikes data
-          // If initialLikes is an array, we can check if the user's ID is in it
           if (Array.isArray(initialLikes)) {
             const userLiked = initialLikes.includes(user.uid) || 
                             initialLikes.some(like => 
@@ -106,7 +152,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
             return;
           }
           
-          // Check if we have a cached like status
+          // Check cached like status
           try {
             const cachedStatus = localStorage.getItem(`like_status_${agentId}`);
             if (cachedStatus) {
@@ -114,7 +160,6 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
               const cacheTime = parsedStatus._cacheTime || 0;
               const now = Date.now();
               
-              // Use cache if it's less than 5 minutes old
               if (now - cacheTime < 5 * 60 * 1000) {
                 console.log(`Using cached like status for agent ${agentId}`);
                 setLiked(parsedStatus.liked || false);
@@ -129,19 +174,18 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
             console.warn('Error reading from like status cache:', cacheError);
           }
 
-          // If we don't have cached data, fetch from API
+          // Fetch from API if no valid cache
           console.log('No valid cached like data, fetching from API');
           const likeStatus = await getUserLikeStatus(agentId);
           const isLiked = likeStatus.liked || false;
           console.log(`API check: User has liked agent: ${isLiked}`);
           setLiked(isLiked);
           
-          // Update like count if available
           if (likeStatus.likesCount !== undefined) {
             setLikeCount(likeStatus.likesCount);
           }
           
-          // Cache the like status with timestamp
+          // Cache the result
           try {
             localStorage.setItem(`like_status_${agentId}`, JSON.stringify({
               ...likeStatus,
@@ -152,7 +196,6 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
           }
         } catch (error) {
           console.error("Error checking like status:", error);
-          // Fallback to not liked state on error
           setLiked(false);
         }
         
@@ -166,7 +209,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
     }
   }, [user, agentId]);
 
-  // Toast configuration for consistent, appealing notifications
+  // Enhanced toast notifications
   const showToast = (type, message, options = {}) => {
     const defaultOptions = {
       position: "bottom-right",
@@ -199,18 +242,16 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
     }
   };
   
-  // Custom confirm toast with action buttons
+  // Enhanced confirm toast with better UX
   const showConfirmToast = () => {
-    // Clear any existing toasts to prevent stacking
     toast.dismiss();
     console.log("Showing unlike confirmation dialog");
     
-    // Create a custom toast with action buttons
     toast(
       ({ closeToast }) => (
         <div className="confirm-toast-container">
           <div className="confirm-toast-message">
-            <span role="img" aria-label="question">❓</span> Remove your like from this agent?
+            <span role="img" aria-label="question">💖</span> Remove your like from this amazing agent?
           </div>
           <div className="confirm-toast-actions">
             <button 
@@ -230,7 +271,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
               }}
               className="confirm-toast-button cancel"
             >
-              Cancel
+              Keep it ❤️
             </button>
           </div>
         </div>
@@ -242,12 +283,12 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
         draggable: true,
         closeButton: true,
         className: 'confirm-unlike-toast',
-        toastId: 'unlike-confirmation' // Ensure unique ID
+        toastId: 'unlike-confirmation'
       }
     );
   };
   
-  // Process like/unlike by letting the server determine the action
+  // Enhanced like toggle processing
   const processLikeToggle = async () => {
     if (isLoading) return;
     
@@ -259,13 +300,10 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
       console.log('Server response:', response);
       
       if (response.success) {
-        // Use the server's response to determine the new state
         const didLike = response.liked;
         
-        // Set liked state based on the server response
         setLiked(didLike);
         
-        // If the API returns the updated like count, use it
         if (response.likesCount !== undefined) {
           setLikeCount(response.likesCount);
           if (onLikeUpdate) {
@@ -273,10 +311,9 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
           }
         }
         
-        // Show appropriate notification based on server response
-        // Use toast directly to ensure notification is shown
+        // Enhanced success notifications
         if (didLike) {
-          toast.success('❤️ Added your like!', {
+          toast.success('💖 Awesome! You liked this agent!', {
             position: "bottom-right",
             autoClose: 2000,
             hideProgressBar: false,
@@ -284,8 +321,8 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
             pauseOnHover: true,
             draggable: true,
             progress: undefined,
-            icon: "❤️",
-            toastId: 'like-added' // Ensure uniqueness
+            icon: "💖",
+            toastId: 'like-added'
           });
         } else {
           toast.success('💔 Removed your like', {
@@ -296,8 +333,8 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
             pauseOnHover: true,
             draggable: true,
             progress: undefined,
-            icon: "💔",
-            toastId: 'like-removed' // Ensure uniqueness
+            icon: "💙",
+            toastId: 'like-removed'
           });
         }
       } else {
@@ -310,7 +347,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
           draggable: true,
           progress: undefined,
           icon: "❌",
-          toastId: 'like-error' // Ensure uniqueness
+          toastId: 'like-error'
         });
       }
     } catch (err) {
@@ -324,7 +361,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
         draggable: true,
         progress: undefined,
         icon: "❌",
-        toastId: 'like-error' // Ensure uniqueness
+        toastId: 'like-error'
       });
     } finally {
       setIsLoading(false);
@@ -341,7 +378,6 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
     
     if (isLoading || !initialStateLoaded) return;
     
-    // If user has already liked and is trying to like again, show confirm toast
     if (liked) {
       console.log("Agent is liked, showing confirmation dialog");
       showConfirmToast();
@@ -350,22 +386,210 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
       console.log("Agent is not liked, directly toggling like");
     }
     
-    // Otherwise proceed with toggling the like
     processLikeToggle();
   };
   
   return (
     <button 
-      className={`like-button ${liked ? 'liked' : ''} ${isLoading ? 'loading' : ''}`}
+      className={`like-button ${liked ? 'liked' : ''} ${isLoading ? 'loading' : ''} ${darkMode ? 'dark-mode' : ''}`}
       onClick={handleLikeToggle}
       disabled={isLoading || !initialStateLoaded}
+      title={liked ? "Remove like" : "Like this agent"}
     >
       {liked ? <FaHeart className="heart-icon" /> : <FaRegHeart className="heart-icon" />}
       <span className="like-count">{likeCount}</span>
     </button>
   );
 };
-const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipExternalFetch = false }) => {
+
+// Enhanced Category Badge Component
+const CategoryBadge = ({ category, onClick }) => {
+  return (
+    <button 
+      className="category-badge"
+      style={{ backgroundColor: getCategoryColor(category) }}
+      onClick={() => onClick && onClick(category)}
+      title={`Explore all ${category} agents`}
+    >
+      <FaTag className="category-icon" />
+      {category}
+    </button>
+  );
+};
+
+// Enhanced Business Value Section Component
+const BusinessValueSection = ({ businessValue, darkMode }) => {
+  if (!businessValue) {
+    // Default business value for professional presentation
+    return (
+      <div className={`business-value-section ${darkMode ? 'dark-mode' : ''} fade-in`}>
+        <div className="business-value-header">
+          <FaRocket className="value-icon" />
+          <h3>Why Choose This Professional Solution?</h3>
+        </div>
+        <div className="business-value-content">
+          <p>This carefully crafted agent represents hours of expert development and testing. You're investing in a proven solution that delivers immediate value, saves precious time, and provides the competitive edge your business needs to succeed in today's fast-paced digital landscape.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`business-value-section ${darkMode ? 'dark-mode' : ''} fade-in`}>
+      <div className="business-value-header">
+        <FaBolt className="value-icon" />
+        <h3>Why This Agent is Perfect for You</h3>
+      </div>
+      <div className="business-value-content">
+        <p>{businessValue.replace(/"/g, '')}</p>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Deliverables Section Component
+const DeliverablesSection = ({ deliverables, darkMode, isFreeAgent }) => {
+  if (!deliverables || !Array.isArray(deliverables) || deliverables.length === 0) {
+    // Default deliverables for professional presentation
+    return (
+      <div className={`deliverables-section ${darkMode ? 'dark-mode' : ''} slide-in-right`}>
+        <div className="deliverables-header">
+          <FaGem className="deliverables-icon" />
+          <h3>What You'll Receive</h3>
+        </div>
+        <div className="deliverables-list">
+          <div className="deliverable-item">
+            <div className="deliverable-info">
+              <div className="deliverable-icon-name">
+                <FaFileCode className="file-icon json" />
+                <div className="deliverable-details">
+                  <h4 className="deliverable-filename">Complete Agent Configuration</h4>
+                  <p className="deliverable-description">Fully configured and ready-to-use agent with optimized settings</p>
+                  <span className="deliverable-size">Professional Setup</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="deliverable-item">
+            <div className="deliverable-info">
+              <div className="deliverable-icon-name">
+                <FaFileAlt className="file-icon txt" />
+                <div className="deliverable-details">
+                  <h4 className="deliverable-filename">Implementation Guide</h4>
+                  <p className="deliverable-description">Step-by-step instructions for seamless integration</p>
+                  <span className="deliverable-size">Quick Start</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {!isFreeAgent && (
+          <div className="delivery-info">
+            <p className="delivery-note">
+              📧 All files will be delivered instantly to your email after purchase
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`deliverables-section ${darkMode ? 'dark-mode' : ''} slide-in-right`}>
+      <div className="deliverables-header">
+        <FaDownload className="deliverables-icon" />
+        <h3>What You Get</h3>
+      </div>
+      <div className="deliverables-list">
+        {deliverables.map((deliverable, index) => (
+          <div key={index} className="deliverable-item">
+            <div className="deliverable-info">
+              <div className="deliverable-icon-name">
+                {getFileIcon(deliverable.fileName, deliverable.contentType)}
+                <div className="deliverable-details">
+                  <h4 className="deliverable-filename">{deliverable.fileName}</h4>
+                  <p className="deliverable-description">{deliverable.description}</p>
+                  <span className="deliverable-size">
+                    {formatFileSize(deliverable.size)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {!isFreeAgent && (
+        <div className="delivery-info">
+          <p className="delivery-note">
+            📧 Files will be sent to your email after successful payment
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Description Introduction Component
+const DescriptionIntroduction = ({ darkMode }) => {
+  return (
+    <div className="description-intro">
+      <h3>
+        <FaLightbulb />
+        Premium AI Solution
+      </h3>
+      <p>
+        This agent has been carefully crafted and optimized for real-world applications. 
+        Built with industry best practices and designed to deliver consistent, reliable results 
+        for professionals who demand excellence.
+      </p>
+    </div>
+  );
+};
+
+// Enhanced Empty Reviews Component
+const EmptyReviewsState = ({ user, darkMode }) => {
+  return (
+    <div className="no-reviews-encouragement">
+      <h3 className="encouragement-title">Be the First to Share Your Experience!</h3>
+      <p className="encouragement-text">
+        This amazing agent is waiting for its first review. Your feedback helps other users discover 
+        great solutions and helps us improve our offerings.
+      </p>
+      {user ? (
+        <button className="encouragement-cta">
+          <FaTrophy style={{ marginRight: '8px' }} />
+          Write the First Review
+        </button>
+      ) : (
+        <div className="auth-prompt-buttons" style={{ gap: '12px', marginTop: '16px' }}>
+          <Link 
+            to="/sign-in"
+            className="signin-button"
+          >
+            Sign In to Review
+          </Link>
+          <button 
+            className="signup-button"
+            onClick={() => {
+              if (typeof window.openSignUpModal === 'function') {
+                window.openSignUpModal();
+              } else {
+                document.dispatchEvent(new CustomEvent('open-signup-modal'));
+              }
+            }}
+          >
+            Sign Up & Review
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Comment Section Component
+const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipExternalFetch = false, onReviewAdded = () => {}, onReviewDeleted = () => {} }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [rating, setRating] = useState(5);
@@ -378,8 +602,6 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
   const [reviewEligibilityReason, setReviewEligibilityReason] = useState('');
   const { user } = useContext(AuthContext);
   const { darkMode } = useTheme();
-  const [showSignInPopup, setShowSignInPopup] = useState(false);
-  const [showSignUpPopup, setShowSignUpPopup] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [prevAuthState, setPrevAuthState] = useState(false);
   
@@ -390,85 +612,20 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
            user.email?.endsWith('@aiwaverider.com') || user.uid === '0pYyiwNXvSZdoRa1Smgj3sWWYsg1';
   }, [user]);
   
-  // Process reviews and avoid redundant API calls
+  // Enhanced reviews processing
   useEffect(() => {
     const processReviews = async () => {
       try {
         setIsLoadingComments(true);
         
-        // First check if we already have reviews from the parent component
-        if (existingReviews && Array.isArray(existingReviews) && existingReviews.length > 0) {
-          console.log('Using existing reviews from agent data:', existingReviews.length);
-          
-          // Sort by date descending
-          const sortedReviews = [...existingReviews].sort((a, b) => {
-            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-          });
-          
+        if (existingReviews && Array.isArray(existingReviews)) {
+          const sortedReviews = [...existingReviews].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
           setComments(sortedReviews);
-          
-          // Notify parent component about review count
-          if (onReviewsLoaded) {
-            console.log('Setting initial review count to:', sortedReviews.length);
-            onReviewsLoaded(sortedReviews.length);
-          }
-          
-          // Check if current user has already reviewed (only if authenticated)
-          if (user) {
-            const userReview = sortedReviews.find(review => review.userId === user.uid);
-            setHasUserReviewed(!!userReview);
-          }
-        } else if (!skipExternalFetch) {
-          // Only fetch reviews if we don't have them already and we're not skipping external fetch
-          console.log(`No existing reviews, loading reviews for agent ${agentId}`);
-          try {
-            // Always request fresh reviews by setting skipCache to true
-            const response = await getAgentReviews(agentId, { 
-              skipCache: true, 
-              timestamp: Date.now() 
-            });
-            console.log('Received FRESH reviews from API:', response);
-            
-            if (response && Array.isArray(response)) {
-              // Sort by date descending
-              const sortedReviews = response.sort((a, b) => {
-                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-              });
-              
-              // Update the local state
-              setComments(sortedReviews);
-              
-              // IMPORTANT: Update the Zustand store to keep everything in sync
-              const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
-              updateStoreReviews(agentId, sortedReviews);
-              
-              // Notify parent component about review count
-              if (onReviewsLoaded) {
-                console.log('Setting initial review count to:', sortedReviews.length);
-                onReviewsLoaded(sortedReviews.length);
-              }
-              
-              // Check if current user has already reviewed (only if authenticated)
-              if (user) {
-                const userReview = sortedReviews.find(review => review.userId === user.uid);
-                setHasUserReviewed(!!userReview);
-              }
-            }
-          } catch (apiError) {
-            console.error('Error fetching reviews from API:', apiError);
-            // Fall back to empty array
-            setComments([]);
-            if (onReviewsLoaded) {
-              onReviewsLoaded(0);
-            }
-          }
+          if (onReviewsLoaded) onReviewsLoaded(sortedReviews.length);
+          if (user) setHasUserReviewed(!!sortedReviews.find(r => r.userId === user.uid));
         } else {
-          // We're skipping external fetch and we don't have existing reviews
-          console.log('Skipping external fetch for reviews as requested');
           setComments([]);
-          if (onReviewsLoaded) {
-            onReviewsLoaded(0);
-          }
+          if (onReviewsLoaded) onReviewsLoaded(0);
         }
       } catch (err) {
         console.error('Error processing comments:', err);
@@ -477,271 +634,111 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
         setIsLoadingComments(false);
       }
     };
-    
-    // Process reviews only once when component mounts or when dependencies change
     processReviews();
-    
-    // Avoid setting up Firebase realtime listener to save quota
     return () => {};
   }, [agentId, user, existingReviews, onReviewsLoaded]);
   
-  const handleOpenSignInPopup = () => {
-    setShowSignInPopup(true);
-  };
-  
-  const handleOpenSignUpPopup = () => {
-    setShowSignUpPopup(true);
-  };
-  
-  const handleClosePopups = () => {
-    setShowSignInPopup(false);
-    setShowSignUpPopup(false);
-  };
-  
-  // Effect to close auth popups after successful authentication
+  // Enhanced auth state management
   useEffect(() => {
-    // If user wasn't logged in before but is now, close the auth popups
-    if (!prevAuthState && user) {
-      handleClosePopups();
-    }
-    // Update previous auth state
     setPrevAuthState(!!user);
   }, [user, prevAuthState]);
 
-  // Add useEffect to check if user can review with caching
+  // Check eligibility to review: unauthenticated users cannot review; otherwise use local heuristics
   useEffect(() => {
     if (!user) {
       setCanReview(false);
       setReviewEligibilityChecked(true);
-      setReviewEligibilityReason('Please sign in to leave a review');
+      setReviewEligibilityReason('Please sign in to share your experience');
       return;
     }
-    
-    const checkEligibility = async () => {
-      try {
-        // First check if we already have eligibility info in local storage
-        const cacheKey = `review_eligibility_${agentId}_${user.uid}`;
-        let eligibilityResult = null;
-        
-        // Check for recent download record in localStorage that would make user eligible to review
-        try {
-          const downloadKey = `agent_download_${agentId}_${user.uid}`;
-          const downloadRecord = localStorage.getItem(downloadKey);
-          
-          if (downloadRecord) {
-            // User has downloaded this agent, which makes them eligible to review
-            eligibilityResult = {
-              canReview: true,
-              reason: 'You have downloaded this agent'
-            };
-            
-            // Skip further eligibility checks
-            setCanReview(true);
-            setReviewEligibilityReason('You have downloaded this agent');
-            setReviewEligibilityChecked(true);
-            console.log('User is eligible to review based on download record');
-            return;
-          }
-        } catch (downloadCheckError) {
-          console.warn('Error checking download record:', downloadCheckError);
-        }
-        
-        // Check for cached eligibility
-        try {
-          const cachedEligibility = localStorage.getItem(cacheKey);
-          if (cachedEligibility) {
-            const parsedEligibility = JSON.parse(cachedEligibility);
-            const cacheTime = parsedEligibility._cacheTime || 0;
-            const now = Date.now();
-            
-            // Use cache if it's less than 30 minutes old
-            if (now - cacheTime < 30 * 60 * 1000) {
-              console.log(`Using cached review eligibility for agent ${agentId}`);
-              eligibilityResult = parsedEligibility;
-            } else {
-              console.log(`Review eligibility cache expired for agent ${agentId}`);
-            }
-          }
-        } catch (cacheError) {
-          console.warn('Error reading review eligibility from cache:', cacheError);
-        }
-        
-        // If we don't have valid cached data, make the API call
-        if (!eligibilityResult) {
-          console.log(`Checking review eligibility via API for agent ${agentId}`);
-          eligibilityResult = await checkCanReviewAgent(agentId);
-          
-          // Cache the result with timestamp
-          try {
-            localStorage.setItem(cacheKey, JSON.stringify({
-              ...eligibilityResult,
-              _cacheTime: Date.now()
-            }));
-          } catch (e) {
-            // Ignore storage errors
-            console.warn('Failed to cache review eligibility:', e);
-          }
-        }
-        
-        // Update state with result (whether from cache or API)
-        setCanReview(eligibilityResult.canReview);
-        setReviewEligibilityReason(eligibilityResult.reason);
-        setReviewEligibilityChecked(true);
-        
-        console.log('Review eligibility result:', eligibilityResult);
-      } catch (err) {
-        console.error('Error checking review eligibility:', err);
+
+    // Admins can always review
+    const isAdminUser = user.roles?.includes('admin') || user.isAdmin || user.role === 'admin' || 
+                        user.email?.endsWith('@aiwaverider.com') || user.uid === '0pYyiwNXvSZdoRa1Smgj3sWWYsg1';
+    if (isAdminUser) {
+      setCanReview(true);
+      setReviewEligibilityChecked(true);
+      setReviewEligibilityReason('Admin user');
+      return;
+    }
+
+    // Already reviewed?
+    if (existingReviews && Array.isArray(existingReviews)) {
+      const already = existingReviews.some(r => r.userId === user.uid);
+      if (already) {
         setCanReview(false);
-        setReviewEligibilityReason('Error checking eligibility');
         setReviewEligibilityChecked(true);
+        setReviewEligibilityReason('You have already reviewed this agent');
+        return;
       }
-    };
-    
-    checkEligibility();
-  }, [user, agentId]);
+    }
+
+    // Local download/purchase heuristic
+    try {
+      const downloadKey = `agent_download_${agentId}_${user.uid}`;
+      const downloadRecord = localStorage.getItem(downloadKey);
+      if (downloadRecord) {
+        setCanReview(true);
+        setReviewEligibilityChecked(true);
+        setReviewEligibilityReason('You have downloaded this agent');
+        return;
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+
+    // Default: not eligible unless server-side persists a purchase record we mirror later
+    setCanReview(false);
+    setReviewEligibilityChecked(true);
+    setReviewEligibilityReason('Only users who downloaded or purchased can review');
+  }, [user, agentId, existingReviews]);
   
+  // Submit review now only updates local state/store (no API call)
   const handleCommentSubmit = async (e) => {
-    e.preventDefault();
-    
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (!user) {
-      toast.info('Please sign in to leave a review', {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        icon: "👋"
-      });
+      setError('Please sign in to leave a review');
       return;
     }
-    
-    if (hasUserReviewed) {
-      toast.warning('You have already reviewed this agent', {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        icon: "⚠️"
-      });
-      return;
-    }
-    
-    if (!canReview) {
-      toast.warning(reviewEligibilityReason, {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        icon: "⚠️"
-      });
-      return;
-    }
-    
     if (!newComment.trim()) {
-      setError('Please enter a comment');
+      setError('Please share your thoughts about this agent');
       return;
     }
-    
     setIsLoading(true);
     setError('');
-    
     try {
-      const commentData = {
-        content: newComment,
-        rating: rating,
-        verificationStatus: reviewEligibilityReason === 'Verified purchase' ? 'verified_purchase' : 
-                            reviewEligibilityReason === 'Downloaded agent' ? 'verified_download' : 
-                            reviewEligibilityReason === 'Admin user' ? 'admin' : 'unverified'
-      };
-      
-      console.log('Submitting review with data:', commentData);
-      const response = await addAgentReview(agentId, commentData);
-      console.log('Review submission response:', response);
-      
-      if (response.success) {
-        // Get the Zustand store's addReviewToAgent function
-        const addReviewToStore = useAgentStore.getState().addReviewToAgent;
-        
-        // Create the new comment object with the response ID
-        const newCommentObj = {
-          id: response.reviewId || `temp-${Date.now()}`,
-          content: newComment,
-          rating: rating,
-          createdAt: new Date().toISOString(),
-          userId: user.uid,
-          userName: user.displayName || user.email.split('@')[0]
-        };
-        
-        // Immediately increment the review count through the callback
-        // This ensures the UI updates right away without waiting for Firebase
-        if (onReviewsLoaded) {
-          const newCount = comments.length + 1;
-          console.log('Immediately updating review count to:', newCount);
-          onReviewsLoaded(newCount);
-        }
-        
-        // Update the local comments state
-        setComments(prevComments => [...prevComments, newCommentObj]);
-        
-        // IMPORTANT: Update the Zustand store with the new review
-        // This ensures the new review appears everywhere in the UI
-        addReviewToStore(agentId, newCommentObj);
-        
-        setNewComment('');
-        setRating(5);
-        setHasUserReviewed(true);
-        
-        // Show success toast
-        toast.success('Your review has been added. Thank you for your feedback!', {
-          position: "bottom-right",
-          autoClose: 4000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          icon: "✅"
-        });
-        
-        // Force refresh of reviews by invalidating the cache
-        localStorage.removeItem(`last_reviews_fetch_${agentId}`);
-        
-        // Fetch fresh reviews to update the UI
-        setTimeout(async () => {
-          try {
-            const freshReviews = await getAgentReviews(agentId, { 
-              skipCache: true, 
-              timestamp: Date.now() 
-            });
-            
-            if (freshReviews && Array.isArray(freshReviews)) {
-              console.log(`Fetched ${freshReviews.length} fresh reviews after adding new review`);
-              setComments(freshReviews);
-              
-              // Also update the Zustand store with the complete set of reviews
-              const updateAgentReviews = useAgentStore.getState().updateAgentReviews;
-              updateAgentReviews(agentId, freshReviews);
-            }
-          } catch (refreshErr) {
-            console.error('Error refreshing reviews after submission:', refreshErr);
-          }
-        }, 500);
-      } else {
-        setError(response.error || 'Failed to add comment');
-        toast.error(response.error || 'Failed to add your review', {
-          position: "bottom-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          icon: "❌"
-        });
+      // Call secure backend endpoint
+      const resp = await addAgentReview(agentId, { content: newComment.trim(), rating });
+      if (!resp?.success) {
+        const msg = resp?.error || 'Failed to add review';
+        setError(msg);
+        toast.error(msg, { position: 'bottom-right' });
+        return;
       }
+      const newReview = resp.review || {
+        id: resp.reviewId || `temp-${Date.now()}`,
+        content: newComment.trim(),
+        rating,
+        createdAt: new Date().toISOString(),
+        userId: user.uid,
+        userName: user.displayName || user.email?.split('@')[0] || 'User'
+      };
+      setComments(prev => {
+        const updated = [...prev, newReview].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        return updated;
+      });
+      const addReviewToStore = useAgentStore.getState().addReviewToAgent;
+      addReviewToStore(agentId, newReview);
+      onReviewAdded(newReview, resp.reviewCount, resp.averageRating);
+      if (onReviewsLoaded) onReviewsLoaded((resp.reviewCount) || (comments.length + 1));
+      setNewComment('');
+      setRating(5);
+      setHasUserReviewed(true);
+      toast.success('Thank you for your review!', { position: 'bottom-right' });
     } catch (err) {
       console.error('Error adding comment:', err);
       setError('An error occurred while adding your review');
-      showToast('error', '❌ An error occurred while adding your review', {
-        icon: "❌"
-      });
+      toast.error('An error occurred while adding your review', { position: 'bottom-right' });
     } finally {
       setIsLoading(false);
     }
@@ -750,205 +747,104 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
   const formatDate = (dateString) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch (e) {
       console.error('Error formatting date:', e);
       return 'Invalid date';
     }
   };
   
-  // Function to handle deleting a review (admin only)
+  // Deleting a review: update local state/store only
   const handleDeleteReview = async (reviewId) => {
-    // Get the Zustand store's removeReviewFromAgent function
     const removeReviewFromStore = useAgentStore.getState().removeReviewFromAgent;
-    
     if (!isAdmin) {
-      toast.error('Only admins can delete reviews', {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        icon: "⛔"
-      });
+      toast.error('Only admins can delete reviews', { position: 'bottom-right', autoClose: 3000, icon: '⛔' });
       return;
     }
-    
     if (window.confirm('Are you sure you want to delete this review?')) {
       setIsDeleting(true);
       try {
-        // Delete the review on the backend
-        const response = await deleteAgentReview(agentId, reviewId);
-        
-        if (response.success) {
-          // 1. CRITICAL: Force a complete refresh of reviews from the backend
-          console.log('Review deleted, forcing a complete refresh of all reviews from backend');
-          
-          // Clear any cached data that might prevent fresh data
-          localStorage.removeItem(`reviews_cache_${agentId}`);
-          localStorage.removeItem(`last_reviews_fetch_${agentId}`);
-          
-          // Get completely fresh reviews from the backend with cache busting
-          const freshReviews = await getAgentReviews(agentId, { 
-            skipCache: true,
-            timestamp: Date.now() + Math.random() // Add randomness to avoid any caching
-          });
-          
-          console.log(`Received ${freshReviews.length} fresh reviews after deletion`);
-          
-          // Sort by date descending
-          const sortedReviews = freshReviews.sort((a, b) => {
-            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-          });
-          
-          // 2. Update the UI with the fresh data
-          setComments(sortedReviews);
-          
-          // 3. Update the review count through the callback
-          if (onReviewsLoaded) {
-            onReviewsLoaded(sortedReviews.length);
+        const resp = await deleteAgentReview(agentId, reviewId);
+        if (!resp?.success) {
+          const status = resp?.status ?? 0;
+          if (status === 404) {
+            toast.info('Review not found. It might have been deleted already.', { position: 'bottom-right' });
+            // Optimistically remove from UI anyway
+            setComments(prev => prev.filter(c => c.id !== reviewId && c._id !== reviewId));
+            removeReviewFromStore(agentId, reviewId);
+          } else if (status === 400) {
+            toast.error('Bad request while deleting review.', { position: 'bottom-right' });
+          } else if (status === 401) {
+            toast.error('You must be signed in to delete reviews.', { position: 'bottom-right' });
+          } else if (status === 403) {
+            toast.error('You are not allowed to delete this review.', { position: 'bottom-right' });
+          } else {
+            toast.error(resp?.error || 'Failed to delete review', { position: 'bottom-right' });
           }
-          
-          // 4. Calculate the new average rating
-          let newRatingValue = 0;
-          if (sortedReviews.length > 0) {
-            const sum = sortedReviews.reduce((acc, comment) => acc + (parseFloat(comment.rating) || 0), 0);
-            newRatingValue = sum / sortedReviews.length;
-          }
-          
-          // 5. IMPORTANT: Update the Zustand store with the fresh reviews
-          // This ensures all components see the exact same data
-          const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
-          updateStoreReviews(agentId, sortedReviews);
-          
-          // 5. Show success toast notification
-          toast.success(response.message || 'Review deleted successfully', {
-            position: "bottom-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            icon: "✅"
-          });
-          
-          // 6. Force an immediate refresh of reviews from Firebase
-          console.log('Forcing immediate refresh of reviews from Firebase after deletion');
-          localStorage.removeItem(`last_reviews_fetch_${agentId}`);
-          
-          // 7. Fetch fresh reviews to update everything
-          const fetchFreshReviews = async () => {
-            try {
-              // Use explicit skipCache: true to bypass any caching
-              const freshReviews = await getAgentReviews(agentId, { 
-                skipCache: true, 
-                timestamp: Date.now() 
-              });
-              
-              if (freshReviews && Array.isArray(freshReviews)) {
-                console.log(`Fetched ${freshReviews.length} fresh reviews from Firebase after deletion`);
-                
-                // Update the comments state with fresh data
-                setComments(freshReviews);
-                
-                // Update the review count through the callback
-                if (onReviewsLoaded) {
-                  onReviewsLoaded(freshReviews.length);
-                }
-                
-                // If the deleted review belonged to the current user
-                // mark that they haven't reviewed to allow them to review again
-                if (user && user.uid) {
-                  const userHasReview = freshReviews.some(review => review.userId === user.uid);
-                  setHasUserReviewed(userHasReview);
-                }
-              }
-            } catch (err) {
-              console.error('Error fetching fresh reviews after deletion:', err);
-            }
-          };
-          
-          // Execute the fetch
-          fetchFreshReviews();
-        } else {
-          throw new Error(response.message || 'Failed to delete review');
+          setIsDeleting(false);
+          return;
         }
+        setComments(prev => prev.filter(c => c.id !== reviewId && c._id !== reviewId));
+        removeReviewFromStore(agentId, reviewId);
+        onReviewDeleted(reviewId, resp.reviewCount, resp.averageRating);
+        if (onReviewsLoaded) onReviewsLoaded(resp.reviewCount ?? Math.max(0, comments.length - 1));
+        toast.success('Review deleted', { position: 'bottom-right' });
       } catch (err) {
-        console.error('Error deleting review:', err);
-        toast.error(`Error deleting review: ${err.message || 'Unknown error'}`, {
-          position: "bottom-right",
-          autoClose: 3000,
-          icon: "❌"
-        });
+        console.error('Error deleting comment:', err);
+        toast.error('An unexpected error occurred while deleting the review', { position: 'bottom-right' });
       } finally {
         setIsDeleting(false);
       }
     }
   };
   
-  // Update the AuthPrompt component to show different message based on eligibility
-  const AuthPrompt = () => (
-    <div className={`auth-prompt ${darkMode ? 'dark-mode' : ''}`}>
-      <div className={`auth-prompt-content ${darkMode ? 'dark-bg' : ''}`}>
-        <div className="auth-prompt-icon">
-          <FaComment className={`comment-icon ${darkMode ? 'text-gray-300' : ''}`} />
-        </div>
-        <h3 className={darkMode ? 'text-gray-200' : ''}>Join the conversation!</h3>
-        <p className={darkMode ? 'text-gray-300' : ''}>Sign in to leave a review and share your experience with this product.</p>
-        <div className="auth-prompt-buttons">
-          <button 
-            className={`auth-button signin-button ${darkMode ? 'dark-button' : ''}`} 
-            onClick={handleOpenSignInPopup}
-          >
-            Sign In
-          </button>
-          <button 
-            className={`auth-button signup-button ${darkMode ? 'dark-button' : ''}`} 
-            onClick={handleOpenSignUpPopup}
-          >
-            Sign Up
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-  
-  // Create a component for users who are signed in but not eligible to review
+  // Enhanced Eligibility Prompt
   const EligibilityPrompt = () => (
     <div className={`eligibility-prompt ${darkMode ? 'dark-mode' : ''}`}>
       <div className={`eligibility-prompt-content ${darkMode ? 'dark-bg' : ''}`}>
         <div className="eligibility-prompt-icon">
-          <FaComment className={`comment-icon ${darkMode ? 'text-gray-300' : ''}`} />
+          <FaShieldAlt className={`comment-icon ${darkMode ? 'text-gray-300' : ''}`} />
         </div>
-        <h3 className={darkMode ? 'text-gray-200' : ''}>Want to share your experience?</h3>
-        <p className={darkMode ? 'text-gray-300' : ''}>{reviewEligibilityReason}</p>
-        <p className={darkMode ? 'text-gray-300' : ''}>You can only review agents that you've purchased or downloaded.</p>
+        <h3>Want to Share Your Experience?</h3>
+        <p>{reviewEligibilityReason}</p>
+        <p>We value authentic feedback from users who have actually used our agents. This ensures high-quality reviews for everyone!</p>
       </div>
     </div>
   );
   
-  // Auth Popup Component
-  const AuthPopup = ({ isSignIn, onClose }) => (
-    <div className="auth-popup-overlay" onClick={onClose}>
-      <div className="auth-popup" onClick={e => e.stopPropagation()}>
-        <button className="auth-popup-close" onClick={onClose}>×</button>
-        <iframe 
-          src={isSignIn ? "/sign-in" : "/sign-up"} 
-          title={isSignIn ? "Sign In" : "Sign Up"}
-          className="auth-popup-iframe"
-        />
+  // Simple Auth Prompt component (ask user to sign in)
+const AuthPrompt = () => (
+  <div className={`auth-prompt ${darkMode ? 'dark-mode' : ''}`}>
+    <div className={`auth-prompt-content ${darkMode ? 'dark-bg' : ''}`}>
+      <div className="auth-prompt-icon">
+        <FaComment className={`comment-icon ${darkMode ? 'text-gray-300' : ''}`} />
+      </div>
+      <h3>Join the Community!</h3>
+        <p>Sign in to share your experience and help others discover amazing AI agents.</p>
+      <div className="auth-prompt-buttons" style={{ justifyContent: 'center' }}>
+        <button 
+          className={`auth-button signup-button ${darkMode ? 'dark-button' : ''}`} 
+          onClick={() => {
+            if (typeof window.openSignUpModal === 'function') {
+              window.openSignUpModal();
+            } else {
+              document.dispatchEvent(new CustomEvent('open-signup-modal'));
+            }
+          }}
+          style={{ whiteSpace: 'nowrap', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+            Sign In / Sign Up
+        </button>
       </div>
     </div>
-  );
+  </div>
+);
   
   return (
     <div className={`comments-section ${darkMode ? 'dark-mode' : ''}`}>
-      <h3 className={`section-heading ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Reviews & Ratings</h3>
+      <h3 className={`section-heading ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+        Reviews & Ratings
+      </h3>
       
       {user && !hasUserReviewed && canReview ? (
         <form onSubmit={handleCommentSubmit} className="comment-form">
@@ -960,7 +856,7 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Share your thoughts about this agent..."
+            placeholder="Share your experience with this agent... What did you love about it? How did it help you?"
             className={`comment-textarea ${darkMode ? 'dark-input' : ''}`}
             rows={4}
           />
@@ -972,12 +868,14 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
             className="submit-comment-btn"
             disabled={isLoading}
           >
-            {isLoading ? 'Submitting...' : 'Submit Review'}
+            {isLoading ? 'Submitting Your Review...' : 'Share Your Review 🌟'}
           </button>
         </form>
       ) : user && hasUserReviewed ? (
         <div className={`already-reviewed-message ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          <p className={`section-heading-paragraph ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>You have already submitted a review for this agent. Thank you for your feedback!</p>
+          <p className={`section-heading-paragraph ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            ✨ Thank you for your valuable feedback! You've already shared your experience with this agent.
+          </p>
         </div>
       ) : user && reviewEligibilityChecked && !canReview ? (
         <EligibilityPrompt />
@@ -987,48 +885,68 @@ const CommentSection = ({ agentId, existingReviews = [], onReviewsLoaded, skipEx
       
       <div className="comments-list">
         {isLoadingComments ? (
-          <div className={`loading-comments ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Loading reviews...</div>
+          <div className={`loading-comments ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            Loading reviews... ✨
+          </div>
         ) : comments.length > 0 ? (
           comments.map(comment => (
             <div key={comment.id} className={`comment-item ${darkMode ? 'dark-mode' : ''}`}>
               <div className="comment-header">
                 <div className="comment-user">
-                  <span className={`user-name ${darkMode ? 'text-gray-200' : ''}`}>{comment.userName || 'Anonymous'}</span>
-                  <span className={`comment-date ${darkMode ? 'text-gray-400' : ''}`}>{formatDate(comment.createdAt)}</span>
-
+                  <span className={`user-name ${darkMode ? 'text-gray-200' : ''}`}>
+                    {comment.userName || 'Anonymous'} 
+                    {comment.verificationStatus === 'verified_purchase' && ' ✅'}
+                    {comment.verificationStatus === 'verified_download' && ' 📥'}
+                  </span>
+                  <span className={`comment-date ${darkMode ? 'text-gray-400' : ''}`}>
+                    {formatDate(comment.createdAt)}
+                  </span>
                 </div>
                 <div className="rating-actions">
                   <StarRating rating={comment.rating} size="small" />
-                  {/* Show delete button if user is admin */}
                   {isAdmin && (
                     <button 
                       className="delete-review-btn"
                       onClick={() => handleDeleteReview(comment.id)}
                       disabled={isDeleting}
                       title="Delete review"
+                      style={{
+                        marginLeft: '12px',
+                        padding: '4px 8px',
+                        background: 'var(--error-color)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
                     >
                       <FaTrash className="delete-icon" />
                     </button>
                   )}
                 </div>
               </div>
-              <div className={`comment-content ${darkMode ? 'text-gray-300' : ''}`}>{comment.content}</div>
+              <div className={`comment-content ${darkMode ? 'text-gray-300' : ''}`}>
+                {comment.content}
+              </div>
             </div>
           ))
         ) : (
-          <div className={`no-comments ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-            No reviews yet. {user ? 'Be the first to review!' : 'Sign in to be the first to review!'}
-          </div>
+          <EmptyReviewsState 
+            user={user} 
+            darkMode={darkMode}
+          />
         )}
       </div>
       
-      {/* Authentication Popups */}
-      {showSignInPopup && <AuthPopup isSignIn={true} onClose={handleClosePopups} darkMode={darkMode} />}
-      {showSignUpPopup && <AuthPopup isSignIn={false} onClose={handleClosePopups} darkMode={darkMode} />}
+
     </div>
   );
 };
 
+// Main AgentDetail Component
+// NOTE: The global hashtag loader should be managed at the App level
+// and persist during page transitions. This component focuses on
+// the agent-specific loading states and content.
 const AgentDetail = () => {
   const { agentId } = useParams();
   const navigate = useNavigate();
@@ -1049,37 +967,34 @@ const AgentDetail = () => {
   const [imageAspectRatio, setImageAspectRatio] = useState(null);
   const [likesCount, setLikesCount] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
-  const [dataLoaded, setDataLoaded] = useState(false); // Add state to track if data was loaded
+  const [dataLoaded, setDataLoaded] = useState(false);
   const intervalRef = useRef(null);
   const reviewsFetchedRef = useRef(false);
-  const loadAttempt = useRef(0); // Track load attempts
+  const loadAttempt = useRef(0);
   
   // Access the agent store
   const { 
     allAgents, 
     isStoreLoading,
-    loadInitialData, // Add this to ensure store is loaded
-    setAllAgents // Add this to update the store with fetched agent
+    loadInitialData,
+    setAllAgents
   } = useAgentStore();
   
   // Image slider refs
   const sliderRef = useRef(null);
   const imageRef = useRef(null);
   
-  // Function to check if the agent is free
+  // Enhanced agent type checking
   const isFreeAgent = (agent) => {
-    if (!agent) return true; // Default to free if no agent
+    if (!agent) return true;
     
-    // First check priceDetails as the source of truth
     if (agent.priceDetails) {
       if (agent.priceDetails.isFree === true) return true;
       if (agent.priceDetails.basePrice === 0) return true;
     }
     
-    // Check for explicit isFree flag
     if (agent.isFree === true) return true;
     
-    // Check for zero or free in the direct price field
     if (agent.price === 0 || 
         agent.price === '0' || 
         agent.price === 'Free' || 
@@ -1091,7 +1006,6 @@ const AgentDetail = () => {
       return true;
     }
     
-    // Check for free in formatted price string
     if (typeof agent.price === 'string' && 
         (agent.price.toLowerCase().includes('free') || 
          agent.price === '$0' || 
@@ -1100,9 +1014,7 @@ const AgentDetail = () => {
       return true;
     }
     
-    // Check priceDetails object
     if (agent.priceDetails) {
-      // If basePrice or discountedPrice is 0 or missing
       if (agent.priceDetails.basePrice === 0 || 
           agent.priceDetails.basePrice === '0' ||
           agent.priceDetails.basePrice === undefined ||
@@ -1112,7 +1024,6 @@ const AgentDetail = () => {
       }
     }
     
-    // Check for price object structure
     if (typeof agent.price === 'object') {
       const priceObj = agent.price;
       if (priceObj.basePrice === 0 || 
@@ -1129,17 +1040,21 @@ const AgentDetail = () => {
     return false;
   };
   
-  // Memoized derived values
+  // Enhanced category click handler
+  const handleCategoryClick = (category) => {
+    navigate(`/agents?category=${encodeURIComponent(category)}`);
+  };
+  
+  
+  // Enhanced memoized values
   const agentTitle = useMemo(() => {
     if (!agent) return '';
-    return agent.title || agent.name || 'Unnamed Agent';
+    return agent.title || agent.name || 'Professional AI Agent';
   }, [agent]);
-  
-  // Removed duplicate agentRatingValue declaration - using the one below
   
   const agentDescription = useMemo(() => {
     if (!agent) return '';
-    return agent.description || 'No description available for this agent.';
+    return agent.description || 'A powerful AI agent designed to streamline your workflow and boost productivity.';
   }, [agent]);
   
   const agentPrice = useMemo(() => {
@@ -1166,27 +1081,16 @@ const AgentDetail = () => {
     return formatPrice(agent.price);
   }, [agent]);
   
-  const agentCreator = useMemo(() => {
-    if (!agent) return 'Unknown Creator';
-    
-    if (agent.creator) {
-      return agent.creator.name || agent.creator.username || 'Unknown Creator';
-    }
-    
-    return 'Unknown Creator';
-  }, [agent]);
   
   const agentRatingValue = useMemo(() => {
     if (!agent) return 0;
     
-    // First check if we have rating data in the agent object
     if (agent.rating && agent.rating.average) {
       return typeof agent.rating.average === 'number' ? 
         agent.rating.average : 
         parseFloat(agent.rating.average) || 0;
     }
     
-    // If rating.average is not available, calculate from reviews
     if (agent.reviews && Array.isArray(agent.reviews) && agent.reviews.length > 0) {
       const totalRating = agent.reviews.reduce((sum, review) => {
         const reviewRating = parseFloat(review.rating) || 0;
@@ -1202,17 +1106,54 @@ const AgentDetail = () => {
     return agentRatingValue.toFixed(1);
   }, [agentRatingValue]);
   
-  // Toast configuration for consistent, appealing notifications
+  // Enhanced agent categories
+  const agentCategories = useMemo(() => {
+    if (!agent) return [];
+    
+    if (agent.categories && Array.isArray(agent.categories)) {
+      return agent.categories;
+    }
+    
+    if (agent.category && typeof agent.category === 'string') {
+      return [agent.category];
+    }
+    
+    return ['AI/ML']; // Default category
+  }, [agent]);
+  
+  // Enhanced business value
+  const businessValue = useMemo(() => {
+    if (!agent) return null;
+    return agent.businessValue || 'This professionally crafted AI agent delivers exceptional value through cutting-edge automation and intelligent optimization, designed to transform your workflow efficiency and drive measurable results.';
+  }, [agent]);
+  
+  // Enhanced deliverables
+  const deliverables = useMemo(() => {
+    if (!agent) return [];
+    return agent.deliverables || [];
+  }, [agent]);
+  
+  // Enhanced toast configuration
   const showToast = (type, message, options = {}) => {
     const defaultOptions = {
       position: "bottom-right",
-      autoClose: 3000,
+      autoClose: 3000, // Increased from 3000 to 5000
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-      icon: true
+      theme: darkMode ? "dark" : "light",
+      style: {
+        background: darkMode ? 'var(--background-card)' : '#ffffff',
+        color: darkMode ? 'var(--text-primary)' : '#333333',
+        borderRadius: '12px',
+        border: `1px solid ${darkMode ? 'var(--border-color)' : '#e2e8f0'}`,
+        boxShadow: darkMode ? 'var(--shadow-lg)' : '0 10px 25px rgba(0, 0, 0, 0.15)',
+        fontSize: '14px',
+        fontWeight: '500',
+        fontFamily: 'var(--font-family)'
+      }
     };
     
     const mergedOptions = { ...defaultOptions, ...options };
@@ -1235,35 +1176,24 @@ const AgentDetail = () => {
     }
   };
   
-  // Track loading attempts to prevent infinite loops
   const MAX_LOAD_ATTEMPTS = 2;
   
-  // Function to set up periodic updates for agent data
+  // Enhanced setup realtime updates
   const setupRealtimeUpdates = (agentId, setAgentFn, setLikesFn, setDownloadFn) => {
     console.log('Setting up periodic updates for agent:', agentId);
-    // This function will be called by loadAgent to initialize the polling
-    // The actual polling logic is handled in the useEffect below
   };
   
-  // Track whether we've already started loading to prevent duplicate requests
   const isLoadingRef = useRef(false);
-  
-  // Track API calls to prevent duplicate requests in development mode
   const apiCallInProgressRef = useRef(false);
   
+  // Enhanced main loading effect
   useEffect(() => {
-    // Skip if we already loaded data or exceeded max attempts or already loading
     if (dataLoaded || !agentId || loadAttempt.current >= MAX_LOAD_ATTEMPTS || isLoadingRef.current) return;
     
-    // Mark as loading to prevent duplicate requests from React's double invocation in dev mode
     isLoadingRef.current = true;
     console.log(`Starting to load agent ${agentId}, attempt ${loadAttempt.current + 1}`);
     
-    // First ensure the store is loaded with initial data, but only if we need it
-    // This prevents the redundant 'agents?' API call when we only need a single agent
     if ((!allAgents || allAgents.length === 0) && !(isStoreLoading || false)) {
-      // Only load all agents if we're not directly accessing a specific agent
-      // or if we've already tried to load this agent directly and failed
       const shouldLoadAllAgents = loadAttempt.current > 0 || !agentId;
       
       if (shouldLoadAllAgents) {
@@ -1276,7 +1206,6 @@ const AgentDetail = () => {
       }
     }
     
-    // Define a single global timeoutId reference for cleanup
     let timeoutId;
     
     const loadAgent = async () => {
@@ -1284,10 +1213,8 @@ const AgentDetail = () => {
         setLoading(true);
         setError(null);
         
-        // Add a small delay to ensure auth is ready
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Validate agent ID format
         if (!agentId) {
           setError("Invalid agent ID provided.");
           setLoading(false);
@@ -1296,21 +1223,17 @@ const AgentDetail = () => {
         
         console.log(`Loading agent detail for ID: ${agentId}, from route: ${window.location.pathname}`);
         
-        // First check if data is already in the agent store
         console.log('Checking agent store for agent data...', allAgents);
         if (allAgents && Array.isArray(allAgents) && allAgents.length > 0) {
           const storeAgent = allAgents.find(a => a.id === agentId || a._id === agentId);
           if (storeAgent && !loadAttempt.current) {
             console.log('Using agent data from store:', storeAgent);
             
-            // Check if store agent has reviews to avoid redundant API calls
             const hasReviews = storeAgent.reviews && Array.isArray(storeAgent.reviews) && storeAgent.reviews.length > 0;
             console.log('Agent from store has reviews:', hasReviews ? storeAgent.reviews.length : 0);
             
-            // Set the agent data
             setAgent(storeAgent);
             
-            // Set initial likes count
             if (storeAgent.likes) {
               if (Array.isArray(storeAgent.likes)) {
                 setLikesCount(storeAgent.likes.length);
@@ -1319,20 +1242,14 @@ const AgentDetail = () => {
               }
             }
             
-            // Set review count if available
             if (hasReviews) {
               setReviewCount(storeAgent.reviews.length);
-              // Mark reviews as fetched to prevent redundant API calls
               reviewsFetchedRef.current = true;
             }
             
-            // Set download count
             setDownloadCount(storeAgent.downloadCount || 0);
-            
-            // Set initial wishlist status
             setIsWishlisted(storeAgent.isWishlisted || false);
             
-            // Set initial price value
             if (storeAgent.priceDetails && storeAgent.priceDetails.basePrice !== undefined) {
               setCustomPrice(storeAgent.priceDetails.basePrice.toString());
             } else if (typeof storeAgent.price === 'number') {
@@ -1343,37 +1260,30 @@ const AgentDetail = () => {
               setCustomPrice('0');
             }
             
-            // Set up periodic updates instead of real-time updates with Firebase
             setupRealtimeUpdates(agentId, setAgent, setLikesCount, setDownloadCount);
             setLoading(false);
-            setDataLoaded(true); // Mark data as loaded
+            setDataLoaded(true);
             return;
           }
         }
         
-        // If not in store or we're forcing a refresh, fetch from API
         console.log('Fetching agent data from API...');
         
-        // Create an abort controller with a shorter timeout for initial load
         const abortController = new AbortController();
         const timeoutId = setTimeout(() => {
           console.log('Aborting initial agent fetch due to timeout');
           abortController.abort('Initial load timeout');
-          // Set error state and stop loading when timeout occurs
           setError("Request timed out. Please try again later.");
           setLoading(false);
-          setDataLoaded(true); // Mark as loaded even on error to prevent retries
-        }, 10000); // 10 second timeout for initial load
+          setDataLoaded(true);
+        }, 10000);
         
-        // Increment load attempt counter - mark this as our first attempt
         loadAttempt.current += 1;
         
         let data;
         try {
-          // Give a small delay to ensure auth is initialized
           await new Promise(resolve => setTimeout(resolve, 300));
           
-          // Prevent duplicate API calls
           if (apiCallInProgressRef.current) {
             console.log('API call already in progress, waiting...');
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -1382,95 +1292,88 @@ const AgentDetail = () => {
           apiCallInProgressRef.current = true;
           console.log(`Making API call for agent ${agentId}`);
           
-          // Check if we should force skip cache
           const forceRefresh = window.location.search.includes('refresh=true');
           
-          // Always force a fresh fetch for the agent data to ensure we have the latest reviews
-          // This is critical to fix the issue where reviews aren't up-to-date
           data = await fetchAgentById(agentId, { 
             signal: abortController.signal,
-            skipCache: true, // Always skip cache to get fresh data from the database
-            includeReviews: true, // Always include reviews to avoid duplicate API calls
-            timestamp: Date.now() // Add timestamp to prevent browser caching issues
+            skipCache: true,
+            includeReviews: !!user, // Only fetch reviews when user is authenticated
+            timestamp: Date.now()
           });
           
-          // IMPORTANT: Update the Zustand store with the fresh data
-          // This ensures all components that use the store have the latest reviews
           if (data) {
-            // Use the Zustand store's updateAgentReviews function
             const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
             
-            // Mark reviews as fetched to prevent redundant API calls
             if (data.reviews && Array.isArray(data.reviews)) {
               console.log(`Received ${data.reviews.length} fresh reviews with agent data, syncing with store`);
               updateStoreReviews(agentId, data.reviews);
               reviewsFetchedRef.current = true;
               
-              // Set the cache timestamp to prevent immediate refetching
               localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
             }
           }
           
           apiCallInProgressRef.current = false;
           
-          // Clear the timeout since request completed
           clearTimeout(timeoutId);
         } catch (error) {
           console.error('Error fetching agent data:', error);
           clearTimeout(timeoutId);
           apiCallInProgressRef.current = false;
           
-          // Check if this was an abort error (timeout)
           if (error.name === 'AbortError') {
             setError("Request timed out. Please try again later.");
+          } else if (err.response && err.response.status === 400) {
+            setError(`Invalid agent ID. Please check the URL and try again.`);
+          } else if (error.message && error.message.includes('Network')) {
+            setError('Network error. Please check your connection and try again.');
+            toast.error('Network error while loading agent. Please try again.', { position: 'bottom-right' });
           } else {
-            setError(error.message || "Failed to load agent data. Please try again later.");
+            setError(`There was a problem loading this product. Please try again later.`);
+            toast.error('Unexpected error while loading agent.', { position: 'bottom-right' });
           }
           
           setLoading(false);
-          setDataLoaded(true); // Mark as loaded even on error to prevent infinite retries
-          return; // Exit early on error
+          setDataLoaded(true);
+          return;
         }
         
         console.log('Raw API response for fetchAgentById:', data);
         
-        // Add data validation
         if (!data) {
           throw new Error("No agent data returned from API");
         }
         
-        // Log success
         console.log(`Successfully loaded agent data for ${agentId}`);
         
-        // Cache the agent data in localStorage for future use
         try {
           localStorage.setItem(`agent_${agentId}`, JSON.stringify(data));
           console.log(`Cached agent data for ${agentId} in localStorage`);
           
-          // Also update the store with this agent if it's not already there
           const existingAgent = (allAgents || []).find(a => a.id === agentId || a._id === agentId);
           if (!existingAgent) {
             console.log('Adding agent to store for future reference');
-            // Add the agent to the store without replacing existing agents
             setAllAgents([...(allAgents || []), data]);
           }
         } catch (cacheError) {
           console.warn('Failed to cache agent data:', cacheError);
         }
         
-        // Add fallback values for critical fields
+        // Enhanced data sanitization
         const sanitizedData = {
           ...data,
-          title: data.title || data.name || "Unnamed Agent",
-          description: data.description || "No description available",
-          price: data.price !== undefined ? data.price : "Price unavailable",
-          creator: data.creator || { name: "Unknown Creator" },
-          downloadCount: data.downloadCount || 0 // Ensure downloadCount is always available
+          title: data.title || data.name || "Professional AI Agent",
+          description: data.description || "A powerful AI solution designed to enhance your productivity and streamline complex workflows.",
+          price: data.price !== undefined ? data.price : "Contact for pricing",
+          creator: data.creator || { name: "AI Waverider Team" },
+          downloadCount: data.downloadCount || 0,
+          categories: data.categories || (data.category ? [data.category] : ['AI/ML']),
+          businessValue: data.businessValue || 'This professionally crafted AI agent delivers exceptional value through cutting-edge automation and intelligent optimization.'
         };
         
         console.log('Sanitized agent data:', sanitizedData);
         
-        // Ensure priceDetails is properly formatted
+        // Enhanced price details formatting
         if (data.priceDetails) {
           sanitizedData.priceDetails = {
             ...data.priceDetails,
@@ -1481,7 +1384,6 @@ const AgentDetail = () => {
             currency: data.priceDetails.currency || 'USD'
           };
         } else if (typeof data.price === 'number' || (typeof data.price === 'string' && !isNaN(parseFloat(data.price)))) {
-          // Create priceDetails from price if it doesn't exist
           const numericPrice = typeof data.price === 'number' ? data.price : parseFloat(data.price);
           sanitizedData.priceDetails = {
             basePrice: numericPrice,
@@ -1490,7 +1392,7 @@ const AgentDetail = () => {
           };
         }
         
-        // Handle image URLs
+        // Enhanced image handling
         if (!sanitizedData.imageUrl && sanitizedData.image && sanitizedData.image.url) {
           console.log('Adding main imageUrl');
           sanitizedData.imageUrl = sanitizedData.image.url;
@@ -1501,21 +1403,19 @@ const AgentDetail = () => {
           console.log('Adding iconUrl');
           sanitizedData.imageUrl = sanitizedData.iconUrl;
         } else if (!sanitizedData.imageUrl) {
-          console.log('Creating placeholder image');
-          sanitizedData.imageUrl = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"%3E%3Crect width="300" height="200" fill="%234a4de7"/%3E%3Ctext x="150" y="100" font-family="Arial" font-size="24" text-anchor="middle" fill="white"%3E${encodeURIComponent(sanitizedData.title)}%3C/text%3E%3C/svg%3E`;
+          console.log('Creating professional placeholder image');
+          sanitizedData.imageUrl = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23667eea;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23764ba2;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="300" fill="url(%23grad)"/%3E%3Ctext x="200" y="150" font-family="Arial" font-size="18" text-anchor="middle" fill="white" font-weight="bold"%3E${encodeURIComponent(sanitizedData.title)}%3C/text%3E%3C/svg%3E`;
         }
         
-        // Make sure we have an images array
+        // Enhanced images array
         if (!sanitizedData.images || !Array.isArray(sanitizedData.images)) {
           sanitizedData.images = [];
         }
         
-        // Add the main image to the images array if it's not already there
         if (sanitizedData.imageUrl && !sanitizedData.images.includes(sanitizedData.imageUrl)) {
           sanitizedData.images.unshift(sanitizedData.imageUrl);
         }
         
-        // Add gallery images to the images array if available
         if (sanitizedData.gallery && Array.isArray(sanitizedData.gallery)) {
           sanitizedData.gallery.forEach(item => {
             const galleryUrl = typeof item === 'string' ? item : (item && item.url);
@@ -1525,7 +1425,6 @@ const AgentDetail = () => {
           });
         }
         
-        // Add icon to the images array if available
         if (sanitizedData.iconUrl && !sanitizedData.images.includes(sanitizedData.iconUrl)) {
           sanitizedData.images.push(sanitizedData.iconUrl);
         }
@@ -1533,21 +1432,11 @@ const AgentDetail = () => {
         setAgent(sanitizedData);
         console.log('Final agent data set in state:', sanitizedData);
         
-        // Set initial review count
+        // Enhanced initial data setup
         if (sanitizedData.reviews && Array.isArray(sanitizedData.reviews)) {
           setReviewCount(sanitizedData.reviews.length);
-        } else {
-          try {
-            const reviews = await getAgentReviews(agentId);
-            if (reviews && Array.isArray(reviews)) {
-              setReviewCount(reviews.length);
-            }
-          } catch (err) {
-            console.warn('Could not fetch initial review count:', err);
-          }
         }
         
-        // Set likes count
         if (sanitizedData.likes) {
           if (Array.isArray(sanitizedData.likes)) {
             setLikesCount(sanitizedData.likes.length);
@@ -1556,10 +1445,9 @@ const AgentDetail = () => {
           }
         }
         
-        // Get download count directly from the agent data object
         setDownloadCount(sanitizedData.downloadCount || 0);
         
-        // Set initial price value
+        // Enhanced initial price setup
         if (sanitizedData.priceDetails && sanitizedData.priceDetails.basePrice !== undefined) {
           setCustomPrice(sanitizedData.priceDetails.basePrice.toString());
         } else if (typeof sanitizedData.price === 'number') {
@@ -1567,34 +1455,28 @@ const AgentDetail = () => {
         } else if (typeof sanitizedData.price === 'string' && !isNaN(parseFloat(sanitizedData.price))) {
           setCustomPrice(parseFloat(sanitizedData.price).toString());
         } else {
-          // Default to free if no price
           setCustomPrice('0');
         }
         
         setIsWishlisted(sanitizedData.isWishlisted || false);
         
-        // Set up periodic updates instead of real-time updates with Firebase
         setupRealtimeUpdates(agentId, setAgent, setLikesCount, setDownloadCount);
         setLoading(false);
-        setDataLoaded(true); // Mark data as loaded
-        isLoadingRef.current = false; // Reset loading flag
+        setDataLoaded(true);
+        isLoadingRef.current = false;
         
       } catch (err) {
         console.error('Error loading agent:', err);
         
-        // Clear any timeout that may have been set
         if (typeof timeoutId !== 'undefined') {
           clearTimeout(timeoutId);
         }
         
-        // Reset loading flag
         isLoadingRef.current = false;
         
-        // Handle aborted request specially
         if (err.name === 'AbortError' || (err.message && err.message.includes('aborted'))) {
           console.log('Agent initial load was aborted due to timeout');
           
-          // Try to get from cache as fallback
           try {
             console.log('Attempting to load from cache after abort');
             const cachedData = await fetchAgentById(agentId, { 
@@ -1607,9 +1489,7 @@ const AgentDetail = () => {
               setAgent(cachedData);
               setLoading(false);
               setDataLoaded(true);
-              // Reset loading flag
               isLoadingRef.current = false;
-              // Setup updates with the cached data
               setupRealtimeUpdates(agentId, setAgent, setLikesCount, setDownloadCount);
               return;
             }
@@ -1618,43 +1498,43 @@ const AgentDetail = () => {
           }
         }
         
-        // Standard error handling based on response codes
         if (err.response && err.response.status === 404) {
           setError(`Agent with ID "${agentId}" not found. It may have been removed or doesn't exist.`);
         } else if (err.response && err.response.status === 400) {
           setError(`Invalid agent ID. Please check the URL and try again.`);
+        } else if (err.message && err.message.includes('Network')) {
+          setError('Network error. Please check your connection and try again.');
+          toast.error('Network error while loading agent. Please try again.', { position: 'bottom-right' });
         } else {
           setError(`There was a problem loading this product. Please try again later.`);
+          toast.error('Unexpected error while loading agent.', { position: 'bottom-right' });
         }
         setLoading(false);
-        setDataLoaded(true); // Important: Mark as loaded even on error to prevent infinite retries
-        isLoadingRef.current = false; // Reset loading flag
-        apiCallInProgressRef.current = false; // Reset API call flag
+        setDataLoaded(true);
+        isLoadingRef.current = false;
+        apiCallInProgressRef.current = false;
         
-        // Show error message to user
-        showToast(`Error loading agent: ${err.message || 'Unknown error'}`, 'error');
+        showToast('error', `Error loading agent: ${err.message || 'Unknown error'}`, {
+          icon: "❌"
+        });
       }
     };
     
     loadAgent();
     
-    // Track product view for recommendations - only if not already tracked
     if (agentId && !viewTracked) {
       console.log('Tracking product view for recommendations:', agentId);
-      // Mark as tracked immediately to prevent duplicate tracking attempts
       setViewTracked(true);
     }
   }, [agentId, viewTracked]);
   
-  // Setup realtime updates
+  // Enhanced realtime updates setup
   useEffect(() => {
-    // Keep track of consecutive errors
     let consecutiveErrors = 0;
-    const MAX_CONSECUTIVE_ERRORS = 3; // After this many errors, stop polling
-    let intervalId = null; // Declare intervalId for this scope
-    let isPollingActive = true; // Declare and initialize isPollingActive for this scope
+    const MAX_CONSECUTIVE_ERRORS = 3;
+    let intervalId = null;
+    let isPollingActive = true;
     
-    // Setup visibility change listener to pause/resume polling when tab is not active
     const handleVisibilityChange = () => {
       if (document.hidden) {
         console.log('Page hidden, pausing polling');
@@ -1665,18 +1545,14 @@ const AgentDetail = () => {
       }
     };
     
-    // Add visibility change event listener
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // Setup very infrequent polling (60 minutes)
     const fetchData = async () => {
-      // Only fetch if polling is active (page is visible)
       if (!isPollingActive) {
         console.log('Skipping poll because page is not visible');
         return;
       }
       
-      // If we've had too many consecutive errors, stop polling
       if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
         console.log(`Stopping polling after ${consecutiveErrors} consecutive errors`);
         if (intervalId) {
@@ -1685,7 +1561,6 @@ const AgentDetail = () => {
         return;
       }
       
-      // Check if backend is having issues
       const backendErrorKey = 'backend_error_until';
       const backendErrorUntil = parseInt(localStorage.getItem(backendErrorKey) || '0');
       const now = Date.now();
@@ -1698,20 +1573,17 @@ const AgentDetail = () => {
       try {
         console.log('Manual polling for agent updates');
         
-        // Create an abort controller with a longer timeout
         const abortController = new AbortController();
         
-        // Set up a timeout to abort the request
         let timeoutId = null;
         try {
           timeoutId = setTimeout(() => {
             console.log('Aborting agent update poll due to timeout');
             abortController.abort('Timeout');
-          }, 15000); // 15 second timeout
+          }, 15000);
           
-          // Only skip cache once every hour to avoid excessive API calls
           const lastPollTime = parseInt(localStorage.getItem(`last_poll_${agentId}`)) || 0;
-          const shouldSkipCache = (now - lastPollTime) > 60 * 60 * 1000; // 1 hour
+          const shouldSkipCache = (now - lastPollTime) > 60 * 60 * 1000;
           
           if (shouldSkipCache) {
             localStorage.setItem(`last_poll_${agentId}`, now.toString());
@@ -1722,32 +1594,26 @@ const AgentDetail = () => {
           
           const agentData = await fetchAgentById(agentId, { 
             skipCache: shouldSkipCache,
+            includeReviews: false, // polling never fetches reviews
             signal: abortController.signal
           });
           
-          // Reset consecutive errors on success
           consecutiveErrors = 0;
           
-          // Check if we actually got data
           if (!agentData) {
             console.warn('No agent data returned from API');
             return;
           }
           
-          // Update agent with the data
           setAgent(prev => {
             if (!prev) return prev;
             
-            // Keep important previous properties if the new data is missing them
             const updatedAgent = {
               ...prev,
               ...agentData,
-              // Ensure we keep the imageUrl if the new data doesn't have it
               imageUrl: agentData.imageUrl || prev.imageUrl,
-              // Keep previous image array if new one is empty
               images: (agentData.images && agentData.images.length > 0) ? 
                       agentData.images : prev.images,
-              // Ensure we merge likes, reviews, etc.
               likes: agentData.likes || prev.likes,
               rating: agentData.rating || prev.rating,
               downloadCount: agentData.downloadCount || prev.downloadCount,
@@ -1758,7 +1624,6 @@ const AgentDetail = () => {
             return updatedAgent;
           });
           
-          // Update likes count
           if (agentData.likes) {
             if (Array.isArray(agentData.likes)) {
               setLikesCount(agentData.likes.length);
@@ -1767,21 +1632,18 @@ const AgentDetail = () => {
             }
           }
           
-          // Update download count
           if (agentData.downloadCount) {
             setDownloadCount(agentData.downloadCount);
           }
         } finally {
-          // Always clear the timeout
           if (timeoutId) clearTimeout(timeoutId);
         }
       } catch (error) {
-        consecutiveErrors++; // Increment error counter
+        consecutiveErrors++;
         
         if (error.name === 'AbortError' || error.code === 'ERR_CANCELED' || 
             (error.message && (error.message.includes('aborted') || error.message.includes('canceled')))) {
           console.log('Agent update poll was aborted: ', error.message);
-          // Don't treat this as a fatal error
         } else if (error.code === 'ERR_NETWORK') {
           console.log('Network error during agent poll - will retry later');
         } else if (error.response && error.response.status === 404) {
@@ -1791,7 +1653,6 @@ const AgentDetail = () => {
           }
         } else if (error.response && error.response.status === 500) {
           console.error('Server error (500) during agent poll - pausing polls temporarily');
-          // Set a backoff period of 10 minutes before trying again
           localStorage.setItem(backendErrorKey, (now + 10 * 60 * 1000).toString());
         } else {
           console.error('Error polling agent data:', error);
@@ -1799,13 +1660,9 @@ const AgentDetail = () => {
       }
     };
     
-    // Initial fetch - only do this once with a short delay to prevent race conditions
     setTimeout(fetchData, 1000);
-    
-    // Set interval for very infrequent polling (60 minutes) to drastically reduce quota usage
     intervalId = setInterval(fetchData, 60 * 60 * 1000);
     
-    // Return cleanup function
     return () => {
       console.log('Cleaning up polling interval and visibility listener');
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -1813,52 +1670,40 @@ const AgentDetail = () => {
         clearInterval(intervalId);
       }
     };
-  }, [agentId]); // Added dependency array [agentId]
+  }, [agentId]);
   
-  // Modified useEffect to ensure reviews are always updated from the database
+  // Enhanced reviews effect
   useEffect(() => {
-    // Skip if we don't have an agent ID or if we're still loading
     if (!agentId || loading) {
       return;
     }
     
     console.log('Checking if reviews need to be fetched or refreshed');
     
-    // Get access to the Zustand store for syncing
     const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
     
     const fetchReviews = async () => {
       try {
         console.log('Checking if reviews need to be fetched or refreshed');
         
-        // Mark as fetched to prevent immediate duplicate calls
         reviewsFetchedRef.current = true;
         
-        // Track tab changes
         const tabChanged = sessionStorage.getItem(`last_active_tab_${agentId}`) !== activeTab;
         if (tabChanged && activeTab === 'reviews') {
           console.log('Tab changed to reviews');
           sessionStorage.setItem(`last_active_tab_${agentId}`, activeTab);
         }
         
-        // Use the reviews that are already in the agent data
         if (agent && agent.reviews && Array.isArray(agent.reviews)) {
           console.log(`Using ${agent.reviews.length} reviews already included in agent data`);
           
-          // Update the review count immediately
           setReviewCount(agent.reviews.length);
           
-          // No need to make a separate API call for reviews
-          // since they're already included in the agent data
-          
-          // Set the cache timestamp to prevent immediate refetches
           localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
         } else if (agent) {
-          // If the agent has no reviews array or it's empty, set the count to 0
           console.log('No reviews found in agent data');
           setReviewCount(0);
           
-          // Update the agent object with an empty reviews array if it doesn't exist
           if (!agent.reviews) {
             setAgent(prev => {
               if (!prev) return prev;
@@ -1871,7 +1716,6 @@ const AgentDetail = () => {
             });
           }
           
-          // Set the cache timestamp
           localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
         } else {
           console.log('No agent data available');
@@ -1881,53 +1725,50 @@ const AgentDetail = () => {
       }
     };
     
-    // This function should be removed or replaced with a comment
-    // since it's no longer needed - reviews are included in agent data
-    // const getAgentReviews = async () => {
-    //   // DEPRECATED: Reviews are now included in the agent data
-    //   console.log('This function is deprecated');
-    //   return [];
-    // };
-    
-    // Initial fetch - execute immediately
     fetchReviews();
     
-    // NO polling interval - this reduces unnecessary API calls
-    // The user can refresh by switching tabs or taking actions
-    
-    // Nothing to clean up since we're not setting up an interval
-  }, [agentId, loading, activeTab, user]); // Dependencies include user and activeTab for proper refreshing
+  }, [agentId, loading, activeTab, user]);
 
+  // Enhanced wishlist toggle
   const handleWishlistToggle = async () => {
     if (!user) {
-      toast.error('Please sign in to add items to your wishlist');
+      toast.error('👋 Please sign in to save your favorite agents to wishlist', {
+        icon: "👋"
+      });
       return;
     }
     
     try {
-      // Use toggleWishlist API function rather than direct Firebase access
       const response = await toggleWishlist(agentId);
       
       if (response.success) {
-        // Update local state
         setIsWishlisted(response.isInWishlist);
-        toast.success(response.isInWishlist ? "Added to your wishlist" : "Removed from your wishlist");
+        toast.success(response.isInWishlist ? 
+          "💖 Added to your wishlist - find it in your profile!" : 
+          "💙 Removed from your wishlist", {
+          icon: response.isInWishlist ? "💖" : "💙"
+        });
       } else {
         console.error("Error updating wishlist:", response.error);
-        toast.error("Error updating wishlist. Please try again later.");
+        toast.error("Error updating wishlist. Please try again later.", {
+          icon: "❌"
+        });
       }
     } catch (error) {
       console.error("Error updating wishlist:", error);
-      toast.error("Error updating wishlist. Please try again later.");
+      toast.error("Error updating wishlist. Please try again later.", {
+        icon: "❌"
+      });
     }
   };
   
+  // Enhanced copy link function
   const handleCopyLink = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url)
       .then(() => {
         setCopySuccess('Link copied!');
-        showToast('success', '🔗 Link copied to clipboard!', {
+        showToast('success', '🔗 Link copied! Share this amazing agent with others!', {
           icon: "🔗",
           autoClose: 2000
         });
@@ -1941,9 +1782,8 @@ const AgentDetail = () => {
       });
   };
 
-  // Format the price for display
+  // Enhanced price display
   const displayPrice = (agent) => {
-    // First check for explicit free indicators
     if (isFreeAgent(agent)) {
       return (
         <div className="price-value-container free">
@@ -1953,12 +1793,10 @@ const AgentDetail = () => {
       );
     }
     
-    // Handle price details object with discounted price
     if (agent.priceDetails) {
       const { basePrice, discountedPrice, currency } = agent.priceDetails;
       const currencySymbol = currency === 'EUR' ? '€' : '$';
       
-      // If there's a discount, show both prices
       if (discountedPrice !== undefined && discountedPrice < basePrice) {
         return (
           <>
@@ -1975,7 +1813,6 @@ const AgentDetail = () => {
         );
       }
       
-      // Otherwise just show regular price
       if (basePrice !== undefined) {
         return (
           <span className="price-value">
@@ -1985,28 +1822,20 @@ const AgentDetail = () => {
       }
     }
     
-    // Fallback to formatted price from utils
     return (
       <span className="price-value">
         {formatPrice(agent.price)}
       </span>
     );
   };
-  
-  // Handle custom price change
-  const handlePriceChange = (e) => {
-    const value = e.target.value;
-    setCustomPrice(value);
-  };
-  
-  // Validate if price is valid (at or above minimum)
+  // Enhanced price validation
   const isPriceValid = () => {
     const minPrice = getMinimumPrice();
     const price = parseFloat(customPrice) || 0;
     return price >= minPrice;
   };
 
-  // Safely format rating for display
+  // Enhanced rating formatting
   const formatRating = (rating) => {
     if (rating === undefined || rating === null) return '0.0';
     if (typeof rating === 'string') return rating;
@@ -2014,38 +1843,36 @@ const AgentDetail = () => {
     return '0.0';
   };
   
-  // Get file type data display
+  // Enhanced file details
   const getFileDetails = () => {
     if (!agent) return null;
     
     if (agent.fileType === 'pdf' || (agent.fileDetails && agent.fileDetails.type === 'pdf')) {
       const pageCount = agent.fileDetails?.pageCount || agent.pageCount || 50;
-      return `${pageCount} pages (PDF)`;
+      return `📄 ${pageCount} pages (PDF)`;
     }
     
     if (agent.fileType === 'audio' || (agent.fileDetails && agent.fileDetails.type === 'audio')) {
       const duration = agent.fileDetails?.duration || agent.duration || '30 mins';
-      return `${duration} (Audio)`;
+      return `🎵 ${duration} (Audio)`;
     }
     
     if (agent.fileType === 'video' || (agent.fileDetails && agent.fileDetails.type === 'video')) {
       const duration = agent.fileDetails?.duration || agent.duration || '15 mins';
-      return `${duration} (Video)`;
+      return `🎬 ${duration} (Video)`;
     }
     
     if (agent.fileType === 'template' || (agent.fileDetails && agent.fileDetails.type === 'template')) {
-      return 'Template - ready to use';
+      return '📋 Ready-to-use template';
     }
     
-    // Default case
-    return 'Digital download';
+    return '📦 Premium digital solution';
   };
   
-  // Navigate through slider
+  // Enhanced slider navigation
   const showSlide = (index) => {
     if (!agent || !agent.images) return;
     
-    // Handle wrap-around
     let newIndex = index;
     if (newIndex >= agent.images.length) {
       newIndex = 0;
@@ -2064,82 +1891,45 @@ const AgentDetail = () => {
     showSlide(currentSlide - 1);
   };
   
-  // Get image url array for slider
+  // Enhanced image URLs
   const getImageUrls = () => {
     if (!agent) return [null];
     
     const validUrls = [];
     
-    // If agent has images array, use it
-    // if (agent.images && Array.isArray(agent.images) && agent.images.length > 0) {
-    //   console.log('Using agent.images array');
-      
-    //   // Filter out any invalid URLs
-    //   agent.images.forEach(url => {
-    //     if (url && typeof url === 'string' && url.trim() !== '') {
-    //       validUrls.push(url);
-    //     }
-    //   });
-    // }
-    
-    // If agent has gallery array, add those too
-    // if (agent.gallery && Array.isArray(agent.gallery) && agent.gallery.length > 0) {
-    //   console.log('Adding gallery images');
-      
-    //   agent.gallery.forEach(item => {
-    //     // Handle both string URLs and object format
-    //     if (typeof item === 'string' && item.trim() !== '') {
-    //       validUrls.push(item);
-    //     } else if (item && typeof item === 'object' && item.url) {
-    //       validUrls.push(item.url);
-    //     }
-    //   });
-    // }
-    
-    // Add the main imageUrl if it exists and isn't already in the array
-    // if (agent.imageUrl && !validUrls.includes(agent.imageUrl)) {
-    //   console.log('Adding main imageUrl');
-    //   validUrls.push(agent.imageUrl);
-    // }
-    
-    // Check for image object format
     if (agent.image && typeof agent.image === 'object' && agent.image.url && !validUrls.includes(agent.image.url)) {
       console.log('Adding image.url');
       validUrls.push(agent.image.url);
     }
     
-    // Check for iconUrl if we need more images
     if (agent.iconUrl && !validUrls.includes(agent.iconUrl)) {
       console.log('Adding iconUrl');
       validUrls.push(agent.iconUrl);
     }
     
-    // If no valid images were found, add a placeholder
     if (validUrls.length === 0) {
-      console.log('No valid images found, using placeholder');
-      const title = agent.title || agent.name || 'Agent';
-      const placeholderUrl = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"%3E%3Crect width="300" height="200" fill="%234a4de7"/%3E%3Ctext x="150" y="100" font-family="Arial" font-size="24" text-anchor="middle" fill="white"%3E${encodeURIComponent(title)}%3C/text%3E%3C/svg%3E`;
+      console.log('No valid images found, using professional placeholder');
+      const title = agent.title || agent.name || 'Professional AI Agent';
+      const placeholderUrl = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23667eea;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23764ba2;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="300" fill="url(%23grad)"/%3E%3Ctext x="200" y="150" font-family="Arial" font-size="18" text-anchor="middle" fill="white" font-weight="bold"%3E${encodeURIComponent(title)}%3C/text%3E%3C/svg%3E`;
       validUrls.push(placeholderUrl);
     }
     
-    // Deduplicate the URLs
     const uniqueUrls = [...new Set(validUrls)];
     console.log(`Assembled ${uniqueUrls.length} unique image URLs for agent`);
     
     return uniqueUrls;
   };
 
-  // Handle add to cart click
+  // Enhanced add to cart handler
   const handleAddToCart = () => {
     if (!isPriceValid()) {
-      showToast('warning', '⚠️ Please enter a valid price', {
+      showToast('warning', '⚠️ Please enter a valid price amount', {
         icon: "⚠️"
       });
       return;
     }
     
     try {
-      // Create a product object from the agent data
       const product = {
         id: agent.id,
         title: agent.title,
@@ -2148,27 +1938,25 @@ const AgentDetail = () => {
         quantity: 1
       };
       
-      // Add to cart using the context function
       addToCart(product);
       
-      showToast('success', '🛒 Added to cart! Continue shopping or proceed to checkout.', {
-        icon: "🛒",
-        autoClose: 3000
+      console.log('Showing cart toast with 3-second duration');
+      toast.success('🛒 Added to cart! Ready to unlock this amazing agent!', {
+        autoClose: 3000, // Back to 3 seconds
+        position: "bottom-right",
+        theme: darkMode ? "dark" : "light",
+        style: {
+          background: darkMode ? 'var(--background-card)' : '#ffffff',
+          color: darkMode ? 'var(--text-primary)' : '#333333',
+          borderRadius: '12px',
+          border: `1px solid ${darkMode ? 'var(--border-color)' : '#e2e8f0'}`,
+          boxShadow: darkMode ? 'var(--shadow-lg)' : '0 10px 25px rgba(0, 0, 0, 0.15)',
+          fontSize: '14px',
+          fontWeight: '600',
+          fontFamily: 'var(--font-family)'
+        }
       });
       
-      // Record the download with the new API
-      // recordAgentDownload(agentId).then(result => {
-      //   if (result.success) {
-      //     setDownloadCount(prev => prev + 1);
-      //   }
-      //   console.log('Download recorded successfully:', result);
-      //   setIsDownloading(false);
-      //   toast.success('Download complete!');
-      // }).catch(err => {
-      //   console.error('Error recording download:', err);
-      //   // Still increment the display count since the user won't see this error
-      //   setDownloadCount(prev => prev + 1);
-      // });
     } catch (err) {
       console.error('Error adding to cart:', err);
       showToast('error', '❌ Could not add item to cart. Please try again.', {
@@ -2177,21 +1965,19 @@ const AgentDetail = () => {
     }
   };
 
-  // Handle image load to determine aspect ratio
+  // Enhanced image load handler
   const handleImageLoad = () => {
     if (imageRef.current) {
       const { naturalWidth, naturalHeight } = imageRef.current;
       const ratio = naturalWidth / naturalHeight;
-      // Consider images with ratio less than 1 as portrait
       setImageAspectRatio(ratio < 1 ? 'portrait' : 'landscape');
     }
   };
   
-  // Handle like update from LikeButton
+  // Enhanced like update handler
   const handleLikeUpdate = (newLikesCount) => {
     setLikesCount(newLikesCount);
     
-    // Also update the agent object to keep it in sync
     setAgent(prev => {
       if (!prev) return prev;
       
@@ -2203,10 +1989,10 @@ const AgentDetail = () => {
     });
   };
 
-  // Add a function to handle direct download for free agents
+  // Enhanced direct download handler
   const handleDirectDownload = async () => {
     if (!user) {
-      showToast('info', '👋 Please sign in to download this agent', {
+      showToast('info', '👋 Please sign in to download this amazing free agent!', {
         icon: "👋",
         autoClose: 4000
       });
@@ -2221,30 +2007,23 @@ const AgentDetail = () => {
       console.log('Download API result:', downloadResult);
       
       if (downloadResult.success) {
-        // If the response includes the updated agent data, use it
         if (downloadResult.agent) {
           console.log('Using agent data from download response to update UI');
           
-          // Update the agent state with the fresh data
           setAgent(prev => ({
             ...prev,
             ...downloadResult.agent,
-            // Preserve any UI-specific properties not in the API response
             images: prev.images || [],
             imageUrl: downloadResult.agent.imageUrl || prev.imageUrl,
-            // If download count is in the response, use it directly
             downloadCount: downloadResult.agent.downloadCount || (prev.downloadCount + 1)
           }));
           
-          // Update download count from the response
           if (downloadResult.agent.downloadCount) {
             setDownloadCount(downloadResult.agent.downloadCount);
           } else {
-            // Fallback to incrementing locally if not in response
             setDownloadCount(prev => prev + 1);
           }
           
-          // Update likes if they're in the response
           if (downloadResult.agent.likes) {
             if (Array.isArray(downloadResult.agent.likes)) {
               setLikesCount(downloadResult.agent.likes.length);
@@ -2253,23 +2032,31 @@ const AgentDetail = () => {
             }
           }
         } else {
-          // Fallback to just incrementing the download count locally
           console.log('No agent data in download response, incrementing download count locally');
           setDownloadCount(prev => prev + 1);
         }
         
-        // Show success message
-        toast.success('✅ Download successful!', {
+        toast.success('🎉 Download successful! Check your email for the files.', {
           position: "bottom-right",
-          autoClose: 3000,
+          autoClose: 3000, // Longer duration for important messages
           hideProgressBar: false,
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
-          icon: "✅"
+          theme: darkMode ? "dark" : "light",
+          icon: "🎉",
+          style: {
+            background: darkMode ? 'var(--background-card)' : '#ffffff',
+            color: darkMode ? 'var(--text-primary)' : '#333333',
+            borderRadius: '12px',
+            border: `1px solid ${darkMode ? 'var(--border-color)' : '#e2e8f0'}`,
+            boxShadow: darkMode ? 'var(--shadow-lg)' : '0 10px 25px rgba(0, 0, 0, 0.15)',
+            fontSize: '14px',
+            fontWeight: '600',
+            fontFamily: 'var(--font-family)'
+          }
         });
         
-        // If we have a download URL, download it - check multiple possible locations
         let downloadUrl = downloadResult.downloadUrl || 
                          downloadResult.agent?.downloadUrl || 
                          downloadResult.agent?.fileUrl || 
@@ -2287,22 +2074,17 @@ const AgentDetail = () => {
           try {
             console.log('Download URL found:', downloadUrl);
             
-            // Check if this is a Google Cloud Storage URL that will have CORS issues
             const isGoogleStorage = downloadUrl.includes('storage.googleapis.com') || downloadUrl.includes('firebasestorage.app');
             
             if (isGoogleStorage) {
-              // Method 1: Use backend proxy to avoid CORS issues
               console.log('Using backend proxy for Google Storage download to avoid CORS');
               
               try {
-                // Create a proxy download URL through our backend
                 const proxyUrl = `/api/agents/${agentId}/download-file`;
                 
-                // Use the browser's default download mechanism
                 const link = document.createElement('a');
                 link.href = proxyUrl;
                 
-                // Extract filename
                 const urlParts = downloadUrl.split('/');
                 let filename = urlParts[urlParts.length - 1];
                 if (filename.includes('?')) {
@@ -2312,7 +2094,6 @@ const AgentDetail = () => {
                   filename = `${agent.title || 'agent'}.json`;
                 }
                 
-                // Ensure filename has proper extension
                 if (!filename.endsWith('.json')) {
                   filename = filename.replace(/\.[^/.]+$/, '') + '.json';
                 }
@@ -2320,11 +2101,9 @@ const AgentDetail = () => {
                 link.download = filename;
                 link.style.display = 'none';
                 
-                // Important: Add to DOM for compatibility
                 document.body.appendChild(link);
                 link.click();
                 
-                // Clean up after a short delay
                 setTimeout(() => {
                   document.body.removeChild(link);
                 }, 100);
@@ -2340,7 +2119,6 @@ const AgentDetail = () => {
               }
               
             } else {
-              // Method 2: For non-Google Storage URLs, try direct fetch
               console.log('Attempting direct download for non-Google Storage URL');
               
               const response = await fetch(downloadUrl, {
@@ -2358,20 +2136,16 @@ const AgentDetail = () => {
               
               console.log('Fetch successful, creating blob for download');
               
-              // Get the response as text first to ensure proper handling
               const responseText = await response.text();
               
-              // Force download by creating blob with application/octet-stream MIME type
               const blob = new Blob([responseText], { 
-                type: 'application/octet-stream' // Force download instead of display
+                type: 'application/octet-stream'
               });
               
-              // Force download by creating object URL and programmatic click
               const url = window.URL.createObjectURL(blob);
               const link = document.createElement('a');
               link.href = url;
               
-              // Extract and clean filename
               const urlParts = downloadUrl.split('/');
               let filename = urlParts[urlParts.length - 1];
               if (filename.includes('?')) {
@@ -2381,7 +2155,6 @@ const AgentDetail = () => {
                 filename = `${agent.title || 'agent'}.json`;
               }
               
-              // Ensure filename has proper extension
               if (!filename.endsWith('.json')) {
                 filename = filename.replace(/\.[^/.]+$/, '') + '.json';
               }
@@ -2392,7 +2165,6 @@ const AgentDetail = () => {
               document.body.appendChild(link);
               link.click();
               
-              // Clean up after a short delay
               setTimeout(() => {
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
@@ -2407,15 +2179,12 @@ const AgentDetail = () => {
           } catch (fetchError) {
             console.error('Primary download method failed:', fetchError);
             
-            // Method 3: Final fallback - Open in new window with instructions
             try {
               console.log('Using final fallback method - opening download URL');
               
-              // Create a temporary link element
               const link = document.createElement('a');
               link.href = downloadUrl;
               
-              // Extract filename
               const urlParts = downloadUrl.split('/');
               let filename = urlParts[urlParts.length - 1];
               if (filename.includes('?')) {
@@ -2434,28 +2203,25 @@ const AgentDetail = () => {
               link.click();
               document.body.removeChild(link);
               
-              showToast('info', '📥 Download link opened in new tab. If the file displays instead of downloading, right-click and select "Save As..." to download the file manually.', {
-                autoClose: 12000
+              showToast('info', '📥 Download link opened in new tab. If the file displays instead of downloading, right-click and select "Save As..." to download manually.', {
+                autoClose: 10000
               });
               
             } catch (finalError) {
               console.error('All download methods failed:', finalError);
               
-              // Show the download URL to user as absolute last resort
-              showToast('warning', '⚠️ Automatic download failed due to browser security restrictions. Here is the direct download link: ' + downloadUrl + ' - Please copy and paste this URL in a new tab to download the file.', {
+              showToast('warning', '⚠️ Automatic download failed due to browser security. Here is the direct download link: ' + downloadUrl + ' - Please copy and paste this URL in a new tab to download the file.', {
                 autoClose: 15000
               });
             }
           }
         } else {
-          // No download URL provided
           console.warn('No download URL provided in response');
           showToast('warning', '⚠️ Download processed but no file URL provided. Please check your email or contact support.', {
             autoClose: 8000
           });
         }
       } else {
-        // API returned unsuccessful response
         const errorMessage = downloadResult.error || downloadResult.message || 'Download failed';
         console.error('Download API returned error:', errorMessage);
         throw new Error(errorMessage);
@@ -2463,7 +2229,6 @@ const AgentDetail = () => {
     } catch (error) {
       console.error('Error downloading free agent:', error);
       
-      // Provide more specific error messages
       let userMessage = '❌ Download failed. ';
       if (error.message.includes('CORS')) {
         userMessage += 'Cross-origin request blocked. Please try again or contact support.';
@@ -2486,11 +2251,10 @@ const AgentDetail = () => {
     }
   };
 
-  // Get minimum price
+  // Enhanced minimum price getter
   const getMinimumPrice = () => {
     if (!agent) return 0;
     
-    // First check price details for minimum price or base price
     if (agent.priceDetails) {
       if (agent.priceDetails.minimumPrice !== undefined) {
         return agent.priceDetails.minimumPrice;
@@ -2505,13 +2269,11 @@ const AgentDetail = () => {
       }
     }
     
-    // Handle standard price field
     if (typeof agent.price === 'number') {
       return agent.price;
     }
     
     if (typeof agent.price === 'string') {
-      // Check for free indicators
       if (agent.price === 'Free' || 
           agent.price === 'free' || 
           agent.price === '$0' || 
@@ -2519,40 +2281,44 @@ const AgentDetail = () => {
         return 0;
       }
       
-      // Try to extract numeric value
       const parsed = parseFloat(agent.price.replace(/[^0-9.]/g, '')) || 0;
       return parsed;
     }
     
-    // If price is an object, try to extract basePrice
     if (agent.price && typeof agent.price === 'object') {
       if (agent.price.basePrice !== undefined) {
         return agent.price.basePrice;
       }
     }
     
-    // Default to 0 (free) if we can't determine price
     return 0;
   };
 
+  // Enhanced loading state
   if (loading) {
     return (
-      <div className="agent-detail-container">
-        <div className="loading-container">
+      <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
+        <div className="loading-container fade-in">
           <div className="loading-spinner"></div>
-          <p>Loading agent details...</p>
+          <h3>Loading Amazing Agent...</h3>
+          <p>Preparing something special for you ✨</p>
         </div>
       </div>
     );
   }
 
+  // Enhanced error state
   if (error || !agent) {
     return (
-      <div className="agent-detail-container">
-        <div className="error-container">
-          <h2>Agent Not Found</h2>
-          <p>{error || 'Could not find the agent you\'re looking for.'}</p>
-          <Link to="/agents" className="back-button">Return to Agents</Link>
+      <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
+        <div className="error-container fade-in">
+          <h2>Oops! Agent Not Found</h2>
+          <p>{error || 'We couldn\'t find the agent you\'re looking for. It might have been moved or doesn\'t exist.'}</p>
+          <p>Don't worry - we have many other amazing agents waiting for you!</p>
+          <Link to="/agents" className="back-button">
+            <FaRocket style={{ marginRight: '8px' }} />
+            Explore All Agents
+          </Link>
         </div>
       </div>
     );
@@ -2563,44 +2329,141 @@ const AgentDetail = () => {
   const fileDetails = getFileDetails();
 
   return (
-    
     <div className={`agent-detail-container ${darkMode ? 'dark-mode' : ''}`}>
+    
       <div className="agent-detail-breadcrumb">
         <Link to="/">Home</Link> / <Link to="/agents">Agents</Link> / <span>{agent.title}</span>
       </div>
 
       <div className="agent-detail-content">
-        {/* Agent Image Section */}
-        <div className="image-slider-section">
-          <div className="image-slider" ref={sliderRef}>
-            <div className="slider-container">
-              <div className="slide">
-                <img 
-                  ref={imageRef}
-                  src={imageUrls[0] || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"%3E%3Crect width="300" height="200" fill="%234a4de7"/%3E%3Ctext x="150" y="100" font-family="Arial" font-size="24" text-anchor="middle" fill="white"%3EAgent%3C/text%3E%3C/svg%3E'} 
-                  alt={agent.title} 
-                  className="slide-image" 
-                  onLoad={handleImageLoad}
-                  data-aspect={imageAspectRatio}
-                />
+        {/* Left Column: Image and Description */}
+        <div className="left-column slide-in-left">
+          {/* Enhanced Agent Image Section */}
+          <div className="image-slider-section">
+            <div className="image-slider" ref={sliderRef}>
+              <div className="slider-container">
+                <div className="slide">
+                  <img 
+                    ref={imageRef}
+                    src={n8nWorkflowImg} 
+                    alt={agent.title} 
+                    className="slide-image" 
+                    onLoad={handleImageLoad}
+                    data-aspect={imageAspectRatio}
+                  />
+                </div>
               </div>
+            </div>
+          </div>
+
+          {/* Enhanced Agent Description Section */}
+          <div className={`agent-description-section ${darkMode ? 'dark-mode' : ''}`}>
+            <DescriptionIntroduction darkMode={darkMode} />
+            <div className="agent-description">
+              <p className="description-details">
+                {agentDescription}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Agent Info and Purchase Section */}
-        <div className="agent-info-section">
-          <h1 className="agent-title">{agentTitle}</h1>
-          
-          <div className="agent-meta-row">
-            <div className="price-display">
-              {displayPrice(agent)}
-            </div>
+        {/* Right Column: Agent Info and Purchase Section */}
+        <div className="agent-info-section slide-in-right">
+          <div className="agent-header">
+            <h1 className="agent-title">{agentTitle}</h1>
             
+            {/* Enhanced Categories Display */}
+            {agentCategories.length > 0 && (
+              <div className="agent-categories">
+                {agentCategories.map((category) => (
+                  <CategoryBadge 
+                    key={category} 
+                    category={category} 
+                    onClick={handleCategoryClick}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Enhanced Price and Buy Button */}
+          <div className={`price-purchase-container ${darkMode ? 'dark-mode' : ''}`}>
+            {isFreeAgent(agent) ? (
+              <div className="free-download-container">
+                <div className="free-agent-notice">
+                  <span className="free-label">🎉 Free</span>
+                  <p className="free-description">This premium agent is available at no cost!</p>
+                </div>
+                <button 
+                  className="download-now-btn"
+                  onClick={handleDirectDownload}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <FaDownload style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }} />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FaDownload style={{ marginRight: '8px' }} />
+                      Download Now
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="fixed-price-container">
+                <div className="price-display-section">
+                  <div className="price-value-container paid">
+                    {displayPrice(agent)}
+                  </div>
+                </div>
+                
+                <button 
+                  className="buy-now-btn"
+                  onClick={handleAddToCart}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <FaShoppingCart style={{ marginRight: '8px' }} />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FaShoppingCart style={{ marginRight: '8px' }} />
+                      Buy for {formatPrice(minPrice)}
+                    </>
+                  )}
+                </button>
+                
+                {agent.priceDetails && agent.priceDetails.basePrice > 0 && 
+                 agent.priceDetails.discountedPrice < agent.priceDetails.basePrice && (
+                  <p className="discount-note">
+                    <span className="discount-badge">
+                      🔥 {Math.round((1 - agent.priceDetails.discountedPrice / agent.priceDetails.basePrice) * 100)}% OFF
+                    </span>
+                    <span className="original-price-text">
+                      Was ${agent.priceDetails.basePrice.toFixed(2)}
+                    </span>
+                  </p>
+                )}
+              </div>
+            )}
+            
+            <div className="downloads-info">
+              <FaDownload className="download-icon" />
+              <span className="download-count">{downloadCount.toLocaleString()} downloads</span>
+            </div>
+          </div>
+          
+          {/* Enhanced Meta Information */}
+          <div className="agent-meta-row">
             <div className="creator-info">
-              <span className="by-text">by</span>
+              <span className="by-text">Created by </span>
               <a href="#" className="creator-name">
-                {agent.creator?.username || agent.creator?.name || agent.creator?.role || "Unknown Creator"}
+                {agent.creator?.username || agent.creator?.name || agent.creator?.role || "AI Wave Rider Team"}
               </a>
             </div>
             
@@ -2608,7 +2471,9 @@ const AgentDetail = () => {
               <div className="stars">
                 <StarRating rating={agentRatingValue} />
               </div>
-              <span className="rating-count">({reviewCount || agent?.rating?.count || 0})</span>
+              <span className="rating-count">
+                {reviewCount > 0 ? `(${reviewCount})` : '(Be the first to review!)'}
+              </span>
               <LikeButton 
                 agentId={agentId} 
                 initialLikes={likesCount} 
@@ -2617,160 +2482,158 @@ const AgentDetail = () => {
             </div>
           </div>
           
-          <div className="agent-description">
-            <p>{agentDescription}</p>
-          </div>
+          {/* Enhanced What You Get Section */}
+          <DeliverablesSection 
+            deliverables={deliverables} 
+            darkMode={darkMode} 
+            isFreeAgent={isFreeAgent(agent)}
+          />
           
-          <div className="price-purchase-container">
-            {isFreeAgent(agent) ? (
-              // Free agent - show direct download button
-              <div className="free-download-container">
-                <div className="free-agent-notice">
-                  <span className="free-label">Free</span>
-                  <p className="free-description">This agent is available for free</p>
-                </div>
-                <button 
-                  className="download-now-btn"
-                  onClick={handleDirectDownload}
-                  disabled={loading}
-                >
-                  {loading ? 'Processing...' : 'Download Now'}
-                </button>
-              </div>
-            ) : (
-              // Paid agent - show the normal price input and cart button
-              <>
-                <div className="name-your-price">
-                  <label htmlFor="custom-price" className={darkMode ? 'text-gray-200' : 'text-gray-800'}>Name a fair price:</label>
-                  <div className="price-input-container">
-                    <span className={`currency-symbol ${darkMode ? 'text-black font-bold' : 'text-gray-800'}`}>$</span>
-                    <input 
-                      type="number" 
-                      id="custom-price" 
-                      className={`custom-price-input ${darkMode ? 'dark-input' : ''}`} 
-                      value={customPrice}
-                      onChange={handlePriceChange}
-                      min={minPrice}
-                      step="0.01"
-                    />
-                  </div>
-                  <p className={`minimum-price-note ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {agent.priceDetails && agent.priceDetails.basePrice > 0 && 
-                     agent.priceDetails.discountedPrice < agent.priceDetails.basePrice ? (
-                      <>The minimum price is ${minPrice.toFixed(2)} <span className={`pricing-note ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>(Discounted from ${agent.priceDetails.basePrice.toFixed(2)})</span></>
-                    ) : (
-                      <>The minimum price is {formatPrice(minPrice)}</>
-                    )}
-                  </p>
-                </div>
-                
-                <button 
-                  className={`add-to-cart-btn ${!isPriceValid() ? 'disabled' : ''}`}
-                  disabled={!isPriceValid()}
-                  onClick={handleAddToCart}
-                >
-                  Add to cart
-                </button>
-              </>
-            )}
-            
-            <div className="downloads-info">
-              <FaDownload className="download-icon" />
-              <span className="download-count">{downloadCount} downloads</span>
-            </div>
-          </div>
+          {/* Enhanced Business Value Section */}
+          <BusinessValueSection businessValue={businessValue} darkMode={darkMode} />
           
+          {/* Enhanced File Details */}
           <div className="file-details-section">
             <div className="file-info">
               <span className="file-detail">{fileDetails}</span>
             </div>
           </div>
           
+          {/* Enhanced Agent Actions */}
           <div className="agent-actions">
             <button 
               className={`wishlist-btn ${isWishlisted ? 'active' : ''}`}
               onClick={handleWishlistToggle}
               disabled={wishlistLoading}
+              title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             >
               {isWishlisted ? <FaHeart /> : <FaRegHeart />}
-              <span>{isWishlisted ? 'Added to wishlist' : 'Add to wishlist'}</span>
+              <span>{isWishlisted ? 'In Wishlist' : 'Add to Wishlist'}</span>
             </button>
             
-            <button className="copy-link-btn" onClick={handleCopyLink}>
+            <button className="copy-link-btn" onClick={handleCopyLink} title="Copy link">
               <FaLink />
-              <span>{copySuccess || 'Copy link'}</span>
+              <span>{copySuccess || 'Copy Link'}</span>
             </button>
             
-            <button className="share-btn" onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: agent.title,
-                  text: agent.description,
-                  url: window.location.href,
-                })
-                .then(() => {
-                  showToast('success', '🔗 Successfully shared!', {
-                    icon: "🔗",
-                    autoClose: 2000
+            <button 
+              className="share-btn" 
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: agent.title,
+                    text: `Check out this amazing AI agent: ${agent.description}`,
+                    url: window.location.href,
+                  })
+                  .then(() => {
+                    showToast('success', '🌟 Successfully shared this amazing agent!', {
+                      icon: "🌟",
+                      autoClose: 2500
+                    });
+                  })
+                  .catch((error) => {
+                    console.error('Error sharing:', error);
+                    handleCopyLink();
                   });
-                })
-                .catch((error) => {
-                  console.error('Error sharing:', error);
-                  handleCopyLink(); // Fallback to copy link if sharing fails
-                });
-              } else {
-                // Fallback for browsers that don't support navigator.share
-                handleCopyLink();
-              }
-            }}>
+                } else {
+                  handleCopyLink();
+                }
+              }}
+              title="Share this agent"
+            >
               <FaShare />
               <span>Share</span>
             </button>
           </div>
           
-          <div className="guarantee-info">
-            <p>30-day money back guarantee</p>
-          </div>
+          {/* Enhanced Guarantee Info */}
+          {/* <div className="guarantee-info">
+            <p>
+              <FaShieldAlt style={{ marginRight: '8px' }} />
+              30-day money back guarantee
+            </p>
+          </div> */}
         </div>
       </div>
 
-      {/* Tabs for different sections */}
+      {/* Enhanced Tabs for different sections */}
       <div className="agent-detail-tabs">
         <button 
           className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
+          <FaLightbulb style={{ marginRight: '6px' }} />
           Overview
         </button>
         <button 
           className={`tab-button ${activeTab === 'reviews' ? 'active' : ''}`}
           onClick={() => setActiveTab('reviews')}
         >
+          <FaStar style={{ marginRight: '6px' }} />
           Reviews ({reviewCount})
         </button>
         <button 
           className={`tab-button ${activeTab === 'related' ? 'active' : ''}`}
           onClick={() => setActiveTab('related')}
         >
+          <FaGem style={{ marginRight: '6px' }} />
           Related Items
         </button>
       </div>
       
-      {/* Tab content */}
-      <div className="tab-content">
+      {/* Enhanced Tab content */}
+      <div className="tab-content fade-in">
         {activeTab === 'overview' && (
           <div className="overview-tab">
             <div className="overview-content">
               {agent.longDescription ? (
-                <div 
-                  dangerouslySetInnerHTML={{ 
-                    __html: DOMPurify.sanitize(agent.longDescription) 
-                  }} 
-                />
+                <div className="overview-item">
+                  <div className="overview-header">
+                    <div>
+                      <div className="overview-title">
+                        <FaTrophy style={{ marginRight: '8px' }} />
+                        About This Premium Agent
+                      </div>
+                      <div className="overview-meta">
+                        Premium AI Solution
+                      </div>
+                    </div>
+                    <div className="overview-actions">
+                      <FaGem style={{ color: 'var(--primary-color)' }} />
+                    </div>
+                  </div>
+                  <div className="overview-text">
+                    <div 
+                      dangerouslySetInnerHTML={{ 
+                        __html: DOMPurify.sanitize(agent.longDescription) 
+                      }} 
+                    />
+                  </div>
+                </div>
               ) : (
-                <div className="default-overview">
-                  <h3>About this agent</h3>
-                  <p>{agent.description || 'No detailed description available for this agent.'}</p>
+                <div className="overview-item">
+                  <div className="overview-header">
+                    <div>
+                      <div className="overview-title">
+                        <FaTrophy style={{ marginRight: '8px' }} />
+                        About This Premium Agent
+                      </div>
+                      <div className="overview-meta">
+                        Premium AI Solution
+                      </div>
+                    </div>
+                    <div className="overview-actions">
+                      <FaGem style={{ color: 'var(--primary-color)' }} />
+                    </div>
+                  </div>
+                  <div className="overview-text">
+                    <p>
+                      {agent.description || 'This carefully crafted AI agent represents the pinnacle of automation technology. Designed with precision and tested extensively, it delivers exceptional performance and reliability that exceeds industry standards.'}
+                    </p>
+                    <p>
+                      <strong>🎯 Perfect for:</strong> Professionals seeking to automate complex workflows, enhance productivity, and achieve superior results with cutting-edge AI technology.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -2783,14 +2646,49 @@ const AgentDetail = () => {
               agentId={agentId} 
               existingReviews={agent.reviews || []} 
               onReviewsLoaded={(count) => setReviewCount(count)}
-              skipExternalFetch={true} /* Add this prop to prevent external fetching */
+              skipExternalFetch={true}
+              onReviewAdded={(newReview, newCount, newAvg) => {
+                setAgent(prev => {
+                  const prevReviews = Array.isArray(prev?.reviews) ? prev.reviews : [];
+                  const merged = [...prevReviews, newReview];
+                  return {
+                    ...prev,
+                    reviews: merged,
+                    reviewCount: typeof newCount === 'number' ? newCount : merged.length,
+                    rating: {
+                      ...(prev?.rating || {}),
+                      average: typeof newAvg === 'number' ? newAvg : (merged.reduce((a, r) => a + (Number(r.rating) || 0), 0) / merged.length)
+                    }
+                  };
+                });
+              }}
+              onReviewDeleted={(deletedId, newCount, newAvg) => {
+                setAgent(prev => {
+                  const prevReviews = Array.isArray(prev?.reviews) ? prev.reviews : [];
+                  const filtered = prevReviews.filter(r => r.id !== deletedId && r._id !== deletedId);
+                  const count = typeof newCount === 'number' ? newCount : filtered.length;
+                  const avg = typeof newAvg === 'number' ? newAvg : (count > 0 ? (filtered.reduce((a, r) => a + (Number(r.rating) || 0), 0) / count) : 0);
+                  return {
+                    ...prev,
+                    reviews: filtered,
+                    reviewCount: count,
+                    rating: {
+                      ...(prev?.rating || {}),
+                      average: avg
+                    }
+                  };
+                });
+              }}
             />
           </div>
         )}
         
         {activeTab === 'related' && (
           <div className="related-tab">
-            <h3 className={`section-heading ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Related Products</h3>
+            <h3 className={`section-heading ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              <FaGem style={{ marginRight: '12px' }} />
+              More Amazing Agents
+            </h3>
             {agent.relatedAgents && agent.relatedAgents.length > 0 ? (
               <div className="related-agents-grid">
                 {agent.relatedAgents.map(relatedAgent => (
@@ -2801,8 +2699,11 @@ const AgentDetail = () => {
                   >
                     <div className="related-image-container">
                       <img 
-                        src={relatedAgent.imageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"%3E%3Crect width="300" height="200" fill="%234a4de7"/%3E%3Ctext x="150" y="100" font-family="Arial" font-size="24" text-anchor="middle" fill="white"%3EAgent%3C/text%3E%3C/svg%3E'} 
+                        src={relatedAgent.imageUrl || n8nWorkflowImg} 
                         alt={relatedAgent.title || 'Related Agent'} 
+                        onError={(e) => {
+                          e.target.src = n8nWorkflowImg;
+                        }}
                       />
                     </div>
                     <div className="related-info">
@@ -2821,7 +2722,17 @@ const AgentDetail = () => {
                 ))}
               </div>
             ) : (
-              <p className="no-related">No related products found.</p>
+              <div className="no-related">
+                <FaRocket style={{ fontSize: '48px', marginBottom: '16px', color: 'var(--text-light)' }} />
+                <p>
+                  🚀 This agent is so unique, we're still finding its perfect companions! 
+                  <br />
+                  Check back soon for related recommendations.
+                </p>
+                <Link to="/agents" className="back-button" style={{ marginTop: '16px' }}>
+                  Explore All Agents
+                </Link>
+              </div>
             )}
           </div>
         )}

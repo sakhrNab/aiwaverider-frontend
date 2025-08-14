@@ -2,37 +2,24 @@ import React, { useRef } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import './CategoryNav.css';
 
-// Simplified agent categories
-const AGENT_CATEGORIES = [
-  'All',
-  'Design',
-  'Creative',
-  'Productivity',
-  'Development',
-  'Business'
-];
+const DEFAULT_CATEGORIES = ['All', 'Design', 'Creative', 'Productivity', 'Development', 'Business'];
 
-const CategoryNav = ({ selectedCategory, onCategoryChange }) => {
+const CategoryNav = ({ selectedCategory, onCategoryChange, categories = [] }) => {
   const scrollContainerRef = useRef(null);
   const [showScrollButtons, setShowScrollButtons] = React.useState(false);
+  const categoryList = Array.isArray(categories) && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
   
-  // Check if scrolling is needed when component mounts or window resizes
   React.useEffect(() => {
     const checkForScrolling = () => {
       if (scrollContainerRef.current) {
         const { scrollWidth, clientWidth } = scrollContainerRef.current;
-        // Only show scroll buttons if content width exceeds container width
         setShowScrollButtons(scrollWidth > clientWidth);
       }
     };
-    
-    // Initial check
     checkForScrolling();
-    
-    // Check on window resize
     window.addEventListener('resize', checkForScrolling);
     return () => window.removeEventListener('resize', checkForScrolling);
-  }, []);
+  }, [categoryList.length]);
   
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -60,7 +47,7 @@ const CategoryNav = ({ selectedCategory, onCategoryChange }) => {
       
       <div className="category-nav" ref={scrollContainerRef}>
         <div className="category-scroll">
-          {AGENT_CATEGORIES.map((category) => (
+          {categoryList.map((category) => (
             <button
               key={category}
               className={`category-button ${selectedCategory === category ? 'active' : ''}`}

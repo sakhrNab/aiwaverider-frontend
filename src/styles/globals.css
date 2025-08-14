@@ -497,3 +497,30 @@ button {
   background-size: 200% 100%;
   animation: shimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
+
+.paypal-focus {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+  background: #ffffff;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+  margin-top: 12px;
+}
+.paypal-focus .trust-badges {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.paypal-focus .trust-badges span {
+  background: #f3f4f6;
+  border-radius: 9999px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.payment-benefits ul {
+  margin-top: 12px;
+  list-style: disc;
+  padding-left: 20px;
+  color: #374151;
+}

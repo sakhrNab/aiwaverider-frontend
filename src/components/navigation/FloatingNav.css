@@ -6,19 +6,48 @@
 }
 
 .floating-nav-button {
-  /* Core button styling */
   display: flex;
   align-items: center;
   transition: all 0.2s ease-in-out;
 }
 
-/* Device specific adjustments */
+/* Collapsed pill (mobile) */
+.floating-nav-collapsed {
+  min-width: 86px;
+  min-height: 40px;
+  padding: 0.45rem 0.75rem;
+  border: 1.5px solid;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
 
-/* Small phones - iPhone SE, etc */
+/* Expanded panel (mobile) */
+.floating-nav-panel {
+  width: 92vw;
+  max-width: 420px;
+  border: 1.5px solid;
+  border-radius: 16px;
+  padding: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.2);
+}
+
+/* Compact buttons in mobile */
+@media (max-width: 639px) {
+  .floating-nav-button {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+}
+
+/* Small phones */
 @media (max-width: 375px) {
   .floating-nav-button {
-    font-size: 0.75rem;
-    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.55rem;
   }
   
   .floating-nav-button span {
@@ -29,58 +58,34 @@
   }
 }
 
-/* Medium phones - iPhone XR, 12 Pro, etc */
-@media (min-width: 376px) and (max-width: 428px) {
-  .floating-nav-button {
-    font-size: 0.8rem;
-  }
-}
-
-/* Large phones - iPhone 14 Pro Max, Galaxy S20 Ultra */
+/* Large phones */
 @media (min-width: 429px) and (max-width: 512px) {
-  .floating-nav-container {
-    max-width: 92vw;
-  }
+  .floating-nav-container { max-width: 92vw; }
 }
 
-/* Tablets - iPad Mini, iPad Air, iPad Pro */
+/* Tablets */
 @media (min-width: 768px) and (max-width: 1024px) {
-  .floating-nav-button {
-    padding: 0.5rem 1rem;
-  }
+  .floating-nav-button { padding: 0.5rem 1rem; }
 }
 
-/* Foldable devices - Galaxy Z Fold, Surface Duo */
+/* Foldables */
 @media (min-width: 540px) and (max-width: 767px) {
-  .floating-nav-button {
-    font-size: 0.85rem;
-  }
+  .floating-nav-button { font-size: 0.9rem; }
 }
 
-/* Landscape orientation adjustments */
+/* Landscape compact */
 @media (orientation: landscape) and (max-height: 450px) {
-  .floating-nav-container {
-    bottom: 1rem !important;
-  }
-  
-  .floating-nav-button {
-    padding: 0.25rem 0.75rem;
-  }
+  .floating-nav-container { bottom: 1rem !important; }
+  .floating-nav-button { padding: 0.25rem 0.75rem; }
 }
 
-/* Large screens - Desktop, Nest Hub Max */
+/* Desktop */
 @media (min-width: 1200px) {
-  .floating-nav-container {
-    max-width: 80vw;
-  }
-  
-  .floating-nav-button {
-    font-size: 0.9rem;
-    padding: 0.5rem 1.25rem;
-  }
+  .floating-nav-container { max-width: 80vw; }
+  .floating-nav-button { font-size: 0.95rem; padding: 0.5rem 1.25rem; }
 }
 
-/* Handle safe areas for notched phones */
+/* Safe areas */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .floating-nav-container {
     padding-bottom: env(safe-area-inset-bottom);
@@ -88,17 +93,15 @@
   }
 }
 
-/* Handle hover states only on devices that support hover */
+/* Hover devices */
 @media (hover: hover) {
-  .floating-nav-button:hover {
-    transform: translateY(-2px);
-  }
+  .floating-nav-button:hover { transform: translateY(-2px); }
 }
 
 /* Animations and transitions */
 .floating-nav-button {
   transform: translateY(0);
-  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Focus states for accessibility */

@@ -197,6 +197,29 @@ const networkFirstWithTimeout = async (request, timeout = 3000) => {
 
 // Fetch Event
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Completely skip handling API requests - let them go through natively
+  if (url.pathname.includes('/api/')) {
+    return; // Let the browser handle API requests natively without any caching
+  }
+
+  // Firebase resources should be excluded from service worker caching
+  if (url.hostname.includes('firebase') || 
+      url.hostname.includes('firestore') || 
+      url.hostname.includes('googleapis')) {
+    return;
+  }
+
+  // Skip any query parameters that indicate filtering
+  if (url.search.includes('priceMin') || 
+      url.search.includes('priceMax') || 
+      url.search.includes('rating') || 
+      url.search.includes('tags') || 
+      url.search.includes('features')) {
+    return; // Let filtering requests go through natively
+  }
+  
   // Skip stats endpoints entirely
   if (isStatsEndpoint(event.request.url)) {
     event.respondWith(

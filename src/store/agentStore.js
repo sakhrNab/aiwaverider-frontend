@@ -333,21 +333,26 @@ const useAgentStore = create(
         let othersTagCount = 0;
         let othersFeatureCount = 0;
         
-        // Use more efficient loops for better performance
         for (let i = 0; i < agents.length; i++) {
           const agent = agents[i];
           
-          // For tags, use category or tags array if available
-          if (agent.category) {
-            if (agent.category.trim()) {
-              const category = agent.category.trim();
-              tagCount[category] = (tagCount[category] || 0) + 1;
-            } else {
-              // Count empty categories as "Others"
-              othersTagCount++;
+          // Categories can be a string (legacy) or array (new)
+          const categories = Array.isArray(agent.categories)
+            ? agent.categories
+            : (agent.category && typeof agent.category === 'string' ? [agent.category] : []);
+          if (categories.length > 0) {
+            for (let j = 0; j < categories.length; j++) {
+              const c = categories[j];
+              if (c && typeof c === 'string' && c.trim()) {
+                const key = c.trim();
+                tagCount[key] = (tagCount[key] || 0) + 1;
+              }
             }
+            } else {
+              othersTagCount++;
           }
           
+          // Existing tags array logic remains
           let hasValidTag = false;
           if (agent.tags && Array.isArray(agent.tags)) {
             for (let j = 0; j < agent.tags.length; j++) {
@@ -358,13 +363,12 @@ const useAgentStore = create(
                 hasValidTag = true;
               }
             }
-            // If agent has tags array but all are empty, count as "Others"
             if (agent.tags.length > 0 && !hasValidTag) {
               othersTagCount++;
             }
           }
           
-          // For features, check for specific properties or use features array
+          // Features logic unchanged
           let hasValidFeature = false;
           if (agent.features && Array.isArray(agent.features)) {
             for (let j = 0; j < agent.features.length; j++) {
@@ -375,13 +379,12 @@ const useAgentStore = create(
                 hasValidFeature = true;
               }
             }
-            // If agent has features array but all are empty, count as "Others"
             if (agent.features.length > 0 && !hasValidFeature) {
               othersFeatureCount++;
             }
           }
           
-          // Count free agents
+          // Free/subscription counts unchanged
           if (agent.price === 0 || 
               agent.price === '0' || 
               agent.price === 'Free' || 
@@ -389,8 +392,6 @@ const useAgentStore = create(
               agent.isFree === true) {
             featureCount['Free'] = (featureCount['Free'] || 0) + 1;
           }
-          
-          // Count subscription agents
           if (typeof agent.price === 'string' && 
               (agent.price.includes('/month') || 
                agent.price.includes('a month') || 
@@ -400,11 +401,9 @@ const useAgentStore = create(
           }
         }
         
-        // Add the "Others" category if there are any empty/invalid tags or features
         if (othersTagCount > 0) {
           tagCount['Others'] = othersTagCount;
         }
-        
         if (othersFeatureCount > 0) {
           featureCount['Others'] = othersFeatureCount;
         }

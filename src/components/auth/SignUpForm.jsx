@@ -14,14 +14,14 @@ import { validateEmail } from '../../utils/emailValidator';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const SignUp = ({ isOpen, onClose }) => {
+const SignUp = ({ isOpen, onClose, prefillEmail, redirectPath }) => {
   const noop = () => {};
   const handleClose = isOpen !== undefined ? onClose : noop;
   const { darkMode } = useTheme(); // Get current theme
 
   const [formData, setFormData] = useState({
     firstName: '',
-    email: '',
+    email: prefillEmail || '',
     password: '',
   });
 
@@ -37,6 +37,13 @@ const SignUp = ({ isOpen, onClose }) => {
   const isModalView = isOpen !== undefined;
   const shouldRender = isModalView ? isOpen : true;
   const { signInUser, handleSignupData } = useContext(AuthContext);
+
+  // Keep email in sync if prefillEmail changes while modal is open
+  useEffect(() => {
+    if (prefillEmail) {
+      setFormData((prev) => ({ ...prev, email: prefillEmail }));
+    }
+  }, [prefillEmail]);
 
   // Calculate password strength with more detailed scoring
   const calculatePasswordStrength = useCallback((password) => {
@@ -152,7 +159,7 @@ const SignUp = ({ isOpen, onClose }) => {
         
         // Wait a moment to ensure auth state is updated before navigating
         setTimeout(() => {
-          navigate('/', { replace: true });
+          navigate(redirectPath || '/', { replace: true });
           if (isModalView) {
             handleClose();
           }
@@ -161,12 +168,12 @@ const SignUp = ({ isOpen, onClose }) => {
     } catch (err) {
       console.error('[SignUp] Error handling successful signup:', err);
       // Still navigate on success even if there was an error processing the response
-      navigate('/', { replace: true });
+      navigate(redirectPath || '/', { replace: true });
       if (isModalView) {
         handleClose();
       }
     }
-  }, [signInUser, handleSignupData, darkMode, navigate, isModalView, handleClose]);
+  }, [signInUser, handleSignupData, darkMode, navigate, isModalView, handleClose, redirectPath]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -546,11 +553,15 @@ const SignUp = ({ isOpen, onClose }) => {
 SignUp.propTypes = {
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
+  prefillEmail: PropTypes.string,
+  redirectPath: PropTypes.string,
 };
 
 SignUp.defaultProps = {
   isOpen: undefined,
   onClose: () => {},
+  prefillEmail: '',
+  redirectPath: '/',
 };
 
 export default SignUp;

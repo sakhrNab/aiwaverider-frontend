@@ -40,31 +40,19 @@ export const AUTH = {
 
 // Payment Configuration
 export const PAYMENT = {
-  STRIPE: {
-    PUBLIC_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
-    WEBHOOK_SECRET: import.meta.env.VITE_STRIPE_WEBHOOK_SECRET,
-    ELEMENTS_APPEARANCE: {
-      theme: 'stripe',
-      variables: {
-        colorPrimary: '#007bff'
-      }
-    }
-  },
   PAYPAL: {
+    // Explicit runtime environment selection for PayPal SDK
+    ENV: (import.meta.env.VITE_PAYPAL_ENV || (ENV.PROD ? 'live' : 'sandbox')).toLowerCase(),
+    // Optional separate client IDs for live and sandbox, with fallback to a generic client ID
+    CLIENT_ID_LIVE: import.meta.env.VITE_PAYPAL_CLIENT_ID_LIVE,
+    CLIENT_ID_SANDBOX: import.meta.env.VITE_PAYPAL_CLIENT_ID_SANDBOX,
+    // Backward compatible single client id (if provided)
     CLIENT_ID: import.meta.env.VITE_PAYPAL_CLIENT_ID,
     CURRENCY: 'USD',
     INTENT: 'capture'
   },
-  GOOGLE_PAY: {
-    ENVIRONMENT: import.meta.env.VITE_GOOGLE_PAY_ENVIRONMENT || 'TEST',
-    GATEWAY: import.meta.env.VITE_GOOGLE_PAY_GATEWAY || 'stripe',
-    MERCHANT_NAME: import.meta.env.VITE_MERCHANT_NAME || 'AI Waverider'
-  },
-  APPLE_PAY: {
-    MERCHANT_ID: import.meta.env.VITE_APPLE_PAY_MERCHANT_ID
-  },
   ENABLE_SIMULATION: ENV.DEV && (import.meta.env.VITE_ENABLE_PAYMENT_SIMULATION === 'true'),
-  ALLOWED_CURRENCIES: ['USD', 'EUR', 'GBP', 'INR', 'CAD', 'AUD', 'JPY']
+  ALLOWED_CURRENCIES: ['USD', 'EUR', 'GBP']
 };
 
 // External Services
@@ -87,10 +75,10 @@ export const MONITORING = {
 
 // Feature Flags
 export const FEATURES = {
-  ENABLE_CRYPTO_PAYMENTS: import.meta.env.VITE_ENABLE_CRYPTO === 'true',
-  ENABLE_APPLE_PAY: import.meta.env.VITE_ENABLE_APPLE_PAY !== 'false',
-  ENABLE_GOOGLE_PAY: import.meta.env.VITE_ENABLE_GOOGLE_PAY !== 'false',
-  ENABLE_SEPA: import.meta.env.VITE_ENABLE_SEPA !== 'false',
+  ENABLE_CRYPTO_PAYMENTS: false,
+  ENABLE_APPLE_PAY: false,
+  ENABLE_GOOGLE_PAY: false,
+  ENABLE_SEPA: false,
   // Only show these features in development unless explicitly enabled in production
   SHOW_TEST_FEATURES: ENV.DEV || import.meta.env.VITE_SHOW_TEST_FEATURES === 'true'
 };

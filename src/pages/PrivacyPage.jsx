@@ -113,7 +113,7 @@ const PrivacyPage = () => {
 
                             <h3 className="text-xl font-semibold mb-3">6.1 Service Providers</h3>
                             <ul className="list-disc pl-6 space-y-2 mb-4">
-                                <li>Payment processors (Stripe, PayPal)</li>
+                                <li>Payment processor (PayPal)</li>
                                 <li>Email service providers</li>
                                 <li>Analytics providers (Google Analytics)</li>
                                 <li>Cloud hosting providers</li>

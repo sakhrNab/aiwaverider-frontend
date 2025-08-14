@@ -136,6 +136,7 @@
   background-color: #4a4de7;
   border-top-left-radius: 0.75rem;
   border-top-right-radius: 0.75rem;
+  max-height: 55vh; /* prevent image area from exceeding viewport on tiny screens */
 }
 
 /* Responsive image container adjustments */
@@ -175,7 +176,7 @@
 
 /* For portrait images */
 .marketplace-agent-image[data-aspect="portrait"] {
-  object-fit: contain;
+  object-fit: cover; /* fill container even for portrait */
   background-color: #4a4de7;
 }
 
@@ -360,11 +361,22 @@
   background-color: rgba(124, 58, 237, 0.9);
 }
 
+/* Updated Categories Display - now inline with title */
+.marketplace-agent-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
 .marketplace-agent-title {
+  flex: 1;
+  min-width: 0; /* Allow text to shrink */
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin: 0;
   line-height: 1.3;
   /* Allow text to wrap to multiple lines */
   white-space: normal;
@@ -488,6 +500,92 @@
   margin-top: 0.25rem;
 }
 
+/* Categories Display - now inline */
+.marketplace-agent-categories {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+/* Enhanced Category Badge Design */
+.marketplace-category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.marketplace-category-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.marketplace-category-badge.small {
+  font-size: 9px;
+  padding: 3px 6px;
+  max-width: 70px;
+}
+
+.marketplace-category-icon {
+  font-size: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .marketplace-agent-header {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  
+  .marketplace-agent-categories {
+    gap: 3px;
+  }
+  
+  .marketplace-category-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    max-width: 65px;
+  }
+
+  .marketplace-category-badge.small {
+    font-size: 8px;
+    padding: 2px 5px;
+    max-width: 60px;
+  }
+
+  .marketplace-category-icon {
+    font-size: 7px;
+  }
+}
+
+@media (max-width: 375px) {
+  .marketplace-agent-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .marketplace-agent-categories {
+    width: 100%;
+  }
+}
+
 .agent-tags {
   display: flex;
   flex-wrap: wrap;
@@ -506,8 +604,16 @@
 .marketplace-agent-card-link {
   text-decoration: none;
   color: inherit;
-  display: block;
+  display: contents;
   height: 100%;
+}
+
+/* Responsive: make the link wrapper layout-neutral on small devices */
+@media (max-width: 834px) {
+  .marketplace-agent-card-link { display: contents !important; }
+}
+@media (max-width: 480px) {
+  .marketplace-agent-card-link { display: contents !important; }
 }
 
 @media (max-width: 480px) {
@@ -544,4 +650,41 @@
   border-radius: 2rem;
   display: inline-block;
   border: 1px solid rgba(74, 222, 128, 0.3);
+} 
+
+/* Ensure inner container stretches and prevents overflow */
+.marketplace-agent-card-inner {
+  border: 1px solid rgba(232, 233, 235, 1);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: transparent;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .marketplace-agent-card-inner { border-radius: 6px; }
+}
+@media (max-width: 480px) {
+  .marketplace-agent-card-inner { border-radius: 4px; }
+}
+
+/* Guard against overflow for categories */
+.marketplace-agent-categories {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.marketplace-category-badge {
+  flex: 0 1 auto;
+  min-width: 0;
+} 
+
+@media (max-width: 360px) {
+  .marketplace-agent-categories { gap: 2px; }
+  .marketplace-category-badge { max-width: 58px; }
+  .marketplace-category-badge.small { max-width: 52px; }
 } 
