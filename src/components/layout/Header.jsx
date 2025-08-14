@@ -285,6 +285,8 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
     <div aria-hidden="true" style={{ height: isFixedOnHome ? headerHeight : 0 }} />
   );
 
+  // Removed unused hasSubscription state (was planned for subscriber UI gating)
+
   return (
     <>
       <header className={headerClass} ref={headerRef}>
@@ -525,6 +527,16 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
                             {getUserDisplayName()}
                           </div>
                           <div className="text-xs text-gray-300 truncate">{user.email}</div>
+                          {/* Subscriber badge */}
+                          {(() => {
+                            let sub = false;
+                            try { sub = localStorage.getItem('subscription_status') === 'active'; } catch {}
+                            return sub ? (
+                              <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-green-600/20 text-green-300 border border-green-500/40">
+                                Subscriber
+                              </span>
+                            ) : null;
+                          })()}
                         </div>
                         
                         {/* Menu Options */}

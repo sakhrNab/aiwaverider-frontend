@@ -26,6 +26,7 @@ const PostDetail = lazy(() => import('../components/posts/PostDetail'));
 const CreatePost = lazy(() => import('../components/posts/CreatePost'));
 const ApiTestPage = lazy(() => import('../pages/ApiTestPage'));
 const VideosPage = lazy(() => import('../pages/VideosPage'));
+const SubscribePage = lazy(() => import('../pages/SubscribePage'));
 
 // Legal pages
 const TermsPage = lazy(() => import('../pages/TermsPage'));
@@ -76,6 +77,7 @@ const AppRoutes = () => {
       <Route path="/sign-in" element={withSuspense(<SignIn />)} />
       <Route path="/sign-up" element={withSuspense(<SignUp />)} />
       <Route path="/profile" element={withSuspense(<Profile />)} />
+      <Route path="/subscribe" element={withSuspense(<SubscribePage />)} />
       
       {/* Content Routes */}
       <Route path="/agents" element={withSuspense(<Agents />)} />

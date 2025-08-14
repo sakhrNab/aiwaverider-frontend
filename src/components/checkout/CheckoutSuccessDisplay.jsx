@@ -164,8 +164,13 @@ const CheckoutSuccess = () => {
           }
         );
       } else {
-        // Normal payment processing
-        checkPaymentStatus();
+        // For PayPal/Direct card flows we may not have a specific status API; if order id exists, consider it succeeded
+        if (orderIdFromParams) {
+          setOrderStatus('succeeded');
+          setIsLoading(false);
+        } else {
+          checkPaymentStatus();
+        }
       }
     } else {
       setIsLoading(false);
@@ -211,9 +216,14 @@ const CheckoutSuccess = () => {
         // Handle Stripe payments, including SEPA through Stripe
         endpoint = `/api/payments/stripe/${paymentId}`;
       } else {
-        console.warn(`Unknown payment type for status check: ${paymentType}`);
-        setIsLoading(false); // Add this to stop loading if payment type is unknown
-        return; // Exit if we don't know how to check this payment type
+        // No known status endpoint for this payment type (e.g., PayPal direct). Stop polling and show success UI if orderId exists
+        if (orderId) {
+          setOrderStatus('succeeded');
+          setStatusMessage('Your payment has been confirmed and your order is complete!');
+          setStatusColor('text-green-600');
+        }
+        setIsLoading(false);
+        return;
       }
       
       const response = await fetch(`${apiUrl}${endpoint}`);
@@ -319,7 +329,7 @@ const CheckoutSuccess = () => {
           {downloadTemplates.map((template, index) => (
             <a 
               key={index}
-              href={template.downloadUrl}
+              href={`${template.downloadUrl}&format=download`}
               className="download-template-button"
               target="_blank"
               rel="noopener noreferrer"

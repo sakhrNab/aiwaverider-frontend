@@ -221,3 +221,47 @@
     grid-template-columns: 1fr;
   }
 } 
+
+/* Download templates section */
+.download-templates-section {
+  margin: 24px 0;
+  padding: 16px;
+  background: #f6f9ff;
+  border: 1px solid #e3edff;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.template-download-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.download-template-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  background: #4a86e8;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(74, 134, 232, 0.25);
+}
+
+.download-template-button:hover {
+  background: #3a76d8;
+}
+
+.download-icon {
+  font-size: 28px;
+}
+
+@media (max-width: 768px) {
+  .template-download-buttons { gap: 10px; }
+  .download-template-button { padding: 12px 16px; }
+  .download-icon { font-size: 24px; }
+} 
