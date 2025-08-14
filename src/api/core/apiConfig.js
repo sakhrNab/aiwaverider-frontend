@@ -246,3 +246,13 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 ); 
+
+export const confirmSubscription = async (subscriptionID) => {
+	const res = await api.post('/api/payments/paypal/subscriptions/confirm', { subscriptionID });
+	return res.data;
+};
+
+export const createSubscriberAccessToken = async (agentId) => {
+	const res = await api.post('/api/templates/access', { agentId });
+	return res.data;
+}; 

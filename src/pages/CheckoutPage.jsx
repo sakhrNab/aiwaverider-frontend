@@ -87,7 +87,13 @@ const Checkout = () => {
 
   const onPayPalApprove = async (data) => {
     try {
-      await capturePayPalPayment(data.orderID, { items: JSON.stringify(cart), email: email || '' });
+      const result = await capturePayPalPayment(data.orderID, { items: JSON.stringify(cart), email: email || '' });
+      // Persist templates for success page if provided
+      try {
+        if (result?.templates && Array.isArray(result.templates) && result.templates.length > 0) {
+          sessionStorage.setItem('downloadTemplates', JSON.stringify(result.templates));
+        }
+      } catch {}
       // Persist purchased items for success page
       try { localStorage.setItem('lastPurchasedItems', JSON.stringify(cart)); } catch {}
       clearCart();

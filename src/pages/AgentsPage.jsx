@@ -444,9 +444,12 @@ const Agents = () => {
                 {/* Badge/Announcement */}
                 <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-400/30 backdrop-blur-sm">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className={`text-sm font-medium ${darkMode ? 'text-green-300' : 'text-green-200'}`}>
+                  <span className={`${darkMode ? 'text-green-300' : 'text-green-200'} text-sm font-medium`}>
                     🚀 Limited Time: 100% Free
                   </span>
+                  <Link to="/subscribe" className="ml-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-semibold shadow hover:opacity-90">
+                    Or get All‑Access (€50/mo)
+                  </Link>
                 </div>
 
                 {/* Main Headline */}

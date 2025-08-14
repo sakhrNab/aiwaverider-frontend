@@ -19,6 +19,7 @@ import DOMPurify from 'dompurify';
 import { toast } from 'react-toastify';
 import './AgentDetailPage.css';
 import n8nWorkflowImg from '../assets/n8nworkflow.png';
+import { createSubscriberAccessToken } from '../api/core/apiConfig';
 
 // Helper function to format file size
 const formatFileSize = (bytes) => {
@@ -2420,23 +2421,70 @@ const AgentDetail = () => {
                   </div>
                 </div>
                 
-                <button 
-                  className="buy-now-btn"
-                  onClick={handleAddToCart}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <FaShoppingCart style={{ marginRight: '8px' }} />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <FaShoppingCart style={{ marginRight: '8px' }} />
-                      Buy for {formatPrice(minPrice)}
-                    </>
-                  )}
-                </button>
+                {agent?.downloadProtected && agent?.entitled ? (
+                  <div style={{
+                    marginTop: 8,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: 'var(--success-color)'
+                  }}>
+                    Included with your All‑Access subscription · Regular price {formatPrice(minPrice)}
+                  </div>
+                ) : (
+                  <button 
+                    className="buy-now-btn"
+                    onClick={handleAddToCart}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <FaShoppingCart style={{ marginRight: '8px' }} />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <FaShoppingCart style={{ marginRight: '8px' }} />
+                        Buy for {formatPrice(minPrice)}
+                      </>
+                    )}
+                  </button>
+                )}
+                
+                {/* Subscription CTA for all-access */}
+                <div style={{ marginTop: '12px' }}>
+                  {agent?.downloadProtected && !agent?.entitled ? (
+                    <div className="allaccess-cta">
+                      <div className="allaccess-cta-title">Included in All‑Access</div>
+                      <div className="allaccess-cta-subtitle">Unlock every premium agent for just €50/month</div>
+                      <Link to="/subscribe" className="allaccess-cta-button">Get All‑Access (€50/mo)</Link>
+                    </div>
+                  ) : agent?.downloadProtected && agent?.entitled ? (
+                    <div style={{ marginTop: 8 }}>
+                      <button
+                        className="download-now-btn"
+                        onClick={async () => {
+                          try {
+                            const res = await createSubscriberAccessToken(agent.id);
+                            if (res?.success && res.downloadUrl) {
+                              const link = document.createElement('a');
+                              link.href = res.downloadUrl;
+                              link.target = '_blank';
+                              document.body.appendChild(link);
+                              link.click();
+                              setTimeout(() => document.body.removeChild(link), 100);
+                            } else {
+                              toast.error(res?.error || 'Could not generate download link');
+                            }
+                          } catch (e) {
+                            toast.error(e?.response?.data?.error || e.message || 'Failed to start download');
+                          }
+                        }}
+                      >
+                        Download (Subscriber)
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
                 
                 {agent.priceDetails && agent.priceDetails.basePrice > 0 && 
                  agent.priceDetails.discountedPrice < agent.priceDetails.basePrice && (
