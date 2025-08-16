@@ -797,12 +797,12 @@ const Agents = () => {
               </div>
 
               {/* Featured agents carousel */}
-              {featuredAgents.length > 0 && (
+              {/* {featuredAgents.length > 0 && (
                 <section className="mb-12 glass-effect section-container">
                   <h2 className="section-title">Featured Agents</h2>
                   <FeaturedAgents agents={featuredAgents} />
                 </section>
-              )}
+              )} */}
 
               {/* Results summary */}
               <div className="results-summary glass-effect mb-4 p-4 text-white" ref={resultsRef}>
