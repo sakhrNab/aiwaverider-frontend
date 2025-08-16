@@ -883,21 +883,54 @@ export const getUserLikeStatus = async (agentId) => {
 export const downloadFreeAgent = async (agentId) => {
   try {
     console.log(`[API] Downloading free agent ${agentId}`);
-    const response = await api.post(`/api/agents/${agentId}/download`);
+    
+    // Use the free-download endpoint which doesn't require authentication
+    const response = await api.post(`/api/agents/${agentId}/free-download`);
+    
+    console.log(`[API] Free agent download response:`, response.data);
     
     // Note: We don't need to call incrementAgentDownloadCount or recordAgentDownload
-    // because the /download endpoint already handles these operations server-side
+    // because the /free-download endpoint already handles these operations server-side
     
     return {
       success: true,
       downloadUrl: response.data?.downloadUrl,
+      agent: response.data?.agent,
       ...response.data
     };
   } catch (error) {
-    console.error(`Error downloading agent ${agentId}:`, error);
+    console.error(`Error downloading free agent ${agentId}:`, error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to download agent';
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 404:
+          errorMessage = 'Agent not found';
+          break;
+        case 403:
+          errorMessage = data?.message || 'This agent is not free';
+          break;
+        case 500:
+          errorMessage = 'Server error occurred while downloading';
+          break;
+        default:
+          errorMessage = data?.message || data?.error || `Download failed (${status})`;
+      }
+    } else if (error.request) {
+      errorMessage = 'Network error - please check your connection';
+    } else {
+      errorMessage = error.message || 'Download failed';
+    }
+    
     return {
       success: false,
-      error: error.message || 'Failed to download agent'
+      error: errorMessage,
+      details: error.response?.data || error.message
     };
   }
 };

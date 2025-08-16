@@ -214,32 +214,41 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
   const showToast = (type, message, options = {}) => {
     const defaultOptions = {
       position: "bottom-right",
-      autoClose: 3000,
+      autoClose: 4000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      progress: undefined,
-      icon: true
+      theme: darkMode ? "dark" : "light",
+      style: {
+        background: darkMode ? 'var(--background-card)' : '#ffffff',
+        color: darkMode ? 'var(--text-primary)' : '#333333',
+        borderRadius: '12px',
+        border: `1px solid ${darkMode ? 'var(--border-color)' : '#e2e8f0'}`,
+        boxShadow: darkMode ? 'var(--shadow-lg)' : '0 10px 25px rgba(0, 0, 0, 0.15)',
+        fontSize: '14px',
+        fontWeight: '600',
+        fontFamily: 'var(--font-family)'
+      }
     };
-    
-    const mergedOptions = { ...defaultOptions, ...options };
-    
+
+    const toastOptions = { ...defaultOptions, ...options };
+
     switch (type) {
       case 'success':
-        toast.success(message, mergedOptions);
+        toast.success(message, toastOptions);
         break;
       case 'error':
-        toast.error(message, mergedOptions);
-        break;
-      case 'info':
-        toast.info(message, mergedOptions);
+        toast.error(message, toastOptions);
         break;
       case 'warning':
-        toast.warning(message, mergedOptions);
+        toast.warning(message, toastOptions);
+        break;
+      case 'info':
+        toast.info(message, toastOptions);
         break;
       default:
-        toast(message, mergedOptions);
+        toast(message, toastOptions);
     }
   };
   
@@ -1134,16 +1143,17 @@ const AgentDetail = () => {
     return agent.deliverables || [];
   }, [agent]);
   
+  const MAX_LOAD_ATTEMPTS = 2;
+  
   // Enhanced toast configuration
   const showToast = (type, message, options = {}) => {
     const defaultOptions = {
       position: "bottom-right",
-      autoClose: 3000, // Increased from 3000 to 5000
+      autoClose: 4000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      progress: undefined,
       theme: darkMode ? "dark" : "light",
       style: {
         background: darkMode ? 'var(--background-card)' : '#ffffff',
@@ -1152,32 +1162,30 @@ const AgentDetail = () => {
         border: `1px solid ${darkMode ? 'var(--border-color)' : '#e2e8f0'}`,
         boxShadow: darkMode ? 'var(--shadow-lg)' : '0 10px 25px rgba(0, 0, 0, 0.15)',
         fontSize: '14px',
-        fontWeight: '500',
+        fontWeight: '600',
         fontFamily: 'var(--font-family)'
       }
     };
-    
-    const mergedOptions = { ...defaultOptions, ...options };
-    
+
+    const toastOptions = { ...defaultOptions, ...options };
+
     switch (type) {
       case 'success':
-        toast.success(message, mergedOptions);
+        toast.success(message, toastOptions);
         break;
       case 'error':
-        toast.error(message, mergedOptions);
-        break;
-      case 'info':
-        toast.info(message, mergedOptions);
+        toast.error(message, toastOptions);
         break;
       case 'warning':
-        toast.warning(message, mergedOptions);
+        toast.warning(message, toastOptions);
+        break;
+      case 'info':
+        toast.info(message, toastOptions);
         break;
       default:
-        toast(message, mergedOptions);
+        toast(message, toastOptions);
     }
   };
-  
-  const MAX_LOAD_ATTEMPTS = 2;
   
   // Enhanced setup realtime updates
   const setupRealtimeUpdates = (agentId, setAgentFn, setLikesFn, setDownloadFn) => {
@@ -2081,7 +2089,8 @@ const AgentDetail = () => {
               console.log('Using backend proxy for Google Storage download to avoid CORS');
               
               try {
-                const proxyUrl = `/api/agents/${agentId}/download-file`;
+                // Use the correct proxy endpoint with the file URL as a query parameter
+                const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
                 
                 const link = document.createElement('a');
                 link.href = proxyUrl;
@@ -2116,9 +2125,16 @@ const AgentDetail = () => {
                 
               } catch (proxyError) {
                 console.error('Backend proxy download failed:', proxyError);
+                
+                // Show specific error toast for proxy failure
+                showToast('error', '❌ Download failed: Server proxy error. Please try again or contact support.', {
+                  autoClose: 5000
+                });
+                
+                // Fall back to direct download
+                console.log('Falling back to direct download method');
                 throw new Error('Backend proxy download failed');
               }
-              
             } else {
               console.log('Attempting direct download for non-Google Storage URL');
               
@@ -2180,6 +2196,21 @@ const AgentDetail = () => {
           } catch (fetchError) {
             console.error('Primary download method failed:', fetchError);
             
+            // Show specific error toast for fetch failure
+            let fetchErrorMessage = '❌ Download failed';
+            
+            if (fetchError.message.includes('HTTP error')) {
+              fetchErrorMessage = '🌐 Network error: Unable to download file. Please try again.';
+            } else if (fetchError.message.includes('CORS')) {
+              fetchErrorMessage = '🔒 CORS error: Using fallback download method.';
+            } else {
+              fetchErrorMessage = `❌ Download error: ${fetchError.message}`;
+            }
+            
+            showToast('warning', fetchErrorMessage, {
+              autoClose: 5000
+            });
+            
             try {
               console.log('Using final fallback method - opening download URL');
               
@@ -2225,6 +2256,32 @@ const AgentDetail = () => {
       } else {
         const errorMessage = downloadResult.error || downloadResult.message || 'Download failed';
         console.error('Download API returned error:', errorMessage);
+        
+        // Show specific error toast based on the error type
+        let toastMessage = '❌ Download failed';
+        let toastType = 'error';
+        
+        if (errorMessage.includes('not free')) {
+          toastMessage = '💰 This agent requires purchase. Please buy it first.';
+          toastType = 'warning';
+        } else if (errorMessage.includes('not found')) {
+          toastMessage = '🔍 Agent not found. Please refresh the page and try again.';
+          toastType = 'error';
+        } else if (errorMessage.includes('Network error')) {
+          toastMessage = '🌐 Network error. Please check your connection and try again.';
+          toastType = 'error';
+        } else if (errorMessage.includes('Server error')) {
+          toastMessage = '⚡ Server error. Please try again in a few moments.';
+          toastType = 'error';
+        } else {
+          toastMessage = `❌ ${errorMessage}`;
+          toastType = 'error';
+        }
+        
+        showToast(toastType, toastMessage, {
+          autoClose: 6000
+        });
+        
         throw new Error(errorMessage);
       }
     } catch (error) {
