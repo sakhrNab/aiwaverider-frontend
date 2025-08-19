@@ -2089,12 +2089,10 @@ const AgentDetail = () => {
               console.log('Using backend proxy for Google Storage download to avoid CORS');
               
               try {
-                // Use the correct proxy endpoint with the file URL as a query parameter
-                const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
-                
-                const link = document.createElement('a');
-                link.href = proxyUrl;
-                
+                // Use the backend proxy endpoint with the file URL as a query parameter
+                const proxyUrl = `/api/agents/${agentId}/download-file?url=${encodeURIComponent(downloadUrl)}`;
+
+                // Derive a safe filename
                 const urlParts = downloadUrl.split('/');
                 let filename = urlParts[urlParts.length - 1];
                 if (filename.includes('?')) {
@@ -2103,20 +2101,26 @@ const AgentDetail = () => {
                 if (!filename || !filename.includes('.')) {
                   filename = `${agent.title || 'agent'}.json`;
                 }
-                
                 if (!filename.endsWith('.json')) {
                   filename = filename.replace(/\.[^/.]+$/, '') + '.json';
                 }
-                
-                link.download = filename;
-                link.style.display = 'none';
-                
-                document.body.appendChild(link);
-                link.click();
-                
-                setTimeout(() => {
-                  document.body.removeChild(link);
-                }, 100);
+
+                // iOS Safari has stricter rules with programmatic clicks and the download attribute.
+                // Redirecting directly is more reliable on mobile Safari.
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                if (isIOS) {
+                  window.location.href = proxyUrl;
+                } else {
+                  const link = document.createElement('a');
+                  link.href = proxyUrl;
+                  link.setAttribute('download', filename);
+                  link.style.display = 'none';
+                  document.body.appendChild(link);
+                  link.click();
+                  setTimeout(() => {
+                    document.body.removeChild(link);
+                  }, 100);
+                }
                 
                 console.log('Download initiated via backend proxy');
                 showToast('success', '📥 Download started! Check your downloads folder.', {
