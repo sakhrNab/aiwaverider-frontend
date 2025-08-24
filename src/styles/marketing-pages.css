@@ -1,0 +1,933 @@
+/* Modern glassy marketing pages with proper contrast */
+
+/* Base container styles */
+.mk-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, 
+    #667eea 0%, 
+    #764ba2 100%);
+  padding: 2rem 1rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.mk-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+  pointer-events: none;
+}
+
+[data-theme='dark'] .mk-page {
+  background: linear-gradient(135deg, 
+    #2d1b69 0%, 
+    #11065a 100%);
+}
+
+.mk-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Glass morphism cards */
+.mk-glass-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.mk-glass-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] .mk-glass-card {
+  background: rgba(17, 24, 39, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .mk-glass-card:hover {
+  background: rgba(17, 24, 39, 0.6);
+}
+
+/* Typography with high contrast */
+.mk-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+}
+
+.mk-section-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mk-text {
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.mk-muted {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+}
+
+/* Buttons */
+.mk-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.mk-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.mk-btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.mk-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Carousel for screenshots */
+.mk-carousel-container {
+  margin-top: 1.5rem;
+}
+
+.mk-carousel-main {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.mk-screenshot-large {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.mk-screenshot-placeholder {
+  aspect-ratio: 9/16;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.3s ease;
+  padding: 2rem;
+}
+
+.mk-screenshot-placeholder.large {
+  min-height: 300px;
+}
+
+.mk-screenshot-placeholder:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Carousel navigation buttons */
+.mk-carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.mk-carousel-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.mk-carousel-prev {
+  left: -25px;
+}
+
+.mk-carousel-next {
+  right: -25px;
+}
+
+/* Carousel thumbnails */
+.mk-carousel-thumbnails {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.mk-carousel-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.mk-carousel-thumb:hover,
+.mk-carousel-thumb.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.mk-thumb-views {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fbbf24;
+  margin-bottom: 0.25rem;
+}
+
+.mk-thumb-title {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.2;
+}
+
+/* Package cards */
+.mk-package-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.mk-package-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.mk-package-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.mk-package-price {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fbbf24;
+  margin-bottom: 1rem;
+}
+
+.mk-package-details {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+}
+
+/* Pricing table */
+.mk-table-container {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 0;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+
+.mk-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mk-table thead {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mk-table th {
+  padding: 1.5rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.mk-table td {
+  padding: 1.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.mk-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mk-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Stats grid with animations */
+.mk-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.mk-stat-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.mk-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.6s;
+}
+
+.mk-stat-card:hover::before {
+  left: 100%;
+}
+
+.mk-stat-card:hover {
+  transform: translateY(-8px) rotateY(5deg);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.mk-stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fbbf24;
+  display: block;
+  animation: countUp 2s ease-out;
+  position: relative;
+  z-index: 1;
+}
+
+.mk-stat-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  margin-top: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes countUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header actions */
+.mk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.mk-button-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .mk-page {
+    padding: 1rem 0.5rem;
+  }
+  
+  .mk-glass-card {
+    padding: 1.5rem;
+  }
+  
+  .mk-title {
+    font-size: 2rem;
+  }
+  
+  .mk-section-title {
+    font-size: 1.5rem;
+  }
+  
+  .mk-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .mk-carousel-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  
+  .mk-carousel-prev {
+    left: -20px;
+  }
+  
+  .mk-carousel-next {
+    right: -20px;
+  }
+  
+  .mk-carousel-thumbnails {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+}
+
+/* Print styles - Enhanced to preserve design elements */
+@media print {
+  @page { 
+    size: A4 portrait; 
+    margin: 10mm; 
+  }
+  
+  .no-print { 
+    display: none !important; 
+  }
+  
+  .mk-page {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    color: #212529 !important;
+    padding: 1rem !important;
+    min-height: auto !important;
+  }
+  
+  .mk-glass-card {
+    background: white !important;
+    color: #212529 !important;
+    border: 2px solid #6c757d !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 1.5rem !important;
+    page-break-inside: avoid;
+  }
+  
+  .mk-title {
+    color: #495057 !important;
+    text-shadow: none !important;
+    font-size: 2rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .mk-section-title {
+    color: #6c757d !important;
+    text-shadow: none !important;
+    font-size: 1.5rem !important;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+  }
+  
+  .mk-text,
+  .mk-package-details {
+    color: #495057 !important;
+  }
+  
+  .mk-package-title {
+    color: #343a40 !important;
+    text-shadow: none !important;
+  }
+  
+  .mk-package-price {
+    color: #fd7e14 !important;
+    font-weight: bold !important;
+  }
+  
+  .mk-stat-card {
+    background: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    color: #495057 !important;
+  }
+  
+  .mk-stat-number {
+    color: #fd7e14 !important;
+  }
+  
+  .mk-stat-label {
+    color: #6c757d !important;
+  }
+  
+  .mk-table {
+    border-collapse: collapse !important;
+  }
+  
+  .mk-table th,
+  .mk-table td {
+    border: 1px solid #dee2e6 !important;
+    color: #495057 !important;
+  }
+  
+  .mk-table th {
+    background: #e9ecef !important;
+    font-weight: bold !important;
+  }
+  
+  .mk-carousel-container {
+    page-break-inside: avoid;
+  }
+  
+  .mk-carousel-thumbnails {
+    display: none !important;
+  }
+  
+  .mk-carousel-btn {
+    display: none !important;
+  }
+  
+  .mk-screenshot-placeholder {
+    border: 2px solid #6c757d !important;
+    background: #f8f9fa !important;
+    color: #495057 !important;
+  }
+  
+  /* Ensure proper page breaks */
+  .mk-glass-card:nth-child(3) {
+    page-break-before: always;
+  }
+}
+
+/* New Components Styles */
+
+/* ROI Calculator */
+.mk-calculator {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2rem;
+  margin: 2rem 0;
+  backdrop-filter: blur(20px);
+}
+
+.mk-calculator-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  color: white;
+  width: 100%;
+  margin: 0.5rem 0;
+  transition: all 0.3s ease;
+}
+
+.mk-calculator-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mk-calculator-result {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-top: 1rem;
+  animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Package Comparison Matrix */
+.mk-comparison-table {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  margin: 2rem 0;
+}
+
+.mk-comparison-header {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  gap: 1rem;
+  font-weight: 600;
+}
+
+.mk-comparison-row {
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.3s ease;
+}
+
+.mk-comparison-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mk-feature-check {
+  color: #10b981;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.mk-feature-cross {
+  color: #ef4444;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+/* Testimonials */
+.mk-testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.mk-testimonial-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.mk-testimonial-card::before {
+  content: '"';
+  font-size: 4rem;
+  color: rgba(255, 255, 255, 0.2);
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  font-family: serif;
+}
+
+.mk-testimonial-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mk-testimonial-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-style: italic;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.mk-testimonial-author {
+  font-weight: 600;
+  color: white;
+}
+
+.mk-testimonial-company {
+  font-size: 0.9rem;
+  color: #fbbf24;
+}
+
+.mk-testimonial-result {
+  font-size: 0.9rem;
+  color: #10b981;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+/* Quote Wizard */
+.mk-quote-wizard {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2rem;
+  margin: 2rem 0;
+  backdrop-filter: blur(20px);
+}
+
+.mk-wizard-progress {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.mk-wizard-progress::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  z-index: 1;
+}
+
+.mk-wizard-step {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.mk-wizard-step.active {
+  background: #fbbf24;
+  border-color: #fbbf24;
+  transform: scale(1.1);
+}
+
+.mk-wizard-step.completed {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.mk-wizard-content {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mk-wizard-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+/* Feature toggles for calculator */
+.mk-feature-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mk-feature-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mk-feature-toggle.selected {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.mk-toggle-switch {
+  width: 50px;
+  height: 25px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 25px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.mk-toggle-switch.active {
+  background: #fbbf24;
+}
+
+.mk-toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 21px;
+  height: 21px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.mk-toggle-switch.active::after {
+  transform: translateX(25px);
+}
+
+/* Performance dashboard */
+.mk-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.mk-metric-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.mk-metric-card:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mk-metric-title {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.5rem;
+}
+
+.mk-metric-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fbbf24;
+  margin-bottom: 0.5rem;
+}
+
+.mk-metric-change {
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.mk-metric-change.positive {
+  color: #10b981;
+}
+
+.mk-metric-change.negative {
+  color: #ef4444;
+}
+
+/* Touch improvements */
+@media (max-width: 768px) {
+  .mk-btn-primary,
+  .mk-btn-secondary,
+  .mk-carousel-btn,
+  .mk-feature-toggle {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .mk-carousel-main {
+    touch-action: pan-x;
+  }
+  
+  .mk-comparison-header,
+  .mk-comparison-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .mk-testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Highlight text effect */
+.mk-highlight {
+  background: linear-gradient(120deg, #fbbf24 0%, #f59e0b 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+/* Pulse animation for urgent elements */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.mk-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Loading states */
+.mk-skeleton {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.1) 25%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+

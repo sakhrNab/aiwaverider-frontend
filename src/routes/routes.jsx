@@ -27,6 +27,8 @@ const CreatePost = lazy(() => import('../components/posts/CreatePost'));
 const ApiTestPage = lazy(() => import('../pages/ApiTestPage'));
 const VideosPage = lazy(() => import('../pages/VideosPage'));
 const SubscribePage = lazy(() => import('../pages/SubscribePage'));
+const MediaKitPage = lazy(() => import('../pages/MediaKitPage'));
+const PackagePricingPage = lazy(() => import('../pages/PackagePricingPage'));
 
 // Legal pages
 const TermsPage = lazy(() => import('../pages/TermsPage'));
@@ -95,6 +97,8 @@ const AppRoutes = () => {
       <Route path="/about" element={withSuspense(<About />)} />
       <Route path="/monetization-paths" element={withSuspense(<MonetizationPaths />)} />
       <Route path="/ai-obstacle-solutions" element={withSuspense(<AIObstacleSolutions />)} />
+      <Route path="/media-kit" element={withSuspense(<MediaKitPage />)} />
+      <Route path="/packages/pricing" element={withSuspense(<PackagePricingPage />)} />
       
       {/* E-commerce */}
       <Route path="/checkout" element={withSuspense(<Checkout />)} />
