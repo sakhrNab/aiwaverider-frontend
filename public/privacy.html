@@ -7,7 +7,7 @@
     <meta name="description" content="AI Waverider Privacy Policy. Learn how we collect, use, and protect your personal data when you use our AI services and digital products.">
     <meta name="keywords" content="privacy policy, data protection, AI Waverider, personal data, GDPR">
     
-    <!-- Facebook App ID - You'll need to replace this with your actual Facebook App ID -->
+    <!-- Facebook App ID -->
     <meta property="fb:app_id" content="793031433088453">
     
     <!-- Open Graph Meta Tags for Facebook -->
@@ -43,12 +43,22 @@
     <!-- Favicon -->
     <link rel="shortcut icon" href="/AIWaveriderTabIcon.png">
     
-    <!-- Redirect to React app after a brief delay to allow crawlers to read meta tags -->
+    <!-- Detect Facebook crawler and only redirect non-crawler users -->
     <script>
-        // Allow crawlers to read the page content, then redirect to React app
-        setTimeout(function() {
-            window.location.href = '/#/privacy';
-        }, 100);
+        // Check if this is Facebook's crawler
+        function isFacebookCrawler() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            return userAgent.includes('facebookexternalhit') || 
+                   userAgent.includes('facebot') ||
+                   userAgent.includes('facebookcatalog');
+        }
+        
+        // Only redirect if it's not a Facebook crawler
+        if (!isFacebookCrawler()) {
+            setTimeout(function() {
+                window.location.href = '/#/privacy';
+            }, 100);
+        }
     </script>
     
     <style>
@@ -92,16 +102,52 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .content {
+            display: none;
+        }
+        .content.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Privacy Policy</h1>
-        <div class="loading">
+        
+        <!-- Content for Facebook crawler -->
+        <div class="content" id="crawler-content">
+            <h2>AI Waverider Privacy Policy</h2>
+            <p>At AI Waverider, we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, and safeguard your data when you use our AI services and digital products.</p>
+            
+            <h3>Information We Collect</h3>
+            <p>We collect information you provide directly to us, such as when you create an account, make a purchase, or contact us for support. This may include your name, email address, payment information, and any other information you choose to provide.</p>
+            
+            <h3>How We Use Your Information</h3>
+            <p>We use the information we collect to provide, maintain, and improve our services, process transactions, send you technical notices and support messages, and communicate with you about products, services, and events.</p>
+            
+            <h3>Data Security</h3>
+            <p>We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+            
+            <h3>Your Rights</h3>
+            <p>You have the right to access, correct, or delete your personal information. You may also have the right to restrict or object to certain processing of your information.</p>
+            
+            <p><strong>Last updated:</strong> January 2025</p>
+        </div>
+        
+        <!-- Loading for regular users -->
+        <div class="loading" id="loading-content">
             <div class="spinner"></div>
             <p>Loading AI Waverider Privacy Policy...</p>
             <p><small>If you're not redirected automatically, <a href="/#/privacy" style="color: #fff; text-decoration: underline;">click here</a></small></p>
         </div>
     </div>
+    
+    <script>
+        // Show content for Facebook crawler, loading for others
+        if (isFacebookCrawler()) {
+            document.getElementById('crawler-content').classList.add('show');
+            document.getElementById('loading-content').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
