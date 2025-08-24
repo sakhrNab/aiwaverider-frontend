@@ -7,6 +7,9 @@
     <meta name="description" content="AI Waverider Terms of Service. Read our terms and conditions for using our AI services and digital products.">
     <meta name="keywords" content="terms of service, terms and conditions, AI Waverider, legal">
     
+    <!-- Facebook App ID - You'll need to replace this with your actual Facebook App ID -->
+    <meta property="fb:app_id" content="YOUR_FACEBOOK_APP_ID">
+    
     <!-- Open Graph Meta Tags for Facebook -->
     <meta property="og:title" content="Terms of Service - AI Waverider">
     <meta property="og:description" content="AI Waverider Terms of Service. Read our terms and conditions for using our AI services and digital products.">
@@ -15,14 +18,22 @@
     <meta property="og:image" content="https://www.aiwaverider.com/AIWaveriderTabIcon.png">
     <meta property="og:image:width" content="512">
     <meta property="og:image:height" content="512">
+    <meta property="og:image:alt" content="AI Waverider Terms of Service - Professional AI Solutions">
     <meta property="og:site_name" content="AI Waverider">
     <meta property="og:locale" content="en_US">
+    
+    <!-- Facebook Instant Articles Meta Tags -->
+    <meta property="ia:markup_url" content="https://www.aiwaverider.com/terms">
+    <meta property="ia:markup_url_dev" content="https://www.aiwaverider.com/terms">
+    <meta property="ia:rules_url" content="https://www.aiwaverider.com/terms">
+    <meta property="ia:rules_url_dev" content="https://www.aiwaverider.com/terms">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Terms of Service - AI Waverider">
     <meta name="twitter:description" content="AI Waverider Terms of Service. Read our terms and conditions for using our AI services and digital products.">
     <meta name="twitter:image" content="https://www.aiwaverider.com/AIWaveriderTabIcon.png">
+    <meta name="twitter:image:alt" content="AI Waverider Terms of Service - Professional AI Solutions">
     
     <!-- Additional SEO Meta Tags -->
     <meta name="robots" content="index, follow">
@@ -34,6 +45,7 @@
     
     <!-- Redirect to React app after a brief delay to allow crawlers to read meta tags -->
     <script>
+        // Allow crawlers to read the page content, then redirect to React app
         setTimeout(function() {
             window.location.href = '/#/terms';
         }, 100);
