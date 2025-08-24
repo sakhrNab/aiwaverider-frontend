@@ -40,16 +40,6 @@ const SubscriptionButton = ({ planId, onConfirmed = () => {}, disabled = false }
   const activePlanId = planId || import.meta.env.VITE_PAYPAL_SUBS_PLAN_ID;
   const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID_SANDBOX || import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test';
 
-  // Hide CTA if user already has an active subscription
-  let isSubscribed = false;
-  try {
-    isSubscribed = localStorage.getItem('subscription_status') === 'active';
-  } catch {}
-
-  if (isSubscribed) {
-    return null;
-  }
-
   if (!activePlanId) {
     return <button className="subscribe-btn" disabled>Subscription plan not configured</button>;
   }
