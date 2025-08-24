@@ -8,6 +8,7 @@ import { PostsProvider } from './contexts/PostsContext';
 import { CartProvider } from './contexts/CartContext.jsx';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
+import { HelmetProvider } from 'react-helmet-async';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -99,30 +100,32 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      <ThemeProvider>
-        <AuthProvider>
-          <PostsProvider>
-            <CartProvider>
-              <PayPalScriptProvider options={paypalOptions}>
-                <AuthCallback>
-                  {isUIVisible ? <AppContent /> : <div>Loading application...</div>}
-                </AuthCallback>
-              </PayPalScriptProvider>
-            </CartProvider>
-          </PostsProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <HelmetProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+        <ThemeProvider>
+          <AuthProvider>
+            <PostsProvider>
+              <CartProvider>
+                <PayPalScriptProvider options={paypalOptions}>
+                  <AuthCallback>
+                    {isUIVisible ? <AppContent /> : <div>Loading application...</div>}
+                  </AuthCallback>
+                </PayPalScriptProvider>
+              </CartProvider>
+            </PostsProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 };
