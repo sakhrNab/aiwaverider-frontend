@@ -2293,6 +2293,16 @@ const AgentDetail = () => {
 
                 // Use the correct proxy endpoint with the file URL as a query parameter
                 const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
+                
+                // Debug the exact URL construction
+                console.log('[URL DEBUG] Original downloadUrl:', downloadUrl);
+                console.log('[URL DEBUG] Encoded downloadUrl:', encodeURIComponent(downloadUrl));
+                console.log('[URL DEBUG] Final proxyUrl:', proxyUrl);
+                console.log('[URL DEBUG] ProxyUrl length:', proxyUrl.length);
+                
+                if (isMobileDevice()) {
+                  showMobileDebugNotification(`🔗 URL Construction:\nOriginal: ${downloadUrl.substring(0, 50)}...\nEncoded: ${encodeURIComponent(downloadUrl).substring(0, 50)}...\nFinal: ${proxyUrl.substring(0, 50)}...\nLength: ${proxyUrl.length}`, 'info');
+                }
 
                 const urlParts = downloadUrl.split('/');
                 let filename = urlParts[urlParts.length - 1];
@@ -2345,6 +2355,16 @@ const AgentDetail = () => {
                     showMobileDebugNotification(`🧪 Test endpoint: ${testResponse.status} - ${testData.message || 'No message'}`, testResponse.ok ? 'success' : 'error');
                   } catch (testError) {
                     showMobileDebugNotification(`🧪 Test endpoint failed: ${testError.message}`, 'error');
+                  }
+                  
+                  // Test the base download endpoint without parameters
+                  showMobileDebugNotification('🧪 Testing base download endpoint...', 'info');
+                  try {
+                    const baseTestUrl = `/api/agents/${agentId}/download`;
+                    const baseTestResponse = await fetch(baseTestUrl);
+                    showMobileDebugNotification(`🧪 Base endpoint: ${baseTestResponse.status} ${baseTestResponse.statusText}`, baseTestResponse.ok ? 'success' : 'error');
+                  } catch (baseTestError) {
+                    showMobileDebugNotification(`🧪 Base endpoint failed: ${baseTestError.message}`, 'error');
                   }
                   
                   // Debug the exact proxy URL being used
