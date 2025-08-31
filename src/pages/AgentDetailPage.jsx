@@ -2111,9 +2111,10 @@ const AgentDetail = () => {
               console.log('Using backend proxy for Google Storage download to avoid CORS');
               
               try {
+
                 // Use the correct proxy endpoint with the file URL as a query parameter
                 const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
-                
+
                 const urlParts = downloadUrl.split('/');
                 let filename = urlParts[urlParts.length - 1];
                 if (filename.includes('?')) {
@@ -2122,7 +2123,6 @@ const AgentDetail = () => {
                 if (!filename || !filename.includes('.')) {
                   filename = `${agent.title || 'agent'}.json`;
                 }
-                
                 if (!filename.endsWith('.json')) {
                   filename = filename.replace(/\.[^/.]+$/, '') + '.json';
                 }
