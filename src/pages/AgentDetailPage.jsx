@@ -2101,9 +2101,27 @@ const AgentDetail = () => {
           finalUrl: downloadUrl
         });
         
-        if (downloadUrl) {
+        // Mobile-specific logging
+        if (isMobileDevice()) {
+          console.log('[MOBILE] User agent:', navigator.userAgent);
+          console.log('[MOBILE] Download URL found:', !!downloadUrl);
+          console.log('[MOBILE] Download URL type:', typeof downloadUrl);
+          console.log('[MOBILE] Download URL value:', downloadUrl);
+        }
+        
+        if (downloadUrl && typeof downloadUrl === 'string' && downloadUrl.trim() !== '') {
           try {
             console.log('Download URL found:', downloadUrl);
+            
+            // Validate download URL format
+            let validUrl;
+            try {
+              validUrl = new URL(downloadUrl);
+              console.log('Download URL is valid:', validUrl.href);
+            } catch (urlError) {
+              console.error('Invalid download URL format:', downloadUrl, urlError);
+              throw new Error(`Invalid download URL format: ${downloadUrl}`);
+            }
             
             const isGoogleStorage = downloadUrl.includes('storage.googleapis.com') || downloadUrl.includes('firebasestorage.app');
             
@@ -2151,20 +2169,61 @@ const AgentDetail = () => {
                 
                 // Use a user-initiated action for mobile browsers
                 if (isMobileDevice()) {
+                  console.log('[MOBILE] Attempting download with proxy URL:', proxyUrl);
+                  console.log('[MOBILE] Link created with href:', link.href);
+                  console.log('[MOBILE] Link download attribute:', link.download);
+                  
                   // Create a timeout to ensure this is seen as user-initiated
                   setTimeout(() => {
-                    link.click();
-                    console.log('Mobile download link clicked');
-                    
-                    showToast('success', '📥 Download started! Check your downloads folder.', {
-                      autoClose: 3000
-                    });
-                    
-                    setTimeout(() => {
-                      if (document.body.contains(link)) {
-                        document.body.removeChild(link);
+                    try {
+                      console.log('[MOBILE] About to click download link');
+                      link.click();
+                      console.log('[MOBILE] Download link clicked successfully');
+                      
+                      // Check if the download actually started by monitoring the link
+                      let downloadStarted = false;
+                      const checkDownload = () => {
+                        // For mobile, we'll assume success if no error occurs within 2 seconds
+                        downloadStarted = true;
+                        console.log('[MOBILE] Download appears to have started');
+                        showToast('success', '📥 Download started! Check your downloads folder.', {
+                          autoClose: 3000
+                        });
+                      };
+                      
+                      setTimeout(checkDownload, 2000);
+                      
+                      setTimeout(() => {
+                        if (document.body.contains(link)) {
+                          document.body.removeChild(link);
+                          console.log('[MOBILE] Download link cleaned up');
+                        }
+                      }, 3000);
+                      
+                    } catch (clickError) {
+                      console.error('[MOBILE] Error clicking download link:', clickError);
+                      showToast('error', '❌ Mobile download failed. Trying alternative method...', {
+                        autoClose: 3000
+                      });
+                      
+                      // Fallback to window.open
+                      try {
+                        const downloadWindow = window.open(proxyUrl, '_blank', 'noopener,noreferrer');
+                        if (downloadWindow) {
+                          console.log('[MOBILE] Fallback window.open successful');
+                          setTimeout(() => {
+                            try {
+                              downloadWindow.close();
+                            } catch (e) {}
+                          }, 3000);
+                        }
+                      } catch (windowError) {
+                        console.error('[MOBILE] Window.open fallback failed:', windowError);
+                        showToast('error', '❌ All mobile download methods failed', {
+                          autoClose: 5000
+                        });
                       }
-                    }, 1000);
+                    }
                   }, 50);
                 } else {
                   link.click();
@@ -2334,8 +2393,14 @@ const AgentDetail = () => {
             }
           }
         } else {
-          console.warn('No download URL provided in response');
-          showToast('warning', '⚠️ Download processed but no file URL provided. Please check your email or contact support.', {
+          console.warn('No valid download URL provided in response');
+          console.warn('Download result:', downloadResult);
+          
+          if (isMobileDevice()) {
+            console.error('[MOBILE] No download URL found - this might be why mobile download is failing');
+          }
+          
+          showToast('error', '❌ No download file found. The agent might not have a file attached. Please contact support.', {
             autoClose: 8000
           });
         }
