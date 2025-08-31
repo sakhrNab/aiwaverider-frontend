@@ -2398,6 +2398,10 @@ const AgentDetail = () => {
                   } catch (fetchError) {
                     console.error('[MOBILE] Fetch+blob approach failed:', fetchError);
                     showMobileDebugNotification(`❌ Fetch+Blob Failed: ${fetchError.message}`, 'error');
+
+                    showMobileDebugNotification(`❌ Fetch+Blob Failed: ${fetchError.stack}`, 'error');
+
+                    showMobileDebugNotification(`❌ Fetch+Blob Failed: ${fetchError}`, 'error');
                     
                     // Fallback to direct link click
                     console.log('[MOBILE] Falling back to direct link click');
