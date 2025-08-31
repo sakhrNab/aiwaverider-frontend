@@ -2336,6 +2336,20 @@ const AgentDetail = () => {
                   
                   showMobileDebugNotification(`🚀 Starting Mobile Download\nProxy: ${proxyUrl.substring(0, 50)}...\nFile: ${filename}`, 'info');
                   
+                  // Test the download-test endpoint first
+                  showMobileDebugNotification('🧪 Testing download endpoint...', 'info');
+                  try {
+                    const testUrl = `/api/agents/${agentId}/download-test`;
+                    const testResponse = await fetch(testUrl);
+                    const testData = await testResponse.json();
+                    showMobileDebugNotification(`🧪 Test endpoint: ${testResponse.status} - ${testData.message || 'No message'}`, testResponse.ok ? 'success' : 'error');
+                  } catch (testError) {
+                    showMobileDebugNotification(`🧪 Test endpoint failed: ${testError.message}`, 'error');
+                  }
+                  
+                  // Debug the exact proxy URL being used
+                  showMobileDebugNotification(`🔍 Proxy URL Details:\nFull URL: ${proxyUrl}\nEncoded File URL: ${encodeURIComponent(downloadUrl)}`, 'info');
+                  
                   // For mobile, use fetch + blob approach which works better with JSON files
                   try {
                     console.log('[MOBILE] Fetching file via proxy...');
