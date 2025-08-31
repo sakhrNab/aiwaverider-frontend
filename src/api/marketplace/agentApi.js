@@ -885,7 +885,27 @@ export const downloadFreeAgent = async (agentId) => {
     console.log(`[API] Downloading free agent ${agentId}`);
     
     // Use the free-download endpoint which doesn't require authentication
-    const response = await api.post(`/api/agents/${agentId}/free-download`);
+    // Create config without auth headers for mobile compatibility
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+    
+    // If user is authenticated, optionally include auth header
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      try {
+        const token = await currentUser.getIdToken();
+        config.headers.Authorization = `Bearer ${token}`;
+        console.log(`[API] Including optional authentication for logged in user`);
+      } catch (authError) {
+        console.log(`[API] Could not get auth token, proceeding without authentication:`, authError);
+        // Continue without auth - free downloads don't require it
+      }
+    }
+    
+    const response = await api.post(`/api/agents/${agentId}/free-download`, {}, config);
     
     console.log(`[API] Free agent download response:`, response.data);
     

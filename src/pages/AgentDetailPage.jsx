@@ -21,6 +21,27 @@ import './AgentDetailPage.css';
 import n8nWorkflowImg from '../assets/n8nworkflow.png';
 import { createSubscriberAccessToken } from '../api/core/apiConfig';
 
+// Enhanced mobile detection utility
+const isMobileDevice = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const mobileKeywords = [
+    'android', 'webos', 'iphone', 'ipad', 'ipod', 'blackberry', 
+    'windows phone', 'opera mini', 'mobile', 'tablet'
+  ];
+  
+  // Check user agent for mobile keywords
+  const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword));
+  
+  // Check for touch support
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  // Check screen size (mobile/tablet typically have smaller screens)
+  const isSmallScreen = window.innerWidth <= 768;
+  
+  // Return true if any mobile indicators are present
+  return isMobileUA || (isTouchDevice && isSmallScreen);
+};
+
 // Helper function to format file size
 const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes';
@@ -2000,13 +2021,14 @@ const AgentDetail = () => {
 
   // Enhanced direct download handler
   const handleDirectDownload = async () => {
-    if (!user) {
-      showToast('info', '👋 Please sign in to download this amazing free agent!', {
-        icon: "👋",
-        autoClose: 4000
-      });
-      return;
-    }
+    // Free agents don't require authentication - removed this restriction
+    // if (!user) {
+    //   showToast('info', '👋 Please sign in to download this amazing free agent!', {
+    //     icon: "👋",
+    //     autoClose: 4000
+    //   });
+    //   return;
+    // }
     
     try {
       setLoading(true);
@@ -2089,10 +2111,10 @@ const AgentDetail = () => {
               console.log('Using backend proxy for Google Storage download to avoid CORS');
               
               try {
-                // Use the backend proxy endpoint with the file URL as a query parameter
-                const proxyUrl = `/api/agents/${agentId}/download-file?url=${encodeURIComponent(downloadUrl)}`;
 
-                // Derive a safe filename
+                // Use the correct proxy endpoint with the file URL as a query parameter
+                const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
+
                 const urlParts = downloadUrl.split('/');
                 let filename = urlParts[urlParts.length - 1];
                 if (filename.includes('?')) {
@@ -2104,28 +2126,35 @@ const AgentDetail = () => {
                 if (!filename.endsWith('.json')) {
                   filename = filename.replace(/\.[^/.]+$/, '') + '.json';
                 }
-
-                // iOS Safari has stricter rules with programmatic clicks and the download attribute.
-                // Redirecting directly is more reliable on mobile Safari.
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                if (isIOS) {
+                
+                // Mobile-friendly download approach
+                if (isMobileDevice()) {
+                  console.log('Mobile device detected, using window.location for download');
+                  // For mobile devices, use window.location which is more reliable
                   window.location.href = proxyUrl;
+                  
+                  showToast('success', '📥 Download started! Check your downloads folder.', {
+                    autoClose: 3000
+                  });
                 } else {
+                  // Desktop approach using programmatic link click
                   const link = document.createElement('a');
                   link.href = proxyUrl;
-                  link.setAttribute('download', filename);
+                  link.download = filename;
                   link.style.display = 'none';
+                  
                   document.body.appendChild(link);
                   link.click();
+                  
                   setTimeout(() => {
                     document.body.removeChild(link);
                   }, 100);
+                  
+                  console.log('Download initiated via backend proxy');
+                  showToast('success', '📥 Download started! Check your downloads folder.', {
+                    autoClose: 3000
+                  });
                 }
-                
-                console.log('Download initiated via backend proxy');
-                showToast('success', '📥 Download started! Check your downloads folder.', {
-                  autoClose: 3000
-                });
                 
               } catch (proxyError) {
                 console.error('Backend proxy download failed:', proxyError);
@@ -2218,30 +2247,39 @@ const AgentDetail = () => {
             try {
               console.log('Using final fallback method - opening download URL');
               
-              const link = document.createElement('a');
-              link.href = downloadUrl;
-              
-              const urlParts = downloadUrl.split('/');
-              let filename = urlParts[urlParts.length - 1];
-              if (filename.includes('?')) {
-                filename = filename.split('?')[0];
+              // Mobile-friendly fallback
+              if (isMobileDevice()) {
+                console.log('Mobile fallback: using window.location');
+                window.location.href = downloadUrl;
+                showToast('info', '📥 Download initiated! If it opens in a new tab, please save the file manually.', {
+                  autoClose: 8000
+                });
+              } else {
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                
+                const urlParts = downloadUrl.split('/');
+                let filename = urlParts[urlParts.length - 1];
+                if (filename.includes('?')) {
+                  filename = filename.split('?')[0];
+                }
+                if (!filename || !filename.includes('.')) {
+                  filename = `${agent.title || 'agent'}.json`;
+                }
+                
+                link.download = filename;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.style.display = 'none';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast('info', '📥 Download link opened in new tab. If the file displays instead of downloading, right-click and select "Save As..." to download manually.', {
+                  autoClose: 10000
+                });
               }
-              if (!filename || !filename.includes('.')) {
-                filename = `${agent.title || 'agent'}.json`;
-              }
-              
-              link.download = filename;
-              link.target = '_blank';
-              link.rel = 'noopener noreferrer';
-              link.style.display = 'none';
-              
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              
-              showToast('info', '📥 Download link opened in new tab. If the file displays instead of downloading, right-click and select "Save As..." to download manually.', {
-                autoClose: 10000
-              });
               
             } catch (finalError) {
               console.error('All download methods failed:', finalError);
