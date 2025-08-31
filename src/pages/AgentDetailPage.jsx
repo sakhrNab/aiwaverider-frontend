@@ -2127,33 +2127,58 @@ const AgentDetail = () => {
                   filename = filename.replace(/\.[^/.]+$/, '') + '.json';
                 }
                 
-                // Mobile-friendly download approach
+                // Universal download approach that works on both mobile and desktop
+                console.log('Creating download link for all devices');
+                
+                const link = document.createElement('a');
+                link.href = proxyUrl;
+                link.download = filename;
+                
+                // For mobile compatibility, add additional attributes
                 if (isMobileDevice()) {
-                  console.log('Mobile device detected, using window.location for download');
-                  // For mobile devices, use window.location which is more reliable
-                  window.location.href = proxyUrl;
+                  console.log('Mobile device detected, using enhanced link approach');
+                  link.target = '_blank';
+                  link.rel = 'noopener noreferrer';
+                  // Don't hide the link on mobile - some browsers need visible elements
+                  link.style.position = 'absolute';
+                  link.style.left = '-9999px';
+                  link.style.opacity = '0';
+                } else {
+                  link.style.display = 'none';
+                }
+                
+                document.body.appendChild(link);
+                
+                // Use a user-initiated action for mobile browsers
+                if (isMobileDevice()) {
+                  // Create a timeout to ensure this is seen as user-initiated
+                  setTimeout(() => {
+                    link.click();
+                    console.log('Mobile download link clicked');
+                    
+                    showToast('success', '📥 Download started! Check your downloads folder.', {
+                      autoClose: 3000
+                    });
+                    
+                    setTimeout(() => {
+                      if (document.body.contains(link)) {
+                        document.body.removeChild(link);
+                      }
+                    }, 1000);
+                  }, 50);
+                } else {
+                  link.click();
+                  console.log('Desktop download link clicked');
                   
                   showToast('success', '📥 Download started! Check your downloads folder.', {
                     autoClose: 3000
                   });
-                } else {
-                  // Desktop approach using programmatic link click
-                  const link = document.createElement('a');
-                  link.href = proxyUrl;
-                  link.download = filename;
-                  link.style.display = 'none';
-                  
-                  document.body.appendChild(link);
-                  link.click();
                   
                   setTimeout(() => {
-                    document.body.removeChild(link);
+                    if (document.body.contains(link)) {
+                      document.body.removeChild(link);
+                    }
                   }, 100);
-                  
-                  console.log('Download initiated via backend proxy');
-                  showToast('success', '📥 Download started! Check your downloads folder.', {
-                    autoClose: 3000
-                  });
                 }
                 
               } catch (proxyError) {
@@ -2249,11 +2274,30 @@ const AgentDetail = () => {
               
               // Mobile-friendly fallback
               if (isMobileDevice()) {
-                console.log('Mobile fallback: using window.location');
-                window.location.href = downloadUrl;
-                showToast('info', '📥 Download initiated! If it opens in a new tab, please save the file manually.', {
-                  autoClose: 8000
-                });
+                console.log('Mobile fallback: using window.open with _blank');
+                try {
+                  const downloadWindow = window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+                  if (downloadWindow) {
+                    showToast('info', '📥 Download opened in new tab! Save the file manually if needed.', {
+                      autoClose: 8000
+                    });
+                    // Close the window after a delay to clean up
+                    setTimeout(() => {
+                      try {
+                        downloadWindow.close();
+                      } catch (e) {
+                        // Window might already be closed by user or browser
+                      }
+                    }, 5000);
+                  } else {
+                    throw new Error('Popup blocked or failed to open');
+                  }
+                } catch (e) {
+                  console.error('Mobile window.open fallback failed:', e);
+                  showToast('warning', '⚠️ Please copy this link and paste it in a new tab: ' + downloadUrl, {
+                    autoClose: 15000
+                  });
+                }
               } else {
                 const link = document.createElement('a');
                 link.href = downloadUrl;
