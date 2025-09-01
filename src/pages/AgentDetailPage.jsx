@@ -42,156 +42,7 @@ const isMobileDevice = () => {
   return isMobileUA || (isTouchDevice && isSmallScreen);
 };
 
-// Mobile Debug Notification System
-const showMobileDebugNotification = (message, type = 'info', duration = 8000) => {
-  if (!isMobileDevice()) return;
-  
-  const debugContainer = document.getElementById('mobile-debug-container') || createMobileDebugContainer();
-  
-  const notification = document.createElement('div');
-  notification.className = `mobile-debug-notification ${type}`;
-  notification.innerHTML = `
-    <div class="debug-header">
-      <span class="debug-type">${type.toUpperCase()}</span>
-      <span class="debug-time">${new Date().toLocaleTimeString()}</span>
-    </div>
-    <div class="debug-message">${message}</div>
-    <button class="debug-close" onclick="this.parentElement.remove()">×</button>
-  `;
-  
-  debugContainer.appendChild(notification);
-  
-  // Auto-remove after duration
-  setTimeout(() => {
-    if (notification.parentElement) {
-      notification.remove();
-    }
-  }, duration);
-  
-  // Keep only last 5 notifications
-  const notifications = debugContainer.querySelectorAll('.mobile-debug-notification');
-  if (notifications.length > 5) {
-    notifications[0].remove();
-  }
-};
 
-const createMobileDebugContainer = () => {
-  const container = document.createElement('div');
-  container.id = 'mobile-debug-container';
-  container.style.cssText = `
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    width: 300px;
-    max-height: 80vh;
-    overflow-y: auto;
-    z-index: 9999;
-    background: rgba(0, 0, 0, 0.9);
-    border-radius: 8px;
-    padding: 8px;
-    font-family: monospace;
-    font-size: 12px;
-    color: white;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  `;
-  
-  document.body.appendChild(container);
-  return container;
-};
-
-// Add CSS for mobile debug notifications
-const addMobileDebugStyles = () => {
-  if (!document.getElementById('mobile-debug-styles')) {
-    const style = document.createElement('style');
-    style.id = 'mobile-debug-styles';
-    style.textContent = `
-      .mobile-debug-notification {
-        background: rgba(0, 0, 0, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 6px;
-        padding: 8px;
-        margin-bottom: 8px;
-        font-size: 11px;
-        line-height: 1.3;
-        position: relative;
-        animation: slideIn 0.3s ease-out;
-      }
-      
-      .mobile-debug-notification.info {
-        border-left: 3px solid #3498db;
-      }
-      
-      .mobile-debug-notification.success {
-        border-left: 3px solid #2ecc71;
-      }
-      
-      .mobile-debug-notification.error {
-        border-left: 3px solid #e74c3c;
-      }
-      
-      .mobile-debug-notification.warning {
-        border-left: 3px solid #f39c12;
-      }
-      
-      .debug-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 4px;
-        font-weight: bold;
-      }
-      
-      .debug-type {
-        color: #3498db;
-      }
-      
-      .debug-time {
-        color: #95a5a6;
-        font-size: 10px;
-      }
-      
-      .debug-message {
-        word-break: break-word;
-        white-space: pre-wrap;
-      }
-      
-      .debug-close {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        background: none;
-        border: none;
-        color: #95a5a6;
-        font-size: 16px;
-        cursor: pointer;
-        padding: 0;
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-};
-
-// Initialize mobile debug system
-if (isMobileDevice()) {
-  addMobileDebugStyles();
-  showMobileDebugNotification('🔧 Mobile Debug System Active', 'info', 3000);
-}
 
 // Helper function to format file size
 const formatFileSize = (bytes) => {
@@ -2252,23 +2103,7 @@ const AgentDetail = () => {
           finalUrl: downloadUrl
         });
         
-        // Mobile-specific logging and debug notifications
-        if (isMobileDevice()) {
-          console.log('[MOBILE] User agent:', navigator.userAgent);
-          console.log('[MOBILE] Download URL found:', !!downloadUrl);
-          console.log('[MOBILE] Download URL type:', typeof downloadUrl);
-          console.log('[MOBILE] Download URL value:', downloadUrl);
-          console.log('[MOBILE] Is Firebase Storage URL:', downloadUrl?.includes('firebasestorage'));
-          console.log('[MOBILE] Is JSON file:', downloadUrl?.includes('.json'));
-          
-          // Debug notifications for mobile
-          showMobileDebugNotification(`📱 Download Process Started\nUser Agent: ${navigator.userAgent.substring(0, 50)}...`, 'info');
-          showMobileDebugNotification(`🔗 Download URL: ${downloadUrl ? 'Found' : 'Missing'}`, downloadUrl ? 'success' : 'error');
-          if (downloadUrl) {
-            showMobileDebugNotification(`🌐 URL Type: ${downloadUrl.includes('firebasestorage') ? 'Firebase Storage' : 'Other'}`, 'info');
-            showMobileDebugNotification(`📄 File Type: ${downloadUrl.includes('.json') ? 'JSON' : 'Other'}`, 'info');
-          }
-        }
+
         
         if (downloadUrl && typeof downloadUrl === 'string' && downloadUrl.trim() !== '') {
           try {
@@ -2293,16 +2128,6 @@ const AgentDetail = () => {
 
                 // Use the correct proxy endpoint with the file URL as a query parameter
                 const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
-                
-                // Debug the exact URL construction
-                console.log('[URL DEBUG] Original downloadUrl:', downloadUrl);
-                console.log('[URL DEBUG] Encoded downloadUrl:', encodeURIComponent(downloadUrl));
-                console.log('[URL DEBUG] Final proxyUrl:', proxyUrl);
-                console.log('[URL DEBUG] ProxyUrl length:', proxyUrl.length);
-                
-                if (isMobileDevice()) {
-                  showMobileDebugNotification(`🔗 URL Construction:\nOriginal: ${downloadUrl.substring(0, 50)}...\nEncoded: ${encodeURIComponent(downloadUrl).substring(0, 50)}...\nFinal: ${proxyUrl.substring(0, 50)}...\nLength: ${proxyUrl.length}`, 'info');
-                }
 
                 const urlParts = downloadUrl.split('/');
                 let filename = urlParts[urlParts.length - 1];
@@ -2338,118 +2163,41 @@ const AgentDetail = () => {
                 
                 document.body.appendChild(link);
                 
-                // Special mobile handling for JSON downloads
+                // Mobile-specific handling: bypass fetch restrictions by using direct navigation
                 if (isMobileDevice()) {
-                  console.log('[MOBILE] Starting mobile-specific JSON download');
-                  console.log('[MOBILE] Proxy URL:', proxyUrl);
-                  console.log('[MOBILE] Filename:', filename);
+                  console.log('[MOBILE] Using direct navigation for mobile download');
                   
-                  showMobileDebugNotification(`🚀 Starting Mobile Download\nProxy: ${proxyUrl.substring(0, 50)}...\nFile: ${filename}`, 'info');
+                  // Clean up the link element since we won't use it
+                  document.body.removeChild(link);
                   
-                  // Test the download-test endpoint first
-                  showMobileDebugNotification('🧪 Testing download endpoint...', 'info');
+                  // Mobile browsers handle direct navigation to Firebase Storage URLs well
+                  // The file will open in a new tab where users can use "Save As" 
                   try {
-                    const testUrl = `/api/agents/${agentId}/download-test`;
-                    const testResponse = await fetch(testUrl);
-                    const testData = await testResponse.json();
-                    showMobileDebugNotification(`🧪 Test endpoint: ${testResponse.status} - ${testData.message || 'No message'}`, testResponse.ok ? 'success' : 'error');
-                  } catch (testError) {
-                    showMobileDebugNotification(`🧪 Test endpoint failed: ${testError.message}`, 'error');
-                  }
-                  
-                  // Test the base download endpoint without parameters
-                  showMobileDebugNotification('🧪 Testing base download endpoint...', 'info');
-                  try {
-                    const baseTestUrl = `/api/agents/${agentId}/download`;
-                    const baseTestResponse = await fetch(baseTestUrl);
-                    showMobileDebugNotification(`🧪 Base endpoint: ${baseTestResponse.status} ${baseTestResponse.statusText}`, baseTestResponse.ok ? 'success' : 'error');
-                  } catch (baseTestError) {
-                    showMobileDebugNotification(`🧪 Base endpoint failed: ${baseTestError.message}`, 'error');
-                  }
-                  
-                  // Debug the exact proxy URL being used
-                  showMobileDebugNotification(`🔍 Proxy URL Details:\nFull URL: ${proxyUrl}\nEncoded File URL: ${encodeURIComponent(downloadUrl)}`, 'info');
-                  
-                  // For mobile, use fetch + blob approach which works better with JSON files
-                  try {
-                    console.log('[MOBILE] Fetching file via proxy...');
-                    showMobileDebugNotification('📡 Fetching file via proxy...', 'info');
+                    window.open(downloadUrl, '_blank', 'noopener,noreferrer');
                     
-                    const response = await fetch(proxyUrl, {
-                      method: 'GET',
-                      headers: {
-                        'Accept': 'application/json, application/octet-stream, */*'
-                      }
+                    showToast('info', '📱 File opened in new tab. Use "Download" or "Save As" from your browser menu to save the file.', {
+                      autoClose: 6000
                     });
                     
-                    console.log('[MOBILE] Fetch response status:', response.status);
-                    showMobileDebugNotification(`📊 Fetch Response: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                    console.log('[MOBILE] Direct navigation completed successfully');
+                    return; // Exit early for mobile
                     
-                    if (!response.ok) {
-                      throw new Error(`Fetch failed: ${response.status}`);
+                  } catch (mobileError) {
+                    console.error('[MOBILE] Direct navigation failed:', mobileError);
+                    
+                    // Ultimate fallback: copy URL to clipboard
+                    try {
+                      navigator.clipboard.writeText(downloadUrl);
+                      showToast('warning', '📋 Download URL copied to clipboard. Paste it in your browser to download the file.', {
+                        autoClose: 8000
+                      });
+                    } catch (clipboardError) {
+                      console.error('[MOBILE] Clipboard fallback failed:', clipboardError);
+                      showToast('error', '❌ Download failed. Please try again or contact support.', {
+                        autoClose: 5000
+                      });
                     }
-                    
-                    const blob = await response.blob();
-                    console.log('[MOBILE] Blob created, size:', blob.size);
-                    showMobileDebugNotification(`📦 Blob Created: ${blob.size} bytes\nType: ${blob.type}`, 'success');
-                    
-                    // Create blob URL and download
-                    const blobUrl = URL.createObjectURL(blob);
-                    link.href = blobUrl;
-                    
-                    console.log('[MOBILE] Triggering blob download...');
-                    showMobileDebugNotification('💾 Triggering blob download...', 'info');
-                    link.click();
-                    
-                    showMobileDebugNotification('✅ Blob download triggered successfully!', 'success');
-                    
-                    // Clean up
-                    setTimeout(() => {
-                      document.body.removeChild(link);
-                      URL.revokeObjectURL(blobUrl);
-                      console.log('[MOBILE] Blob download cleanup completed');
-                      showMobileDebugNotification('🧹 Blob download cleanup completed', 'info');
-                    }, 2000);
-                    
-                    showToast('success', '📥 Download started! Check your downloads folder.', {
-                      autoClose: 3000
-                    });
-                    
-                  } catch (fetchError) {
-                    console.error('[MOBILE] Fetch+blob approach failed:', fetchError);
-                    showMobileDebugNotification(`❌ Fetch+Blob Failed: ${fetchError.message}`, 'error');
-
-                    showMobileDebugNotification(`❌ Fetch+Blob Failed: ${fetchError}`, 'error');
-                    showMobileDebugNotification(`❌ Fetch+Blob Failed: ${fetchError.stack}`, 'error');
-
-                    
-                    
-                    // Fallback to direct link click
-                    console.log('[MOBILE] Falling back to direct link click');
-                    showMobileDebugNotification('🔄 Falling back to direct link click...', 'warning');
-                    
-                    setTimeout(() => {
-                      try {
-                        link.click();
-                        console.log('[MOBILE] Direct link click completed');
-                        showMobileDebugNotification('✅ Direct link click completed', 'success');
-                        showToast('info', '📥 Download initiated. File may open in browser - use "Save As" if needed.', {
-                          autoClose: 5000
-                        });
-                      } catch (clickError) {
-                        console.error('[MOBILE] Direct link click failed:', clickError);
-                        showMobileDebugNotification(`❌ Direct link click failed: ${clickError.message}`, 'error');
-                        showToast('error', '❌ Mobile download failed. Please try from desktop.', {
-                          autoClose: 5000
-                        });
-                      }
-                      
-                      setTimeout(() => {
-                        if (document.body.contains(link)) {
-                          document.body.removeChild(link);
-                        }
-                      }, 1000);
-                    }, 100);
+                    return;
                   }
                 } else {
                   link.click();
@@ -2560,12 +2308,12 @@ const AgentDetail = () => {
               // Mobile-friendly fallback
               if (isMobileDevice()) {
                 console.log('Mobile fallback: using window.open with _blank');
-                showMobileDebugNotification('🔄 Using window.open fallback...', 'warning');
+
                 
                 try {
                   const downloadWindow = window.open(downloadUrl, '_blank', 'noopener,noreferrer');
                   if (downloadWindow) {
-                    showMobileDebugNotification('✅ Window.open successful - file opened in new tab', 'success');
+
                     showToast('info', '📥 Download opened in new tab! Save the file manually if needed.', {
                       autoClose: 8000
                     });
@@ -2573,10 +2321,10 @@ const AgentDetail = () => {
                     setTimeout(() => {
                       try {
                         downloadWindow.close();
-                        showMobileDebugNotification('🔒 Window closed automatically', 'info');
+
                       } catch (e) {
                         // Window might already be closed by user or browser
-                        showMobileDebugNotification('🔒 Window already closed by user/browser', 'info');
+
                       }
                     }, 5000);
                   } else {
@@ -2584,7 +2332,7 @@ const AgentDetail = () => {
                   }
                 } catch (e) {
                   console.error('Mobile window.open fallback failed:', e);
-                  showMobileDebugNotification(`❌ Window.open failed: ${e.message}`, 'error');
+
                   showToast('warning', '⚠️ Please copy this link and paste it in a new tab: ' + downloadUrl, {
                     autoClose: 15000
                   });
@@ -2620,8 +2368,8 @@ const AgentDetail = () => {
               console.error('All download methods failed:', finalError);
               
               if (isMobileDevice()) {
-                showMobileDebugNotification(`💥 All download methods failed: ${finalError.message}`, 'error');
-                showMobileDebugNotification(`🔗 Direct URL: ${downloadUrl}`, 'warning');
+
+
               }
               
               showToast('warning', '⚠️ Automatic download failed due to browser security. Here is the direct download link: ' + downloadUrl + ' - Please copy and paste this URL in a new tab to download the file.', {
@@ -2635,8 +2383,8 @@ const AgentDetail = () => {
           
           if (isMobileDevice()) {
             console.error('[MOBILE] No download URL found - this might be why mobile download is failing');
-            showMobileDebugNotification('❌ No download URL found in response', 'error');
-            showMobileDebugNotification(`📋 Response data: ${JSON.stringify(downloadResult, null, 2).substring(0, 200)}...`, 'warning');
+
+
           }
           
           showToast('error', '❌ No download file found. The agent might not have a file attached. Please contact support.', {
@@ -2648,8 +2396,8 @@ const AgentDetail = () => {
         console.error('Download API returned error:', errorMessage);
         
         if (isMobileDevice()) {
-          showMobileDebugNotification(`🚨 API Error: ${errorMessage}`, 'error');
-          showMobileDebugNotification(`📋 Full response: ${JSON.stringify(downloadResult, null, 2).substring(0, 200)}...`, 'warning');
+
+
         }
         
         // Show specific error toast based on the error type
@@ -2683,8 +2431,8 @@ const AgentDetail = () => {
       console.error('Error downloading free agent:', error);
       
       if (isMobileDevice()) {
-        showMobileDebugNotification(`💥 Download Process Error: ${error.message}`, 'error');
-        showMobileDebugNotification(`📋 Error stack: ${error.stack?.substring(0, 200)}...`, 'warning');
+
+
       }
       
       let userMessage = '❌ Download failed. ';
