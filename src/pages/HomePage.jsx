@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HashLoader } from 'react-spinners';
-import {FaCalendarAlt, FaArrowRight, FaRobot, FaTools, FaLightbulb, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion, FaDiscord, FaCogs, FaHandshake } from 'react-icons/fa';
+import {FaCalendarAlt, FaArrowRight, FaRobot, FaTools, FaLightbulb, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion, FaUsers, FaCogs, FaHandshake } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import '../styles/animations.css'; // Import animations
@@ -125,12 +125,12 @@ const HomePage = () => {
                 </a>
 
                 <a 
-                href="https://discord.gg/PNqBfZcm"
+                href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
               >
-                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+                <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
               </div>
               
@@ -246,12 +246,12 @@ const HomePage = () => {
                 Learn All Business Models <FaChevronRight className="ml-2" />
               </Link>
               <a 
-                href="https://discord.gg/PNqBfZcm"
+                href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
               >
-                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+                <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
             </div>
           </div>
@@ -356,12 +356,12 @@ const HomePage = () => {
                 Learn How I Solve These Obstacles <FaChevronRight className="ml-2" />
               </Link>
               <a 
-                href="https://discord.gg/PNqBfZcm"
+                href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
               >
-                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+                <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
             </div>
           </div>
@@ -448,12 +448,12 @@ const HomePage = () => {
                   START FREE Strategy Call
                 </Link>
               <a 
-                href="https://discord.gg/PNqBfZcm"
+                href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-lg font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-lg font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
               >
-                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+                <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
             </div>
           </div>
@@ -658,12 +658,12 @@ const HomePage = () => {
                   START FREE Strategy Call
                 </Link>
               <a 
-                href="https://discord.gg/PNqBfZcm"
+                href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-6 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold text-xl sm:text-2xl transition-all inline-flex items-center border-2 border-purple-400 hover:shadow-lg"
               >
-                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+                <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
             </div>
           </div>
@@ -809,12 +809,12 @@ const HomePage = () => {
                 <FaArrowRight className="ml-3" />
               </button>
               <a 
-                href="https://discord.gg/PNqBfZcm"
+                href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-full font-bold text-xl transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-full font-bold text-xl transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
               >
-                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+                <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
             </div>
           </div>
@@ -921,12 +921,12 @@ const HomePage = () => {
             </div>
             <div className="mt-4">
               <a 
-                href="https://discord.gg/PNqBfZcm"
+                href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-8 py-4 rounded-xl font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+                className={`px-8 py-4 rounded-xl font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
               >
-                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+                <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
             </div>
           </div>
@@ -958,12 +958,12 @@ const HomePage = () => {
                   <FaCalendarAlt /> Schedule Your Free Strategy Call
                 </button>
                 <a 
-                  href="https://discord.gg/PNqBfZcm"
+                  href="https://www.skool.com/ai-waverider-community-2071"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`px-8 py-5 rounded-full font-bold text-xl transition-all inline-flex items-center gap-3 ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-xl`}
+                  className={`px-8 py-5 rounded-full font-bold text-xl transition-all inline-flex items-center gap-3 ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-xl`}
                 >
-                  <FaDiscord /> JOIN COMMUNITY
+                  <FaUsers /> JOIN COMMUNITY
                 </a>
               </div>
             </div>

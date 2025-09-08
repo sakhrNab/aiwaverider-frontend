@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaHome, FaQuestion, FaUserFriends, FaCalendarAlt, FaDiscord, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHome, FaQuestion, FaUserFriends, FaCalendarAlt, FaUsers, FaBars, FaTimes } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import './FloatingNav.css'; 
@@ -138,11 +138,11 @@ const FloatingNav = ({ scrollRefs = {} }) => {
                   <span className="text-sm font-medium">Who It's For</span>
                 </button>
                 <button
-                  onClick={() => window.open('https://discord.gg/PNqBfZcm', '_blank')}
-                  className={`floating-nav-button w-full ${darkMode ? 'bg-purple-600 hover:bg-purple-700 border-purple-500 text-white' : 'bg-purple-500 hover:bg-purple-600 border-purple-400 text-white'} 
+                  onClick={() => window.open('https://www.skool.com/ai-waverider-community-2071', '_blank')}
+                  className={`floating-nav-button w-full ${darkMode ? 'bg-green-600 hover:bg-green-700 border-green-500 text-white' : 'bg-green-500 hover:bg-green-600 border-green-400 text-white'} 
                     border-2 py-2 px-3 rounded-full flex items-center justify-start transition-colors duration-200 shadow-lg hover:shadow-xl`}
                 >
-                  <FaDiscord className="mr-2" />
+                  <FaUsers className="mr-2" />
                   <span className="text-sm font-medium">Join Community</span>
                 </button>
                 <button
@@ -206,12 +206,12 @@ const FloatingNav = ({ scrollRefs = {} }) => {
               <div className={`h-6 w-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
 
               <button
-                onClick={() => window.open('https://discord.gg/PNqBfZcm', '_blank')}
-                className={`floating-nav-button ${darkMode ? 'bg-purple-600 hover:bg-purple-700 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 border-purple-400'} text-white border-2
+                onClick={() => window.open('https://www.skool.com/ai-waverider-community-2071', '_blank')}
+                className={`floating-nav-button ${darkMode ? 'bg-green-600 hover:bg-green-700 border-green-500' : 'bg-green-500 hover:bg-green-600 border-green-400'} text-white border-2
                   py-2 px-3 rounded-full flex items-center justify-center md:justify-start transition-colors duration-200 shadow-lg hover:shadow-xl`}
                 aria-label="Join Community"
               >
-                <span className={iconClass}><FaDiscord /></span>
+                <span className={iconClass}><FaUsers /></span>
                 <span className="text-sm font-medium ml-2">Join Community</span>
               </button>
 

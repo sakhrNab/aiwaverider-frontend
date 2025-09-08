@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { FaCheck, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion, FaDiscord, FaArrowRight, FaLightbulb, FaCogs, FaHandshake, FaGraduationCap, FaChartLine, FaTools } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion, FaUsers, FaArrowRight, FaLightbulb, FaCogs, FaHandshake, FaGraduationCap, FaChartLine, FaTools } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -391,12 +391,12 @@ const AIObstacleSolutionsPage = () => {
                 Start Your AI Business Journey <FaArrowRight className="ml-2" />
               </Link>
               <a 
-                href="https://discord.gg/PNqBfZcm"
+                href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500' : 'bg-purple-500 hover:bg-purple-600 text-white border-2 border-purple-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
               >
-                <FaDiscord className="mr-2" /> JOIN COMMUNITY
+                <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
             </div>
           </div>
