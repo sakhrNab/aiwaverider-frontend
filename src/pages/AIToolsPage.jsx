@@ -216,8 +216,13 @@ const AITools = () => {
     
     // Tools data from store is already filtered to exclude prompts
     toolsData.forEach(tool => {
+      // Handle both array and string formats for category
       if (tool.category) {
-        tagSet.add(tool.category);
+        if (Array.isArray(tool.category)) {
+          tool.category.forEach(cat => cat && tagSet.add(cat));
+        } else {
+          tagSet.add(tool.category);
+        }
       }
       
       if (Array.isArray(tool.tags)) {
@@ -268,12 +273,18 @@ const AITools = () => {
   const filteredTools = tools.filter((tool) => {
     const titleMatch = tool.title.toLowerCase().includes(searchTerm.toLowerCase());
     const descriptionMatch = tool.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Handle both legacy keyword and keywords array
     const keywordMatch = tool.keyword?.toLowerCase().includes(searchTerm.toLowerCase());
+    const keywordsMatch = tool.keywords && Array.isArray(tool.keywords) 
+      ? tool.keywords.some(keyword => keyword.toLowerCase().includes(searchTerm.toLowerCase()))
+      : false;
+    
     const tagMatch = selectedTag === '' || selectedTag === 'All' || 
-                    tool.category === selectedTag || 
+                    (Array.isArray(tool.category) ? tool.category.includes(selectedTag) : tool.category === selectedTag) || 
                     (tool.tags && tool.tags.includes(selectedTag));
     
-    return (titleMatch || descriptionMatch || keywordMatch) && tagMatch;
+    return (titleMatch || descriptionMatch || keywordMatch || keywordsMatch) && tagMatch;
   });
 
   // Create pagination for filtered AI tools
@@ -499,7 +510,11 @@ const AITools = () => {
                               <p className="ai-tool-description">{tool.description}</p>
                               <div className="ai-tool-tags">
                                 <span className="ai-tool-primary-tag">
-                                  {tool.category || tool.keyword || 'AI Tool'}
+                                  {Array.isArray(tool.category) && tool.category.length > 0 
+                                    ? tool.category[0] 
+                                    : tool.category || 
+                                      (tool.keywords && tool.keywords.length > 0 ? tool.keywords[0] : tool.keyword) || 
+                                      'AI Tool'}
                                 </span>
                                 {tool.tags?.slice(0, 2).map((tag, tagIndex) => (
                                   <span 

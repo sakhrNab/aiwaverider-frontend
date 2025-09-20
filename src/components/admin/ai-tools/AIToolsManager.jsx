@@ -30,14 +30,51 @@ const AIToolsManager = () => {
     'Organization'
   ];
 
+  // Available categories for tools
+  const availableCategories = [
+    'Productivity',
+    'AI Tools',
+    'Development',
+    'Design',
+    'Marketing',
+    'Content Creation',
+    'Video Editing',
+    'Audio',
+    'Automation',
+    'Education',
+    'Business',
+    'Entertainment'
+  ];
+
+  // Available keywords for tools
+  const availableKeywords = [
+    'AI',
+    'Automation',
+    'Productivity',
+    'Coding',
+    'Development',
+    'Design',
+    'Video',
+    'Audio',
+    'Marketing',
+    'Content',
+    'Free',
+    'Paid',
+    'Online',
+    'Desktop',
+    'Mobile'
+  ];
+
   // Initial empty tool form
   const emptyTool = {
     title: '',
     description: '',
     keyword: '',
+    keywords: [],
     link: '',
     image: '',
-    tags: []
+    tags: [],
+    category: []
   };
 
   // Fetch tools on component mount
@@ -78,7 +115,18 @@ const AIToolsManager = () => {
   };
 
   const handleEditTool = (tool) => {
-    setEditingTool({ ...tool });
+    // Handle backward compatibility for keyword/keywords and category
+    const processedTool = {
+      ...tool,
+      // Ensure keywords is an array
+      keywords: Array.isArray(tool.keywords) ? tool.keywords : 
+               (tool.keyword ? [tool.keyword] : []),
+      // Ensure category is an array  
+      category: Array.isArray(tool.category) ? tool.category : 
+               (tool.category ? [tool.category] : [])
+    };
+    
+    setEditingTool(processedTool);
     setImagePreview(tool.image);
     setImageFile(null);
     setIsModalOpen(true);
@@ -110,6 +158,34 @@ const AIToolsManager = () => {
     }
   };
 
+  const handleCategoryToggle = (category) => {
+    if (editingTool.category.includes(category)) {
+      setEditingTool({
+        ...editingTool,
+        category: editingTool.category.filter(c => c !== category)
+      });
+    } else {
+      setEditingTool({
+        ...editingTool,
+        category: [...editingTool.category, category]
+      });
+    }
+  };
+
+  const handleKeywordToggle = (keyword) => {
+    if (editingTool.keywords.includes(keyword)) {
+      setEditingTool({
+        ...editingTool,
+        keywords: editingTool.keywords.filter(k => k !== keyword)
+      });
+    } else {
+      setEditingTool({
+        ...editingTool,
+        keywords: [...editingTool.keywords, keyword]
+      });
+    }
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -124,7 +200,7 @@ const AIToolsManager = () => {
 
   const handleSaveTool = async () => {
     // Validate form
-    if (!editingTool.title || !editingTool.description || !editingTool.keyword || !editingTool.link) {
+    if (!editingTool.title || !editingTool.description || !editingTool.link) {
       setError('Please fill all required fields');
       return;
     }
@@ -221,7 +297,11 @@ const AIToolsManager = () => {
                   <div className="tool-content">
                     <h3>{tool.title}</h3>
                     <p className="tool-description">{tool.description}</p>
-                    <div className="tool-keyword">Keyword: {tool.keyword}</div>
+                    {/* Show legacy keyword if it exists and keywords array is empty */}
+                    {tool.keyword && (!tool.keywords || tool.keywords.length === 0) && (
+                      <div className="tool-keyword">Keyword: {tool.keyword}</div>
+                    )}
+c
                     <div className="tool-tags">
                       {tool.tags.map(tag => (
                         <span key={tag} className="tool-tag">{tag}</span>
@@ -361,6 +441,36 @@ const AIToolsManager = () => {
                         onClick={() => handleTagToggle(tag)}
                       >
                         {tag}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Categories (select one or more)</label>
+                  <div className="tags-selector">
+                    {availableCategories.map(category => (
+                      <div 
+                        key={category} 
+                        className={`tag-option ${editingTool?.category?.includes(category) ? 'selected' : ''}`}
+                        onClick={() => handleCategoryToggle(category)}
+                      >
+                        {category}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Keywords (select one or more)</label>
+                  <div className="tags-selector">
+                    {availableKeywords.map(keyword => (
+                      <div 
+                        key={keyword} 
+                        className={`tag-option ${editingTool?.keywords?.includes(keyword) ? 'selected' : ''}`}
+                        onClick={() => handleKeywordToggle(keyword)}
+                      >
+                        {keyword}
                       </div>
                     ))}
                   </div>
