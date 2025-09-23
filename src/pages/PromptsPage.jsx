@@ -132,6 +132,17 @@ const PromptsPage = () => {
     // Prevent infinite loops by removing the error handler
     img.onerror = null;
     
+    // Check if the failed image was a base64 data URL
+    if (img.src && img.src.startsWith('data:')) {
+      console.log(`Base64 image load error for ${prompt.title}, this shouldn't happen`);
+      // For base64 images, we shouldn't get errors, but if we do, try to extract from additionalHTML
+      const base64Image = getBase64ImageFromHTML(prompt.additionalHTML);
+      if (base64Image) {
+        img.src = base64Image;
+        return;
+      }
+    }
+    
     // First try the fallback specific to this prompt's category
     const promptCategory = prompt.category?.split(' ')[0];
     const fallbackIcon = iconMap[promptCategory] || iconMap["Prompt"];
@@ -213,6 +224,21 @@ const PromptsPage = () => {
     return imageUrl;
   }, []);
 
+  // Helper function to extract base64 image from additionalHTML
+  const getBase64ImageFromHTML = useCallback((additionalHTML) => {
+    if (!additionalHTML) return null;
+    
+    // Look for base64 data URLs in img src attributes
+    const imgRegex = /<img[^>]+src="(data:image\/[^"]+)"/g;
+    const match = imgRegex.exec(additionalHTML);
+    
+    if (match && match[1]) {
+      return match[1];
+    }
+    
+    return null;
+  }, []);
+
   useEffect(() => {
     // Start the prompts listener when component mounts
     startListening();
@@ -253,6 +279,12 @@ const PromptsPage = () => {
     const imageUrl = getImageUrl(prompt);
     if (imageUrl) {
       return imageUrl;
+    }
+    
+    // If no image field, try to extract base64 image from additionalHTML
+    const base64Image = getBase64ImageFromHTML(prompt.additionalHTML);
+    if (base64Image) {
+      return base64Image;
     }
     
     // Try to get an icon based on the prompt's category
