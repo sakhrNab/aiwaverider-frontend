@@ -188,6 +188,11 @@ const PromptsPage = () => {
       return null;
     }
     
+    // Check if it's a base64 data URL (don't modify these)
+    if (prompt.image.startsWith('data:')) {
+      return prompt.image;
+    }
+    
     // Check if image is a full URL or a relative path
     let imageUrl = prompt.image;
     if (imageUrl.startsWith('/')) {

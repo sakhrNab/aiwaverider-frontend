@@ -252,7 +252,7 @@ export const getFeaturedPrompts = async (limit = 10) => {
 /**
  * Create a new prompt
  * @param {Object} promptData - Data for the new prompt
- * @param {File} imageFile - Optional image file to upload
+ * @param {File|string} imageFile - Optional image file to upload or base64 data URL
  * @returns {Promise<Object>} - Created prompt data
  */
 export const createPrompt = async (promptData, imageFile = null) => {
@@ -285,8 +285,8 @@ export const createPrompt = async (promptData, imageFile = null) => {
       processedPromptData.keywords = [];
     }
     
-    // Use FormData if we have an image file
-    if (imageFile) {
+    // Use FormData if we have an image file (File object)
+    if (imageFile && imageFile instanceof File) {
       const formData = new FormData();
       
       // Add all prompt data to the form
@@ -315,8 +315,25 @@ export const createPrompt = async (promptData, imageFile = null) => {
       });
       
       return response.data?.data || response.data;
-    } else {
-      // No image file, send JSON
+    } 
+    // Use JSON if we have base64 data URL or other binary data
+    else if (imageFile && typeof imageFile === 'string' && imageFile.startsWith('data:')) {
+      console.log('[Prompts API] Sending base64 image data');
+      
+      const response = await api.post('/api/prompts', {
+        ...processedPromptData,
+        image: imageFile
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      return response.data?.data || response.data;
+    } 
+    // No image file, send JSON
+    else {
       const response = await api.post('/api/prompts', processedPromptData, {
         headers: {
           'Content-Type': 'application/json',
@@ -330,6 +347,16 @@ export const createPrompt = async (promptData, imageFile = null) => {
     console.error('Error creating prompt:', error);
     throw error;
   }
+};
+
+/**
+ * Create a new prompt with base64 image data (for workflows like n8n)
+ * @param {Object} promptData - Data for the new prompt
+ * @param {string} base64Image - Base64 data URL of the image
+ * @returns {Promise<Object>} - Created prompt data
+ */
+export const createPromptWithBase64Image = async (promptData, base64Image) => {
+  return createPrompt(promptData, base64Image);
 };
 
 /**
