@@ -36,9 +36,13 @@
 /* Updated Image Container with Text Handling */
 .prompt-image-container {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 0.75rem;
   margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
 }
 
 .prompt-image-container img {
@@ -49,6 +53,40 @@
   border-radius: 0.75rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease;
+}
+
+/* Main prompt image styling */
+.prompt-main-image {
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+  border-radius: 0.75rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: block;
+  margin: 0 auto;
+}
+
+.prompt-main-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.image-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: visible;
+  width: 100%;
 }
 
 /* Text overlay for image containers */
@@ -298,6 +336,109 @@ h3[title*="Design"] {
   height: auto;
   border-radius: 0.5rem;
   margin: 1.5rem 0;
+  display: block;
+}
+
+/* Specific styling for prompt example images */
+.rich-text-content .prompt-example-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1.5rem auto;
+  display: block;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.rich-text-content .prompt-example-image:hover {
+  transform: scale(1.02);
+}
+
+/* Ensure base64 images display properly */
+.rich-text-content img[src^="data:"] {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5rem auto;
+}
+
+/* Ensure images display at their natural size when smaller than container */
+.prompt-main-image {
+  min-width: auto;
+  min-height: auto;
+}
+
+/* Force image to maintain aspect ratio and show completely */
+.prompt-main-image[src] {
+  object-fit: contain !important;
+  object-position: center;
+}
+
+/* Image Modal Styles */
+.image-modal {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.image-modal-overlay {
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.image-modal-controls {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.image-modal-zoom-indicator {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.image-modal-instructions {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Smooth transitions for modal */
+.image-modal img {
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Hover effects for modal controls */
+.image-modal button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.image-modal button:active {
+  transform: scale(0.95);
+}
+
+/* Responsive modal controls */
+@media (max-width: 640px) {
+  .image-modal .absolute.top-4.left-4 {
+    top: 1rem;
+    left: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .image-modal .absolute.top-4.right-4 {
+    top: 1rem;
+    right: 1rem;
+  }
+  
+  .image-modal .absolute.bottom-4 {
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    transform: none;
+  }
 }
 
 .rich-text-content blockquote {
@@ -372,4 +513,110 @@ h3[title*="Design"] {
 
 .prompt-container {
   animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive design for mobile devices */
+@media (max-width: 768px) {
+  .prompt-container {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .prompt-title {
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+  }
+  
+  .prompt-description {
+    font-size: 1rem;
+  }
+  
+  .prompt-image-container {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+  }
+  
+  .prompt-image-container img {
+    max-height: 16rem;
+  }
+  
+  .prompt-main-image {
+    max-height: none;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+  }
+  
+  .image-wrapper {
+    min-height: 150px;
+    padding: 0.75rem;
+  }
+  
+  .prompt-image-container .image-text-overlay {
+    padding: 1rem;
+  }
+  
+  .prompt-image-container .image-text-overlay h1,
+  .prompt-image-container .image-text-overlay h2,
+  .prompt-image-container .image-text-overlay h3 {
+    font-size: clamp(1rem, 4vw, 1.5rem);
+  }
+  
+  .prompt-image-container .image-title {
+    font-size: clamp(1.25rem, 5vw, 2rem);
+    padding: 0.75rem;
+  }
+  
+  .rich-text-content h1 {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+  }
+  
+  .rich-text-content h2 {
+    font-size: clamp(1.25rem, 3.5vw, 1.75rem);
+  }
+  
+  .rich-text-content h3 {
+    font-size: clamp(1.125rem, 3vw, 1.5rem);
+  }
+  
+  .rich-text-content h4 {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+  }
+  
+  .rich-text-content p {
+    font-size: 1rem;
+  }
+  
+  .rich-text-content ul,
+  .rich-text-content ol {
+    margin-left: 1rem;
+  }
+  
+  .rich-text-content pre {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .rich-text-content code {
+    font-size: 0.8em;
+  }
+  
+  .rich-text-content blockquote {
+    padding-left: 0.75rem;
+    font-size: 0.95rem;
+  }
+  
+  .rich-text-content img {
+    margin: 1rem 0;
+  }
+  
+  .text-responsive {
+    font-size: clamp(0.8rem, 2.5vw, 1rem);
+  }
+  
+  .text-wrap {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+  }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaEdit, FaArrowLeft, FaSpinner, FaExclamationTriangle, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaEdit, FaArrowLeft, FaSpinner, FaExclamationTriangle, FaHeart, FaRegHeart, FaTimes, FaSearchPlus, FaSearchMinus, FaExpand, FaCompress } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchPromptById, togglePromptLike } from '../api/marketplace/promptsApi';
@@ -20,6 +20,13 @@ const PromptPage = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [likingInProgress, setLikingInProgress] = useState(false);
+  
+  // Image modal state
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [modalImageSrc, setModalImageSrc] = useState('');
+  const [modalImageAlt, setModalImageAlt] = useState('');
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const fetchPrompt = async () => {
@@ -33,6 +40,14 @@ const PromptPage = () => {
         const promptData = await fetchPromptById(id);
         
         if (promptData) {
+          console.log('📊 Prompt data received:', {
+            id: promptData.id,
+            title: promptData.title,
+            image: promptData.image,
+            hasAdditionalHTML: !!promptData.additionalHTML,
+            additionalHTMLLength: promptData.additionalHTML?.length
+          });
+          
           setPrompt(promptData);
           setLikeCount(promptData.likeCount || 0);
           
@@ -99,6 +114,75 @@ const PromptPage = () => {
       setLikingInProgress(false);
     }
   };
+
+  // Image modal functions
+  const openImageModal = (src, alt) => {
+    setModalImageSrc(src);
+    setModalImageAlt(alt);
+    setIsImageModalOpen(true);
+    setZoomLevel(1);
+    setIsFullscreen(false);
+  };
+
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+    setModalImageSrc('');
+    setModalImageAlt('');
+    setZoomLevel(1);
+    setIsFullscreen(false);
+  };
+
+  const zoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.25, 5));
+  };
+
+  const zoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.25, 0.25));
+  };
+
+  const resetZoom = () => {
+    setZoomLevel(1);
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => !prev);
+  };
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isImageModalOpen) return;
+
+      switch (e.key) {
+        case 'Escape':
+          closeImageModal();
+          break;
+        case '+':
+        case '=':
+          e.preventDefault();
+          zoomIn();
+          break;
+        case '-':
+          e.preventDefault();
+          zoomOut();
+          break;
+        case '0':
+          e.preventDefault();
+          resetZoom();
+          break;
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        default:
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isImageModalOpen]);
 
   if (loading) {
     return (
@@ -405,8 +489,46 @@ const PromptPage = () => {
               <h3 className="text-xl font-bold mb-3 text-wrap">Prompt Content</h3>
               <div 
                 className="rich-text-content text-wrap" 
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(prompt.additionalHTML) }}
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(prompt.additionalHTML, {
+                    ADD_ATTR: ['src', 'alt', 'class'],
+                    ADD_TAGS: ['img']
+                  })
+                }}
+                onLoad={() => {
+                  console.log('✅ additionalHTML rendered');
+                  // Check if images are present
+                  const images = document.querySelectorAll('.rich-text-content img');
+                  console.log('🖼️ Found images in additionalHTML:', images.length);
+                  images.forEach((img, index) => {
+                    console.log(`📷 Image ${index + 1}:`, {
+                      src: img.src.substring(0, 50) + '...',
+                      alt: img.alt,
+                      className: img.className,
+                      naturalWidth: img.naturalWidth,
+                      naturalHeight: img.naturalHeight
+                    });
+                  });
+                }}
               />
+            </div>
+          )}
+
+          {/* Main image from image field - displayed below additionalHTML */}
+          {prompt.image && (
+            <div className="prompt-image-container mb-8">
+              <h3 className="text-xl font-bold mb-4 text-wrap">Visual Example</h3>
+              <div className="image-wrapper">
+                <img 
+                  src={prompt.image} 
+                  alt={prompt.title}
+                  className="prompt-main-image cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => openImageModal(prompt.image, prompt.title)}
+                  onLoad={() => console.log('✅ Main image loaded:', prompt.image)}
+                  onError={(e) => console.log('❌ Main image failed to load:', e.target.src)}
+                  title="Click to open in full screen"
+                />
+              </div>
             </div>
           )}
 
@@ -581,6 +703,88 @@ const PromptPage = () => {
           )}
         </div>
       </div>
+
+      {/* Image Modal */}
+      {isImageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
+          <div className="relative w-full h-full flex items-center justify-center p-4">
+            {/* Close button */}
+            <button
+              onClick={closeImageModal}
+              className="absolute top-4 right-4 z-10 p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+              title="Close (Esc)"
+            >
+              <FaTimes size={24} />
+            </button>
+
+            {/* Zoom controls */}
+            <div className="absolute top-4 left-4 z-10 flex gap-2">
+              <button
+                onClick={zoomIn}
+                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+                title="Zoom In (+)"
+              >
+                <FaSearchPlus size={20} />
+              </button>
+              <button
+                onClick={zoomOut}
+                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+                title="Zoom Out (-)"
+              >
+                <FaSearchMinus size={20} />
+              </button>
+              <button
+                onClick={resetZoom}
+                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+                title="Reset Zoom (0)"
+              >
+                <span className="text-sm font-bold">1:1</span>
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+                title="Toggle Fullscreen (F)"
+              >
+                {isFullscreen ? <FaCompress size={20} /> : <FaExpand size={20} />}
+              </button>
+            </div>
+
+            {/* Zoom level indicator */}
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+              {Math.round(zoomLevel * 100)}%
+            </div>
+
+            {/* Image container */}
+            <div 
+              className={`flex items-center justify-center w-full h-full ${isFullscreen ? 'p-0' : 'p-8'}`}
+              style={{ cursor: zoomLevel > 1 ? 'grab' : 'default' }}
+            >
+              <img
+                src={modalImageSrc}
+                alt={modalImageAlt}
+                className="max-w-full max-h-full object-contain transition-transform duration-200"
+                style={{
+                  transform: `scale(${zoomLevel})`,
+                  transformOrigin: 'center',
+                  cursor: zoomLevel > 1 ? 'grab' : 'default'
+                }}
+                draggable={false}
+                onMouseDown={(e) => {
+                  if (zoomLevel > 1) {
+                    e.preventDefault();
+                  }
+                }}
+              />
+            </div>
+
+            {/* Instructions */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 bg-black bg-opacity-50 text-white px-4 py-2 rounded-full text-sm">
+              <span className="hidden sm:inline">Use + / - to zoom, 0 to reset, F for fullscreen, Esc to close</span>
+              <span className="sm:hidden">Tap to zoom, Esc to close</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
