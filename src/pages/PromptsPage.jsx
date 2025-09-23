@@ -233,6 +233,7 @@ const PromptsPage = () => {
     const match = imgRegex.exec(additionalHTML);
     
     if (match && match[1]) {
+      console.log('✅ Found base64 image in additionalHTML:', match[1].substring(0, 50) + '...');
       return match[1];
     }
     
@@ -275,18 +276,25 @@ const PromptsPage = () => {
 
   // Helper function to get the appropriate image for a prompt
   const getPromptImage = useCallback((prompt) => {
+    console.log('🔍 Getting image for prompt:', prompt.title);
+    console.log('📷 Prompt image field:', prompt.image);
+    console.log('📄 Prompt additionalHTML length:', prompt.additionalHTML?.length);
+    
     // First check if the prompt has an image URL from the database
     const imageUrl = getImageUrl(prompt);
     if (imageUrl) {
+      console.log('✅ Using image field:', imageUrl.substring(0, 50) + '...');
       return imageUrl;
     }
     
     // If no image field, try to extract base64 image from additionalHTML
     const base64Image = getBase64ImageFromHTML(prompt.additionalHTML);
     if (base64Image) {
+      console.log('✅ Using base64 image from additionalHTML');
       return base64Image;
     }
     
+    console.log('⚠️ No image found, using fallback icon');
     // Try to get an icon based on the prompt's category
     const promptCategory = prompt.category?.split(' ')[0];
     if (iconMap[promptCategory]) {
