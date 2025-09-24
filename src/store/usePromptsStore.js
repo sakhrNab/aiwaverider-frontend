@@ -32,15 +32,14 @@ const usePromptsStore = create((set, get) => ({
     createdBy: null
   },
   
-  // Categories and featured prompts
+  // Categories
   categories: [],
-  featuredPrompts: [],
   
   // Start listening for updates
   startListening: () => {
     // Don't start a new polling if one is already active
     if (get().unsubscribe) {
-      console.log('Prompts polling already active');
+      // Prompts polling already active
       return;
     }
 
@@ -59,7 +58,7 @@ const usePromptsStore = create((set, get) => ({
           lastRefreshed: cachedData.timestamp
         });
         
-        console.log(`Loaded ${cachedData.prompts.length} prompts from cache, expired: ${!isCacheValid}`);
+        // Loaded prompts from cache
         
         // Fetch if cache is expired
         if (!isCacheValid) {
@@ -84,9 +83,8 @@ const usePromptsStore = create((set, get) => ({
 
       set({ unsubscribe: () => clearInterval(intervalId) });
       
-      // Also load categories and featured prompts
+      // Also load categories
       get().fetchCategories();
-      get().fetchFeaturedPrompts();
     } catch (error) {
       console.error('Error setting up prompts polling:', error);
       set({
@@ -103,7 +101,7 @@ const usePromptsStore = create((set, get) => ({
     const unsub = get().unsubscribe;
     if (unsub) {
       unsub();
-      console.log('Prompts polling stopped');
+      // Prompts polling stopped
       set({ unsubscribe: null });
     }
   },
@@ -123,7 +121,7 @@ const usePromptsStore = create((set, get) => ({
     // Skip if recently fetched
     if (!skipCache && isLoaded && lastRefreshed && 
         (Date.now() - lastRefreshed < 300000) && prompts.length > 0) {
-      console.log('Skipping fetch, using recently loaded prompts');
+      // Skipping fetch, using recently loaded prompts
       return prompts;
     }
 
@@ -143,7 +141,7 @@ const usePromptsStore = create((set, get) => ({
             isLoading: false,
             lastRefreshed: cachedData.timestamp
           });
-          console.log('Loaded prompts from cache:', cachedData.prompts.length);
+          // Loaded prompts from cache
           return cachedData.prompts;
         }
       }
@@ -175,7 +173,7 @@ const usePromptsStore = create((set, get) => ({
 
       // Save to cache
       get().saveToCache(result.prompts, result.totalCount);
-      console.log('Fetched prompts from API:', result.prompts.length);
+      // Fetched prompts from API
       
       return result.prompts;
     } catch (error) {
@@ -198,15 +196,6 @@ const usePromptsStore = create((set, get) => ({
     }
   },
 
-  // Fetch featured prompts
-  fetchFeaturedPrompts: async (limit = 10) => {
-    try {
-      const featured = await getFeaturedPrompts(limit);
-      set({ featuredPrompts: featured });
-    } catch (error) {
-      console.error('Error fetching featured prompts:', error);
-    }
-  },
 
   // Set search query and refresh
   setSearchQuery: async (query) => {
@@ -250,7 +239,7 @@ const usePromptsStore = create((set, get) => ({
   saveToCache: (prompts, totalCount) => {
     try {
       if (!prompts || prompts.length === 0) {
-        console.log('Skipping cache update - no prompts to cache');
+        // Skipping cache update - no prompts to cache
         return;
       }
       
@@ -267,7 +256,7 @@ const usePromptsStore = create((set, get) => ({
           existingCache.prompts.length === prompts.length) {
         const cacheAge = timestamp - existingCache.timestamp;
         if (cacheAge < 5 * 60 * 1000) { // 5 minutes
-          console.log('Skipping cache update - recent cache exists');
+          // Skipping cache update - recent cache exists
           return;
         }
       }
@@ -278,7 +267,7 @@ const usePromptsStore = create((set, get) => ({
       // Also save to IndexedDB for offline support
       get().saveToIndexedDB(prompts);
       
-      console.log(`Updated prompts cache with ${prompts.length} prompts`);
+      // Updated prompts cache
     } catch (error) {
       console.error('Error saving prompts to cache:', error);
     }
@@ -288,7 +277,7 @@ const usePromptsStore = create((set, get) => ({
   saveToIndexedDB: (prompts) => {
     try {
       if (!window.indexedDB) {
-        console.log('IndexedDB not supported');
+        // IndexedDB not supported
         return;
       }
       
@@ -316,7 +305,7 @@ const usePromptsStore = create((set, get) => ({
         });
         
         transaction.oncomplete = () => {
-          console.log(`Saved ${prompts.length} prompts to IndexedDB`);
+          // Saved prompts to IndexedDB
         };
         
         transaction.onerror = (error) => {
@@ -358,7 +347,7 @@ const usePromptsStore = create((set, get) => ({
           getAllRequest.onsuccess = () => {
             const prompts = getAllRequest.result;
             if (prompts && prompts.length > 0) {
-              console.log(`Loaded ${prompts.length} prompts from IndexedDB`);
+              // Loaded prompts from IndexedDB
               resolve(prompts);
             } else {
               resolve(null);
@@ -405,7 +394,7 @@ const usePromptsStore = create((set, get) => ({
     try {
       localStorage.removeItem(CACHE_KEY);
       localStorage.removeItem(CACHE_TIMESTAMP_KEY);
-      console.log('Prompts cache cleared');
+      // Prompts cache cleared
     } catch (error) {
       console.error('Error clearing prompts cache:', error);
     }
@@ -413,7 +402,7 @@ const usePromptsStore = create((set, get) => ({
 
   // Force refresh
   forceRefresh: async () => {
-    console.log('Force refreshing prompts...');
+    // Force refreshing prompts
     get().clearCache();
     
     set({ 
@@ -423,9 +412,8 @@ const usePromptsStore = create((set, get) => ({
     
     await get().fetchPrompts(true, true);
     await get().fetchCategories();
-    await get().fetchFeaturedPrompts();
     
-    console.log('Prompts refreshed successfully');
+    // Prompts refreshed successfully
   },
 
   // Reset all filters and search
@@ -435,7 +423,6 @@ const usePromptsStore = create((set, get) => ({
       filters: {
         category: 'All',
         tags: null,
-        featured: null,
         createdBy: null
       },
       currentPage: 1

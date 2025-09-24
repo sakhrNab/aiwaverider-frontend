@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { FaExternalLinkAlt, FaSearch, FaTimes, FaSync, FaLightbulb } from 'react-icons/fa';
 import PageHeader from '../components/layout/PageHeader';
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import { createSvgDataUri } from '../utils/imageUtils';
 import { getPromptColor } from '../api/marketplace/promptsApi';
 import '../styles/animations.css'; // Import animations
 import usePromptsStore from '../store/usePromptsStore';
+import useImageCacheStore from '../store/useImageCacheStore';
 
 // Import icons
 import promptIcon from '../assets/ai-tools/prompt-icon.svg';
@@ -39,13 +40,17 @@ const iconMap = {
 };
 
 // Create a cache for images
-const imageCache = new Map();
+// Note: Image caching is now handled by the centralized imageCacheService
 
 const PromptsPage = () => {
   const { darkMode } = useTheme();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [imageCacheTimestamp, setImageCacheTimestamp] = useState(Date.now());
+  
+  // State for cached images
+  const [cachedImages, setCachedImages] = useState(new Map());
+  const lastProcessedPromptsRef = useRef(new Set());
   
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
@@ -73,6 +78,14 @@ const PromptsPage = () => {
     setPage,
     setPageSize
   } = usePromptsStore();
+
+  // Get image cache store
+  const {
+    preloadImages,
+    updateCacheStats,
+    startListening: startImageCacheListening,
+    stopListening: stopImageCacheListening
+  } = useImageCacheStore();
 
   // Helper function to ensure links have proper format
   const formatLink = (link) => {
@@ -111,13 +124,7 @@ const PromptsPage = () => {
     img.classList.remove('img-loading');
     img.classList.add('img-loaded');
     
-    // Add to cache
-    if (img.src && !img.src.startsWith('data:')) {
-      imageCache.set(img.src, {
-        timestamp: Date.now(),
-        loaded: true
-      });
-    }
+    // Note: Image caching is now handled by the centralized service
   };
   
   // Handle manual refresh
@@ -134,7 +141,7 @@ const PromptsPage = () => {
     const match = imgRegex.exec(additionalHTML);
     
     if (match && match[1]) {
-      console.log('✅ Found base64 image in additionalHTML:', match[1].substring(0, 50) + '...');
+      // Found base64 image in additionalHTML
       return match[1];
     }
     
@@ -145,18 +152,14 @@ const PromptsPage = () => {
   const handleImageError = useCallback((e, prompt) => {
     const img = e.target;
     
-    console.log(`❌ Image load error for ${prompt.title}:`, img.src);
-    
     // Prevent infinite loops by removing the error handler
     img.onerror = null;
     
     // Check if the failed image was a base64 data URL
     if (img.src && img.src.startsWith('data:')) {
-      console.log(`Base64 image load error for ${prompt.title}, this shouldn't happen`);
       // For base64 images, we shouldn't get errors, but if we do, try to extract from additionalHTML
       const base64Image = getBase64ImageFromHTML(prompt.additionalHTML);
       if (base64Image) {
-        console.log('🔄 Trying base64 image from additionalHTML');
         img.src = base64Image;
         return;
       }
@@ -165,7 +168,6 @@ const PromptsPage = () => {
     // Try to extract base64 image from additionalHTML as first fallback
     const base64Image = getBase64ImageFromHTML(prompt.additionalHTML);
     if (base64Image) {
-      console.log('🔄 Using base64 image from additionalHTML as fallback');
       img.src = base64Image;
       img.setAttribute('data-aspect', 'square');
       img.classList.remove('img-loading');
@@ -175,7 +177,6 @@ const PromptsPage = () => {
     }
     
     // Only use icon fallback as last resort
-    console.log(`⚠️ No base64 image found, using icon fallback for ${prompt.title}`);
     const promptCategory = prompt.category?.split(' ')[0];
     const fallbackIcon = iconMap[promptCategory] || iconMap["Prompt"];
     
@@ -204,85 +205,15 @@ const PromptsPage = () => {
     img.classList.remove('img-loading');
     img.classList.add('img-loaded');
     img.classList.add('square-image');
-    
-    // Mark as failed in cache to avoid repeated attempts
-    if (prompt.image) {
-      imageCache.set(prompt.image, {
-        timestamp: Date.now(),
-        loaded: false,
-        fallback: img.src
-      });
-    }
   }, [getBase64ImageFromHTML]);
 
-  // Helper function to get image URL with proper caching
-  const getImageUrl = useCallback((prompt) => {
-    console.log('🔍 Checking image URL for prompt:', prompt.title);
-    console.log('📷 Raw image field:', prompt.image);
-    console.log('📷 Image type:', typeof prompt.image);
-    console.log('📷 Image length:', prompt.image?.length);
-    
-    // More comprehensive check for invalid image values
-    if (!prompt.image || 
-        prompt.image === '/uploads/undefined' || 
-        prompt.image.includes('/undefined') || 
-        prompt.image === '' ||
-        prompt.image === 'undefined' ||
-        prompt.image === null ||
-        prompt.image === 'null') {
-      console.log('❌ Invalid image URL:', prompt.image);
-      return null;
-    }
-    
-    // Check if it's a base64 data URL (don't modify these)
-    if (prompt.image.startsWith('data:')) {
-      console.log('✅ Found base64 data URL');
-      return prompt.image;
-    }
-    
-    // Check if it's a Firebase Storage URL (these are usually valid)
-    if (prompt.image.includes('firebasestorage.googleapis.com') || 
-        prompt.image.includes('storage.googleapis.com')) {
-      console.log('✅ Found Firebase Storage URL');
-      return prompt.image;
-    }
-    
-    // Check if it's a full HTTP/HTTPS URL
-    if (prompt.image.startsWith('http://') || prompt.image.startsWith('https://')) {
-      console.log('✅ Found full HTTP URL');
-      return prompt.image;
-    }
-    
-    // Check if image is a relative path
-    let imageUrl = prompt.image;
-    if (imageUrl.startsWith('/')) {
-      // For local development, prepend the API base URL
-      const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4000';
-      imageUrl = `${apiBase}${imageUrl}`;
-      console.log('🔧 Converted relative path to full URL:', imageUrl);
-    } else {
-      // If it's not a relative path, it might be a filename or invalid
-      console.log('⚠️ Image is not a valid URL format:', prompt.image);
-      return null;
-    }
-    
-    // Check cache
-    if (imageCache.has(imageUrl)) {
-      const cacheEntry = imageCache.get(imageUrl);
-      // If cache entry is marked as failed, return the fallback
-      if (!cacheEntry.loaded && cacheEntry.fallback) {
-        console.log('⚠️ Using cached fallback for failed image');
-        return cacheEntry.fallback;
-      }
-    }
-    
-    console.log('✅ Returning image URL:', imageUrl);
-    return imageUrl;
-  }, []);
 
   useEffect(() => {
     // Start the prompts listener when component mounts
     startListening();
+    
+    // Start image cache listener
+    startImageCacheListening();
     
     // One-time cache cleanup for old fallback data
     const checkForOldCache = () => {
@@ -296,11 +227,10 @@ const PromptsPage = () => {
           );
           
           if (hasOldFallbacks) {
-            console.log('🧹 Clearing old cache with fallback images');
+            // Clearing old cache with fallback images
             localStorage.removeItem('prompts_cache');
             localStorage.removeItem('prompts_cache_timestamp');
-            // Force refresh only once to get fresh data
-            forceRefresh();
+            // Don't force refresh - let the store handle it naturally
           }
         }
       } catch (error) {
@@ -311,59 +241,32 @@ const PromptsPage = () => {
     // Check cache after a short delay to let the store initialize
     const timeoutId = setTimeout(checkForOldCache, 1000);
     
-    // Clear image cache every hour
-    const cacheInterval = setInterval(() => {
-      // Remove cache entries older than 1 hour
-      const now = Date.now();
-      imageCache.forEach((value, key) => {
-        if (now - value.timestamp > 3600000) { // 1 hour in milliseconds
-          imageCache.delete(key);
-        }
-      });
-      setImageCacheTimestamp(now);
-    }, 3600000); // Check every hour
-    
     // Clean up listener and interval when component unmounts
     return () => {
       clearTimeout(timeoutId);
-      clearInterval(cacheInterval);
       stopListening();
+      stopImageCacheListening();
     };
-  }, [startListening, stopListening, forceRefresh]);
-
-  // Handle search input changes
-  const handleSearchChange = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-  };
-
-  // Handle filter changes
-  const handleFilterChange = (filterType, value) => {
-    setFilters({ [filterType]: value });
-  };
+  }, [startListening, stopListening, startImageCacheListening, stopImageCacheListening]);
 
   // Helper function to get the appropriate image for a prompt
   const getPromptImage = useCallback((prompt) => {
-    console.log('🔍 Getting image for prompt:', prompt.title);
-    console.log('📷 Prompt image field:', prompt.image);
-    console.log('📄 Prompt additionalHTML length:', prompt.additionalHTML?.length);
+    // First check if we already have this image cached
+    const cachedImage = cachedImages.get(prompt.id);
+    if (cachedImage) {
+      return cachedImage;
+    }
     
-    // First check if the prompt has an image URL from the database (this is the output/result image)
-    const imageUrl = getImageUrl(prompt);
-    if (imageUrl) {
-      console.log('✅ Using output image field:', imageUrl.substring(0, 50) + '...');
-      return imageUrl;
+    // Check if the prompt has an image URL from the database (this is the output/result image)
+    if (prompt.image && prompt.image !== '' && prompt.image !== 'undefined' && prompt.image !== null) {
+      return prompt.image;
     }
     
     // If no image field, try to extract base64 image from additionalHTML
     const base64Image = getBase64ImageFromHTML(prompt.additionalHTML);
     if (base64Image) {
-      console.log('✅ Using base64 image from additionalHTML');
       return base64Image;
     }
-    
-    // Only use fallback if no actual image is available
-    console.log('⚠️ No actual image found, using fallback');
     
     // Try to get an icon based on the prompt's category
     const promptCategory = prompt.category?.split(' ')[0];
@@ -390,7 +293,60 @@ const PromptsPage = () => {
       textColor,
       fontSize: 24
     });
-  }, [getImageUrl, getBase64ImageFromHTML]);
+  }, [cachedImages, getBase64ImageFromHTML]);
+
+  // Effect to preload images when prompts change
+  useEffect(() => {
+    if (prompts && prompts.length > 0) {
+      // Create a set of current prompt IDs for comparison
+      const currentPromptIds = new Set(prompts.map(p => p.id));
+      
+      // Check if we have new prompts that haven't been processed
+      const hasNewPrompts = prompts.some(prompt => 
+        !lastProcessedPromptsRef.current.has(prompt.id)
+      );
+      
+      // Only process if we have new prompts
+      if (hasNewPrompts) {
+        // Update the processed prompts ref immediately
+        lastProcessedPromptsRef.current = currentPromptIds;
+        
+        // Preload images in the background (this will cache them)
+        preloadImages(prompts);
+        
+        // Update cached images state for new prompts only
+        const newCachedImages = new Map(cachedImages);
+        let hasUpdates = false;
+        
+        for (const prompt of prompts) {
+          // Only process if we don't already have this image cached
+          if (!newCachedImages.has(prompt.id) && prompt.image) {
+            const imageSrc = getPromptImage(prompt);
+            if (imageSrc) {
+              newCachedImages.set(prompt.id, imageSrc);
+              hasUpdates = true;
+            }
+          }
+        }
+        
+        // Only update state if we have new images
+        if (hasUpdates) {
+          setCachedImages(newCachedImages);
+        }
+      }
+    }
+  }, [prompts, preloadImages, cachedImages, getPromptImage]);
+
+  // Handle search input changes
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (filterType, value) => {
+    setFilters({ [filterType]: value });
+  };
 
   // Use the new loader component
   if (loading && !isLoaded) {
@@ -510,69 +466,84 @@ const PromptsPage = () => {
                 <div className="glass-effect rounded-3xl p-6 shadow-xl transform transition-transform duration-700 hover:scale-[1.01]">
                   <div className="content-grid">
                     {prompts.map((prompt, index) => {
-                      // Get valid image URL or fallback
-                      const promptImageSrc = getPromptImage(prompt);
+                      // Get cached image or use original image as fallback
+                      const cachedImage = cachedImages.get(prompt.id);
+                      const promptImageSrc = cachedImage || prompt.image || '';
                       
-                      // Debug logging for image sources
-                      console.log(`🖼️ Prompt ${index + 1}: ${prompt.title}`);
-                      console.log(`   Original image: ${prompt.image}`);
-                      console.log(`   Final image src: ${promptImageSrc}`);
-                      console.log(`   Is base64: ${promptImageSrc?.startsWith('data:')}`);
-                      console.log(`   Is Firebase: ${promptImageSrc?.includes('firebasestorage')}`);
+                      // Ensure we have a string, not a Promise
+                      const safeImageSrc = typeof promptImageSrc === 'string' ? promptImageSrc : '';
+                      
                       
                       return (
                         <div 
                           key={prompt.id || `prompt-${index}`}
                           onClick={() => navigate(`/prompts/${prompt.id}`)}
-                          className="ai-tool-card glass-effect stable-card cursor-pointer"
+                          className="group relative bg-gradient-to-br from-purple-900/80 to-purple-800/60 backdrop-blur-sm rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 border border-purple-700/30"
                         >
-                          <div className="tool-icon-container">
-                            <img 
-                              src={promptImageSrc}
+                          {/* Lightbulb Icon */}
+                          <div className="absolute top-4 right-4 z-10">
+                            <FaLightbulb className="text-yellow-400 text-lg opacity-80 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                          
+                          <div className="flex gap-4">
+                            {/* Image Container */}
+                            <div className="flex-shrink-0">
+                              <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-gradient-to-br from-purple-600/20 to-purple-500/10 border border-purple-500/30">
+                                <img 
+                                  src={safeImageSrc || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY2NjY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+'}
                               alt={prompt.title} 
-                              className="img-loading w-full h-full object-cover" 
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
                               onLoad={handleImageLoad}
                               onError={(e) => handleImageError(e, prompt)}
                               loading="lazy"
                             />
                           </div>
-                          <div className="ai-tool-content">
-                            <div className="flex justify-between items-center">
-                              <h3 className="ai-tool-title">{prompt.title}</h3>
-                              <FaLightbulb className="text-yellow-400 text-lg" />
                             </div>
-                            <p className="ai-tool-description">{prompt.description}</p>
-                            <div className="ai-tool-tags">
-                              <span className="ai-tool-primary-tag">
+                            
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-white font-semibold text-lg leading-tight mb-2 line-clamp-2 group-hover:text-purple-200 transition-colors">
+                                {prompt.title}
+                              </h3>
+                              <p className="text-purple-100/80 text-sm leading-relaxed line-clamp-2 mb-4">
+                                {prompt.description}
+                              </p>
+                              
+                              {/* Tags */}
+                              <div className="flex flex-wrap gap-2">
+                                <span className="px-3 py-1 bg-purple-700/30 text-purple-200 text-xs rounded-full border border-purple-600/40 backdrop-blur-sm">
                                 {prompt.category || 'Prompt'}
                               </span>
                               {prompt.tags?.slice(0, 2).map((tag, tagIndex) => (
                                 <span 
                                   key={tagIndex} 
-                                  className="ai-tool-secondary-tag"
+                                    className="px-3 py-1 bg-purple-700/30 text-purple-200 text-xs rounded-full border border-purple-600/40 backdrop-blur-sm hover:bg-purple-600/40 transition-colors"
                                 >
                                   {tag}
                                 </span>
                               ))}
                               {prompt.likeCount > 0 && (
-                                <span className="ai-tool-secondary-tag">
+                                  <span className="px-3 py-1 bg-purple-700/30 text-purple-200 text-xs rounded-full border border-purple-600/40 backdrop-blur-sm">
                                   ❤️ {prompt.likeCount}
                                 </span>
                               )}
                             </div>
+                              
+                              {/* Link */}
                             {prompt.link && (
-                              <div className="mt-2">
+                                <div className="mt-3">
                                 <a
                                   href={formatLink(prompt.link)}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-sm text-blue-400 hover:text-blue-300 flex items-center"
+                                    className="text-sm text-blue-400 hover:text-blue-300 flex items-center transition-colors"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   Visit Source <FaExternalLinkAlt className="ml-1 text-xs" />
                                 </a>
                               </div>
                             )}
+                            </div>
                           </div>
                         </div>
                       );

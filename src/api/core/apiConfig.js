@@ -25,14 +25,14 @@ export const refreshAgentStore = async () => {
 export const clearTokenCache = () => {
   cachedToken = null;
   tokenExpirationTime = null;
-  console.log('[API] Token cache cleared');
+  // Token cache cleared
 };
 
 // Get auth token with caching to reduce Firebase API calls
 export const getAuthToken = async () => {
   // Check for cached token that's still valid
   if (cachedToken && tokenExpirationTime && Date.now() < tokenExpirationTime) {
-    console.log('[API] Using cached token');
+    // Using cached token
     return cachedToken;
   }
 
@@ -45,7 +45,7 @@ export const getAuthToken = async () => {
     }
 
     // Get fresh token
-    console.log('[API] Getting fresh token from Firebase');
+    // Getting fresh token from Firebase
     const token = await user.getIdToken(true);
     
     // Cache token with 55 minute expiration (just under Firebase's 60 minute limit)

@@ -43,7 +43,7 @@ export const fetchPrompts = async (options = {}) => {
     const queryString = queryParams.toString();
     const url = `/api/prompts${queryString ? `?${queryString}` : ''}`;
     
-    console.log(`[Prompts API] Fetching prompts with options:`, options);
+    // Fetching prompts with options
     const response = await api.get(url);
     
     // Process the response to ensure we have valid image URLs
@@ -58,8 +58,6 @@ export const fetchPrompts = async (options = {}) => {
           processedPrompt.image === '' ||
           processedPrompt.image === 'undefined' ||
           processedPrompt.image === null) {
-        console.log('🔄 No image found for prompt:', processedPrompt.title, 'using fallback');
-        
         // Generate SVG data URI for the prompt
         const bgColor = getPromptColor(processedPrompt.title);
         const displayText = processedPrompt.title || 'Prompt';
@@ -72,8 +70,6 @@ export const fetchPrompts = async (options = {}) => {
           textColor: 'ffffff',
           fontSize: 24
         });
-      } else {
-        console.log('✅ Keeping original image for prompt:', processedPrompt.title, 'Image:', processedPrompt.image);
       }
 
       // Handle inputImage fallback if needed
@@ -157,7 +153,7 @@ export const getPromptColor = (promptTitle = '') => {
  */
 export const fetchPromptById = async (id, options = {}) => {
   try {
-    console.log(`[Prompts API] Fetching prompt with ID: ${id}`);
+    // Fetching prompt with ID
     
     const queryParams = new URLSearchParams();
     if (options.skipCache) {
@@ -178,7 +174,7 @@ export const fetchPromptById = async (id, options = {}) => {
           prompt.image === 'undefined' ||
           prompt.image === null ||
           prompt.image.includes('placeholder')) {
-        console.log('🔄 No valid image found for prompt:', prompt.title, 'using fallback');
+        // No valid image found for prompt, using fallback
         
         const bgColor = getPromptColor(prompt.title);
         const displayText = prompt.title || 'Prompt';
@@ -192,7 +188,7 @@ export const fetchPromptById = async (id, options = {}) => {
           fontSize: 24
         });
       } else {
-        console.log('✅ Keeping original image for prompt:', prompt.title, 'Image:', prompt.image);
+        // Keeping original image for prompt
       }
 
       // Handle inputImage if present
@@ -223,7 +219,7 @@ export const fetchPromptById = async (id, options = {}) => {
  */
 export const incrementPromptView = async (promptId) => {
   try {
-    console.log(`[Prompts API] Incrementing view count for prompt: ${promptId}`);
+    // Incrementing view count for prompt
     
     const response = await api.post(`/api/prompts/${promptId}/view`);
     
@@ -240,7 +236,7 @@ export const incrementPromptView = async (promptId) => {
  */
 export const getPromptCount = async () => {
   try {
-    console.log('[Prompts API] Fetching prompt count');
+    // Fetching prompt count
     const response = await api.get('/api/prompts/count');
     return response.data?.totalCount || 0;
   } catch (error) {
@@ -255,7 +251,7 @@ export const getPromptCount = async () => {
  */
 export const getPromptCategories = async () => {
   try {
-    console.log('[Prompts API] Fetching prompt categories');
+    // Fetching prompt categories
     const response = await api.get('/api/prompts/categories');
     return response.data?.data || [];
   } catch (error) {
@@ -271,7 +267,7 @@ export const getPromptCategories = async () => {
  */
 export const getFeaturedPrompts = async (limit = 10) => {
   try {
-    console.log(`[Prompts API] Fetching featured prompts (limit: ${limit})`);
+    // Fetching featured prompts
     const response = await api.get(`/api/prompts/featured?limit=${limit}`);
     
     const prompts = response.data?.prompts || [];
@@ -307,7 +303,7 @@ export const getFeaturedPrompts = async (limit = 10) => {
  */
 export const createPrompt = async (promptData, imageFile = null) => {
   try {
-    console.log('[Prompts API] Creating new prompt:', promptData);
+    // Creating new prompt
     
     // Check if user is logged in
     const user = auth.currentUser;
@@ -373,7 +369,7 @@ export const createPrompt = async (promptData, imageFile = null) => {
     } 
     // Use JSON if we have base64 data URL or other binary data
     else if (imageFile && typeof imageFile === 'string' && imageFile.startsWith('data:')) {
-      console.log('[Prompts API] Sending base64 image data');
+      // Sending base64 image data
       
       const response = await api.post('/api/prompts', {
         ...processedPromptData,
@@ -423,7 +419,7 @@ export const createPromptWithBase64Image = async (promptData, base64Image) => {
  */
 export const updatePrompt = async (id, promptData, imageFile = null) => {
   try {
-    console.log(`[Prompts API] Updating prompt ${id}:`, promptData);
+    // Updating prompt
     
     // Get current auth token
     const token = await auth.currentUser?.getIdToken(true);
@@ -494,7 +490,7 @@ export const updatePrompt = async (id, promptData, imageFile = null) => {
  */
 export const deletePrompt = async (id) => {
   try {
-    console.log(`[Prompts API] Deleting prompt ${id}`);
+    // Deleting prompt
     
     // Get current auth token
     const token = await auth.currentUser?.getIdToken(true);
@@ -529,7 +525,7 @@ export const deletePrompt = async (id) => {
  */
 export const togglePromptLike = async (id) => {
   try {
-    console.log(`[Prompts API] Toggling like for prompt ${id}`);
+    // Toggling like for prompt
     
     // Get current auth token
     const token = await auth.currentUser?.getIdToken(true);
@@ -557,7 +553,7 @@ export const togglePromptLike = async (id) => {
  */
 export const getUserLikedPrompts = async (userId) => {
   try {
-    console.log(`[Prompts API] Fetching liked prompts for user ${userId}`);
+    // Fetching liked prompts for user
     
     // Get current auth token
     const token = await auth.currentUser?.getIdToken(true);
@@ -584,7 +580,7 @@ export const getUserLikedPrompts = async (userId) => {
  */
 export const refreshPromptsCache = async () => {
   try {
-    console.log('[Prompts API] Refreshing prompts cache');
+    // Refreshing prompts cache
     
     // Get current auth token
     const token = await auth.currentUser?.getIdToken(true);
