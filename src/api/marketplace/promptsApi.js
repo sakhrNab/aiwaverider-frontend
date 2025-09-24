@@ -49,17 +49,17 @@ export const fetchPrompts = async (options = {}) => {
     // Process the response to ensure we have valid image URLs
     const prompts = response.data?.prompts || [];
     
-    // Replace external image URLs with SVG data URIs to prevent 404/403 errors
+    // Process prompts but preserve actual images
     const processedPrompts = prompts.map(prompt => {
       const processedPrompt = { ...prompt };
       
-      // Determine if we should use fallback image
-      const isExternalUrl = processedPrompt.image && (
-        processedPrompt.image.startsWith('http') && 
-        !processedPrompt.image.includes('aiwaverider.com')
-      );
-      
-      if (!processedPrompt.image || isExternalUrl) {
+      // Only use fallback if there's truly no image
+      if (!processedPrompt.image || 
+          processedPrompt.image === '' ||
+          processedPrompt.image === 'undefined' ||
+          processedPrompt.image === null) {
+        console.log('🔄 No image found for prompt:', processedPrompt.title, 'using fallback');
+        
         // Generate SVG data URI for the prompt
         const bgColor = getPromptColor(processedPrompt.title);
         const displayText = processedPrompt.title || 'Prompt';
@@ -72,6 +72,19 @@ export const fetchPrompts = async (options = {}) => {
           textColor: 'ffffff',
           fontSize: 24
         });
+      } else {
+        console.log('✅ Keeping original image for prompt:', processedPrompt.title, 'Image:', processedPrompt.image);
+      }
+
+      // Handle inputImage fallback if needed
+      if (processedPrompt.inputImage) {
+        const isInputExternalUrl = processedPrompt.inputImage.startsWith('http') && 
+          !processedPrompt.inputImage.includes('aiwaverider.com');
+        
+        if (isInputExternalUrl) {
+          // For external input images, we could generate a placeholder or keep the URL
+          // For now, we'll keep the URL as is
+        }
       }
       
       return processedPrompt;
@@ -159,8 +172,14 @@ export const fetchPromptById = async (id, options = {}) => {
     const prompt = response.data?.data || response.data;
     
     if (prompt) {
-      // Process image URL if needed
-      if (!prompt.image || prompt.image.includes('placeholder')) {
+      // Only use fallback if there's truly no image
+      if (!prompt.image || 
+          prompt.image === '' ||
+          prompt.image === 'undefined' ||
+          prompt.image === null ||
+          prompt.image.includes('placeholder')) {
+        console.log('🔄 No valid image found for prompt:', prompt.title, 'using fallback');
+        
         const bgColor = getPromptColor(prompt.title);
         const displayText = prompt.title || 'Prompt';
         
@@ -172,6 +191,19 @@ export const fetchPromptById = async (id, options = {}) => {
           textColor: 'ffffff',
           fontSize: 24
         });
+      } else {
+        console.log('✅ Keeping original image for prompt:', prompt.title, 'Image:', prompt.image);
+      }
+
+      // Handle inputImage if present
+      if (prompt.inputImage) {
+        const isInputExternalUrl = prompt.inputImage.startsWith('http') && 
+          !prompt.inputImage.includes('aiwaverider.com');
+        
+        if (isInputExternalUrl) {
+          // For external input images, we could generate a placeholder or keep the URL
+          // For now, we'll keep the URL as is
+        }
       }
       
       return prompt;
@@ -180,6 +212,24 @@ export const fetchPromptById = async (id, options = {}) => {
     throw new Error('Prompt data not found in response');
   } catch (error) {
     console.error(`Error fetching prompt ${id}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Increment prompt view count
+ * @param {string} promptId - ID of the prompt to increment views for
+ * @returns {Promise<Object>} - Response data
+ */
+export const incrementPromptView = async (promptId) => {
+  try {
+    console.log(`[Prompts API] Incrementing view count for prompt: ${promptId}`);
+    
+    const response = await api.post(`/api/prompts/${promptId}/view`);
+    
+    return response.data;
+  } catch (error) {
+    console.error(`Error incrementing view count for prompt ${promptId}:`, error);
     throw error;
   }
 };
@@ -299,6 +349,11 @@ export const createPrompt = async (promptData, imageFile = null) => {
           processedPromptData[key].forEach(keyword => {
             formData.append('keyword', keyword);
           });
+        } else if (key === 'inputImage') {
+          // Handle inputImage as base64 data URL
+          if (processedPromptData[key]) {
+            formData.append('inputImage', processedPromptData[key]);
+          }
         } else {
           formData.append(key, processedPromptData[key]);
         }

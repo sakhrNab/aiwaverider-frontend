@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FaEdit, FaArrowLeft, FaSpinner, FaExclamationTriangle, FaHeart, FaRegHeart, FaTimes, FaSearchPlus, FaSearchMinus, FaExpand, FaCompress } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { fetchPromptById, togglePromptLike } from '../api/marketplace/promptsApi';
+import { fetchPromptById, togglePromptLike, incrementPromptView } from '../api/marketplace/promptsApi';
 import './PromptPage.css';
 import PageTitle from '../components/common/PageTitle';
 import DOMPurify from 'dompurify';
@@ -20,6 +20,7 @@ const PromptPage = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [likingInProgress, setLikingInProgress] = useState(false);
+  const [viewIncremented, setViewIncremented] = useState(false);
   
   // Image modal state
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -44,8 +45,14 @@ const PromptPage = () => {
             id: promptData.id,
             title: promptData.title,
             image: promptData.image,
+            inputImage: promptData.inputImage,
             hasAdditionalHTML: !!promptData.additionalHTML,
-            additionalHTMLLength: promptData.additionalHTML?.length
+            additionalHTMLLength: promptData.additionalHTML?.length,
+            hasInputImage: !!promptData.inputImage,
+            hasResultImage: !!promptData.image,
+            createdAt: promptData.createdAt,
+            updatedAt: promptData.updatedAt,
+            viewCount: promptData.viewCount
           });
           
           setPrompt(promptData);
@@ -77,6 +84,23 @@ const PromptPage = () => {
       fetchPrompt();
     }
   }, [id, user]);
+
+  // Increment view count when prompt loads
+  useEffect(() => {
+    if (prompt && !viewIncremented) {
+      const incrementView = async () => {
+        try {
+          await incrementPromptView(prompt.id);
+          setViewIncremented(true);
+          console.log('✅ View count incremented for prompt:', prompt.id);
+        } catch (error) {
+          console.error('❌ Failed to increment view count:', error);
+        }
+      };
+      
+      incrementView();
+    }
+  }, [prompt, viewIncremented]);
 
   const handleEditClick = () => {
     navigate(`/admin/prompts/${id}`);
@@ -148,7 +172,7 @@ const PromptPage = () => {
     setIsFullscreen(prev => !prev);
   };
 
-  // Handle keyboard shortcuts
+  // Handle keyboard shortcuts and modal body scroll
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isImageModalOpen) return;
@@ -180,8 +204,18 @@ const PromptPage = () => {
       }
     };
 
+    // Prevent body scroll when modal is open
+    if (isImageModalOpen) {
+      document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
   }, [isImageModalOpen]);
 
   if (loading) {
@@ -365,10 +399,10 @@ const PromptPage = () => {
 
 
           {/* Description */}
-          <div className="mb-8">
+          {/* <div className="mb-8">
             <h3 className="text-xl font-bold mb-3 text-wrap">Description</h3>
             <p className="text-lg text-wrap leading-relaxed">{prompt.description}</p>
-          </div>
+          </div> */}
 
           {/* Keywords if available */}
           {prompt.keywords && prompt.keywords.length > 0 && (
@@ -514,21 +548,94 @@ const PromptPage = () => {
             </div>
           )}
 
-          {/* Main image from image field - displayed below additionalHTML */}
-          {prompt.image && (
-            <div className="prompt-image-container mb-8">
-              <h3 className="text-xl font-bold mb-4 text-wrap">Visual Example</h3>
-              <div className="image-wrapper">
+          {/* Image Comparison Section - Input vs Result */}
+          {(prompt.inputImage || prompt.image) && (
+            <div className="prompt-images-container mb-8">
+              <h3 className="text-xl font-bold mb-6 text-wrap">Visual Comparison</h3>
+              
+              {/* Show comparison layout only when both images exist */}
+              {prompt.inputImage && prompt.image ? (
+                <>
+                  {/* Image comparison layout */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Input Image */}
+                    <div className="image-comparison-item">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-lg font-semibold text-blue-600 dark:text-blue-400 text-wrap">Input Image</h4>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-full text-wrap">
+                          Before
+                        </span>
+                      </div>
+                      <div className="image-wrapper bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-2 border-dashed border-blue-200 dark:border-blue-700">
+                        <img 
+                          src={prompt.inputImage} 
+                          alt={`Input for ${prompt.title}`}
+                          className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
+                          onClick={() => openImageModal(prompt.inputImage, `Input for ${prompt.title}`)}
+                          onLoad={() => console.log('✅ Input image loaded:', prompt.inputImage)}
+                          onError={(e) => console.log('❌ Input image failed to load:', e.target.src)}
+                          title="Click to open in full screen"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Result Image */}
+                    <div className="image-comparison-item">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-lg font-semibold text-green-600 dark:text-green-400 text-wrap">Result Image</h4>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full text-wrap">
+                          After
+                        </span>
+                      </div>
+                      <div className="image-wrapper bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-2 border-dashed border-green-200 dark:border-green-700">
+                        <img 
+                          src={prompt.image} 
+                          alt={`Result for ${prompt.title}`}
+                          className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
+                          onClick={() => openImageModal(prompt.image, `Result for ${prompt.title}`)}
+                          onLoad={() => console.log('✅ Result image loaded:', prompt.image)}
+                          onError={(e) => console.log('❌ Result image failed to load:', e.target.src)}
+                          title="Click to open in full screen"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Comparison instructions */}
+                  <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <span className="text-blue-600 dark:text-blue-400">← Input</span>
+                      <span className="text-gray-400">|</span>
+                      <span className="text-gray-500 dark:text-gray-400">Compare the transformation</span>
+                      <span className="text-gray-400">|</span>
+                      <span className="text-green-600 dark:text-green-400">Result →</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Single image fallback - only show when there's no input image */
+                !prompt.inputImage && prompt.image && (
+                  <div className="image-comparison-item">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-lg font-semibold text-gray-600 dark:text-gray-400 text-wrap">Visual Example</h4>
+                      <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full text-wrap">
+                        Result
+                      </span>
+                    </div>
+                    <div className="image-wrapper bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-2 border-dashed border-gray-200 dark:border-gray-600">
                 <img 
                   src={prompt.image} 
                   alt={prompt.title}
-                  className="prompt-main-image cursor-pointer hover:opacity-90 transition-opacity"
+                        className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
                   onClick={() => openImageModal(prompt.image, prompt.title)}
                   onLoad={() => console.log('✅ Main image loaded:', prompt.image)}
                   onError={(e) => console.log('❌ Main image failed to load:', e.target.src)}
                   title="Click to open in full screen"
                 />
               </div>
+                  </div>
+                )
+              )}
             </div>
           )}
 
@@ -656,28 +763,83 @@ const PromptPage = () => {
           )}
 
           {/* Prompt metadata */}
-          {(prompt.createdAt || prompt.updatedAt || prompt.viewCount || prompt.downloadCount || prompt.version) && (
+          {(prompt.createdAt || prompt.updatedAt || prompt.viewCount || prompt.version) && (
             <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-bold mb-3 text-wrap">Prompt Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
                 {prompt.createdAt && (
                   <div className="text-wrap">
-                    <strong>Created:</strong> {new Date(prompt.createdAt.seconds ? prompt.createdAt.seconds * 1000 : prompt.createdAt).toLocaleDateString()}
+                    <strong>Created:</strong> {(() => {
+                      try {
+                        console.log('🔍 Parsing createdAt:', prompt.createdAt, typeof prompt.createdAt);
+                        
+                        // Handle Firestore Timestamp objects
+                        let date;
+                        if (prompt.createdAt.toDate && typeof prompt.createdAt.toDate === 'function') {
+                          // Firestore Timestamp object
+                          console.log('📅 Using toDate() method');
+                          date = prompt.createdAt.toDate();
+                        } else if (prompt.createdAt.seconds) {
+                          // Timestamp with seconds property
+                          console.log('📅 Using seconds property:', prompt.createdAt.seconds);
+                          date = new Date(prompt.createdAt.seconds * 1000);
+                        } else if (prompt.createdAt._seconds) {
+                          // Alternative timestamp format
+                          console.log('📅 Using _seconds property:', prompt.createdAt._seconds);
+                          date = new Date(prompt.createdAt._seconds * 1000);
+                        } else {
+                          // Regular date string or number
+                          console.log('📅 Using direct date conversion');
+                          date = new Date(prompt.createdAt);
+                        }
+                        
+                        console.log('📅 Parsed date:', date, 'isValid:', !isNaN(date.getTime()));
+                        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
+                      } catch (e) {
+                        console.error('Error parsing createdAt:', e);
+                        return 'N/A';
+                      }
+                    })()}
                   </div>
                 )}
                 {prompt.updatedAt && (
                   <div className="text-wrap">
-                    <strong>Updated:</strong> {new Date(prompt.updatedAt.seconds ? prompt.updatedAt.seconds * 1000 : prompt.updatedAt).toLocaleDateString()}
+                    <strong>Updated:</strong> {(() => {
+                      try {
+                        console.log('🔍 Parsing updatedAt:', prompt.updatedAt, typeof prompt.updatedAt);
+                        
+                        // Handle Firestore Timestamp objects
+                        let date;
+                        if (prompt.updatedAt.toDate && typeof prompt.updatedAt.toDate === 'function') {
+                          // Firestore Timestamp object
+                          console.log('📅 Using toDate() method for updatedAt');
+                          date = prompt.updatedAt.toDate();
+                        } else if (prompt.updatedAt.seconds) {
+                          // Timestamp with seconds property
+                          console.log('📅 Using seconds property for updatedAt:', prompt.updatedAt.seconds);
+                          date = new Date(prompt.updatedAt.seconds * 1000);
+                        } else if (prompt.updatedAt._seconds) {
+                          // Alternative timestamp format
+                          console.log('📅 Using _seconds property for updatedAt:', prompt.updatedAt._seconds);
+                          date = new Date(prompt.updatedAt._seconds * 1000);
+                        } else {
+                          // Regular date string or number
+                          console.log('📅 Using direct date conversion for updatedAt');
+                          date = new Date(prompt.updatedAt);
+                        }
+                        
+                        console.log('📅 Parsed updatedAt date:', date, 'isValid:', !isNaN(date.getTime()));
+                        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
+                      } catch (e) {
+                        console.error('Error parsing updatedAt:', e);
+                        return 'N/A';
+                      }
+                    })()}
                   </div>
                 )}
                 {prompt.viewCount !== undefined && (
                   <div className="text-wrap">
                     <strong>Views:</strong> {prompt.viewCount.toLocaleString()}
-                  </div>
-                )}
-                {prompt.downloadCount !== undefined && (
-                  <div className="text-wrap">
-                    <strong>Downloads:</strong> {prompt.downloadCount.toLocaleString()}
                   </div>
                 )}
                 {prompt.version && (
@@ -706,7 +868,20 @@ const PromptPage = () => {
 
       {/* Image Modal */}
       {isImageModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90" 
+          style={{ 
+            position: 'fixed',
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
           <div className="relative w-full h-full flex items-center justify-center p-4">
             {/* Close button */}
             <button

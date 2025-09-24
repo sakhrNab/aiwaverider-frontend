@@ -125,9 +125,27 @@ const PromptsPage = () => {
     forceRefresh();
   };
 
+  // Helper function to extract base64 image from additionalHTML
+  const getBase64ImageFromHTML = useCallback((additionalHTML) => {
+    if (!additionalHTML) return null;
+    
+    // Look for base64 data URLs in img src attributes
+    const imgRegex = /<img[^>]+src="(data:image\/[^"]+)"/g;
+    const match = imgRegex.exec(additionalHTML);
+    
+    if (match && match[1]) {
+      console.log('✅ Found base64 image in additionalHTML:', match[1].substring(0, 50) + '...');
+      return match[1];
+    }
+    
+    return null;
+  }, []);
+
   // Handle image error with better fallback strategy
   const handleImageError = useCallback((e, prompt) => {
     const img = e.target;
+    
+    console.log(`❌ Image load error for ${prompt.title}:`, img.src);
     
     // Prevent infinite loops by removing the error handler
     img.onerror = null;
@@ -138,32 +156,40 @@ const PromptsPage = () => {
       // For base64 images, we shouldn't get errors, but if we do, try to extract from additionalHTML
       const base64Image = getBase64ImageFromHTML(prompt.additionalHTML);
       if (base64Image) {
+        console.log('🔄 Trying base64 image from additionalHTML');
         img.src = base64Image;
         return;
       }
     }
     
-    // First try the fallback specific to this prompt's category
+    // Try to extract base64 image from additionalHTML as first fallback
+    const base64Image = getBase64ImageFromHTML(prompt.additionalHTML);
+    if (base64Image) {
+      console.log('🔄 Using base64 image from additionalHTML as fallback');
+      img.src = base64Image;
+      img.setAttribute('data-aspect', 'square');
+      img.classList.remove('img-loading');
+      img.classList.add('img-loaded');
+      img.classList.add('square-image');
+      return;
+    }
+    
+    // Only use icon fallback as last resort
+    console.log(`⚠️ No base64 image found, using icon fallback for ${prompt.title}`);
     const promptCategory = prompt.category?.split(' ')[0];
     const fallbackIcon = iconMap[promptCategory] || iconMap["Prompt"];
     
     if (fallbackIcon) {
-      console.log(`Image load error for ${prompt.title}, using icon fallback`);
       img.src = fallbackIcon;
     } else {
       // Generate SVG fallback if no icon is available
-      console.log(`Image load error for ${prompt.title}, generating SVG fallback`);
-      
-      // Get the appropriate color based on the prompt title/category
       const bgColor = getPromptColor(prompt.title);
-      const textColor = 'ffffff'; // Default white
+      const textColor = 'ffffff';
       
-      // Get text to display (use the full name if it fits, otherwise first word or initial)
       const displayText = prompt.title ? 
         (prompt.title.length > 15 ? prompt.title.split(' ')[0] : prompt.title) : 
         'Prompt';
       
-      // Use the utility function to create the SVG data URI
       img.src = createSvgDataUri({
         text: displayText,
         width: 300,
@@ -187,29 +213,57 @@ const PromptsPage = () => {
         fallback: img.src
       });
     }
-  }, []);
+  }, [getBase64ImageFromHTML]);
 
   // Helper function to get image URL with proper caching
   const getImageUrl = useCallback((prompt) => {
+    console.log('🔍 Checking image URL for prompt:', prompt.title);
+    console.log('📷 Raw image field:', prompt.image);
+    console.log('📷 Image type:', typeof prompt.image);
+    console.log('📷 Image length:', prompt.image?.length);
+    
     // More comprehensive check for invalid image values
     if (!prompt.image || 
         prompt.image === '/uploads/undefined' || 
         prompt.image.includes('/undefined') || 
-        prompt.image === '') {
+        prompt.image === '' ||
+        prompt.image === 'undefined' ||
+        prompt.image === null ||
+        prompt.image === 'null') {
+      console.log('❌ Invalid image URL:', prompt.image);
       return null;
     }
     
     // Check if it's a base64 data URL (don't modify these)
     if (prompt.image.startsWith('data:')) {
+      console.log('✅ Found base64 data URL');
       return prompt.image;
     }
     
-    // Check if image is a full URL or a relative path
+    // Check if it's a Firebase Storage URL (these are usually valid)
+    if (prompt.image.includes('firebasestorage.googleapis.com') || 
+        prompt.image.includes('storage.googleapis.com')) {
+      console.log('✅ Found Firebase Storage URL');
+      return prompt.image;
+    }
+    
+    // Check if it's a full HTTP/HTTPS URL
+    if (prompt.image.startsWith('http://') || prompt.image.startsWith('https://')) {
+      console.log('✅ Found full HTTP URL');
+      return prompt.image;
+    }
+    
+    // Check if image is a relative path
     let imageUrl = prompt.image;
     if (imageUrl.startsWith('/')) {
       // For local development, prepend the API base URL
       const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4000';
       imageUrl = `${apiBase}${imageUrl}`;
+      console.log('🔧 Converted relative path to full URL:', imageUrl);
+    } else {
+      // If it's not a relative path, it might be a filename or invalid
+      console.log('⚠️ Image is not a valid URL format:', prompt.image);
+      return null;
     }
     
     // Check cache
@@ -217,32 +271,45 @@ const PromptsPage = () => {
       const cacheEntry = imageCache.get(imageUrl);
       // If cache entry is marked as failed, return the fallback
       if (!cacheEntry.loaded && cacheEntry.fallback) {
+        console.log('⚠️ Using cached fallback for failed image');
         return cacheEntry.fallback;
       }
     }
     
+    console.log('✅ Returning image URL:', imageUrl);
     return imageUrl;
-  }, []);
-
-  // Helper function to extract base64 image from additionalHTML
-  const getBase64ImageFromHTML = useCallback((additionalHTML) => {
-    if (!additionalHTML) return null;
-    
-    // Look for base64 data URLs in img src attributes
-    const imgRegex = /<img[^>]+src="(data:image\/[^"]+)"/g;
-    const match = imgRegex.exec(additionalHTML);
-    
-    if (match && match[1]) {
-      console.log('✅ Found base64 image in additionalHTML:', match[1].substring(0, 50) + '...');
-      return match[1];
-    }
-    
-    return null;
   }, []);
 
   useEffect(() => {
     // Start the prompts listener when component mounts
     startListening();
+    
+    // One-time cache cleanup for old fallback data
+    const checkForOldCache = () => {
+      try {
+        const cachedData = localStorage.getItem('prompts_cache');
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          // Check if cached data has old fallback images (SVG data URIs)
+          const hasOldFallbacks = parsed.prompts?.some(prompt => 
+            prompt.image && prompt.image.startsWith('data:image/svg+xml')
+          );
+          
+          if (hasOldFallbacks) {
+            console.log('🧹 Clearing old cache with fallback images');
+            localStorage.removeItem('prompts_cache');
+            localStorage.removeItem('prompts_cache_timestamp');
+            // Force refresh only once to get fresh data
+            forceRefresh();
+          }
+        }
+      } catch (error) {
+        console.error('Error checking cache:', error);
+      }
+    };
+    
+    // Check cache after a short delay to let the store initialize
+    const timeoutId = setTimeout(checkForOldCache, 1000);
     
     // Clear image cache every hour
     const cacheInterval = setInterval(() => {
@@ -258,10 +325,11 @@ const PromptsPage = () => {
     
     // Clean up listener and interval when component unmounts
     return () => {
+      clearTimeout(timeoutId);
       clearInterval(cacheInterval);
       stopListening();
     };
-  }, [startListening, stopListening]);
+  }, [startListening, stopListening, forceRefresh]);
 
   // Handle search input changes
   const handleSearchChange = (e) => {
@@ -280,10 +348,10 @@ const PromptsPage = () => {
     console.log('📷 Prompt image field:', prompt.image);
     console.log('📄 Prompt additionalHTML length:', prompt.additionalHTML?.length);
     
-    // First check if the prompt has an image URL from the database
+    // First check if the prompt has an image URL from the database (this is the output/result image)
     const imageUrl = getImageUrl(prompt);
     if (imageUrl) {
-      console.log('✅ Using image field:', imageUrl.substring(0, 50) + '...');
+      console.log('✅ Using output image field:', imageUrl.substring(0, 50) + '...');
       return imageUrl;
     }
     
@@ -294,7 +362,9 @@ const PromptsPage = () => {
       return base64Image;
     }
     
-    console.log('⚠️ No image found, using fallback icon');
+    // Only use fallback if no actual image is available
+    console.log('⚠️ No actual image found, using fallback');
+    
     // Try to get an icon based on the prompt's category
     const promptCategory = prompt.category?.split(' ')[0];
     if (iconMap[promptCategory]) {
@@ -304,17 +374,14 @@ const PromptsPage = () => {
       return iconMap["Prompt"];
     }
     
-    // Always use SVG data URIs to avoid external image loading issues
-    // Get the appropriate color based on the prompt title/category
+    // Generate SVG fallback as last resort
     const bgColor = getPromptColor(prompt.title || prompt.category);
-    const textColor = 'ffffff'; // Default white
+    const textColor = 'ffffff';
     
-    // Get text to display (use the full name if it fits, otherwise first word)
     const displayText = prompt.title ? 
       (prompt.title.length > 15 ? prompt.title.split(' ')[0] : prompt.title) :
       'Prompt';
     
-    // Use the utility function to create the SVG data URI
     return createSvgDataUri({
       text: displayText,
       width: 300,
@@ -323,7 +390,7 @@ const PromptsPage = () => {
       textColor,
       fontSize: 24
     });
-  }, [getImageUrl]);
+  }, [getImageUrl, getBase64ImageFromHTML]);
 
   // Use the new loader component
   if (loading && !isLoaded) {
@@ -445,6 +512,13 @@ const PromptsPage = () => {
                     {prompts.map((prompt, index) => {
                       // Get valid image URL or fallback
                       const promptImageSrc = getPromptImage(prompt);
+                      
+                      // Debug logging for image sources
+                      console.log(`🖼️ Prompt ${index + 1}: ${prompt.title}`);
+                      console.log(`   Original image: ${prompt.image}`);
+                      console.log(`   Final image src: ${promptImageSrc}`);
+                      console.log(`   Is base64: ${promptImageSrc?.startsWith('data:')}`);
+                      console.log(`   Is Firebase: ${promptImageSrc?.includes('firebasestorage')}`);
                       
                       return (
                         <div 
