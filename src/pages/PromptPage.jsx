@@ -28,6 +28,12 @@ const PromptPage = () => {
   const [modalImageAlt, setModalImageAlt] = useState('');
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Drag state for image panning
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [lastDragPosition, setLastDragPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const fetchPrompt = async () => {
@@ -154,6 +160,8 @@ const PromptPage = () => {
     setModalImageAlt('');
     setZoomLevel(1);
     setIsFullscreen(false);
+    setImagePosition({ x: 0, y: 0 });
+    setIsDragging(false);
   };
 
   const zoomIn = () => {
@@ -166,10 +174,86 @@ const PromptPage = () => {
 
   const resetZoom = () => {
     setZoomLevel(1);
+    setImagePosition({ x: 0, y: 0 });
   };
 
   const toggleFullscreen = () => {
     setIsFullscreen(prev => !prev);
+  };
+
+  // Drag handlers for image panning
+  const handleMouseDown = (e) => {
+    if (zoomLevel > 1) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStart({ x: e.clientX, y: e.clientY });
+      setLastDragPosition({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && zoomLevel > 1) {
+      e.preventDefault();
+      const deltaX = e.clientX - lastDragPosition.x;
+      const deltaY = e.clientY - lastDragPosition.y;
+      
+      setImagePosition(prev => {
+        const newX = prev.x + deltaX;
+        const newY = prev.y + deltaY;
+        
+        // Calculate bounds based on zoom level and viewport
+        const maxOffset = 200 * zoomLevel; // Allow some overflow for better UX
+        
+        return {
+          x: Math.max(-maxOffset, Math.min(maxOffset, newX)),
+          y: Math.max(-maxOffset, Math.min(maxOffset, newY))
+        };
+      });
+      
+      setLastDragPosition({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e) => {
+    if (zoomLevel > 1 && e.touches.length === 1) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      setIsDragging(true);
+      setDragStart({ x: touch.clientX, y: touch.clientY });
+      setLastDragPosition({ x: touch.clientX, y: touch.clientY });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (isDragging && zoomLevel > 1 && e.touches.length === 1) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - lastDragPosition.x;
+      const deltaY = touch.clientY - lastDragPosition.y;
+      
+      setImagePosition(prev => {
+        const newX = prev.x + deltaX;
+        const newY = prev.y + deltaY;
+        
+        // Calculate bounds based on zoom level and viewport
+        const maxOffset = 200 * zoomLevel; // Allow some overflow for better UX
+        
+        return {
+          x: Math.max(-maxOffset, Math.min(maxOffset, newX)),
+          y: Math.max(-maxOffset, Math.min(maxOffset, newY))
+        };
+      });
+      
+      setLastDragPosition({ x: touch.clientX, y: touch.clientY });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
   };
 
   // Handle keyboard shortcuts and modal body scroll
@@ -204,19 +288,27 @@ const PromptPage = () => {
       }
     };
 
-    // Prevent body scroll when modal is open
+    // Prevent body scroll when modal is open and add drag event listeners
     if (isImageModalOpen) {
       document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
     } else {
       document.body.style.overflow = 'unset';
     }
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
       document.body.style.overflow = 'unset';
     };
-  }, [isImageModalOpen]);
+  }, [isImageModalOpen, isDragging, zoomLevel, lastDragPosition]);
 
   if (loading) {
     return (
@@ -882,80 +974,97 @@ const PromptPage = () => {
             justifyContent: 'center'
           }}
         >
-          <div className="relative w-full h-full flex items-center justify-center p-4">
-            {/* Close button */}
-            <button
-              onClick={closeImageModal}
-              className="absolute top-4 right-4 z-10 p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-              title="Close (Esc)"
-            >
-              <FaTimes size={24} />
-            </button>
+          <div className="relative w-full h-full flex items-center justify-center">
+            {/* Header Controls Bar */}
+            <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-4">
+              <div className="flex items-center justify-between">
+                {/* Left side - Zoom controls */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-black/60 backdrop-blur-sm rounded-lg p-1">
+                    <button
+                      onClick={zoomOut}
+                      className="p-2 text-white hover:bg-white/20 rounded-md transition-all duration-200 hover:scale-105"
+                      title="Zoom Out (-)"
+                    >
+                      <FaSearchMinus size={16} />
+                    </button>
+                    <div className="px-3 py-2 text-white text-sm font-medium min-w-[60px] text-center">
+                      {Math.round(zoomLevel * 100)}%
+                    </div>
+                    <button
+                      onClick={zoomIn}
+                      className="p-2 text-white hover:bg-white/20 rounded-md transition-all duration-200 hover:scale-105"
+                      title="Zoom In (+)"
+                    >
+                      <FaSearchPlus size={16} />
+                    </button>
+                  </div>
+                  
+                  <button
+                    onClick={resetZoom}
+                    className="px-3 py-2 bg-black/60 backdrop-blur-sm text-white hover:bg-white/20 rounded-lg transition-all duration-200 hover:scale-105 text-sm font-medium"
+                    title="Reset Zoom (0)"
+                  >
+                    1:1
+                  </button>
+                </div>
 
-            {/* Zoom controls */}
-            <div className="absolute top-4 left-4 z-10 flex gap-2">
-              <button
-                onClick={zoomIn}
-                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-                title="Zoom In (+)"
-              >
-                <FaSearchPlus size={20} />
-              </button>
-              <button
-                onClick={zoomOut}
-                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-                title="Zoom Out (-)"
-              >
-                <FaSearchMinus size={20} />
-              </button>
-              <button
-                onClick={resetZoom}
-                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-                title="Reset Zoom (0)"
-              >
-                <span className="text-sm font-bold">1:1</span>
-              </button>
-              <button
-                onClick={toggleFullscreen}
-                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-                title="Toggle Fullscreen (F)"
-              >
-                {isFullscreen ? <FaCompress size={20} /> : <FaExpand size={20} />}
-              </button>
-            </div>
-
-            {/* Zoom level indicator */}
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-              {Math.round(zoomLevel * 100)}%
+                {/* Right side - Close and fullscreen */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={toggleFullscreen}
+                    className="p-2 bg-black/60 backdrop-blur-sm text-white hover:bg-white/20 rounded-lg transition-all duration-200 hover:scale-105"
+                    title="Toggle Fullscreen (F)"
+                  >
+                    {isFullscreen ? <FaCompress size={16} /> : <FaExpand size={16} />}
+                  </button>
+                  <button
+                    onClick={closeImageModal}
+                    className="p-2 bg-red-600/80 backdrop-blur-sm text-white hover:bg-red-500/80 rounded-lg transition-all duration-200 hover:scale-105"
+                    title="Close (Esc)"
+                  >
+                    <FaTimes size={16} />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Image container */}
             <div 
-              className={`flex items-center justify-center w-full h-full ${isFullscreen ? 'p-0' : 'p-8'}`}
-              style={{ cursor: zoomLevel > 1 ? 'grab' : 'default' }}
+              className={`flex items-center justify-center w-full h-full ${isFullscreen ? 'p-0' : 'pt-20 pb-16 px-8'} overflow-hidden`}
+              style={{ cursor: zoomLevel > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
             >
               <img
                 src={modalImageSrc}
                 alt={modalImageAlt}
-                className="max-w-full max-h-full object-contain transition-transform duration-200"
+                className="max-w-full max-h-full object-contain transition-transform duration-200 shadow-2xl"
                 style={{
-                  transform: `scale(${zoomLevel})`,
+                  transform: `scale(${zoomLevel}) translate(${imagePosition.x}px, ${imagePosition.y}px)`,
                   transformOrigin: 'center',
-                  cursor: zoomLevel > 1 ? 'grab' : 'default'
+                  cursor: zoomLevel > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+                  userSelect: 'none'
                 }}
                 draggable={false}
-                onMouseDown={(e) => {
-                  if (zoomLevel > 1) {
-                    e.preventDefault();
-                  }
-                }}
+                onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
               />
             </div>
 
-            {/* Instructions */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 bg-black bg-opacity-50 text-white px-4 py-2 rounded-full text-sm">
-              <span className="hidden sm:inline">Use + / - to zoom, 0 to reset, F for fullscreen, Esc to close</span>
-              <span className="sm:hidden">Tap to zoom, Esc to close</span>
+            {/* Footer Instructions */}
+            <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent p-4">
+              <div className="flex items-center justify-center">
+                <div className="bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm">
+                  <span className="hidden sm:inline">
+                    <kbd className="px-1.5 py-0.5 bg-white/20 rounded text-xs">+</kbd> / <kbd className="px-1.5 py-0.5 bg-white/20 rounded text-xs">-</kbd> to zoom • 
+                    <kbd className="px-1.5 py-0.5 bg-white/20 rounded text-xs">0</kbd> reset • 
+                    <kbd className="px-1.5 py-0.5 bg-white/20 rounded text-xs">F</kbd> fullscreen • 
+                    Drag to pan • <kbd className="px-1.5 py-0.5 bg-white/20 rounded text-xs">Esc</kbd> close
+                  </span>
+                  <span className="sm:hidden">
+                    Pinch to zoom • Drag to pan • <kbd className="px-1.5 py-0.5 bg-white/20 rounded text-xs">Esc</kbd> close
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
