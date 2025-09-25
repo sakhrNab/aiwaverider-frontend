@@ -298,10 +298,11 @@ export const getFeaturedPrompts = async (limit = 10) => {
 /**
  * Create a new prompt
  * @param {Object} promptData - Data for the new prompt
- * @param {File|string} imageFile - Optional image file to upload or base64 data URL
+ * @param {File|string} imageFile - Optional result image file to upload or base64 data URL
+ * @param {File|string} inputImageFile - Optional input image file to upload or base64 data URL
  * @returns {Promise<Object>} - Created prompt data
  */
-export const createPrompt = async (promptData, imageFile = null) => {
+export const createPrompt = async (promptData, imageFile = null, inputImageFile = null) => {
   try {
     // Creating new prompt
     
@@ -331,11 +332,11 @@ export const createPrompt = async (promptData, imageFile = null) => {
       processedPromptData.keywords = [];
     }
     
-    // Use FormData if we have an image file (File object)
-    if (imageFile && imageFile instanceof File) {
+    // Use FormData if we have any file uploads
+    if ((imageFile && imageFile instanceof File) || (inputImageFile && inputImageFile instanceof File)) {
       const formData = new FormData();
       
-      // Add all prompt data to the form
+      // Add all prompt data to the form (excluding inputImage since it will be handled separately)
       Object.keys(processedPromptData).forEach(key => {
         if (key === 'tags' && Array.isArray(processedPromptData[key])) {
           processedPromptData[key].forEach(tag => {
@@ -346,17 +347,21 @@ export const createPrompt = async (promptData, imageFile = null) => {
             formData.append('keyword', keyword);
           });
         } else if (key === 'inputImage') {
-          // Handle inputImage as base64 data URL
-          if (processedPromptData[key]) {
-            formData.append('inputImage', processedPromptData[key]);
-          }
+          // Skip inputImage here, will be handled separately
         } else {
           formData.append(key, processedPromptData[key]);
         }
       });
       
-      // Add the image file
-      formData.append('image', imageFile);
+      // Add the result image file
+      if (imageFile && imageFile instanceof File) {
+        formData.append('image', imageFile);
+      }
+      
+      // Add the input image file
+      if (inputImageFile && inputImageFile instanceof File) {
+        formData.append('inputImage', inputImageFile);
+      }
       
       const response = await api.post('/api/prompts', formData, {
         headers: {
@@ -368,13 +373,21 @@ export const createPrompt = async (promptData, imageFile = null) => {
       return response.data?.data || response.data;
     } 
     // Use JSON if we have base64 data URL or other binary data
-    else if (imageFile && typeof imageFile === 'string' && imageFile.startsWith('data:')) {
+    else if ((imageFile && typeof imageFile === 'string' && imageFile.startsWith('data:')) || 
+             (inputImageFile && typeof inputImageFile === 'string' && inputImageFile.startsWith('data:'))) {
       // Sending base64 image data
       
-      const response = await api.post('/api/prompts', {
-        ...processedPromptData,
-        image: imageFile
-      }, {
+      const requestData = { ...processedPromptData };
+      
+      if (imageFile && typeof imageFile === 'string' && imageFile.startsWith('data:')) {
+        requestData.image = imageFile;
+      }
+      
+      if (inputImageFile && typeof inputImageFile === 'string' && inputImageFile.startsWith('data:')) {
+        requestData.inputImage = inputImageFile;
+      }
+      
+      const response = await api.post('/api/prompts', requestData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -414,10 +427,11 @@ export const createPromptWithBase64Image = async (promptData, base64Image) => {
  * Update an existing prompt
  * @param {string} id - ID of the prompt to update
  * @param {Object} promptData - Updated data for the prompt
- * @param {File} imageFile - Optional image file to upload
+ * @param {File|string} imageFile - Optional result image file to upload or base64 data URL
+ * @param {File|string} inputImageFile - Optional input image file to upload or base64 data URL
  * @returns {Promise<Object>} - Updated prompt data
  */
-export const updatePrompt = async (id, promptData, imageFile = null) => {
+export const updatePrompt = async (id, promptData, imageFile = null, inputImageFile = null) => {
   try {
     // Updating prompt
     
@@ -436,11 +450,11 @@ export const updatePrompt = async (id, promptData, imageFile = null) => {
       processedPromptData.keywords = processedPromptData.keywords.map(kw => String(kw));
     }
     
-    // Use FormData if we have an image file
-    if (imageFile) {
+    // Use FormData if we have any file uploads
+    if ((imageFile && imageFile instanceof File) || (inputImageFile && inputImageFile instanceof File)) {
       const formData = new FormData();
       
-      // Add all prompt data to the form
+      // Add all prompt data to the form (excluding inputImage since it will be handled separately)
       Object.keys(processedPromptData).forEach(key => {
         if (key === 'tags' && Array.isArray(processedPromptData[key])) {
           processedPromptData[key].forEach(tag => {
@@ -450,17 +464,50 @@ export const updatePrompt = async (id, promptData, imageFile = null) => {
           processedPromptData[key].forEach(keyword => {
             formData.append('keyword', keyword);
           });
+        } else if (key === 'inputImage') {
+          // Skip inputImage here, will be handled separately
         } else {
           formData.append(key, processedPromptData[key]);
         }
       });
       
-      // Add the image file
-      formData.append('image', imageFile);
+      // Add the result image file
+      if (imageFile && imageFile instanceof File) {
+        formData.append('image', imageFile);
+      }
+      
+      // Add the input image file
+      if (inputImageFile && inputImageFile instanceof File) {
+        formData.append('inputImage', inputImageFile);
+      }
       
       const response = await api.put(`/api/prompts/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      return response.data?.data || response.data;
+    } 
+    // Use JSON if we have base64 data URL or other binary data
+    else if ((imageFile && typeof imageFile === 'string' && imageFile.startsWith('data:')) || 
+             (inputImageFile && typeof inputImageFile === 'string' && inputImageFile.startsWith('data:'))) {
+      // Sending base64 image data
+      
+      const requestData = { ...processedPromptData };
+      
+      if (imageFile && typeof imageFile === 'string' && imageFile.startsWith('data:')) {
+        requestData.image = imageFile;
+      }
+      
+      if (inputImageFile && typeof inputImageFile === 'string' && inputImageFile.startsWith('data:')) {
+        requestData.inputImage = inputImageFile;
+      }
+      
+      const response = await api.put(`/api/prompts/${id}`, requestData, {
+        headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       });
