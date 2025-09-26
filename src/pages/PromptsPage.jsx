@@ -478,17 +478,17 @@ const PromptsPage = () => {
                         <div 
                           key={prompt.id || `prompt-${index}`}
                           onClick={() => navigate(`/prompts/${prompt.id}`)}
-                          className="group relative bg-gradient-to-br from-purple-900/80 to-purple-800/60 backdrop-blur-sm rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 border border-purple-700/30"
+                          className="group relative bg-gradient-to-br from-purple-900/80 to-purple-800/60 backdrop-blur-sm rounded-xl p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 border border-purple-700/30"
                         >
                           {/* Lightbulb Icon */}
-                          <div className="absolute top-4 right-4 z-10">
-                            <FaLightbulb className="text-yellow-400 text-lg opacity-80 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute top-3 right-3 z-10">
+                            <FaLightbulb className="text-yellow-400 text-sm opacity-80 group-hover:opacity-100 transition-opacity" />
                           </div>
                           
-                          <div className="flex gap-4">
+                          <div className="flex gap-3 items-start pt-4">
                             {/* Image Container */}
-                            <div className="flex-shrink-0">
-                              <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-gradient-to-br from-purple-600/20 to-purple-500/10 border border-purple-500/30 flex items-center justify-center">
+                            <div className="flex-shrink-0 pt-1" style={{paddingTop: 0}}>
+                              <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-purple-600/20 to-purple-500/10 border border-purple-500/30 flex items-center justify-center">
                                 <img 
                                   src={safeImageSrc || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY2NjY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+'}
                                   alt={prompt.title} 
@@ -502,28 +502,30 @@ const PromptsPage = () => {
                             
                             {/* Content */}
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-white font-semibold text-lg leading-tight mb-2 line-clamp-2 group-hover:text-purple-200 transition-colors">
+                              <h3 className="text-white font-semibold text-base leading-tight mb-1 line-clamp-2 group-hover:text-purple-200 transition-colors"
+                                title={prompt.title}
+                                style={{marginTop: 0}}>
                                 {prompt.title}
                               </h3>
-                              <p className="text-purple-100/80 text-sm leading-relaxed line-clamp-2 mb-4">
+                              <p className="text-purple-100/80 text-xs leading-relaxed line-clamp-2 mb-2">
                                 {prompt.description}
                               </p>
                               
                               {/* Tags */}
-                              <div className="flex flex-wrap gap-2">
-                                <span className="px-3 py-1 bg-purple-700/30 text-purple-200 text-xs rounded-full border border-purple-600/40 backdrop-blur-sm">
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className="px-2 py-0.5 bg-purple-700/30 text-purple-200 text-xs rounded-full border border-purple-600/40 backdrop-blur-sm">
                                 {prompt.category || 'Prompt'}
                               </span>
                               {prompt.tags?.slice(0, 2).map((tag, tagIndex) => (
                                 <span 
                                   key={tagIndex} 
-                                    className="px-3 py-1 bg-purple-700/30 text-purple-200 text-xs rounded-full border border-purple-600/40 backdrop-blur-sm hover:bg-purple-600/40 transition-colors"
+                                    className="px-2 py-0.5 bg-purple-700/30 text-purple-200 text-xs rounded-full border border-purple-600/40 backdrop-blur-sm hover:bg-purple-600/40 transition-colors"
                                 >
                                   {tag}
                                 </span>
                               ))}
                               {prompt.likeCount > 0 && (
-                                  <span className="px-3 py-1 bg-purple-700/30 text-purple-200 text-xs rounded-full border border-purple-600/40 backdrop-blur-sm">
+                                  <span className="px-2 py-0.5 bg-purple-700/30 text-purple-200 text-xs rounded-full border border-purple-600/40 backdrop-blur-sm">
                                   ❤️ {prompt.likeCount}
                                 </span>
                               )}
