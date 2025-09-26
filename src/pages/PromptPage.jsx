@@ -291,7 +291,7 @@ const PromptPage = () => {
     // Prevent body scroll when modal is open and add drag event listeners
     if (isImageModalOpen) {
       document.body.style.overflow = 'hidden';
-      document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -981,41 +981,41 @@ const PromptPage = () => {
                 {/* Left side - Zoom controls */}
                 <div className="flex items-center gap-3">
                   <div className="flex items-center bg-black/60 backdrop-blur-sm rounded-lg p-1">
-                    <button
+            <button
                       onClick={zoomOut}
                       className="p-2 text-white hover:bg-white/20 rounded-md transition-all duration-200 hover:scale-105"
                       title="Zoom Out (-)"
                     >
                       <FaSearchMinus size={16} />
-                    </button>
+            </button>
                     <div className="px-3 py-2 text-white text-sm font-medium min-w-[60px] text-center">
                       {Math.round(zoomLevel * 100)}%
                     </div>
-                    <button
-                      onClick={zoomIn}
+              <button
+                onClick={zoomIn}
                       className="p-2 text-white hover:bg-white/20 rounded-md transition-all duration-200 hover:scale-105"
-                      title="Zoom In (+)"
-                    >
+                title="Zoom In (+)"
+              >
                       <FaSearchPlus size={16} />
-                    </button>
+              </button>
                   </div>
                   
-                  <button
-                    onClick={resetZoom}
+              <button
+                onClick={resetZoom}
                     className="px-3 py-2 bg-black/60 backdrop-blur-sm text-white hover:bg-white/20 rounded-lg transition-all duration-200 hover:scale-105 text-sm font-medium"
-                    title="Reset Zoom (0)"
-                  >
+                title="Reset Zoom (0)"
+              >
                     1:1
-                  </button>
+              </button>
                 </div>
 
                 {/* Right side - Close and fullscreen */}
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={toggleFullscreen}
+              <button
+                onClick={toggleFullscreen}
                     className="p-2 bg-black/60 backdrop-blur-sm text-white hover:bg-white/20 rounded-lg transition-all duration-200 hover:scale-105"
-                    title="Toggle Fullscreen (F)"
-                  >
+                title="Toggle Fullscreen (F)"
+              >
                     {isFullscreen ? <FaCompress size={16} /> : <FaExpand size={16} />}
                   </button>
                   <button
@@ -1024,8 +1024,8 @@ const PromptPage = () => {
                     title="Close (Esc)"
                   >
                     <FaTimes size={16} />
-                  </button>
-                </div>
+              </button>
+            </div>
               </div>
             </div>
 
