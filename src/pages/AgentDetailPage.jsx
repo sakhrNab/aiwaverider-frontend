@@ -2566,9 +2566,9 @@ const AgentDetail = () => {
           <div className={`agent-description-section ${darkMode ? 'dark-mode' : ''}`}>
             <DescriptionIntroduction darkMode={darkMode} />
             <div className="agent-description">
-              <p className="description-details">
+              <div className="description-details" style={{ whiteSpace: 'pre-line' }}>
                 {agentDescription}
-              </p>
+              </div>
             </div>
           </div>
         </div>

@@ -2403,7 +2403,7 @@ const ManageAgents = () => {
                         </div>
                         
                         <div className="manage-agent-details">
-                          <p className="manage-agent-description">{agent.description || "An innovative AI tool for enthusiasts, combining cutting-edge technology with intuitive design."}</p>
+                          <div className="manage-agent-description" style={{ whiteSpace: 'pre-line' }}>{agent.description || "An innovative AI tool for enthusiasts, combining cutting-edge technology with intuitive design."}</div>
                           
                           <div className="manage-agent-info-grid">
                             <div className="manage-agent-info-item">
