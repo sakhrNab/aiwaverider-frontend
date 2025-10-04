@@ -496,7 +496,9 @@ const AgentCard = memo(({ agent }) => {
               )}
             </div>
             
-            <p className="marketplace-agent-description">{description}</p>
+            <div className="marketplace-agent-description" style={{ whiteSpace: 'pre-line' }}>
+              {description}
+            </div>
             
             <div className="marketplace-agent-creator">
               By {creatorName}

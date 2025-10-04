@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import './CategoryNav.css';
 
-const DEFAULT_CATEGORIES = ['All', 'Design', 'Creative', 'Productivity', 'Development', 'Business'];
+const DEFAULT_CATEGORIES = ['All', 'New', 'Design', 'Creative', 'Productivity', 'Development', 'Business', 'Education', 'Entertainment', 'Writing', 'Self Improvement', 'Music & Sound Design', 'Software Development', 'Drawing & Painting', '3D'];
 
 const CategoryNav = ({ selectedCategory, onCategoryChange, categories = [] }) => {
   const scrollContainerRef = useRef(null);

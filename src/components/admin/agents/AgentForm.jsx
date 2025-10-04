@@ -935,17 +935,19 @@ const AgentForm = ({ agent, onSubmit, onCancel, onFieldChange, hideOnSubmit = fa
   // Category options
   const categories = [
     'New',
-    'Self Improvement',
     'Design',
-    'Drawing & Painting',
-    '3D',
-    'Music & Sound Design',
-    'Software Development',
+    'Creative',
+    'Productivity',
+    'Development',
     'Business',
     'Education',
     'Entertainment',
     'Writing',
-    'Productivity'
+    'Self Improvement',
+    'Music & Sound Design',
+    'Software Development',
+    'Drawing & Painting',
+    '3D'
   ];
   
   // Add this helper function to get the currency symbol
