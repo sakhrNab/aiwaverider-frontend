@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaLinkedin, FaGithub, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools } from 'react-icons/fa';
+import { FaLinkedin, FaGithub, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools, FaCogs, FaCloud, FaMobile, FaServer } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -112,9 +112,15 @@ const About = () => {
                 He has successfully helped dozens of businesses integrate AI solutions to optimize processes, reduce costs, and create 
                 new revenue streams.
               </p>
+              <p className="text-base leading-relaxed mb-4">
+                With a degree in Applied Computer Science from Germany and a background in Industrial Engineering, Sakhr brings 
+                a unique blend of technical expertise and business acumen. His international experience spans prestigious organizations 
+                including Accenture (Big 4 consulting), BMG Rights and Management, and Innocean Worldwide GmbH, where he has worked 
+                with major banks and automotive industry leaders across Germany.
+              </p>
               <p className="text-base leading-relaxed">
-                With a background in computer science and business administration, Sakhr bridges the gap between 
-                cutting-edge technology and practical business applications, making complex AI concepts accessible to everyone.
+                Fluent in both English and German, Sakhr bridges the gap between cutting-edge technology and practical business 
+                applications, making complex AI concepts accessible to everyone while delivering solutions that drive real business value.
               </p>
             </div>
             
@@ -163,41 +169,94 @@ const About = () => {
             </h2>
             <p className="text-lg mb-6 leading-relaxed">
               AI Waverider specializes in making artificial intelligence accessible and practical for businesses of all sizes. 
-              We focus on three core areas that deliver real value to our clients.
+              We offer comprehensive solutions across multiple domains to deliver real value to our clients.
             </p>
 
-            <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 mb-8`}>
-              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8`}>
+              {/* Core Development Services - Lead with strongest */}
+              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow border-l-4 border-teal-500`}>
                 <h3 className="text-xl font-bold mb-3 flex items-center">
-                  <FaRobot className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  AI Tool Recommendations
+                  <FaCogs className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
+                  Custom Software Development
                 </h3>
-                <p>
-                  We help you discover and implement the right AI tools for your business through our affiliate partnerships, 
-                  ensuring you get the best solutions at competitive prices.
+                <p className="mb-3">
+                  <strong>Built with Cursor AI, GitHub Copilot, and live coding sessions.</strong> 
+                  We deliver production-ready applications 3x faster and 50% cheaper than traditional development.
                 </p>
+                <div className="text-sm text-gray-300 dark:text-gray-200">
+                  ✓ 100+ successful projects ✓ 30-day money-back guarantee ✓ 24/7 support
+                </div>
               </div>
-              
+
+              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow border-l-4 border-blue-500`}>
+                <h3 className="text-xl font-bold mb-3 flex items-center">
+                  <FaCloud className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
+                  Enterprise SaaS Platforms
+                </h3>
+                <p className="mb-3">
+                  <strong>React, Node.js, PostgreSQL, AWS/Azure architecture.</strong> 
+                  Scalable multi-tenant platforms with 99.9% uptime, delivered in 8-12 weeks.
+                </p>
+                <div className="text-sm text-gray-300 dark:text-gray-200">
+                  ✓ SOC 2 compliant ✓ Auto-scaling infrastructure ✓ Real-time collaboration
+                </div>
+              </div>
+
+              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow border-l-4 border-purple-500`}>
+                <h3 className="text-xl font-bold mb-3 flex items-center">
+                  <FaMobile className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
+                  Native Mobile Applications
+                </h3>
+                <p className="mb-3">
+                  <strong>React Native, Swift, Kotlin development.</strong> 
+                  Production-ready iOS and Android apps with 4.8+ App Store ratings, delivered in 6-10 weeks.
+                </p>
+                <div className="text-sm text-gray-300 dark:text-gray-200">
+                  ✓ App Store optimization ✓ Push notifications ✓ Offline functionality
+                </div>
+              </div>
+
+              {/* Automation & AI Services */}
               <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
                 <h3 className="text-xl font-bold mb-3 flex items-center">
                   <FaTools className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  Custom n8n Workflows
+                  N8N Automation Workflows
                 </h3>
-                <p>
-                  Get powerful automation workflows built specifically for your business needs. Our n8n solutions 
-                  streamline operations and eliminate repetitive tasks.
+                <p className="mb-3">
+                  <strong>Custom N8N workflows that save 20+ hours/week. </strong> 
+                   Connect 200+ apps and automate complex business processes with zero coding required.
                 </p>
+                <div className="text-sm text-gray-300 dark:text-gray-200">
+                  ✓ 200+ app integrations ✓ Visual workflow builder ✓ Error handling & monitoring
+                </div>
+              </div>
+
+              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
+                <h3 className="text-xl font-bold mb-3 flex items-center">
+                  <FaRobot className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
+                  AI Tool Implementation
+                </h3>
+                <p className="mb-3">
+                  <strong>Strategic AI adoption with proven ROI.</strong> 
+                  We've helped 50+ businesses increase productivity by 40% using ChatGPT, Claude, and custom AI solutions.
+                </p>
+                <div className="text-sm text-gray-300 dark:text-gray-200">
+                  ✓ Free AI audit ✓ ROI tracking ✓ Training & support
+                </div>
               </div>
               
               <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
                 <h3 className="text-xl font-bold mb-3 flex items-center">
                   <FaChartLine className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  AI Consulting Services
+                  AI Strategy Consulting
                 </h3>
-                <p>
-                  Work directly with our AI experts to develop comprehensive implementation strategies, 
-                  integrate new technologies, and optimize your existing workflows.
+                <p className="mb-3">
+                  <strong>End-to-end AI transformation for enterprises.</strong> 
+                  From strategy to implementation, we help Fortune 500 companies integrate AI across all departments.
                 </p>
+                <div className="text-sm text-gray-300 dark:text-gray-200">
+                  ✓ C-suite advisory ✓ Change management ✓ Performance metrics
+                </div>
               </div>
             </div>
 

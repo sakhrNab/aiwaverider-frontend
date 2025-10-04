@@ -934,6 +934,7 @@ const AgentForm = ({ agent, onSubmit, onCancel, onFieldChange, hideOnSubmit = fa
   
   // Category options
   const categories = [
+    'New',
     'Self Improvement',
     'Design',
     'Drawing & Painting',
