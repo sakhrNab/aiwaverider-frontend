@@ -5,7 +5,7 @@ import { api } from '../../api/core/apiConfig';
 
 const SubscriptionButton = ({ planId, onConfirmed = () => {}, disabled = false }) => {
   const [{ options }, dispatch] = usePayPalScriptReducer();
-  const activePlanId = planId || 'P-7R550031NB048230TNCOON5Y';
+  const activePlanId = planId || 'P-2ST68221RA053825MNDQ2DWQ';
 
   // Update PayPal options for subscription
   useEffect(() => {
