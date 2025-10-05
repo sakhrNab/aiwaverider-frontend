@@ -48,22 +48,22 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
   // For toggling mobile navigation
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
-
+  
   // Check if current page is an admin page
   const isAdminPage = location.pathname.startsWith('/admin');
-
+  
   // Toggle body class when menu opens/closes
   useEffect(() => {
     const toggleMobileMenu = () => {
       const newMenuState = !isMenuOpen;
       document.body.classList.toggle('menu-open', newMenuState);
       setIsMenuOpen(newMenuState);
-
+      
       // For devices with specific dimensions, adjust position
       const isSurfacePro = window.innerWidth === 1368 && window.innerHeight === 912;
       const isIPad = (window.innerWidth === 768 || window.innerWidth === 820 || window.innerWidth === 1024) && 
                     (window.innerHeight === 1024 || window.innerHeight === 1180 || window.innerHeight === 1366);
-
+      
       if (isSurfacePro || isIPad) {
         document.documentElement.classList.toggle('tablet-device', newMenuState);
       }
@@ -75,12 +75,12 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
     } else {
       body.classList.remove('menu-open');
     }
-
+    
     return () => {
       body.classList.remove('menu-open');
     };
   }, [isMenuOpen]);
-
+  
   // Add/remove admin-page class to body
   useEffect(() => {
     const body = document.querySelector('body');
@@ -89,7 +89,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
     } else {
       body.classList.remove('admin-page');
     }
-
+    
     // Cleanup function
     return () => {
       body.classList.remove('admin-page');
@@ -109,7 +109,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
         setIsMenuOpen(false);
       }
     };
-
+    
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -121,7 +121,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
     const handleResize = () => {
       // Special case for iPad Air portrait (820x1180)
       const isIpadAirPortrait = window.innerWidth === 820 && window.innerHeight > 1000;
-
+      
       // Close mobile menu when screen size is 1000px or larger (updated from 1333px)
       if ((window.innerWidth >= 800 && !isIpadAirPortrait) && isMenuOpen) {
         setIsMenuOpen(false);
@@ -132,11 +132,11 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
         setHeaderHeight(headerRef.current.getBoundingClientRect().height);
       }
     };
-
+    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isMenuOpen, isFixedOnHome]);
-
+  
   // Check if we're on iPad Air portrait mode
   useEffect(() => {
     const checkIpadAir = () => {
@@ -147,7 +147,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
         document.documentElement.classList.remove('ipad-air-portrait');
       }
     };
-
+    
     checkIpadAir();
     window.addEventListener('resize', checkIpadAir);
     return () => window.removeEventListener('resize', checkIpadAir);
@@ -186,7 +186,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
     // Toggle menu state directly
     const bodyElement = document.body;
     const newMenuState = !bodyElement.classList.contains('menu-open');
-
+    
     // Check device dimensions for specialized handling
     const isSurfacePro = window.innerWidth === 1368 && window.innerHeight === 912;
     const isIPad = [
@@ -203,31 +203,31 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
       // Nest Hub Max
       window.innerWidth === 1280 && window.innerHeight === 800
     ].some(condition => condition);
-
+    
     if (newMenuState) {
       // Opening menu
       bodyElement.classList.add('menu-open');
-
+      
       // Add device-specific classes
       if (isSurfacePro) document.documentElement.classList.add('surface-pro');
       if (isIPad) document.documentElement.classList.add('ipad-device');
       if (isNestHub) document.documentElement.classList.add('nest-hub');
-
+      
     } else {
       // Closing menu
       bodyElement.classList.remove('menu-open');
-
+      
       // Remove device-specific classes
       document.documentElement.classList.remove('surface-pro', 'ipad-device', 'nest-hub');
     }
-
+    
     setIsMenuOpen(newMenuState);
   };
 
   // State for profile dropdown
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef(null);
-
+  
   // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -235,7 +235,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
         setProfileDropdownOpen(false);
       }
     };
-
+    
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -256,23 +256,23 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
   // Helper function to get user avatar
   const getUserAvatar = () => {
     if (!user) return null;
-
+    
     if (user.photoURL && user.photoURL !== '/default-avatar.png') {
       return user.photoURL;
     }
-
+    
     return null;
   };
 
   // Helper function to get user initials
   const getUserInitials = () => {
     if (!user) return 'U';
-
+    
     const displayName = getUserDisplayName();
     if (displayName && displayName.length > 0) {
       return displayName.charAt(0).toUpperCase();
     }
-
+    
     return user.email?.charAt(0).toUpperCase() || 'U';
   };
 
@@ -324,7 +324,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
             />
           </div>
         )}
-
+        
         <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center relative z-10">
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -350,7 +350,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
               </motion.span>
           </Link>
           </motion.div>
-
+          
           {/* Desktop Navigation - hidden at 999px and below, visible at 1000px+ */}
           <nav className="hidden custom-1000:flex items-center justify-center flex-grow">
             <ul className="flex nav-links items-center">
@@ -456,9 +456,20 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
               </li>
             </ul>
           </nav>
-
+          
           {/* Universal Right Side - visible at all screen sizes - contains theme toggle, cart, and profile */}
           <div className="flex items-center space-x-3">
+            {/* Homepage Consultation Button */}
+            {isHomePage && (
+              <a
+                href={calendlyLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-2 px-4 rounded-lg transition duration-300 shadow-lg whitespace-nowrap"
+              >
+                Book a FREE Consultation
+              </a>
+            )}
             {/* Dark Mode Toggle - Always visible */}
             <button 
               onClick={toggleDarkMode}
@@ -467,7 +478,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
             >
               {darkMode ? <FaSun className="text-yellow-300" /> : <FaMoon className="text-white" />}
             </button>
-
+            
             {/* Cart Button - Always visible */}
             <Link 
               to="/checkout" 
@@ -481,7 +492,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
                 </span>
               )}
             </Link>
-
+            
             {/* Profile Button with Dropdown - Always visible */}
             <div className="relative" ref={profileDropdownRef}>
               <button 
@@ -515,7 +526,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
                   )}
                 </div>
               </button>
-
+              
               {/* Dropdown Menu with Animation */}
               <AnimatePresence>
                 {profileDropdownOpen && (
@@ -545,7 +556,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
                             ) : null;
                           })()}
                         </div>
-
+                        
                         {/* Menu Options */}
                         <div className="py-1">
                           <Link 
@@ -555,7 +566,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
                           >
                             <FaUser className="mr-2 text-indigo-300" /> Profile
                           </Link>
-
+                          
                           {user.role === 'admin' && (
                             <Link 
                               to="/admin/dashboard" 
@@ -565,7 +576,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
                               <FaUserShield className="mr-2 text-indigo-300" /> Admin Dashboard
                             </Link>
                           )}
-
+                          
                           <button
                             onClick={() => {
                               setProfileDropdownOpen(false);
@@ -601,11 +612,11 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
                 )}
               </AnimatePresence>
             </div>
-
+            
             {/* Mobile menu button - Hamburger icon - visible only on screens below 1000px */}
             <button 
               ref={toggleButtonRef}
-              className="mobile-menu-btn text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0 rounded-md"
+              className="mobile-menu-btn custom-1000:hidden text-white hover:text-[#00bcd4] p-2 flex items-center justify-center flex-shrink-0 rounded-md"
               onClick={toggleMobileMenu}
               aria-label="Toggle mobile menu"
               aria-expanded={isMenuOpen}
@@ -618,7 +629,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
         {/* Removed mobile menu button from here as it's now part of the right-side elements group */}
       </header>
       {isFixedOnHome && fixedHeaderSpacer}
-
+      
       {/* Mobile Menu - Enhanced for better accessibility and UX */}
       <div 
         ref={mobileMenuRef}

@@ -1,0 +1,1127 @@
+/* Header styles */
+.main-header {
+    color: #fff;
+    padding: 0.75rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: all 0.3s ease;
+  }
+  
+  /* Default background for non-homepage */
+  .main-header:not(.homepage-transparent) {
+    background-color: #27115e;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Transparent background for homepage */
+  .main-header.homepage-transparent {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Ensure fixed behavior when the element has both classes */
+  .main-header.fixed {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+  
+  /* Two-line navigation styles */
+  .nav-item .flex-col span {
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  
+  .nav-item .text-blue-200,
+  .mobile-nav-item .text-gray-500 {
+    opacity: 0.85;
+    font-weight: 400;
+  }
+  
+  /* Video gallery nav link highlight */
+  .nav-item a[href="/videos"],
+  .mobile-nav-item a[href="/videos"] {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .nav-item a[href="/videos"]::after {
+    content: "NEW";
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    font-size: 8px;
+    background: linear-gradient(to right, #ff4d4d, #f9cb28);
+    color: white;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: bold;
+    opacity: 0.9;
+    transform: rotate(3deg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  /* Theme toggle, cart, and profile buttons styling */
+  .theme-toggle-btn,
+  .cart-btn,
+  .profile-btn,
+  .mobile-menu-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  
+  .theme-toggle-btn:hover,
+  .cart-btn:hover,
+  .profile-btn:hover {
+    transform: translateY(-2px);
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+  
+  /* Profile dropdown styling */
+  .profile-dropdown {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .menu-open {
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+  
+  /* COMPREHENSIVE MOBILE MENU FIX */
+  /* Always ensure mobile menu is visible when body has menu-open class */
+  body.menu-open .mobile-menu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: fixed !important;
+    top: 105px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 60px);
+    z-index: 9999 !important;
+    background-color: white;
+    overflow-y: auto;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Prevent body scrolling when menu is open */
+  body.menu-open {
+    overflow: hidden !important;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Ensure mobile menu elements are visible */
+  body.menu-open .mobile-menu * {
+    visibility: visible !important;
+  }
+  
+  /* Profile Button Styles */
+  .profile-btn {
+    position: relative;
+    z-index: 20;
+  }
+  
+  .profile-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Profile Dropdown Styles */
+  .profile-dropdown {
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  
+  .profile-dropdown-content a:hover,
+  .profile-dropdown-content button:hover {
+    background-color: rgba(99, 102, 241, 0.2);
+  }
+  
+  /* LAPTOP RANGE OPTIMIZATION - 1000px to 1332px */
+  /* This is the key range for most laptops where we want to keep nav visible but smaller */
+  @media (min-width: 800px) and (max-width: 1332px) {
+    /* Ensure desktop navigation stays visible */
+    nav.hidden.custom-1333\:flex {
+      display: flex !important;
+    }
+    
+    /* Hide mobile menu toggle in this range */
+    .mobile-menu-btn,
+    .mobile-menu-toggle {
+      display: none !important;
+    }
+    
+    /* Compact header padding */
+    .main-header .container {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    
+    /* Smaller logo */
+    .site-logo {
+      width: 2rem !important; /* 32px instead of 40px+ */
+      min-width: 2rem !important;
+    }
+    
+    /* Compact brand text */
+    .main-header span.font-bold {
+      font-size: 1rem !important; /* Smaller brand text */
+      margin-left: 0.5rem !important;
+    }
+    
+    /* Compact navigation links */
+    .nav-link {
+      font-size: 0.8rem !important; /* Smaller font */
+      padding: 0.25rem 0.4rem !important; /* Tighter padding */
+      margin: 0 !important;
+    }
+    
+    /* Smaller icons in nav links */
+    .nav-link svg {
+      font-size: 0.7rem !important;
+      margin-right: 0.3rem !important;
+    }
+    
+    /* Compact multi-line nav text */
+    .nav-link .flex-col span:first-child {
+      font-size: 0.8rem !important;
+      line-height: 1.1 !important;
+    }
+    
+    .nav-link .flex-col span.text-xs {
+      font-size: 0.65rem !important;
+      margin-top: -1px !important;
+    }
+    
+    /* Smaller nav dots */
+    .nav-dot {
+      margin: 0 0.2rem !important;
+      font-size: 4px !important;
+    }
+    
+    /* Compact nav links container */
+    .nav-links {
+      gap: 0 !important;
+    }
+    
+    /* Smaller right-side buttons */
+    .theme-toggle-btn,
+    .cart-btn,
+    .profile-btn {
+      width: 32px !important;
+      height: 32px !important;
+      padding: 0.4rem !important;
+    }
+    
+    /* Smaller button icons */
+    .theme-toggle-btn svg,
+    .cart-btn svg {
+      font-size: 0.9rem !important;
+    }
+    
+    /* Smaller profile avatar */
+    .profile-btn .w-8 {
+      width: 1.75rem !important;
+      height: 1.75rem !important;
+    }
+    
+    /* Smaller cart badge */
+    .cart-btn .absolute {
+      width: 14px !important;
+      height: 14px !important;
+      font-size: 0.6rem !important;
+      top: -2px !important;
+      right: -2px !important;
+    }
+    
+    /* Tighter spacing between right elements */
+    .main-header .flex.items-center.space-x-3 {
+      gap: 0.5rem !important;
+    }
+    
+    /* Ensure no overlap by making nav container more compact */
+    .nav-links .nav-item {
+      margin: 0 !important;
+    }
+    
+    /* Ultra-compact for the smallest laptops in this range */
+    @media (min-width: 1000px) and (max-width: 1150px) {
+      .nav-link {
+        font-size: 0.75rem !important;
+        padding: 0.2rem 0.3rem !important;
+      }
+      
+      .nav-link svg {
+        font-size: 0.65rem !important;
+        margin-right: 0.25rem !important;
+      }
+      
+      .nav-link .flex-col span:first-child {
+        font-size: 0.75rem !important;
+      }
+      
+      .nav-link .flex-col span.text-xs {
+        font-size: 0.6rem !important;
+      }
+      
+      .nav-dot {
+        margin: 0 0.1rem !important;
+        font-size: 3px !important;
+      }
+      
+      /* Even smaller right-side elements */
+      .theme-toggle-btn,
+      .cart-btn,
+      .profile-btn {
+        width: 28px !important;
+        height: 28px !important;
+        padding: 0.3rem !important;
+      }
+      
+      .profile-btn .w-8 {
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+      }
+    }
+  }
+  
+  /* Device-specific styles - Matches exactly with screenshot devices */
+  
+  /* iPhone SE */
+  @media (width: 375px) and (height: 667px) {
+    .profile-btn {
+      padding: 0.25rem 0.5rem !important;
+    }
+    
+    .profile-btn .w-8 {
+      width: 1.5rem !important;
+      height: 1.5rem !important;
+    }
+    
+    .profile-dropdown {
+      width: 210px !important;
+      right: -40px !important;
+    }
+  }
+  
+  /* iPhone XR */
+  @media (width: 414px) and (height: 896px) {
+    .profile-dropdown {
+      width: 230px !important;
+      right: -30px !important;
+    }
+  }
+  
+  /* iPhone 12 Pro */
+  @media (width: 390px) and (height: 844px) {
+    .profile-dropdown {
+      width: 220px !important;
+      right: -35px !important;
+    }
+  }
+  
+  /* iPhone 14 Pro Max */
+  @media (width: 428px) and (height: 926px) {
+    .profile-dropdown {
+      width: 240px !important;
+      right: -20px !important;
+    }
+  }
+  
+  /* Pixel 7 */
+  @media (width: 412px) and (height: 915px) {
+    .profile-dropdown {
+      width: 235px !important;
+      right: -25px !important;
+    }
+  }
+  
+  /* Samsung Galaxy S8+ */
+  @media (width: 360px) and (height: 740px) {
+    .profile-dropdown {
+      width: 215px !important;
+      right: -45px !important;
+    }
+  }
+  
+  /* Samsung Galaxy S20 Ultra */
+  @media (width: 412px) and (height: 915px) {
+    .profile-dropdown {
+      width: 235px !important;
+      right: -25px !important;
+    }
+  }
+  
+  /* Foldable devices */
+  /* Galaxy Z Fold 5 */
+  @media (width: 280px) and (height: 653px) {
+    .account-access-button {
+      padding: 0.2rem 0.4rem !important;
+    }
+    
+    .account-access-button .avatar {
+      width: 1.4rem !important;
+      height: 1.4rem !important;
+    }
+    
+    .profile-dropdown {
+      width: 200px !important;
+      right: -60px !important;
+    }
+  }
+  
+  /* Surface Duo */
+  @media (width: 540px) and (height: 720px) {
+    .account-access-button {
+      padding: 0.5rem 0.75rem !important;
+    }
+    
+    .profile-dropdown {
+      width: 250px !important;
+      right: -10px !important;
+    }
+  }
+  
+  /* Asus Zenbook Fold */
+  @media (width: 393px) and (height: 873px),
+         (width: 655px) and (height: 618px) {
+    .profile-dropdown {
+      width: 240px !important;
+      right: -20px !important;
+    }
+  }
+  
+  /* iPad Mini */
+  @media (width: 768px) and (height: 1024px) {
+    .profile-dropdown {
+      width: 280px !important;
+      right: 0 !important;
+    }
+    
+    .account-access-button .avatar {
+      width: 2rem !important;
+      height: 2rem !important;
+    }
+    
+    html.ipad-device .profile-dropdown {
+      position: absolute;
+      top: 70px;
+    }
+    
+    /* iPad Mobile Menu improvements */
+    .mobile-account-options {
+      margin-top: 1rem;
+    }
+    
+    .mobile-account-options .grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .mobile-account-options .w-10 {
+      width: 2.5rem !important;
+      height: 2.5rem !important;
+    }
+    
+    .mobile-menu {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .mobile-menu nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .mobile-menu nav ul {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .mobile-menu nav ul li:last-child {
+      margin-top: auto;
+    }
+  }
+  
+  /* iPad Air */
+  @media (width: 820px) and (height: 1180px) {
+    .profile-dropdown {
+      width: 290px !important;
+      right: 0 !important;
+    }
+    
+    html.ipad-device .profile-dropdown {
+      position: absolute;
+      top: 70px;
+    }
+  }
+  
+  /* iPad Pro */
+  @media (width: 1024px) and (height: 1366px) {
+    .profile-dropdown {
+      width: 320px !important;
+      right: 0 !important;
+    }
+    
+    html.ipad-device .profile-dropdown {
+      position: absolute;
+      top: 70px;
+    }
+  }
+  
+  /* Surface Pro 7 - Matches exactly with dimensions in screenshot */
+  @media (width: 1368px) and (height: 912px) {
+    .profile-dropdown {
+      width: 320px !important;
+      right: 0 !important;
+    }
+    
+    html.surface-pro .profile-dropdown {
+      position: absolute;
+      top: 70px;
+    }
+  }
+  
+  /* Nest Hub */
+  @media (width: 1024px) and (height: 600px) {
+    .profile-dropdown {
+      top: 60px !important;
+      right: 0 !important;
+      width: 300px !important;
+    }
+  }
+  
+  /* Nest Hub Max */
+  @media (width: 1280px) and (height: 800px) {
+    .profile-dropdown {
+      top: 60px !important;
+      right: 0 !important;
+      width: 320px !important;
+    }
+  }
+  
+  /* Samsung Galaxy A51/71 */
+  @media (width: 412px) and (height: 914px) {
+    .profile-dropdown {
+      width: 235px !important;
+      right: -25px !important;
+    }
+  }
+  
+  /* Animated border transitions */
+  .hover\:border-l-4:hover {
+    border-left-width: 4px;
+    padding-left: 0.75rem;
+    transition: all 0.2s ease;
+  }
+  
+  /* Beautiful gradient animations */
+  .bg-gradient-to-r {
+    background-size: 200% auto;
+    transition: background-position 0.5s ease;
+  }
+  
+  .bg-gradient-to-r:hover {
+    background-position: right center;
+  }
+  
+  .main-header .container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .logo-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-links {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .nav-item:last-child .nav-dot {
+    display: none;
+  }
+  
+  .nav-link {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-link:hover {
+    color: #00bcd4;
+    background-color: rgba(0, 188, 212, 0.1);
+  }
+  
+  .auth-buttons {
+    display: flex;
+    align-items: center;
+  }
+  
+  .auth-link {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  
+  .auth-link:hover {
+    color: #00bcd4;
+    background-color: rgba(0, 188, 212, 0.1);
+  }
+  
+  .auth-button {
+    font-size: 1rem;
+    font-weight: 500;
+    background-color: #16213e;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  
+  .auth-button:hover {
+    background-color: #00bcd4;
+  }
+  
+  .signout-button {
+    background-color: #e53e3e;
+  }
+  
+  .signout-button:hover {
+    background-color: #c53030;
+  }
+  
+  /* Theme toggle button */
+  .theme-toggle-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  /* Enhanced tooltip for theme toggle button */
+  .tooltip-container {
+    position: relative;
+  }
+  
+  .tooltip-container:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -35px;
+    right: 50%;
+    transform: translateX(50%);
+    background-color: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 100;
+    opacity: 0;
+    animation: fadeIn 0.3s ease forwards;
+  }
+  
+  .tooltip-container:hover::before {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent #333 transparent;
+    opacity: 0;
+    animation: fadeIn 0.3s ease forwards;
+  }
+  
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .theme-toggle-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+  
+  .theme-toggle-button svg {
+    font-size: 1.25rem;
+  }
+  
+  .cart-container {
+    margin-left: 8px;
+  }
+  
+  .cart-icon-container {
+    position: relative;
+    display: inline-block;
+    padding: 6px;
+    transition: all 0.2s ease;
+  }
+  
+  .cart-icon-container:hover {
+    color: #00bcd4;
+  }
+  
+  .cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #f56565;
+    color: white;
+    font-size: 0.65rem;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .profile-avatar {
+    display: block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #00bcd4;
+  }
+  
+  /* Mobile menu styling */
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 200;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  /* Fix for logo image */
+  .site-logo {
+    display: block;
+    min-width: 40px;
+    object-fit: contain;
+    max-width: 100%;
+    border-radius: 100%;
+  }
+  
+  /* Mobile navigation */
+  .mobile-nav-item {
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .mobile-nav-item a,
+  .mobile-nav-item button {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: none;
+    font-size: 16px;
+    color: #374151;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-nav-item a:hover,
+  .mobile-nav-item button:hover {
+    background-color: #f3f4f6;
+    color: #0f766e;
+  }
+  
+  .mobile-nav-item svg {
+    margin-right: 12px;
+    font-size: 18px;
+  }
+  
+  /* Search section styling */
+  .search-section {
+    background-color: #f8f9fa;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  /* SearchBar component overrides for Header integration */
+  .search-section .search-bar-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+  
+  .search-section .search-input-wrapper {
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: 50px;
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+    background-color: #fff;
+  }
+  
+  .search-section .search-input-wrapper:focus-within {
+    box-shadow: 0 3px 15px rgba(74, 144, 226, 0.15);
+    border-color: #4a90e2;
+  }
+  
+  .search-section .search-input {
+    flex: 1;
+    border: none;
+    padding: 0 20px;
+    font-size: 16px;
+    outline: none;
+    height: 100%;
+    background-color: transparent;
+  }
+  
+  .search-section .search-button {
+    width: 50px;
+    height: 100%;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+  }
+  
+  .search-section .search-button:hover {
+    background: #3a80d2;
+  }
+  
+  /* Admin dashboard responsiveness */
+  .admin-page .content-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .admin-page .sidebar {
+    flex: 0 0 250px;
+  }
+  
+  .admin-page .main-content {
+    flex: 1;
+    min-width: 0; /* Prevents content from overflowing */
+    overflow-x: auto; /* Allows horizontal scrolling if needed */
+  }
+  
+  .admin-page table {
+    width: 100%;
+    min-width: 650px; /* Ensures tables don't compress too much */
+    overflow-x: auto;
+  }
+  
+  /* Fixed responsive breakpoints for consistency */
+  @media (min-width: 1537px) {
+    .mobile-menu {
+      display: none !important;
+    }
+  }
+  
+  /* Special handling for Surface Pro 7 and similar tablets - UPDATED */
+  @media (min-width: 1025px) and (max-width: 999px) {
+    .mobile-menu-toggle {
+      display: flex !important;
+    }
+    
+    nav.hidden.\32xl\:flex {
+      display: none !important;
+    }
+    
+    /* Critical: Ensure mobile menu is visible when toggled */
+    .mobile-menu {
+      position: fixed !important;
+      top: 60px;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 60px);
+      background-color: white;
+      z-index: 9999 !important;
+      display: none;
+    }
+    
+    body.menu-open .mobile-menu {
+      display: block !important;
+    }
+    
+    /* Target specifically Surface Pro 7 dimensions */
+    @media (width: 1368px) and (height: 912px) {
+      body.menu-open .mobile-menu {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+      }
+    }
+  }
+  
+  /* Override: Hide mobile menu button on screens 1000px+ since we keep desktop nav visible */
+  @media (min-width: 1000px) {
+    .mobile-menu-toggle {
+      display: none !important;
+    }
+  }
+  
+  /* Ensure mobile menu works on iPad Air portrait (820x1180) */
+  @media (width: 820px) and (orientation: portrait), (width: 820px) and (height: 1180px) {
+    .mobile-menu-toggle {
+      display: flex !important;
+    }
+    
+    nav.hidden {
+      display: none !important;
+    }
+    
+    /* Force mobile menu styling for iPad Air */
+    .hidden[class*="2xl:flex"] {
+      display: none !important;
+    }
+    
+    /* Ensure mobile menu displays properly */
+    .mobile-menu {
+      display: block;
+    }
+  }
+  
+  /* Show mobile menu at screens below 1000px */
+  @media (max-width: 800px) {
+    .mobile-menu-toggle {
+      display: flex;
+    }
+    
+    nav.hidden {
+      display: none !important;
+    }
+  }
+  
+  /* Large Desktop Adjustments */
+  @media (min-width: 1333px) {
+    .nav-link, .auth-link {
+      font-size: 1rem;
+      padding: 0.5rem 0.75rem;
+    }
+    
+    .cart-icon-container {
+      margin-right: 8px;
+    }
+    
+    /* Hide mobile menu button on large screens */
+    .mobile-menu-btn {
+      display: none !important;
+    }
+    
+    /* Ensure desktop navigation is shown on large screens */
+    .desktop-nav,
+    nav.hidden.custom-1333\:flex {
+      display: flex !important;
+    }
+  }
+  
+  /* Desktop Adjustments - UPDATED for non-laptop ranges */
+  @media (min-width: 1333px) and (max-width: 1600px) {
+    .nav-link, .auth-link, .auth-button {
+      font-size: 0.95rem;
+      padding: 0.4rem 0.6rem;
+    }
+  
+    .nav-links {
+      gap: 0.25rem;
+    }
+    
+    /* Admin dashboard responsive adjustments */
+    .admin-page .sidebar {
+      flex: 0 0 200px;
+    }
+  }
+  
+  /* Mobile Adjustments */
+  @media (max-width: 800px) {
+    header {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .cart-badge {
+      width: 14px;
+      height: 14px;
+      font-size: 0.55rem;
+      top: -4px;
+      right: -4px;
+    }
+    
+    /* Mobile menu styling */
+    .mobile-menu {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 60px);
+      background-color: white;
+      border-top: 1px solid #e5e7eb;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      z-index: 50;
+      overflow-y: auto;
+      padding-bottom: 0.5rem;
+    }
+  
+    /* Mobile account options styling */
+    .mobile-account-options {
+      margin-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+  
+    .mobile-account-options .grid {
+      max-width: 100%;
+    }
+  
+    /* Mobile menu responsive adjustments for different devices */
+  
+    /* Small phones (iPhone SE, etc.) */
+    @media (max-width: 375px) {
+      .mobile-menu {
+        top: 50px;
+        height: calc(100vh - 50px);
+      }
+      
+      .mobile-menu .px-4 {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      
+      .mobile-account-options .w-10 {
+        width: 2rem !important;
+        height: 2rem !important;
+        min-width: 2rem !important;
+      }
+    }
+  
+    .mobile-menu nav {
+      padding-top: 1rem;
+    }
+    
+    .mobile-menu ul li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .mobile-menu ul li a,
+    .mobile-menu ul li button {
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .mobile-menu ul li a svg,
+    .mobile-menu ul li button svg {
+      margin-right: 1rem;
+      font-size: 1.25rem;
+    }
+    
+    .mobile-menu .border-t {
+      margin-top: 1rem;
+      padding-top: 1rem;
+    }
+  }
+  
+  /* iPad Air portrait mode specific styling */
+  .ipad-air-portrait .mobile-menu-toggle {
+    display: flex !important;
+  }
+  
+  .ipad-air-portrait .hidden[class*="2xl:flex"] {
+    display: none !important;
+  }
+  
+  .ipad-air-portrait .mobile-menu {
+    display: block;
+  }
+  
+  /* Safari/iOS fix for small screens */
+  @supports (-webkit-touch-callout: none) {
+    @media (max-width: 350px) {
+      .site-logo {
+        min-width: 30px;
+        width: 30px;
+        border-radius: 100%;
+      }
+      
+      .theme-toggle-button,
+      .cart-icon-container a {
+        padding: 4px;
+      }
+    }
+  }
+  
+  /* Custom breakpoint for 1000px */
+  @media (min-width: 800px) {
+    .custom-1000\:flex {
+      display: flex !important;
+    }
+    
+    .custom-1000\:hidden {
+      display: none !important;
+    }
+  } 

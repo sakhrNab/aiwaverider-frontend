@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { FaLinkedin, FaGithub, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools, FaCogs, FaCloud, FaMobile, FaServer } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTiktok } from '@fortawesome/free-brands-svg-icons';
+import { faTiktok, faInstagram } from '@fortawesome/free-brands-svg-icons';
 
 const About = () => {
   const { darkMode } = useTheme();
@@ -98,6 +99,10 @@ const About = () => {
         element.innerHTML = '';
         element.classList.add('typing');
         
+        // Ensure element is visible and has proper styling
+        element.style.display = 'block';
+        element.style.opacity = '1';
+        
         function type() {
           if (i < text.length) {
             element.innerHTML += text.charAt(i);
@@ -105,6 +110,9 @@ const About = () => {
             setTimeout(type, speed);
           } else {
             element.classList.remove('typing');
+            // Ensure final content is visible
+            element.style.opacity = '1';
+            element.style.display = 'block';
             resolve();
           }
         }
@@ -116,12 +124,18 @@ const About = () => {
       const detailList = card.querySelector('.card-details ul');
       const lines = Array.from(detailList.querySelectorAll('li')).map(li => li.innerText);
       
+      console.log('Lines to animate:', lines); // Debug log
       detailList.innerHTML = ''; // Clear list for animation
       
-      for (const lineText of lines) {
+      for (let i = 0; i < lines.length; i++) {
+        const lineText = lines[i];
+        console.log(`Animating line ${i}:`, lineText); // Debug log
         const newLi = document.createElement('li');
         detailList.appendChild(newLi);
-        await typeWriter(newLi, lineText, 20);
+        
+        // Add a small delay before starting each item to prevent conflicts
+        await new Promise(resolve => setTimeout(resolve, 50));
+        await typeWriter(newLi, lineText, 10); // Even faster typing speed
       }
     };
 
@@ -197,7 +211,7 @@ const About = () => {
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'} relative`}>
       {/* Particle Background */}
-      <div id="particles-js" className="fixed inset-0 w-full h-full z-0"></div>
+      <div id="particles-js" className="fixed inset-0 w-full h-full z-0 pointer-events-none"></div>
       {/* Hero Section */}
       <section className={`py-16 ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-indigo-50 to-blue-50'} relative z-10`}>
         <div className="container mx-auto px-6">
@@ -215,7 +229,7 @@ const About = () => {
       </section>
 
       {/* Mission Section */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'} relative z-10`}>
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
             <h2 className={`text-3xl font-bold mb-8 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Our Mission</h2>
@@ -233,7 +247,7 @@ const About = () => {
       </section>
 
       {/* Our Values */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} relative z-10`}>
         <div className="container mx-auto px-6">
           <h2 className={`text-3xl font-bold mb-12 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Our Values</h2>
 
@@ -266,7 +280,7 @@ const About = () => {
       </section>
 
       {/* Founders Section */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'} relative z-10`}>
         <div className="container mx-auto px-6">
           <h2 className={`text-3xl font-bold mb-12 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Meet the Founder</h2>
 
@@ -283,20 +297,41 @@ const About = () => {
                 </div>
                 <h3 className="text-3xl font-bold mb-1 text-center">Sakhr Al-absi</h3>
                 <p className={`text-xl mb-4 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Founder & CEO</p>
-                <div className="flex justify-center space-x-6 mb-6">
-                  <a href="https://www.linkedin.com/in/sakhr-nabil-al-absi/" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl`}>
+                <div className="flex justify-center space-x-6 mb-6 relative z-20" style={{ position: 'relative', zIndex: 20 }}>
+                  <a 
+                    href="https://www.linkedin.com/in/sakhr-nabil-al-absi/" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl transition-colors duration-200 cursor-pointer relative z-30`}
+                    onClick={() => console.log('LinkedIn clicked')}
+                    style={{ zIndex: 30 }}
+                  >
                     <FaLinkedin />
                   </a>
-                  <a href="https://github.com/sakhrNab" target="_blank" rel="noopener noreferrer" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} text-2xl`}>
+                  <a 
+                    href="https://github.com/sakhrNab" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} text-2xl transition-colors duration-200 cursor-pointer relative z-30`}
+                    onClick={() => console.log('GitHub clicked')}
+                    style={{ zIndex: 30 }}
+                  >
                     <FaGithub />
                   </a>
-                  <a href="https://www.tiktok.com/@ai.wave.rider" target="_blank" rel="noopener noreferrer" className="text-xl hover:text-pink-600">
+                  <a 
+                    href="https://www.tiktok.com/@ai.wave.rider" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-xl hover:text-pink-600 transition-colors duration-200 cursor-pointer relative z-30"
+                    onClick={() => console.log('TikTok clicked')}
+                    style={{ zIndex: 30 }}
+                  >
                     <FontAwesomeIcon icon={faTiktok} />
                   </a>
                 </div>
               </div>
               <p className="text-base leading-relaxed mb-4">
-                Sakhr is a technology entrepreneur with over 10 years of experience in software development and AI implementation. 
+                Sakhr is a technology entrepreneur with over 7 years of experience in software development and AI implementation. 
                 He has successfully helped dozens of businesses integrate AI solutions to optimize processes, reduce costs, and create 
                 new revenue streams.
               </p>
@@ -307,7 +342,7 @@ const About = () => {
                 with major banks and automotive industry leaders across Germany.
               </p>
               <p className="text-base leading-relaxed">
-                Fluent in both English and German, Sakhr bridges the gap between cutting-edge technology and practical business 
+                Fluent in Arabic, English and German, Sakhr bridges the gap between cutting-edge technology and practical business 
                 applications, making complex AI concepts accessible to everyone while delivering solutions that drive real business value.
               </p>
             </div>
@@ -362,7 +397,7 @@ const About = () => {
 
             {/* Interactive Services Grid */}
             <div className="relative">
-              <style jsx>{`
+              <style>{`
                 .services-grid {
                   display: grid;
                   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -445,6 +480,7 @@ const About = () => {
                 .service-card.active .card-details {
                   max-height: 1000px;
                   opacity: 1;
+                  display: block;
                 }
                 
                 .card-details ul {
@@ -635,7 +671,7 @@ const About = () => {
       </section>
 
       {/* Get Started Section */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'} relative z-10`}>
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className={`text-3xl font-bold mb-8 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Ready to Get Started?</h2>
@@ -644,24 +680,24 @@ const About = () => {
               or get in touch to discuss your specific needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a 
-                href="/agents" 
+              <Link 
+                to="/agents" 
                 className={`inline-block px-8 py-3 ${darkMode ? 
                   'bg-teal-600 hover:bg-teal-700' : 
                   'bg-teal-600 hover:bg-teal-700'} 
                   text-white rounded-lg font-semibold transition duration-300`}
               >
                 Browse AI Solutions
-              </a>
-              <a 
-                href="/contact" 
+              </Link>
+              <Link 
+                to="/contact" 
                 className={`inline-block px-8 py-3 ${darkMode ? 
                   'bg-blue-600 hover:bg-blue-700' : 
                   'bg-blue-600 hover:bg-blue-700'} 
                   text-white rounded-lg font-semibold transition duration-300`}
               >
                 Get in Touch
-              </a>
+              </Link>
             </div>
           </div>
         </div>

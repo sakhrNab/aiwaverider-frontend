@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import '../styles/animations.css'; // Import animations
 import FloatingNav from '../components/navigation/FloatingNav';
-import PageHeader from '../components/layout/PageHeader';
 // import YouAreYouWant from '../components/sections/YouAreYouWant';
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
 import tazProfileImg from '../assets/taz-profile.jpg';
@@ -18,14 +17,149 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState(null);
-  
+
+  // Typewriter effect function with cleanup
+  const typeWriter = (element, text, speed = 20) => {
+    return new Promise(resolve => {
+      let i = 0;
+      let timeoutId = null;
+      let isCancelled = false;
+      
+      element.innerHTML = '';
+      element.classList.add('typing');
+      
+      // Ensure element is visible and has proper styling
+      element.style.display = 'block';
+      element.style.opacity = '1';
+      
+      function type() {
+        if (isCancelled) return;
+        
+        if (i < text.length) {
+          element.innerHTML += text.charAt(i);
+          i++;
+          timeoutId = setTimeout(type, speed);
+        } else {
+          element.classList.remove('typing');
+          // Ensure final content is visible
+          element.style.opacity = '1';
+          element.style.display = 'block';
+          resolve();
+        }
+      }
+      
+      // Store cleanup function on element for potential cancellation
+      element._typewriterCleanup = () => {
+        isCancelled = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      };
+      
+      type();
+    });
+  };
+
   // Create refs for all sections we want to navigate to
   const topRef = useRef(null);
   const obstaclesRef = useRef(null);
   const whoItsForRef = useRef(null);
   const faqRef = useRef(null);
   const monetizationPathsRef = useRef(null);
-  
+
+  // Trigger typewriter effect on page load with cleanup
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutIds = [];
+    
+    const animateCards = async () => {
+      if (!isMounted) return;
+      
+      // Wait for page to load
+      const initialDelay = new Promise(resolve => {
+        const id = setTimeout(resolve, 1000);
+        timeoutIds.push(id);
+      });
+      await initialDelay;
+      
+      if (!isMounted) return;
+      
+      // Animate monetizing methods cards
+      const methodCards = document.querySelectorAll('.futuristic-card');
+      for (let i = 0; i < methodCards.length && isMounted; i++) {
+        const card = methodCards[i];
+        const title = card.querySelector('h3');
+        const description = card.querySelector('p');
+        
+        if (title && isMounted) {
+          const originalText = title.textContent;
+          const delay = new Promise(resolve => {
+            const id = setTimeout(resolve, 200 * i);
+            timeoutIds.push(id);
+          });
+          await delay;
+          if (isMounted) await typeWriter(title, originalText, 15);
+        }
+        
+        if (description && isMounted) {
+          const originalText = description.textContent;
+          const delay = new Promise(resolve => {
+            const id = setTimeout(resolve, 100);
+            timeoutIds.push(id);
+          });
+          await delay;
+          if (isMounted) await typeWriter(description, originalText, 10);
+        }
+      }
+
+      if (!isMounted) return;
+
+      // Animate obstacles cards
+      const obstacleCards = document.querySelectorAll('.obstacle-card');
+      for (let i = 0; i < obstacleCards.length && isMounted; i++) {
+        const card = obstacleCards[i];
+        const title = card.querySelector('h3');
+        const description = card.querySelector('p');
+        
+        if (title && isMounted) {
+          const originalText = title.textContent;
+          const delay = new Promise(resolve => {
+            const id = setTimeout(resolve, 200 * i);
+            timeoutIds.push(id);
+          });
+          await delay;
+          if (isMounted) await typeWriter(title, originalText, 15);
+        }
+        
+        if (description && isMounted) {
+          const originalText = description.textContent;
+          const delay = new Promise(resolve => {
+            const id = setTimeout(resolve, 100);
+            timeoutIds.push(id);
+          });
+          await delay;
+          if (isMounted) await typeWriter(description, originalText, 10);
+        }
+      }
+    };
+
+    animateCards();
+    
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      // Clear all timeouts
+      timeoutIds.forEach(id => clearTimeout(id));
+      // Cleanup any running typewriter effects
+      document.querySelectorAll('[class*="typing"]').forEach(el => {
+        if (el._typewriterCleanup) {
+          el._typewriterCleanup();
+        }
+      });
+    };
+  }, []);
+
   // Audio refs
   const audioContextRef = useRef(null);
   const hoverSynthRef = useRef(null);
@@ -33,7 +167,7 @@ const HomePage = () => {
   
   const { darkMode } = useTheme();
   const calendlyLink = "https://calendly.com/aiwaverider8/30min";
-  
+
   // Data arrays for cards
   const monetizingMethods = [
     {
@@ -103,13 +237,13 @@ const HomePage = () => {
     e.preventDefault();
     monetizationPathsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   // Function to open Calendly for consultation calls
   const openCalendlyConsultation = () => {
     window.open(calendlyLink, '_blank');
   };
 
-  // Load Tone.js and initialize audio
+  // Load Tone.js and initialize audio with cleanup
   useEffect(() => {
     const loadToneJS = async () => {
       try {
@@ -132,82 +266,124 @@ const HomePage = () => {
           envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }
         }).toDestination();
         
-              // Sound effects loaded
+        // Sound effects loaded
       } catch (error) {
-              // Tone.js not available, continuing without sound effects
+        // Tone.js not available, continuing without sound effects
       }
     };
 
     loadToneJS();
+    
+    // Cleanup function
+    return () => {
+      // Dispose of audio resources
+      if (hoverSynthRef.current) {
+        hoverSynthRef.current.dispose();
+        hoverSynthRef.current = null;
+      }
+      if (clickSynthRef.current) {
+        clickSynthRef.current.dispose();
+        clickSynthRef.current = null;
+      }
+      if (audioContextRef.current && audioContextRef.current.context) {
+        audioContextRef.current.context.close();
+        audioContextRef.current = null;
+      }
+    };
   }, []);
 
-  // Initialize particles
+  // Initialize particles with cleanup and reduced count
   useEffect(() => {
+    let particlesInstance = null;
+    let timeoutIds = [];
+    
     const loadParticles = () => {
       // Load particles.js from CDN
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
 
-              // Debug: Check script loading
       script.onload = () => {
-
         if (window.particlesJS) {
           // Wait for DOM to be ready and container to exist
           const initParticles = () => {
             const container = document.querySelector('#particles-js');
             if (!container) {
-              setTimeout(initParticles, 50);
+              const id = setTimeout(initParticles, 50);
+              timeoutIds.push(id);
               return;
             }
             try {
-              window.particlesJS('particles-js', {
-            "particles": {
-              "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-              "color": { "value": "#00ffff" },
-              "shape": { "type": "circle" },
-              "opacity": { "value": 0.5, "random": false },
-              "size": { "value": 3, "random": true },
-              "line_linked": { "enable": true, "distance": 150, "color": "#00ffff", "opacity": 0.4, "width": 1 },
-              "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
-            },
-                "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, "modes": { "repulse": { "distance": 100, "duration": 0.4 }, "push": { "particles_nb": 4 } } },
+              // Reduced particle count and simplified configuration for better performance
+              particlesInstance = window.particlesJS('particles-js', {
+                "particles": {
+                  "number": { "value": 30, "density": { "enable": true, "value_area": 1200 } },
+                  "color": { "value": "#00ffff" },
+                  "shape": { "type": "circle" },
+                  "opacity": { "value": 0.4, "random": false },
+                  "size": { "value": 2, "random": true },
+                  "line_linked": { "enable": true, "distance": 200, "color": "#00ffff", "opacity": 0.2, "width": 1 },
+                  "move": { "enable": true, "speed": 1, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+                },
+                "interactivity": { 
+                  "detect_on": "canvas", 
+                  "events": { 
+                    "onhover": { "enable": true, "mode": "repulse" }, 
+                    "onclick": { "enable": false, "mode": "push" }, 
+                    "resize": true 
+                  }, 
+                  "modes": { 
+                    "repulse": { "distance": 80, "duration": 0.4 }, 
+                    "push": { "particles_nb": 2 } 
+                  } 
+                },
                 "retina_detect": true
               });
-
             } catch (error) {
               console.error('❌ Error initializing particles:', error);
             }
           };
 
-          // Start the initialization process - wait longer for DOM to be ready
-          setTimeout(() => {
-            setTimeout(initParticles, 100);
+          // Start the initialization process with timeout tracking
+          const id1 = setTimeout(() => {
+            const id2 = setTimeout(initParticles, 100);
+            timeoutIds.push(id2);
           }, 500);
+          timeoutIds.push(id1);
         } else {
           console.error('❌ particlesJS is not available after script load');
         }
       };
 
       script.onerror = () => {
-
         // Try alternative CDN
         const altScript = document.createElement('script');
         altScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js';
         altScript.onload = () => {
           if (window.particlesJS) {
-            window.particlesJS('particles-js', {
+            particlesInstance = window.particlesJS('particles-js', {
               "particles": {
-                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "number": { "value": 30, "density": { "enable": true, "value_area": 1200 } },
                 "color": { "value": "#00ffff" },
                 "shape": { "type": "circle" },
-                "opacity": { "value": 0.5, "random": false },
-                "size": { "value": 3, "random": true },
-                "line_linked": { "enable": true, "distance": 150, "color": "#00ffff", "opacity": 0.4, "width": 1 },
-                "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+                "opacity": { "value": 0.4, "random": false },
+                "size": { "value": 2, "random": true },
+                "line_linked": { "enable": true, "distance": 200, "color": "#00ffff", "opacity": 0.2, "width": 1 },
+                "move": { "enable": true, "speed": 1, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
               },
-              "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, "modes": { "repulse": { "distance": 100, "duration": 0.4 }, "push": { "particles_nb": 4 } } },
-            "retina_detect": true
-          });
+              "interactivity": { 
+                "detect_on": "canvas", 
+                "events": { 
+                  "onhover": { "enable": true, "mode": "repulse" }, 
+                  "onclick": { "enable": false, "mode": "push" }, 
+                  "resize": true 
+                }, 
+                "modes": { 
+                  "repulse": { "distance": 80, "duration": 0.4 }, 
+                  "push": { "particles_nb": 2 } 
+                } 
+              },
+              "retina_detect": true
+            });
           }
         };
         altScript.onerror = () => {
@@ -220,6 +396,23 @@ const HomePage = () => {
     };
 
     loadParticles();
+    
+    // Cleanup function
+    return () => {
+      // Clear all timeouts
+      timeoutIds.forEach(id => clearTimeout(id));
+      
+      // Destroy particles instance
+      if (particlesInstance && particlesInstance.destroy) {
+        particlesInstance.destroy();
+      }
+      
+      // Remove particles script
+      const existingScript = document.querySelector('script[src*="particles"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
   }, []);
 
   // Keyboard event listener for modal
@@ -239,10 +432,44 @@ const HomePage = () => {
     const timer = setTimeout(() => {
       setLoading(false);
     }, 1200);
-    
+
     return () => clearTimeout(timer);
   }, []);
-  
+
+  // Pause animations when page is not visible to save CPU
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const style = document.createElement('style');
+      style.id = 'animation-control';
+      
+      if (document.hidden) {
+        // Pause all animations when page is hidden
+        style.textContent = `
+          * {
+            animation-play-state: paused !important;
+          }
+        `;
+        document.head.appendChild(style);
+      } else {
+        // Resume animations when page is visible
+        const existingStyle = document.getElementById('animation-control');
+        if (existingStyle) {
+          existingStyle.remove();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      const existingStyle = document.getElementById('animation-control');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-b from-gray-900 to-blue-900">
@@ -286,7 +513,7 @@ const HomePage = () => {
       stars: 5
     }
   ];
-  
+
   // Modal functions
   const openModal = (item) => {
     playClickSound();
@@ -327,12 +554,29 @@ const HomePage = () => {
   };
 
   return (
-    <div className={`${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'} relative`} ref={topRef} style={{ backgroundColor: darkMode ? '#111827' : 'hsla(305, 71.20%, 75.50%, 0.22)', color: darkMode ? '#e0e0e0' : '#1e293b', overflowX: 'hidden', position: 'relative', minHeight: '100vh', zIndex: 10 }}>
+    <div className={`${darkMode ? 'bg-black' : 'bg-purple-900'} relative`} ref={topRef} style={{ color: darkMode ? '#e0e0e0' : '#1e293b', overflowX: 'hidden', position: 'relative', minHeight: '100vh', zIndex: 1 }}>
       {/* Cinematic gradient backdrop (behind particles) */}
       <div className="bg-movie-gradient fixed inset-0" style={{ zIndex: -2 }} aria-hidden="true"></div>
 
+
+
+
       {/* Particle Background */}
-      <div id="particles-js" className="fixed inset-0 w-full h-full" style={{ zIndex: 5, backgroundColor: 'transparent', pointerEvents: 'none' }}></div>
+      <div id="particles-js" className="fixed inset-0 w-full h-full" style={{ zIndex: 0, backgroundColor: 'transparent', pointerEvents: 'none' }}></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
       {/* CSS Animations */}
@@ -343,6 +587,25 @@ const HomePage = () => {
           color: #e0e0e0;
           overflow-x: hidden;
           transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Ensure header has highest priority on homepage */
+        .main-header {
+          z-index: 9999 !important;
+          position: sticky !important;
+          top: 0 !important;
+        }
+
+        /* Global background for all sections to ensure particle consistency */
+        .homepage-section {
+          background-color: transparent !important;
+          position: relative !important;
+          z-index: 1 !important;
+        }
+
+        .mobile-menu-btn {
+          z-index: 10000 !important;
+          position: relative !important;
         }
 
         /* Light mode body styling */
@@ -429,20 +692,157 @@ const HomePage = () => {
         }
 
         .futuristic-card {
-          background-color: rgba(16, 16, 32, 0.5);
-          border: 1px solid rgba(0, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
-          box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-          animation: pulse-glow 4s infinite alternate;
-          font-family: 'Roboto', 'Inter', sans-serif;
+          background: linear-gradient(135deg, rgba(16, 16, 32, 0.8), rgba(32, 32, 64, 0.6));
+          border: 1px solid rgba(0, 255, 255, 0.3);
+          backdrop-filter: blur(15px);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 
+            0 0 20px rgba(0, 255, 255, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          animation: pulse-glow 8s infinite alternate;
+          font-family: 'Roboto', 'Inter', 'JetBrains Mono', monospace;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .futuristic-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+          animation: typewriter-sweep 6s infinite;
         }
 
         .futuristic-card:hover {
-          transform: translateY(-10px) scale(1.03);
-          box-shadow: 0 0 35px rgba(0, 255, 255, 0.5);
-          border-color: rgba(0, 255, 255, 0.5);
+          transform: translateY(-15px) scale(1.05) rotateX(5deg);
+          box-shadow: 
+            0 25px 50px rgba(0, 255, 255, 0.4),
+            0 0 60px rgba(0, 255, 255, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+          border-color: rgba(0, 255, 255, 0.8);
+          animation-play-state: paused;
         }
+
+        .futuristic-card:hover::before {
+          animation: typewriter-sweep 0.8s ease-out;
+        }
+
+        @keyframes typewriter-glow {
+          0%, 100% { 
+            box-shadow: 
+              0 0 20px rgba(0, 255, 255, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          }
+          50% { 
+            box-shadow: 
+              0 0 30px rgba(0, 255, 255, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+          }
+        }
+
+        @keyframes typewriter-sweep {
+          0% { left: -100%; }
+          100% { left: 100%; }
+        }
+
+        /* Simple typewriter effect - working version */
+        .typewriter-text {
+          font-family: 'Roboto Mono', monospace;
+          overflow: hidden;
+          white-space: nowrap;
+          border-right: 2px solid rgba(0, 255, 255, 0.8);
+          animation: typing 1s steps(20, end), blink-caret 0.75s step-end infinite 1s;
+        }
+
+        .typewriter-text-multiline {
+          font-family: 'Roboto Mono', monospace;
+          overflow: hidden;
+          white-space: nowrap;
+          border-right: 2px solid rgba(0, 255, 255, 0.8);
+          animation: typing 1.5s steps(30, end), blink-caret 0.75s step-end infinite 1.5s;
+        }
+
+        @keyframes typing {
+          from { width: 0; }
+          to { width: 100%; }
+        }
+
+        @keyframes blink-caret {
+          from, to { border-color: transparent; }
+          50% { border-color: rgba(0, 255, 255, 0.8); }
+        }
+
+        /* Typewriter cursor effect */
+        .typing::after {
+          content: '_';
+          animation: blink 0.8s infinite;
+          font-weight: bold;
+          margin-left: 2px;
+          color: rgba(0, 255, 255, 0.8);
+        }
+
+        @keyframes blink { 
+          50% { opacity: 0; } 
+        }
+
+      /* Staggered typewriter effect for multiple elements */
+      .typewriter-stagger-1 { 
+        animation-delay: 0s; 
+      }
+      .typewriter-stagger-2 { 
+        animation-delay: 0.2s; 
+      }
+      .typewriter-stagger-3 { 
+        animation-delay: 0.4s; 
+      }
+      .typewriter-stagger-4 { 
+        animation-delay: 0.6s; 
+      }
+
+      /* Hero Illustration Animations */
+      .hero-illustration {
+        filter: drop-shadow(0 20px 40px rgba(0, 188, 212, 0.3));
+        transition: all 0.3s ease;
+      }
+
+      .hero-illustration:hover {
+        filter: drop-shadow(0 25px 50px rgba(0, 188, 212, 0.4));
+        transform: scale(1.02) !important;
+      }
+
+      @keyframes heroFloatIn {
+        0% {
+          opacity: 0;
+          transform: translateY(30px) scale(0.95);
+        }
+        50% {
+          opacity: 0.8;
+          transform: translateY(-10px) scale(1.02);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes heroFloat {
+        0%, 100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        25% {
+          transform: translateY(-8px) rotate(0.5deg);
+        }
+        50% {
+          transform: translateY(-12px) rotate(0deg);
+        }
+        75% {
+          transform: translateY(-6px) rotate(-0.5deg);
+        }
+      }
+
 
         @keyframes pulse-glow {
           from {
@@ -489,7 +889,7 @@ const HomePage = () => {
         .hero-buttons > *:nth-child(2) { animation-delay: 1.7s; }
 
         .hero-image img {
-          animation: floatIn 2s 0.5s ease-in-out forwards, subtle-float 5s ease-in-out infinite;
+          animation: floatIn 2s 0.5s ease-in-out forwards, subtle-float 8s ease-in-out infinite;
           opacity: 0;
           transform: translateX(50px);
         }
@@ -538,34 +938,22 @@ const HomePage = () => {
           box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
         }
 
-        @keyframes typing {
-          from { width: 0 }
-          to { width: 100% }
-        }
-
-        .typewriter-text {
-          font-family: 'Roboto Mono', monospace;
-          overflow: hidden;
-          white-space: pre-wrap;
-          animation: typing 2s steps(40, end);
-          width: 100%;
-        }
       `}</style>
       {/* Floating navigation that appears when scrolling */}
       <FloatingNav scrollRefs={scrollRefs} />
       
       {/* Cinematic Hero Section */}
-      <div className="hero-section container mx-auto px-4 text-left" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+      <div className="hero-section container mx-auto px-4 text-left homepage-section" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
           <div className="grid md:grid-cols-2 gap-16 items-center">
           <div className="hero-content" style={{ animation: 'fadeIn 1s ease-out forwards', opacity: 0 }}>
-            <h1 className="hero-title text-4xl md:text-6xl font-bold mb-6 text-white" style={{ 
+            <h1 className={`hero-title text-4xl md:text-6xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-white'}`} style={{ 
               animation: 'slideUp 1s 0.5s ease-out forwards, subtle-glow 3s infinite alternate', 
               opacity: 0, 
               transform: 'translateY(20px)',
-                textShadow: '0 0 15px rgba(0, 255, 255, 0.5)'
+              textShadow: darkMode ? '0 0 15px rgba(0, 255, 255, 0.5)' : '0 0 15px rgba(59, 130, 246, 0.3)'
             }}>Master AI Automation & Build Your Digital Empire</h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-8 opacity-90">Learn how to monetize AI through affiliate marketing, sell powerful n8n automation workflows, and provide high-value AI consulting services. Build a $5,000-$25,000/month business in the AI revolution.</p>
-            <ul className="hero-checklist space-y-3 mb-8 text-gray-200">
+            <p className={`text-lg md:text-xl mb-8 opacity-90 ${darkMode ? 'text-gray-300' : 'text-gray-200'}`}>Learn how to monetize AI through affiliate marketing, sell powerful n8n automation workflows, and provide high-value AI consulting services. Build a $5,000-$25,000/month business in the AI revolution.</p>
+            <ul className={`hero-checklist space-y-3 mb-8 ${darkMode ? 'text-gray-200' : 'text-gray-300'}`}>
               <li className="flex items-center" style={{ animation: 'slideUp 1s 0.8s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
                 <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -582,8 +970,17 @@ const HomePage = () => {
                 </svg>Launch your first AI automation workflow in 7 days
               </li>
               </ul>
-            <div className="hero-buttons flex items-center space-x-4">
+            <div className="hero-buttons flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
               <Link to="/monetization-paths" className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg shadow-blue-600/30" style={{ animation: 'fadeIn 1s 1.5s ease-out forwards', opacity: 0 }}>Explore Business Models</Link>
+              <a
+                href="https://calendly.com/aiwaverider8/30min"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg shadow-yellow-500/30"
+                style={{ animation: 'fadeIn 1s 1.6s ease-out forwards', opacity: 0 }}
+              >
+                Book a FREE Consultation
+              </a>
               <a
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
@@ -594,9 +991,39 @@ const HomePage = () => {
                   JOIN COMMUNITY
               </a>
               </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             </div>
           <div className="hero-image hidden md:block">
-            <img src="https://assets-global.website-files.com/6451a1bb0965213560667023/6476e3435c23d3326372f4e3_n8n-product-multi-trigger-p-1080.png" alt="AI Waverider Illustration" className="w-full h-auto" style={{ animation: 'floatIn 2s 0.5s ease-in-out forwards, subtle-float 5s ease-in-out infinite', opacity: 0, transform: 'translateX(50px)' }} />
+            <img 
+              src={aiHeroPage} 
+              alt="AI Waverider Illustration" 
+              className="w-full h-auto hero-illustration" 
+              style={{ 
+                animation: 'heroFloatIn 2s ease-out 0.5s forwards, heroFloat 6s ease-in-out 2.5s infinite', 
+                opacity: 0, 
+                transform: 'translateY(30px) scale(0.95)' 
+              }} 
+            />
           </div>
         </div>
       </div>
@@ -605,13 +1032,13 @@ const HomePage = () => {
       {/* <YouAreYouWant /> */}
 
       {/* Monetization Paths */}
-      <section ref={monetizationPathsRef} id="monetization-paths" className="py-20 relative">
+      <section ref={monetizationPathsRef} id="monetization-paths" className="py-20 relative homepage-section">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-        <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white" style={{ textShadow: '0 0 15px rgba(0, 255, 255, 0.5)' }}>
+        <h2 className={`text-4xl md:text-6xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-white'}`} style={{ textShadow: darkMode ? '0 0 15px rgba(0, 255, 255, 0.5)' : '0 0 15px rgba(99, 102, 241, 0.3)' }}>
           4 Proven Ways To Monetize AI
         </h2>
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-gray-300">
+            <p className={`max-w-3xl mx-auto text-lg md:text-xl ${darkMode ? 'text-gray-300' : 'text-gray-200'}`}>
           Discover the core business models top-performing automation figures in the AI space, plus how I teach others to replicate my success.
         </p>
           </div>
@@ -628,10 +1055,55 @@ const HomePage = () => {
                   <div className="icon-container mr-4 text-3xl">
                     {method.icon}
                   </div>
-                  <h3 className="text-xl font-bold text-white">{method.title}</h3>
+                  <h3 className="text-xl font-bold text-white typewriter-text typewriter-stagger-1">{method.title}</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 </div>
-                <p className="text-gray-400">
+                <p className="text-gray-400 typewriter-text-multiline typewriter-stagger-2">
                   {method.description.substring(0, 100)}...
+
+
+
+
                 </p>
               </div>
           ))}
@@ -656,13 +1128,13 @@ const HomePage = () => {
       </section>
 
       {/* Obstacles Section */}
-      <section ref={obstaclesRef} id="obstacles" className="py-20 relative">
+      <section ref={obstaclesRef} id="obstacles" className="py-20 relative homepage-section">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-        <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white" style={{ textShadow: '0 0 15px rgba(0, 255, 255, 0.5)' }}>
+        <h2 className={`text-4xl md:text-6xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-white'}`} style={{ textShadow: darkMode ? '0 0 15px rgba(0, 255, 255, 0.5)' : '0 0 15px rgba(239, 68, 68, 0.3)' }}>
           Common Obstacles To Building an AI Business
         </h2>
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-gray-300">
+            <p className={`max-w-3xl mx-auto text-lg md:text-xl ${darkMode ? 'text-gray-300' : 'text-gray-200'}`}>
           These are the key challenges that prevent most people from successfully building a profitable AI business.
         </p>
           </div>
@@ -679,14 +1151,75 @@ const HomePage = () => {
                   <div className="icon-container mr-4 text-3xl">
                     {obstacle.icon}
                   </div>
-                  <h3 className="text-xl font-bold text-white">{obstacle.title}</h3>
+                  <h3 className="text-xl font-bold text-white typewriter-text typewriter-stagger-1">{obstacle.title}</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 </div>
-                <p className="text-gray-400">
+                <p className="text-gray-400 typewriter-text-multiline typewriter-stagger-2">
                   {obstacle.description.substring(0, 100)}...
                 </p>
               </div>
           ))}
         </div>
+
+
+
 
           <div className="text-center mt-16">
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -707,14 +1240,14 @@ const HomePage = () => {
       </section>
 
       {/* Solution Section */}
-      <section ref={whoItsForRef} id="community" className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <section ref={whoItsForRef} id="community" className="py-20 relative homepage-section">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-white'}`}>
               Your Path to AI Business Success:
               <br />No Technical Degree, No Guesswork
               </h2>
-            <p className={`max-w-2xl mx-auto text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className={`max-w-2xl mx-auto text-xl ${darkMode ? 'text-gray-300' : 'text-gray-200'}`}>
               I understand these challenges because I've overcome them myself.
               <br />Here's how I make AI business building simple and profitable:
             </p>
@@ -730,10 +1263,10 @@ const HomePage = () => {
               />
             </div>
             <div>
-              <h4 className={`text-2xl md:text-3xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h4 className={`text-2xl md:text-3xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-400'}`}>
                 Simplifying AI Business Building
               </h4>
-              <p className={`mb-8 text-lg md:text-xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-8 text-lg md:text-xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-300'}`}>
                 I provide you with ready-to-use automation workflows, proven affiliate marketing templates, and client acquisition systems. Everything is broken down into simple steps with real-world examples, so you can start generating income within days, not months.
               </p>
             </div>
@@ -741,10 +1274,10 @@ const HomePage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center mb-20">
             <div className="order-2 md:order-1">
-              <h4 className={`text-2xl md:text-3xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h4 className={`text-2xl md:text-3xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-400'}`}>
                 Maximizing Your Time Investment
               </h4>
-              <p className={`mb-8 text-lg md:text-xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-8 text-lg md:text-xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-300'}`}>
                 My system is designed for busy entrepreneurs. You'll learn how to create workflows that can be sold multiple times, build affiliate relationships that generate passive income, and develop consulting processes that scale efficiently.
               </p>
             </div>
@@ -768,10 +1301,10 @@ const HomePage = () => {
               />
             </div>
             <div>
-              <h4 className={`text-3xl md:text-4xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h4 className={`text-3xl md:text-4xl font-semibold mb-4 ${darkMode ? 'text-teal-400' : 'text-teal-400'}`}>
                 Plug-and-Play Business Model
               </h4>
-              <p className={`mb-8 text-xl md:text-2xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-8 text-xl md:text-2xl leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-300'}`}>
                 No more confusion about what to sell or how to price it. I provide you with complete business models including n8n workflow templates, affiliate partner connections, pricing strategies, and client onboarding systems. Plus, I teach you how to package your own knowledge into profitable training programs.
               </p>
             </div>
@@ -799,17 +1332,17 @@ const HomePage = () => {
       </section>
 
       {/* Meet Your AI Educator Section */}
-      <section className="py-24 relative bg-black" style={{
+      <section className="py-24 relative homepage-section" style={{
         backgroundImage: 'url("https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2961&q=80")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}>
         <div className="container mx-auto px-5 max-w-6xl">
-          <h2 className="text-5xl md:text-6xl font-bold text-white text-center mb-16">
+          <h2 className={`text-5xl md:text-6xl font-bold text-center mb-16 ${darkMode ? 'text-white' : 'text-white'}`}>
             MEET YOUR AI BUSINESS MENTOR!
           </h2>
-          
+
           {/* Sakhr Nabil */}
           <div className="flex flex-col lg:flex-row items-stretch gap-10 mb-24">
             {/* Educator Card */}
@@ -818,7 +1351,7 @@ const HomePage = () => {
                 background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
                 boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)'
               }}>
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-purple-900/40 mix-blend-overlay"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-blue-800/40 mix-blend-overlay"></div>
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2072&q=80')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
                 <img 
                   src={sakhrProfileImg} 
@@ -832,7 +1365,7 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Educator Bio */}
             <div className="w-full lg:w-2/3">
               <div className="text-white space-y-6">
@@ -872,7 +1405,7 @@ const HomePage = () => {
                     <span><strong className="text-pink-300 font-semibold">Complete business systems</strong> for scaling from side hustle to six-figure business</span>
                   </li>
                 </ul>
-                
+
                 <div className="flex items-center mt-8">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-pink-300 mr-4">
                     <img 
@@ -894,7 +1427,7 @@ const HomePage = () => {
       </section>
 
       {/* What's Possible Section */}
-      <section className="py-24 relative bg-black" style={{
+      <section className="py-24 relative homepage-section" style={{
         backgroundImage: 'url("https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2961&q=80")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -905,11 +1438,11 @@ const HomePage = () => {
           <h2 className="text-5xl md:text-6xl font-bold text-white text-center mb-16">
             WHAT'S POSSIBLE WITH AI BUSINESS
           </h2>
-          
+
           {/* Two Column Content */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16">
             {/* Discover Column */}
-            <div className="bg-gray-800 border-2 border-pink-300 rounded-xl p-8">
+            <div className="bg-transparent border-2 border-pink-300 rounded-xl p-8">
               <div className="flex items-center mb-8">
                 <span className="text-pink-300 mr-4">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
@@ -920,7 +1453,7 @@ const HomePage = () => {
                 </span>
                 <h3 className="text-3xl font-bold text-white uppercase">MASTER</h3>
               </div>
-              
+
               <ul className="space-y-4 text-xl text-white">
                 <li className="flex items-start">
                   <span className="text-pink-300 mr-2 mt-1">›</span>
@@ -944,9 +1477,9 @@ const HomePage = () => {
                 </li>
               </ul>
             </div>
-            
+
             {/* Growth Column */}
-            <div className="bg-gray-800 border-2 border-pink-300 rounded-xl p-8">
+            <div className="bg-transparent border-2 border-pink-300 rounded-xl p-8">
               <div className="flex items-center mb-8">
                 <span className="text-pink-300 mr-4">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
@@ -955,7 +1488,7 @@ const HomePage = () => {
                 </span>
                 <h3 className="text-3xl font-bold text-white uppercase">ACHIEVE</h3>
               </div>
-              
+
               <ul className="space-y-4 text-xl text-white">
                 <li className="flex items-start">
                   <span className="text-pink-300 mr-2 mt-1">›</span>
@@ -999,7 +1532,7 @@ const HomePage = () => {
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-6 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold text-xl sm:text-2xl transition-all inline-flex items-center border-2 border-purple-400 hover:shadow-lg"
+                className="px-8 py-6 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-xl sm:text-2xl transition-all inline-flex items-center border-2 border-green-400 hover:shadow-lg"
               >
                 <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
@@ -1009,55 +1542,55 @@ const HomePage = () => {
       </section>
 
       {/* Call to Action - Two Options */}
-      <section className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      <section className="py-20 relative homepage-section">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Option 1: Join Now */}
-            <div className="bg-white rounded-3xl shadow-xl p-10 border-2 border-gray-100 transform transition-transform hover:scale-105">
+            <div className="bg-transparent rounded-3xl shadow-xl p-10 border-2 border-gray-100 transform transition-transform hover:scale-105">
               <h3 className="text-3xl font-bold mb-8">
-                <span className="text-red-300">Option 1:</span> <span className="text-gray-900">Start Building</span>
+                <span className="text-red-400">Option 1:</span> <span className="text-white">Start Building</span>
               </h3>
-              
+
               <div className="space-y-6">
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
                     <FaCheck className="text-red-400 text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">Learn my proven n8n workflow templates that sell for $297-$2,997 each.</p>
+                  <p className="ml-3 text-white font-medium">Learn my proven n8n workflow templates that sell for $297-$2,997 each.</p>
                 </div>
-                
+
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
                     <FaCheck className="text-red-400 text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Master affiliate marketing strategies that generate $2,000-$15,000/month in commissions.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
                     <FaCheck className="text-red-400 text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Build a consulting practice charging $200-$500/hour for AI strategy and implementation.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
                     <FaCheck className="text-red-400 text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Create your own training programs and scale to six-figure monthly revenue.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
                     <FaCheck className="text-red-400 text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Join a community of successful AI entrepreneurs and get ongoing support.
             </p>
           </div>
@@ -1066,77 +1599,77 @@ const HomePage = () => {
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
                     <FaCheck className="text-red-400 text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Get lifetime access to updates as AI technology evolves.
                   </p>
                 </div>
               </div>
             </div>
-            
+
             {/* Option 2: Exit This Page */}
-            <div className="bg-white rounded-3xl shadow-xl p-10 border-2 border-gray-100 transform transition-transform hover:scale-105">
+            <div className="bg-transparent rounded-3xl shadow-xl p-10 border-2 border-gray-100 transform transition-transform hover:scale-105">
               <h3 className="text-3xl font-bold mb-8">
-                <span className="text-gray-900">Option 2:</span> <span className="text-gray-500">Do It Alone</span>
+                <span className="text-red-400">Option 2:</span> <span className="text-white">Do It Alone</span>
                     </h3>
-              
+
               <div className="space-y-6">
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
-                    <FaCheck className="text-gray-600 text-sm" />
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-transparent flex items-center justify-center mt-0.5">
+                    <FaCheck className="text-white text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Continue struggling to find profitable AI opportunities on your own.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
-                    <FaCheck className="text-gray-600 text-sm" />
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-transparent flex items-center justify-center mt-0.5">
+                    <FaCheck className="text-white text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Waste months trying to figure out which AI tools to promote and how to price your services.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
-                    <FaCheck className="text-gray-600 text-sm" />
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-transparent flex items-center justify-center mt-0.5">
+                    <FaCheck className="text-white text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Miss out on the current AI boom while competitors build profitable businesses.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
-                    <FaCheck className="text-gray-600 text-sm" />
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-transparent flex items-center justify-center mt-0.5">
+                    <FaCheck className="text-white text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Keep trading time for money instead of building scalable, automated income streams.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
-                    <FaCheck className="text-gray-600 text-sm" />
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-transparent flex items-center justify-center mt-0.5">
+                    <FaCheck className="text-white text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Watch as others implement the exact strategies I'm sharing and achieve the success you want.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
-                    <FaCheck className="text-gray-600 text-sm" />
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-transparent flex items-center justify-center mt-0.5">
+                    <FaCheck className="text-white text-sm" />
                   </div>
-                  <p className="ml-3 text-gray-700 font-medium">
+                  <p className="ml-3 text-white font-medium">
                     Never know how much your income and lifestyle could have improved with proven AI business strategies.
                   </p>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div className="text-center mt-12">
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button 
@@ -1160,89 +1693,89 @@ const HomePage = () => {
       </section>
 
       {/* FAQ Section */}
-      <section className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      <section className="py-20 relative homepage-section">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-white'}`}>
               FREQUENTLY ASKED QUESTIONS
             </h2>
           </div>
 
           <div className="max-w-3xl mx-auto space-y-4">
             {/* FAQ Item 1 */}
-            <details className={`p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} cursor-pointer group`}>
-              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-800'} flex justify-between items-center`}>
+            <details className="p-6 rounded-lg bg-transparent cursor-pointer group">
+              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-white'} flex justify-between items-center`}>
                 Do I need technical skills to succeed with your AI business strategies?
                 <svg className="w-5 h-5 transition-transform transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </summary>
-              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-300 font-semibold'}`}>
                 <p>Not at all! My entire approach is designed for non-technical entrepreneurs. The n8n workflows use a visual, drag-and-drop interface, the affiliate marketing strategies focus on relationship building and sales, and the consulting frameworks are based on business strategy rather than technical implementation.</p>
               </div>
             </details>
 
             {/* FAQ Item 2 */}
-            <details className={`p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} cursor-pointer group`}>
-              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-800'} flex justify-between items-center`}>
+            <details className="p-6 rounded-lg bg-transparent cursor-pointer group">
+              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-white'} flex justify-between items-center`}>
                 How quickly can I start earning income with these strategies?
                 <svg className="w-5 h-5 transition-transform transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </summary>
-              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-300 font-semibold'}`}>
                 <p>With affiliate marketing, you can start earning commissions within your first week once you have the right partnerships in place. n8n workflows can be created and sold within 2-4 weeks, and consulting clients typically come within 30-60 days of implementing my outreach strategies. The key is consistent action and following the proven systems I provide.</p>
               </div>
             </details>
 
             {/* FAQ Item 3 */}
-            <details className={`p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} cursor-pointer group`}>
-              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-800'} flex justify-between items-center`}>
+            <details className="p-6 rounded-lg bg-transparent cursor-pointer group">
+              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-200'} flex justify-between items-center`}>
                 What makes your n8n workflows different from free templates online?
                 <svg className="w-5 h-5 transition-transform transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </summary>
-              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-300 font-semibold'}`}>
                 <p>My workflows are battle-tested in real businesses and designed specifically for profitability. They include detailed documentation, customization guides, and business use cases that demonstrate clear ROI. Plus, you get my pricing strategies and sales frameworks to position these as premium solutions worth $297-$2,997 each.</p>
               </div>
             </details>
 
             {/* FAQ Item 4 */}
-            <details className={`p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} cursor-pointer group`}>
-              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-800'} flex justify-between items-center`}>
+            <details className="p-6 rounded-lg bg-transparent cursor-pointer group">
+              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-white'} flex justify-between items-center`}>
                 Can I implement these strategies while working full-time?
                 <svg className="w-5 h-5 transition-transform transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </summary>
-              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-300 font-semibold'}`}>
                 <p>Absolutely! Many of my students start as side hustles while maintaining their day jobs. Affiliate marketing and selling workflows can be done in your spare time, and consulting calls can be scheduled outside work hours. The strategies are designed for efficiency and scalability, not long hours.</p>
               </div>
             </details>
 
             {/* FAQ Item 5 */}
-            <details className={`p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} cursor-pointer group`}>
-              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-800'} flex justify-between items-center`}>
+            <details className="p-6 rounded-lg bg-transparent cursor-pointer group">
+              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-white'} flex justify-between items-center`}>
                 What ongoing support do you provide?
                 <svg className="w-5 h-5 transition-transform transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </summary>
-              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-300 font-semibold'}`}>
                 <p>You get access to our private Discord community, monthly group coaching calls, regular updates on new AI tools and opportunities, and direct access to me for questions and guidance. The AI space evolves rapidly, so ongoing support and education are crucial for continued success.</p>
               </div>
             </details>
 
             {/* FAQ Item 6 */}
-            <details className={`p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} cursor-pointer group`}>
-              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-800'} flex justify-between items-center`}>
+            <details className="p-6 rounded-lg bg-transparent cursor-pointer group">
+              <summary className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-white'} flex justify-between items-center`}>
                 How do I know if this will work for my specific situation?
                 <svg className="w-5 h-5 transition-transform transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </summary>
-              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-300 font-semibold'}`}>
                 <p>The best way to find out is to book a free strategy call with me. I'll assess your current situation, goals, and resources to determine which of the four business models would be the best fit for you. This personalized approach ensures you're starting with the strategy most likely to succeed in your specific circumstances.</p>
               </div>
             </details>
@@ -1253,7 +1786,7 @@ const HomePage = () => {
               <div className="px-16 py-6 font-bold text-2xl text-white flex items-center justify-center gap-3">
                 <FaCalendarAlt /> BOOK FREE Strategy Call
               </div>
-              <div className="bg-blue-500 text-white text-sm py-2">
+              <div className="bg-transparent text-white text-sm py-2">
                 Discover Your Best AI Business Model
               </div>
             </div>
@@ -1272,21 +1805,21 @@ const HomePage = () => {
       </section>
 
       {/* Dedicated Consultation Call Section */}
-      <section className={`py-16 ${darkMode ? 'bg-gray-900' : 'bg-indigo-50'}`}>
+      <section className="py-16 relative homepage-section">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2
-              className={`text-3xl md:text-4xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-800'}`}
+              className={`text-3xl md:text-4xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-200'}`}
             >
               Ready to Build Your AI Business Empire?
             </h2>
-            
+
             <p 
-              className={`text-xl mb-10 ${darkMode ? 'text-indigo-100' : 'text-gray-600'}`}
+              className={`text-xl mb-10 ${darkMode ? 'text-indigo-100' : 'text-gray-300'}`}
             >
               Book a free 30-minute strategy call to discover which AI business model is perfect for your goals and current situation
             </p>
-            
+
             <div className="mb-10">
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <button
@@ -1305,8 +1838,8 @@ const HomePage = () => {
                 </a>
               </div>
             </div>
-            
-            <div className={`${darkMode ? 'text-indigo-200' : 'text-gray-600'}`}>
+
+            <div className={`${darkMode ? 'text-indigo-200' : 'text-gray-300'}`}>
               <p className="text-lg">No sales pressure, just a friendly conversation about your AI business potential</p>
             </div>
           </div>

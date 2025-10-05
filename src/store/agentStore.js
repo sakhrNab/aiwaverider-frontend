@@ -499,14 +499,16 @@ const useAgentStore = create(
           console.log(`✅ Received ${fixedAgents.length} agents (fromCache: ${response.fromCache})`);
 
           // Update state with new agents and pagination info
+          // Use response.totalCount if available, otherwise keep existing totalItems
+          const newTotalItems = response.totalCount || pagination.totalItems;
           set({
             agents: resetPagination ? fixedAgents : [...state.agents, ...fixedAgents],
             isLoading: false,
             pagination: {
               currentPage: resetPagination ? 1 : pagination.currentPage + 1,
               pageSize: pagination.pageSize,
-              totalItems: response.totalCount || fixedAgents.length,
-              totalPages: Math.ceil((response.totalCount || fixedAgents.length) / pagination.pageSize),
+              totalItems: newTotalItems,
+              totalPages: Math.ceil(newTotalItems / pagination.pageSize),
               hasMore: response.hasMore || false,
               lastVisibleId: response.lastVisibleId || null,
               isLoadingMore: false
@@ -569,6 +571,11 @@ const useAgentStore = create(
           
           if (currentLoadId !== requestId) return;
           
+          // Derive categories from loaded agents
+          let categories = [];
+          
+          if (currentLoadId !== requestId) return;
+          
           // Extract response data
           const agentsResponse = response.agents || [];
           const fromCache = response.fromCache || false;
@@ -577,6 +584,20 @@ const useAgentStore = create(
           console.log(`✅ Received ${agentsResponse.length} agents (fromCache: ${fromCache}, total: ${total})`);
           
           const fixedAgents = fixPlaceholderUrls(agentsResponse);
+          
+          // Derive categories from loaded agents
+          const categorySet = new Set();
+          fixedAgents.forEach(agent => {
+            if (Array.isArray(agent.categories)) {
+              agent.categories.forEach(cat => { 
+                if (cat && typeof cat === 'string') categorySet.add(cat.trim()); 
+              });
+            } else if (typeof agent.category === 'string' && agent.category.trim()) {
+              categorySet.add(agent.category.trim());
+            }
+          });
+          categories = Array.from(categorySet).sort();
+          console.log(`✅ Derived ${categories.length} categories from agents`);
           
           // Derive featured and recommended agents efficiently
           const featuredAgents = fixedAgents

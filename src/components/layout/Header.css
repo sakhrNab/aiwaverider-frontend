@@ -28,6 +28,63 @@
   left: 0;
   right: 0;
   width: 100%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Dark mode fixed header */
+.dark .main-header.fixed,
+body.dark .main-header.fixed,
+[data-theme="dark"] .main-header.fixed {
+  background: rgba(0, 0, 0, 0.95) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  color: #ffffff !important;
+}
+
+/* Light mode fixed header */
+.light .main-header.fixed,
+body.light .main-header.fixed,
+[data-theme="light"] .main-header.fixed,
+:not(.dark) .main-header.fixed {
+  background: linear-gradient(to right, rgba(37, 99, 235, 0.9), rgba(99, 102, 241, 0.8), rgba(147, 51, 234, 0.9)) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.2);
+  color: #ffffff !important;
+}
+
+/* Navigation links in fixed header - Dark mode */
+.dark .main-header.fixed .nav-link,
+body.dark .main-header.fixed .nav-link,
+[data-theme="dark"] .main-header.fixed .nav-link {
+  color: #ffffff !important;
+}
+
+.dark .main-header.fixed .nav-link:hover,
+body.dark .main-header.fixed .nav-link:hover,
+[data-theme="dark"] .main-header.fixed .nav-link:hover {
+  color: #00bcd4 !important;
+  background-color: rgba(0, 188, 212, 0.1) !important;
+}
+
+/* Navigation links in fixed header - Light mode */
+.light .main-header.fixed .nav-link,
+body.light .main-header.fixed .nav-link,
+[data-theme="light"] .main-header.fixed .nav-link,
+:not(.dark) .main-header.fixed .nav-link {
+  color: #ffffff !important;
+}
+
+.light .main-header.fixed .nav-link:hover,
+body.light .main-header.fixed .nav-link:hover,
+[data-theme="light"] .main-header.fixed .nav-link:hover,
+:not(.dark) .main-header.fixed .nav-link:hover {
+  color: #00bcd4 !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Two-line navigation styles */
@@ -76,6 +133,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .theme-toggle-btn:hover,
@@ -153,7 +211,7 @@ body.menu-open .mobile-menu * {
 
 /* LAPTOP RANGE OPTIMIZATION - 1000px to 1332px */
 /* This is the key range for most laptops where we want to keep nav visible but smaller */
-@media (min-width: 800px) and (max-width: 1332px) {
+@media (min-width: 1000px) and (max-width: 1332px) {
   /* Ensure desktop navigation stays visible */
   nav.hidden.custom-1333\:flex {
     display: flex !important;
@@ -948,13 +1006,32 @@ body.menu-open .mobile-menu * {
 }
 
 /* Show mobile menu at screens below 1000px */
-@media (max-width: 800px) {
-  .mobile-menu-toggle {
-    display: flex;
+@media (max-width: 999px) {
+  .mobile-menu-toggle,
+  .mobile-menu-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   nav.hidden {
     display: none !important;
+  }
+}
+
+/* Force mobile menu button visibility on small screens */
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
+  }
+  
+  /* Ensure right-side container can accommodate mobile menu button */
+  .main-header .flex.items-center.space-x-3 {
+    flex-wrap: nowrap !important;
+    overflow: visible !important;
   }
 }
 
@@ -969,10 +1046,6 @@ body.menu-open .mobile-menu * {
     margin-right: 8px;
   }
   
-  /* Hide mobile menu button on large screens */
-  .mobile-menu-btn {
-    display: none !important;
-  }
   
   /* Ensure desktop navigation is shown on large screens */
   .desktop-nav,

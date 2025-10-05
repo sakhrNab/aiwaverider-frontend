@@ -143,16 +143,6 @@ export const deleteAgent = async (agentId) => {
 // addAgentReview and deleteAgentReview have been removed.
 
 
-// Get agent categories
-export const getAgentCategories = async () => {
-  try {
-    const response = await api.get('/api/agents/categories');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching agent categories:', error);
-    throw error;
-  }
-};
 
 // Subscribe to an agent
 export const subscribeToAgent = async (agentId, planId) => {

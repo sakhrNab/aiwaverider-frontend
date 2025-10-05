@@ -95,12 +95,23 @@ const Agents = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Handle scroll to show/hide floating search
+  // Handle scroll to show/hide floating search with optimized performance
   useEffect(() => {
+    let lastScrollTop = 0;
+    let ticking = false;
+    let rafId = null;
+    
     const handleScroll = () => {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       
-      // Get the position of the search wrapper (not just the input)
+      // Skip if scroll change is minimal (less than 10px)
+      if (Math.abs(scrollTop - lastScrollTop) < 10) {
+        return;
+      }
+      
+      lastScrollTop = scrollTop;
+      
+      // Cache DOM queries to avoid repeated lookups
       const searchWrapper = document.querySelector('.search-wrapper');
       const categoryNav = document.querySelector('.curated-marketplace');
       const filterSearchContainer = document.querySelector('.filter-search-container');
@@ -131,17 +142,17 @@ const Agents = () => {
         setIsSearchFloating(false);
       }
     };
-    // Add scroll event listener with throttling for better performance
-    let ticking = false;
+    
     const throttledScroll = () => {
       if (!ticking) {
-        requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(() => {
           handleScroll();
           ticking = false;
         });
         ticking = true;
       }
     };
+    
     window.addEventListener('scroll', throttledScroll, { passive: true });
     
     // Initial check
@@ -150,6 +161,9 @@ const Agents = () => {
     // Cleanup
     return () => {
       window.removeEventListener('scroll', throttledScroll);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
     };
   }, []); // No dependencies needed since it should work regardless of search state
 
@@ -353,17 +367,25 @@ const Agents = () => {
     }
   };
 
-  // Derive categories from loaded agents to avoid extra API calls
-  const categoriesFromAgents = React.useMemo(() => {
-    const set = new Set(['All']);
-    (agents || []).forEach(agent => {
+  // Derive categories from agents, with 'All' as the first option
+  const availableCategories = React.useMemo(() => {
+    if (!agents || agents.length === 0) {
+      return ['All']; // Fallback if agents not loaded yet
+    }
+    
+    const categorySet = new Set();
+    agents.forEach(agent => {
       if (Array.isArray(agent.categories)) {
-        agent.categories.forEach(cat => { if (cat && typeof cat === 'string') set.add(cat); });
+        agent.categories.forEach(cat => { 
+          if (cat && typeof cat === 'string') categorySet.add(cat.trim()); 
+        });
       } else if (typeof agent.category === 'string' && agent.category.trim()) {
-        set.add(agent.category.trim());
+        categorySet.add(agent.category.trim());
       }
     });
-    return Array.from(set);
+    
+    const categories = Array.from(categorySet).sort();
+    return ['All', ...categories];
   }, [agents]);
 
   // Render the agent grid with appropriate filtering
@@ -619,7 +641,7 @@ const Agents = () => {
                 <CategoryNav 
                   selectedCategory={selectedCategory} 
                   onCategoryChange={handleCategoryChange} 
-                  categories={categoriesFromAgents}
+                  categories={availableCategories}
                 />
               </div>
 
@@ -627,7 +649,7 @@ const Agents = () => {
               <div className="filter-search-container glass-effect mb-4 sm:mb-6">
                 <div className="flex sm:hidden justify-between items-center mb-3">
                   <div className="text-white text-sm">
-                      {agents.length} results
+                      {pagination.totalItems} results
                   </div>
                 </div>
                 
@@ -874,7 +896,7 @@ const Agents = () => {
 
                       {/* Info text */}
                       <div className="text-white/80 text-sm mt-3">
-                        Showing {agents.length} agents {pagination.totalItems > 0 && `of ${pagination.totalItems} total`}
+                        Showing {agents.length} of {pagination.totalItems} agents
                       </div>
                     </div>
                   )}
