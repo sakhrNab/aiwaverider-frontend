@@ -44,17 +44,17 @@ export const PAYMENT = {
     // Explicit runtime environment selection for PayPal SDK
     ENV: (import.meta.env.VITE_PAYPAL_ENV || (ENV.PROD ? 'live' : 'sandbox')).toLowerCase(),
     // Optional separate client IDs for live and sandbox, with fallback to a generic client ID
-    CLIENT_ID_LIVE: import.meta.env.VITE_PAYPAL_CLIENT_ID_LIVE,
+    CLIENT_ID_LIVE: import.meta.env.VITE_PAYPAL_CLIENT_ID,
     CLIENT_ID_SANDBOX: import.meta.env.VITE_PAYPAL_CLIENT_ID_SANDBOX || 'test',
     // Backward compatible single client id (if provided)
     CLIENT_ID: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
     CURRENCY: 'USD',
     INTENT: 'capture',
     // Plan IDs for different environments
-    PLAN_ID_LIVE: import.meta.env.VITE_PAYPAL_PLAN_ID_LIVE,
+    PLAN_ID_LIVE: import.meta.env.VITE_PAYPAL_SUBS_PLAN_ID,
     PLAN_ID_SANDBOX: import.meta.env.VITE_PAYPAL_PLAN_ID_SANDBOX || 'P-5AX73474PL747521LNDQ27HQ',
     // Backward compatible single plan id (if provided)
-    PLAN_ID: import.meta.env.VITE_PAYPAL_PLAN_ID || 'P-5AX73474PL747521LNDQ27HQ'
+    PLAN_ID: import.meta.env.VITE_PAYPAL_SUBS_PLAN_ID || 'P-5AX73474PL747521LNDQ27HQ'
   },
   ENABLE_SIMULATION: ENV.DEV && (import.meta.env.VITE_ENABLE_PAYMENT_SIMULATION === 'true'),
   ALLOWED_CURRENCIES: ['USD', 'EUR', 'GBP']

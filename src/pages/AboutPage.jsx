@@ -236,7 +236,7 @@ const About = () => {
       <section className={`py-14 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <div className="container mx-auto px-6">
           <h2 className={`text-3xl font-bold mb-12 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Our Values</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow-lg`}>
               <div className={`w-14 h-14 rounded-full ${darkMode ? 'bg-teal-600' : 'bg-teal-500'} flex items-center justify-center mb-4 text-white text-2xl`}>
@@ -245,7 +245,7 @@ const About = () => {
               <h3 className="text-xl font-bold mb-3">Innovation</h3>
               <p>We constantly explore the cutting edge of AI technology to bring you the most powerful and effective solutions.</p>
             </div>
-            
+
             <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow-lg`}>
               <div className={`w-14 h-14 rounded-full ${darkMode ? 'bg-blue-600' : 'bg-blue-500'} flex items-center justify-center mb-4 text-white text-2xl`}>
                 <FaLaptopCode />
@@ -253,7 +253,7 @@ const About = () => {
               <h3 className="text-xl font-bold mb-3">Accessibility</h3>
               <p>We believe in making AI understandable and usable for everyone, regardless of technical background.</p>
             </div>
-            
+
             <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow-lg`}>
               <div className={`w-14 h-14 rounded-full ${darkMode ? 'bg-purple-600' : 'bg-purple-500'} flex items-center justify-center mb-4 text-white text-2xl`}>
                 <FaBrain />
@@ -269,7 +269,7 @@ const About = () => {
       <section className={`py-14 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <h2 className={`text-3xl font-bold mb-12 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>Meet the Founder</h2>
-          
+
           <div className="max-w-3xl mx-auto">
             {/* Sakhr Nabil */}
             <div className={`rounded-lg overflow-hidden shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} p-8`}>
@@ -311,7 +311,7 @@ const About = () => {
                 applications, making complex AI concepts accessible to everyone while delivering solutions that drive real business value.
               </p>
             </div>
-            
+
             {/* Mutaz Awn */}
             {/* <div className={`rounded-lg overflow-hidden shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} p-8`}>
               <div className="flex flex-col items-center">
@@ -509,6 +509,7 @@ const About = () => {
                   </div>
                 </div>
 
+
                 {/* Enterprise SaaS Platforms */}
                 <div className="service-card" data-service="saas">
                   <div className="card-close">&times;</div>
@@ -531,6 +532,7 @@ const About = () => {
                   </div>
                 </div>
 
+
                 {/* Native Mobile Applications */}
                 <div className="service-card" data-service="mobile">
                   <div className="card-close">&times;</div>
@@ -552,6 +554,7 @@ const About = () => {
                     </ul>
                   </div>
                 </div>
+
 
                 {/* N8N Automation Workflows */}
                 <div className="service-card" data-service="automation">
@@ -596,7 +599,7 @@ const About = () => {
                     </ul>
                   </div>
               </div>
-              
+
                 {/* AI Strategy Consulting */}
                 <div className="service-card" data-service="ai-strategy">
                   <div className="card-close">&times;</div>
@@ -667,4 +670,4 @@ const About = () => {
   );
 };
 
-export default About; 
+export default About;
