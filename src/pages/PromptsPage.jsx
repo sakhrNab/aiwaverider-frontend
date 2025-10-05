@@ -491,13 +491,13 @@ const PromptsPage = () => {
                               <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-purple-600/20 to-purple-500/10 border border-purple-500/30 flex items-center justify-center">
                                 <img 
                                   src={safeImageSrc || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY2NjY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+'}
-                                  alt={prompt.title} 
+                              alt={prompt.title} 
                                   className="max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-300 group-hover:scale-105" 
-                                  onLoad={handleImageLoad}
-                                  onError={(e) => handleImageError(e, prompt)}
-                                  loading="lazy"
-                                />
-                              </div>
+                              onLoad={handleImageLoad}
+                              onError={(e) => handleImageError(e, prompt)}
+                              loading="lazy"
+                            />
+                          </div>
                             </div>
                             
                             {/* Content */}
