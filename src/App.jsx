@@ -19,16 +19,17 @@ import useAgentStore from './store/agentStore';
 // PayPal initial options from config
 const resolvedClientId = (() => {
   const env = PAYMENT.PAYPAL.ENV;
-  if (env === 'live' && PAYMENT.PAYPAL.CLIENT_ID_LIVE) return PAYMENT.PAYPAL.CLIENT_ID_LIVE;
-  if (env === 'sandbox' && PAYMENT.PAYPAL.CLIENT_ID_SANDBOX) return PAYMENT.PAYPAL.CLIENT_ID_SANDBOX;
-  return PAYMENT.PAYPAL.CLIENT_ID || 'test';
+  if (env === 'live') return PAYMENT.PAYPAL.CLIENT_ID;
+  if (env === 'sandbox') return PAYMENT.PAYPAL.CLIENT_ID_SANDBOX;
+  return 'test';
 })();
 
 const paypalOptions = {
   "client-id": resolvedClientId,
   currency: PAYMENT.ALLOWED_CURRENCIES?.includes(PAYMENT.PAYPAL.CURRENCY) ? PAYMENT.PAYPAL.CURRENCY : 'USD',
-  intent: PAYMENT.PAYPAL.INTENT || "capture",
+  intent: "capture", // Default intent, can be overridden by individual components
   components: 'buttons',
+  vault: false, // Default vault setting, can be overridden by individual components
 };
 
 // Module-scoped flag to track if global, one-time initialization has occurred.

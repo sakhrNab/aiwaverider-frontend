@@ -1,23 +1,38 @@
 import React, { useEffect } from 'react';
-import { PayPalButtons, PayPalScriptProvider, usePayPalScriptReducer } from '@paypal/react-paypal-js';
+import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { toast } from 'react-toastify';
 import { api } from '../../api/core/apiConfig';
 
-const InnerButtons = ({ activePlanId, onConfirmed, disabled }) => {
+const SubscriptionButton = ({ planId, onConfirmed = () => {}, disabled = false }) => {
   const [{ options }, dispatch] = usePayPalScriptReducer();
+  const activePlanId = planId || 'P-7R550031NB048230TNCOON5Y';
 
+  // Update PayPal options for subscription
   useEffect(() => {
-    const newOptions = { ...options, vault: true, intent: 'subscription' };
+    const newOptions = { 
+      ...options, 
+      vault: true, 
+      intent: 'subscription',
+      components: 'buttons'
+    };
     dispatch({ type: 'resetOptions', value: newOptions });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePlanId]);
+
+  if (!activePlanId) {
+    return <button className="subscribe-btn" disabled>Subscription plan not configured</button>;
+  }
 
   return (
     <PayPalButtons
       style={{ layout: 'vertical' }}
       fundingSource="paypal"
-      createSubscription={(data, actions) => actions.subscription.create({ plan_id: activePlanId })}
+      createSubscription={(data, actions) => {
+        console.log('Creating subscription with plan ID:', activePlanId);
+        return actions.subscription.create({ plan_id: activePlanId });
+      }}
       onApprove={async (data) => {
+        console.log('Subscription approved:', data);
         try {
           const res = await api.post('/api/payments/paypal/subscriptions/confirm', { subscriptionID: data.subscriptionID });
           if (res.data?.success) {
@@ -28,27 +43,20 @@ const InnerButtons = ({ activePlanId, onConfirmed, disabled }) => {
             toast.error(res.data?.error || 'Failed to confirm subscription');
           }
         } catch (e) {
+          console.error('Subscription confirmation error:', e);
           toast.error(e?.response?.data?.error || e.message || 'Subscription confirmation failed');
         }
       }}
+      onError={(error) => {
+        console.error('PayPal subscription error:', error);
+        toast.error('PayPal subscription failed. Please try again.');
+      }}
+      onCancel={() => {
+        console.log('Subscription cancelled by user');
+        toast.info('Subscription cancelled.');
+      }}
       disabled={disabled}
     />
-  );
-};
-
-const SubscriptionButton = ({ planId, onConfirmed = () => {}, disabled = false }) => {
-  const activePlanId = planId || import.meta.env.VITE_PAYPAL_SUBS_PLAN_ID;
-  const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID_SANDBOX || import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test';
-
-  if (!activePlanId) {
-    return <button className="subscribe-btn" disabled>Subscription plan not configured</button>;
-  }
-
-  // Local provider ensures intent=subscription without affecting global capture buttons
-  return (
-    <PayPalScriptProvider options={{ 'client-id': clientId, intent: 'subscription', vault: true, components: 'buttons' }}>
-      <InnerButtons activePlanId={activePlanId} onConfirmed={onConfirmed} disabled={disabled} />
-    </PayPalScriptProvider>
   );
 };
 

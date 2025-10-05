@@ -947,7 +947,9 @@ const AgentForm = ({ agent, onSubmit, onCancel, onFieldChange, hideOnSubmit = fa
     'Music & Sound Design',
     'Software Development',
     'Drawing & Painting',
-    '3D'
+    '3D',
+    // Folder-based categories from N8N workflows
+    'AI', 'Airtable', 'AI Chatbot', 'AI RAG', 'AI Research', 'AI Summarization', 'Building Blocks', 'Content Creation', 'CRM', 'Crypto Trading', 'Database & Storage', 'DevOps', 'Discord', 'Document Extraction', 'Engineering', 'Finance', 'Forms & Surveys', 'Email Automation', 'Google Workspace', 'HR', 'HR & Recruitment', 'Social Media', 'Internal Wiki', 'Invoice Processing', 'IT Operations', 'Lead Generation', 'Lead Nurturing', 'Marketing', 'Market Research', 'Miscellaneous', 'Multimodal AI', 'Notion', 'OpenAI & LLMs', 'Other', 'Other Integrations', 'PDF Processing', 'Personal Productivity', 'Product', 'Project Management', 'Sales', 'Security Operations', 'Slack', 'Support', 'Support Chatbot', 'Telegram', 'Ticket Management', 'WhatsApp', 'WordPress'
   ];
   
   // Add this helper function to get the currency symbol
