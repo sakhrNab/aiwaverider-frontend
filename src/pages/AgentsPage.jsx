@@ -26,6 +26,7 @@ const Agents = () => {
   // Get state from Zustand store
   const { 
     agents, 
+    allAgents, // Add allAgents to get all available agents
     featuredAgents, 
     selectedCategory,
     selectedFilter,
@@ -367,14 +368,20 @@ const Agents = () => {
     }
   };
 
-  // Derive categories from agents, with 'All' as the first option
+  // Derive categories from ALL agents (not filtered), with 'All' as the first option
   const availableCategories = React.useMemo(() => {
-    if (!agents || agents.length === 0) {
+    // Use allAgents instead of filtered agents to show all available categories
+    // If allAgents is empty or not available, fall back to agents
+    const sourceAgents = allAgents && allAgents.length > 0 ? allAgents : agents;
+    
+    if (!sourceAgents || sourceAgents.length === 0) {
       return ['All']; // Fallback if agents not loaded yet
     }
     
+    console.log(`📊 Deriving categories from ${sourceAgents.length} agents (allAgents: ${allAgents?.length || 0}, filtered agents: ${agents?.length || 0})`);
+    
     const categorySet = new Set();
-    agents.forEach(agent => {
+    sourceAgents.forEach(agent => {
       if (Array.isArray(agent.categories)) {
         agent.categories.forEach(cat => { 
           if (cat && typeof cat === 'string') categorySet.add(cat.trim()); 
@@ -385,8 +392,9 @@ const Agents = () => {
     });
     
     const categories = Array.from(categorySet).sort();
+    console.log(`📊 Available categories: ${categories.length} total`);
     return ['All', ...categories];
-  }, [agents]);
+  }, [allAgents, agents]); // Depend on both allAgents and agents as fallback
 
   // Render the agent grid with appropriate filtering
   const renderAgentGrid = () => {

@@ -503,6 +503,8 @@ const useAgentStore = create(
           const newTotalItems = response.totalCount || pagination.totalItems;
           set({
             agents: resetPagination ? fixedAgents : [...state.agents, ...fixedAgents],
+            // Preserve allAgents - don't update it during filtering
+            allAgents: state.allAgents, // Keep the original allAgents intact
             isLoading: false,
             pagination: {
               currentPage: resetPagination ? 1 : pagination.currentPage + 1,
