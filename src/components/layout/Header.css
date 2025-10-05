@@ -1,12 +1,24 @@
 /* Header styles */
 .main-header {
-  background-color: #27115e;
   color: #fff;
   padding: 0.75rem 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: all 0.3s ease;
+}
+
+/* Default background for non-homepage */
+.main-header:not(.homepage-transparent) {
+  background-color: #27115e;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Transparent background for homepage */
+.main-header.homepage-transparent {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 /* Ensure fixed behavior when the element has both classes */

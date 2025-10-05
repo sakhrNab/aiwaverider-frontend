@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { FaLinkedin, FaGithub, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools, FaCogs, FaCloud, FaMobile, FaServer } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
@@ -7,11 +7,199 @@ import { faTiktok } from '@fortawesome/free-brands-svg-icons';
 
 const About = () => {
   const { darkMode } = useTheme();
+  const audioContextRef = useRef(null);
+  const hoverSynthRef = useRef(null);
+  const clickSynthRef = useRef(null);
+
+  // Load Tone.js and initialize audio
+  useEffect(() => {
+    const loadToneJS = async () => {
+      try {
+        // Dynamically import Tone.js
+        const Tone = await import('tone');
+        
+        // Initialize audio context
+        audioContextRef.current = Tone;
+        
+        // Create synthesizers
+        hoverSynthRef.current = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'fatsine' },
+          volume: -20,
+          envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        clickSynthRef.current = new Tone.PolySynth(Tone.Synth, {
+          volume: -12,
+          oscillator: { type: 'fmsquare', modulationType: 'sawtooth', modulationIndex: 0.5 },
+          envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }
+        }).toDestination();
+        
+        console.log('🎵 Sound effects loaded successfully!');
+      } catch (error) {
+        console.log('🔇 Tone.js not available, continuing without sound effects');
+      }
+    };
+
+    loadToneJS();
+  }, []);
+
+  // Initialize particles
+  useEffect(() => {
+    const loadParticles = () => {
+      // Load particles.js from CDN
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
+      script.onload = () => {
+        if (window.particlesJS) {
+          window.particlesJS('particles-js', {
+            "particles": {
+              "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+              "color": { "value": "#ffffff" },
+              "shape": { "type": "circle", "stroke": { "width": 0, "color": "#000000" } },
+              "opacity": { "value": 0.5, "random": true, "anim": { "enable": true, "speed": 1, "opacity_min": 0.1, "sync": false } },
+              "size": { "value": 3, "random": true, "anim": { "enable": false } },
+              "line_linked": { "enable": true, "distance": 150, "color": "#4444ff", "opacity": 0.4, "width": 1 },
+              "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+            },
+            "interactivity": { 
+              "detect_on": "canvas", 
+              "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": false }, "resize": true }, 
+              "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } } } 
+            },
+            "retina_detect": true
+          });
+          console.log('✨ Particles loaded successfully!');
+        }
+      };
+      script.onerror = () => {
+        console.log('🔇 Particles.js failed to load, continuing without particle background');
+      };
+      document.head.appendChild(script);
+    };
+
+    loadParticles();
+  }, []);
+
+  useEffect(() => {
+    const gridContainer = document.getElementById('services-grid');
+    const cards = document.querySelectorAll('.service-card');
+    
+    if (!gridContainer || cards.length === 0) return;
+
+    const deactivateCards = () => {
+      cards.forEach(c => c.classList.remove('active'));
+      gridContainer.classList.remove('active');
+    };
+
+    // Typewriter effect for card details
+    const typeWriter = (element, text, speed = 20) => {
+      return new Promise(resolve => {
+        let i = 0;
+        element.innerHTML = '';
+        element.classList.add('typing');
+        
+        function type() {
+          if (i < text.length) {
+            element.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+          } else {
+            element.classList.remove('typing');
+            resolve();
+          }
+        }
+        type();
+      });
+    };
+
+    const animateCardDetails = async (card) => {
+      const detailList = card.querySelector('.card-details ul');
+      const lines = Array.from(detailList.querySelectorAll('li')).map(li => li.innerText);
+      
+      detailList.innerHTML = ''; // Clear list for animation
+      
+      for (const lineText of lines) {
+        const newLi = document.createElement('li');
+        detailList.appendChild(newLi);
+        await typeWriter(newLi, lineText, 20);
+      }
+    };
+
+    const activateCard = (card) => {
+      deactivateCards();
+      card.classList.add('active');
+      gridContainer.classList.add('active');
+      animateCardDetails(card);
+    };
+
+    cards.forEach(card => {
+      const closeButton = card.querySelector('.card-close');
+      
+      // Hover sound effect
+      card.addEventListener('mouseenter', async () => {
+        if (audioContextRef.current && hoverSynthRef.current) {
+          try {
+            // Start Tone.js context on first user interaction
+            if (audioContextRef.current.context.state !== 'running') {
+              await audioContextRef.current.start();
+            }
+            hoverSynthRef.current.triggerAttackRelease('C5', '8n');
+          } catch (error) {
+            console.log('Audio error:', error);
+          }
+        }
+      });
+
+      // Card click to activate with sound
+      card.addEventListener('click', async (e) => {
+        if (card.classList.contains('active') || e.target === closeButton) return;
+        
+        // Play click sound
+        if (audioContextRef.current && clickSynthRef.current) {
+          try {
+            // Start Tone.js context on first user interaction
+            if (audioContextRef.current.context.state !== 'running') {
+              await audioContextRef.current.start();
+            }
+            clickSynthRef.current.triggerAttackRelease(['C3', 'G3', 'C4'], '4n');
+          } catch (error) {
+            console.log('Audio error:', error);
+          }
+        }
+        
+        activateCard(card);
+      });
+
+      // Close button click
+      closeButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deactivateCards();
+      });
+    });
+
+    // Click outside to close
+    document.addEventListener('click', (e) => {
+      if (gridContainer.classList.contains('active') && !e.target.closest('.service-card')) {
+        deactivateCards();
+      }
+    });
+
+    // Cleanup
+    return () => {
+      cards.forEach(card => {
+        const closeButton = card.querySelector('.card-close');
+        card.removeEventListener('click', activateCard);
+        closeButton.removeEventListener('click', deactivateCards);
+      });
+    };
+  }, []);
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'} relative`}>
+      {/* Particle Background */}
+      <div id="particles-js" className="fixed inset-0 w-full h-full z-0"></div>
       {/* Hero Section */}
-      <section className={`py-16 ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-indigo-50 to-blue-50'}`}>
+      <section className={`py-16 ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-indigo-50 to-blue-50'} relative z-10`}>
         <div className="container mx-auto px-6">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -161,7 +349,7 @@ const About = () => {
       </section>
 
       {/* AI Waverider Platform */}
-      <section className={`py-14 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      <section className={`py-14 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} relative z-10`}>
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
             <h2 className={`text-3xl font-bold mb-8 text-center ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>
@@ -172,90 +360,263 @@ const About = () => {
               We offer comprehensive solutions across multiple domains to deliver real value to our clients.
             </p>
 
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8`}>
-              {/* Core Development Services - Lead with strongest */}
-              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow border-l-4 border-teal-500`}>
-                <h3 className="text-xl font-bold mb-3 flex items-center">
-                  <FaCogs className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  Custom Software Development
-                </h3>
-                <p className="mb-3">
-                  <strong>Built with Cursor AI, GitHub Copilot, and live coding sessions.</strong> 
-                  We deliver production-ready applications 3x faster and 50% cheaper than traditional development.
-                </p>
-                <div className="text-sm text-gray-300 dark:text-gray-200">
-                  ✓ 100+ successful projects ✓ 30-day money-back guarantee ✓ 24/7 support
+            {/* Interactive Services Grid */}
+            <div className="relative">
+              <style jsx>{`
+                .services-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                  gap: 1.5rem;
+                  width: 100%;
+                  max-width: 1400px;
+                  margin: 0 auto;
+                  transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+                }
+                
+                .service-card {
+                  background: ${darkMode ? 'rgba(22, 22, 49, 0.6)' : 'rgba(255, 255, 255, 0.9)'};
+                  border: 1px solid ${darkMode ? 'rgba(128, 128, 255, 0.25)' : 'rgba(59, 130, 246, 0.25)'};
+                  border-radius: 12px;
+                  padding: 2rem;
+                  cursor: pointer;
+                  backdrop-filter: blur(12px);
+                  -webkit-backdrop-filter: blur(12px);
+                  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                  overflow: hidden;
+                  position: relative;
+                }
+                
+                .service-card:hover {
+                  transform: translateY(-10px) scale(1.03);
+                  box-shadow: 0 0 35px 0px ${darkMode ? 'hsl(240, 100%, 75%)' : 'hsl(220, 100%, 60%)'};
+                  border-color: ${darkMode ? 'hsl(240, 100%, 85%)' : 'hsl(220, 100%, 70%)'};
+                }
+                
+                .service-card.active {
+                  position: fixed;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%) scale(1);
+                  width: clamp(320px, 90vw, 600px);
+                  height: auto;
+                  max-height: 90vh;
+                  z-index: 100;
+                  cursor: default;
+                  overflow-y: auto;
+                  animation: pulseGlow 2.5s infinite ease-in-out;
+                }
+                
+                .services-grid.active .service-card:not(.active) {
+                  opacity: 0;
+                  transform: scale(0.8);
+                  pointer-events: none;
+                }
+                
+                .card-close {
+                  position: absolute;
+                  top: 1rem;
+                  right: 1.5rem;
+                  font-size: 2rem;
+                  color: ${darkMode ? '#A0A0CC' : '#6B7280'};
+                  cursor: pointer;
+                  transition: all 0.3s;
+                  opacity: 0;
+                  pointer-events: none;
+                }
+                
+                .service-card.active .card-close {
+                  opacity: 1;
+                  pointer-events: all;
+                  transition-delay: 0.5s;
+                }
+                
+                .card-close:hover {
+                  color: ${darkMode ? '#fff' : '#000'};
+                  transform: scale(1.2);
+                }
+                
+                .card-details {
+                  max-height: 0;
+                  opacity: 0;
+                  overflow: hidden;
+                  transition: max-height 0.6s ease-in-out, opacity 0.6s ease-in-out 0.2s;
+                }
+                
+                .service-card.active .card-details {
+                  max-height: 1000px;
+                  opacity: 1;
+                }
+                
+                .card-details ul {
+                  list-style: none;
+                  padding: 0;
+                  margin-top: 1.5rem;
+                }
+                
+                .card-details li {
+                  margin-bottom: 0.5rem;
+                  color: ${darkMode ? '#E0E0FF' : '#374151'};
+                  font-size: 0.95rem;
+                }
+                
+                @keyframes pulseGlow {
+                  0% { 
+                    box-shadow: 0 0 20px -8px ${darkMode ? 'hsl(240, 100%, 75%)' : 'hsl(220, 100%, 60%)'}; 
+                    border-color: ${darkMode ? 'hsl(240, 100%, 75%)' : 'hsl(220, 100%, 60%)'};
+                  }
+                  50% { 
+                    box-shadow: 0 0 35px 0px ${darkMode ? 'hsl(240, 100%, 75%)' : 'hsl(220, 100%, 60%)'}; 
+                    border-color: ${darkMode ? 'hsl(240, 100%, 85%)' : 'hsl(220, 100%, 70%)'};
+                  }
+                  100% { 
+                    box-shadow: 0 0 20px -8px ${darkMode ? 'hsl(240, 100%, 75%)' : 'hsl(220, 100%, 60%)'}; 
+                    border-color: ${darkMode ? 'hsl(240, 100%, 75%)' : 'hsl(220, 100%, 60%)'};
+                  }
+                }
+                
+                @keyframes blink { 
+                  50% { opacity: 0; } 
+                }
+                
+                .typing::after {
+                  content: '_';
+                  animation: blink 0.8s infinite;
+                  font-weight: bold;
+                  margin-left: 2px;
+                }
+              `}</style>
+              
+              <div className="services-grid" id="services-grid">
+                {/* Custom Software Development */}
+                <div className="service-card" data-service="software">
+                  <div className="card-close">&times;</div>
+                  <div className="card-front">
+                    <div className="text-4xl mb-4">⚙️</div>
+                    <h3 className="text-xl font-bold mb-3 text-white">Custom Software Development</h3>
+                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                      <strong>Built with Cursor AI, GitHub Copilot, and live coding sessions.</strong> 
+                      We deliver production-ready applications 3x faster and 50% cheaper than traditional development.
+                    </p>
+                  </div>
+                  <div className="card-details">
+                    <ul>
+                      <li>✓ 100+ successful projects</li>
+                      <li>✓ 30-day money-back guarantee</li>
+                      <li>✓ 24/7 support</li>
+                      <li>✓ Agile methodology</li>
+                      <li>✓ Scalable architectures</li>
+                    </ul>
+                  </div>
                 </div>
-              </div>
 
-              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow border-l-4 border-blue-500`}>
-                <h3 className="text-xl font-bold mb-3 flex items-center">
-                  <FaCloud className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  Enterprise SaaS Platforms
-                </h3>
-                <p className="mb-3">
-                  <strong>React, Node.js, PostgreSQL, AWS/Azure architecture.</strong> 
-                  Scalable multi-tenant platforms with 99.9% uptime, delivered in 8-12 weeks.
-                </p>
-                <div className="text-sm text-gray-300 dark:text-gray-200">
-                  ✓ SOC 2 compliant ✓ Auto-scaling infrastructure ✓ Real-time collaboration
+                {/* Enterprise SaaS Platforms */}
+                <div className="service-card" data-service="saas">
+                  <div className="card-close">&times;</div>
+                  <div className="card-front">
+                    <div className="text-4xl mb-4">☁️</div>
+                    <h3 className="text-xl font-bold mb-3 text-white">Enterprise SaaS Platforms</h3>
+                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                      <strong>React, Node.js, PostgreSQL, AWS/Azure architecture.</strong> 
+                      Scalable multi-tenant platforms with 99.9% uptime, delivered in 8-12 weeks.
+                    </p>
+                  </div>
+                  <div className="card-details">
+                    <ul>
+                      <li>✓ SOC 2 compliant</li>
+                      <li>✓ Auto-scaling infrastructure</li>
+                      <li>✓ Real-time collaboration</li>
+                      <li>✓ Secure data handling</li>
+                      <li>✓ Custom API integrations</li>
+                    </ul>
+                  </div>
                 </div>
-              </div>
 
-              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow border-l-4 border-purple-500`}>
-                <h3 className="text-xl font-bold mb-3 flex items-center">
-                  <FaMobile className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  Native Mobile Applications
-                </h3>
-                <p className="mb-3">
-                  <strong>React Native, Swift, Kotlin development.</strong> 
-                  Production-ready iOS and Android apps with 4.8+ App Store ratings, delivered in 6-10 weeks.
-                </p>
-                <div className="text-sm text-gray-300 dark:text-gray-200">
-                  ✓ App Store optimization ✓ Push notifications ✓ Offline functionality
+                {/* Native Mobile Applications */}
+                <div className="service-card" data-service="mobile">
+                  <div className="card-close">&times;</div>
+                  <div className="card-front">
+                    <div className="text-4xl mb-4">📱</div>
+                    <h3 className="text-xl font-bold mb-3 text-white">Native Mobile Applications</h3>
+                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                      <strong>React Native, Swift, Kotlin development.</strong> 
+                      Production-ready iOS and Android apps with 4.8+ App Store ratings, delivered in 6-10 weeks.
+                    </p>
+                  </div>
+                  <div className="card-details">
+                    <ul>
+                      <li>✓ App Store optimization</li>
+                      <li>✓ Push notifications</li>
+                      <li>✓ Offline functionality</li>
+                      <li>✓ Biometric authentication</li>
+                      <li>✓ Smooth animations</li>
+                    </ul>
+                  </div>
                 </div>
-              </div>
 
-              {/* Automation & AI Services */}
-              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
-                <h3 className="text-xl font-bold mb-3 flex items-center">
-                  <FaTools className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  N8N Automation Workflows
-                </h3>
-                <p className="mb-3">
-                  <strong>Custom N8N workflows that save 20+ hours/week. </strong> 
-                   Connect 200+ apps and automate complex business processes with zero coding required.
-                </p>
-                <div className="text-sm text-gray-300 dark:text-gray-200">
-                  ✓ 200+ app integrations ✓ Visual workflow builder ✓ Error handling & monitoring
-                </div>
-              </div>
-
-              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
-                <h3 className="text-xl font-bold mb-3 flex items-center">
-                  <FaRobot className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  AI Tool Implementation
-                </h3>
-                <p className="mb-3">
-                  <strong>Strategic AI adoption with proven ROI.</strong> 
-                  We've helped 50+ businesses increase productivity by 40% using ChatGPT, Claude, and custom AI solutions.
-                </p>
-                <div className="text-sm text-gray-300 dark:text-gray-200">
-                  ✓ Free AI audit ✓ ROI tracking ✓ Training & support
-                </div>
+                {/* N8N Automation Workflows */}
+                <div className="service-card" data-service="automation">
+                  <div className="card-close">&times;</div>
+                  <div className="card-front">
+                    <div className="text-4xl mb-4">⚡️</div>
+                    <h3 className="text-xl font-bold mb-3 text-white">N8N Automation Workflows</h3>
+                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                      <strong>Custom N8N workflows that save 20+ hours/week.</strong> 
+                      Connect 200+ apps and automate complex business processes with zero coding required.
+                    </p>
+                  </div>
+                  <div className="card-details">
+                    <ul>
+                      <li>✓ 200+ app integrations</li>
+                      <li>✓ Visual workflow builder</li>
+                      <li>✓ Error handling & monitoring</li>
+                      <li>✓ Scalable for high volume</li>
+                      <li>✓ Secure credential management</li>
+                    </ul>
+                  </div>
               </div>
               
-              <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow`}>
-                <h3 className="text-xl font-bold mb-3 flex items-center">
-                  <FaChartLine className={`mr-2 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`} />
-                  AI Strategy Consulting
-                </h3>
-                <p className="mb-3">
-                  <strong>End-to-end AI transformation for enterprises.</strong> 
-                  From strategy to implementation, we help Fortune 500 companies integrate AI across all departments.
-                </p>
-                <div className="text-sm text-gray-300 dark:text-gray-200">
-                  ✓ C-suite advisory ✓ Change management ✓ Performance metrics
+                {/* AI Tool Implementation */}
+                <div className="service-card" data-service="ai-tools">
+                  <div className="card-close">&times;</div>
+                  <div className="card-front">
+                    <div className="text-4xl mb-4">🤖</div>
+                    <h3 className="text-xl font-bold mb-3 text-white">AI Tool Implementation</h3>
+                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                      <strong>Strategic AI adoption with proven ROI.</strong> 
+                      We've helped 50+ businesses increase productivity by 40% using ChatGPT, Claude, and custom AI solutions.
+                    </p>
+                  </div>
+                  <div className="card-details">
+                    <ul>
+                      <li>✓ Free AI audit</li>
+                      <li>✓ ROI tracking</li>
+                      <li>✓ Training & support</li>
+                      <li>✓ Custom model fine-tuning</li>
+                      <li>✓ Prompt engineering</li>
+                    </ul>
+                  </div>
+              </div>
+              
+                {/* AI Strategy Consulting */}
+                <div className="service-card" data-service="ai-strategy">
+                  <div className="card-close">&times;</div>
+                  <div className="card-front">
+                    <div className="text-4xl mb-4">🧠</div>
+                    <h3 className="text-xl font-bold mb-3 text-white">AI Strategy Consulting</h3>
+                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                      <strong>End-to-end AI transformation for enterprises.</strong> 
+                      From strategy to implementation, we help Fortune 500 companies integrate AI across all departments.
+                    </p>
+                  </div>
+                  <div className="card-details">
+                    <ul>
+                      <li>✓ C-suite advisory</li>
+                      <li>✓ Change management</li>
+                      <li>✓ Performance metrics</li>
+                      <li>✓ Technology roadmap</li>
+                      <li>✓ Competitive analysis</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>

@@ -32,12 +32,15 @@ import './Header.css'; // Import custom Header CSS
 import '../../styles/animations.css'; // Import animations
 import { motion, AnimatePresence } from 'framer-motion'; // For subtle animations
 
-const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
+const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) => {
   const { user, signOut, loading } = useContext(AuthContext);
   const { cart, itemCount } = useCart();
   const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Calendly link for homepage consultation button
+  const calendlyLink = "https://calendly.com/aiwaverider8/30min";
   const mobileMenuRef = useRef(null);
   const toggleButtonRef = useRef(null);
   const headerRef = useRef(null);
@@ -274,10 +277,12 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
   };
 
   // Determine header classes
-  const headerClass = `main-header sticky top-0 z-50 backdrop-blur-xl ${
-    darkMode 
-      ? 'bg-gradient-to-r from-gray-900/90 via-indigo-950/80 to-gray-900/90 border-b border-indigo-700/30 shadow-lg shadow-indigo-900/20' 
-      : 'bg-gradient-to-r from-blue-600/90 via-indigo-500/80 to-purple-500/90 border-b border-indigo-300 shadow-lg shadow-indigo-500/20'
+  const headerClass = `main-header sticky top-0 z-50 ${
+    isHomePage
+      ? 'homepage-transparent absolute'
+      : darkMode
+        ? 'bg-gradient-to-r from-gray-900/90 via-indigo-950/80 to-gray-900/90 border-b border-indigo-700/30 shadow-lg shadow-indigo-900/20 backdrop-blur-xl'
+        : 'bg-gradient-to-r from-white/95 via-blue-50/90 to-indigo-50/95 border-b border-indigo-200/50 shadow-lg shadow-indigo-200/20 backdrop-blur-xl'
   } transition-all duration-300 ${isFixedOnHome ? 'fixed w-full left-0' : ''}`;
 
   // Spacer height to avoid content jump when fixed
@@ -290,35 +295,37 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
   return (
     <>
       <header className={headerClass} ref={headerRef}>
-        {/* Animated glow effect */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.1, 0.2, 0.1]
-            }}
-            transition={{ 
-              repeat: Infinity,
-              duration: 8,
-              ease: "easeInOut" 
-            }}
-            className={`absolute -top-24 -right-24 w-48 h-48 rounded-full ${darkMode ? 'bg-indigo-600' : 'bg-blue-400'} blur-3xl`}
-          />
-          <motion.div 
-            animate={{ 
-              y: [-10, 10, -10],
-              opacity: [0.1, 0.2, 0.1]
-            }}
-            transition={{ 
-              repeat: Infinity,
-              duration: 10,
-              ease: "easeInOut" 
-            }}
-            className={`absolute -bottom-24 -left-24 w-48 h-48 rounded-full ${darkMode ? 'bg-purple-600' : 'bg-indigo-400'} blur-3xl`}
-          />
-        </div>
+        {/* Animated glow effect - only show on non-homepage */}
+        {!isHomePage && (
+          <div className="absolute inset-0 overflow-hidden">
+            <motion.div
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.1, 0.2, 0.1]
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 8,
+                ease: "easeInOut"
+              }}
+              className={`absolute -top-24 -right-24 w-48 h-48 rounded-full ${darkMode ? 'bg-indigo-600' : 'bg-blue-400'} blur-3xl`}
+            />
+            <motion.div
+              animate={{
+                y: [-10, 10, -10],
+                opacity: [0.1, 0.2, 0.1]
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 10,
+                ease: "easeInOut"
+              }}
+              className={`absolute -bottom-24 -left-24 w-48 h-48 rounded-full ${darkMode ? 'bg-purple-600' : 'bg-indigo-400'} blur-3xl`}
+            />
+          </div>
+        )}
         
-        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center relative">
+        <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center relative z-10">
           <motion.div
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -348,12 +355,12 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
           <nav className="hidden custom-1000:flex items-center justify-center flex-grow">
             <ul className="flex nav-links items-center">
               <li className="nav-item flex items-center">
-                <Link 
-                  to="/" 
-                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                <Link
+                  to="/"
+                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-white/10 transition-colors"
                   aria-label="Home"
                 >
-                  <FaHome className="mr-1.5" /> 
+                  <FaHome className="mr-1.5" />
                   <span>Home</span>
                 </Link>
                 <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
@@ -361,12 +368,12 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
                 </span>
               </li>
               <li className="nav-item flex items-center">
-                <Link 
-                  to="/agents" 
-                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                <Link
+                  to="/agents"
+                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-white/10 transition-colors"
                   aria-label="AI Agents"
                 >
-                  <FaRobot className="mr-1.5" /> 
+                  <FaRobot className="mr-1.5" />
                   <span>AI Agents</span>
                 </Link>
                 <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
@@ -375,12 +382,12 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
               </li>
               <li className="nav-item flex items-center">
                 <div className="relative group">
-                  <button 
-                    className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                  <button
+                    className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-white/10 transition-colors"
                     aria-label="AI Tools & Prompts"
                     aria-expanded="false"
                   >
-                    <FaTools className="mr-1.5" /> 
+                    <FaTools className="mr-1.5" />
                     <div className="flex flex-col items-start">
                       <span>AI Tools</span>
                       <span className="text-xs mt-[-2px] text-blue-200">& Prompts</span>
@@ -389,14 +396,14 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
                   </button>
                   {/* Dropdown Menu */}
                   <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border border-gray-200 dark:border-gray-700">
-                    <Link 
-                      to="/ai-tools" 
+                    <Link
+                      to="/ai-tools"
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
                     >
                       <FaTools className="mr-2 inline" /> AI Tools
                     </Link>
-                    <Link 
-                      to="/prompts" 
+                    <Link
+                      to="/prompts"
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg"
                     >
                       <FaLightbulb className="mr-2 inline" /> Prompts
@@ -408,12 +415,12 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
                 </span>
               </li>
               <li className="nav-item flex items-center">
-                <Link 
-                  to="/latest-tech" 
-                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                <Link
+                  to="/latest-tech"
+                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-white/10 transition-colors"
                   aria-label="Latest News & Tutorials"
                 >
-                  <FaMicrochip className="mr-1.5" /> 
+                  <FaMicrochip className="mr-1.5" />
                   <div className="flex flex-col items-start">
                     <span>Latest Tech News</span>
                     <span className="text-xs mt-[-2px] text-blue-200">& Tutorials</span>
@@ -424,12 +431,12 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
                 </span>
               </li>
               <li className="nav-item flex items-center">
-                <Link 
-                  to="/videos" 
-                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                <Link
+                  to="/videos"
+                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-white/10 transition-colors"
                   aria-label="Video Gallery"
                 >
-                  <FaVideo className="mr-1.5" /> 
+                  <FaVideo className="mr-1.5" />
                   <span>Videos</span>
                 </Link>
                 <span className="nav-dot mx-2 text-[6px] text-white opacity-70">
@@ -438,12 +445,12 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
               </li>
 
               <li className="nav-item flex items-center">
-                <Link 
-                  to="/about" 
-                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-opacity-10 hover:bg-white"
+                <Link
+                  to="/about"
+                  className="nav-link px-2 py-1 md:px-3 md:py-2 rounded-md font-medium flex items-center text-white hover:bg-white/10 transition-colors"
                   aria-label="About"
                 >
-                  <FaInfoCircle className="mr-1.5" /> 
+                  <FaInfoCircle className="mr-1.5" />
                   <span>About Us</span>
                 </Link>
               </li>
@@ -452,6 +459,17 @@ const Header = ({ openSignUpModal, isFixedOnHome = false }) => {
           
           {/* Universal Right Side - visible at all screen sizes - contains theme toggle, cart, and profile */}
           <div className="flex items-center space-x-3">
+            {/* Homepage Consultation Button */}
+            {isHomePage && (
+              <a
+                href={calendlyLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-2 px-4 rounded-lg transition duration-300 shadow-lg whitespace-nowrap"
+              >
+                Book a FREE Consultation
+              </a>
+            )}
             {/* Dark Mode Toggle - Always visible */}
             <button 
               onClick={toggleDarkMode}

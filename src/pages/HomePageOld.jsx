@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HashLoader } from 'react-spinners';
-import {FaCalendarAlt, FaArrowRight, FaRobot, FaTools, FaLightbulb, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion, FaUsers, FaCogs, FaHandshake, FaBullseye, FaBriefcase, FaComments } from 'react-icons/fa';
+import {FaCalendarAlt, FaArrowRight, FaRobot, FaTools, FaLightbulb, FaUserGraduate, FaChartLine, FaCheck, FaChevronRight, FaStar, FaTimes, FaClock, FaRandom, FaUserFriends, FaDollarSign, FaQuestion, FaUsers, FaCogs, FaHandshake, FaBullseye, FaGear, FaBriefcase, FaCommentDots } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import '../styles/animations.css'; // Import animations
@@ -34,25 +34,25 @@ const HomePage = () => {
   const { darkMode } = useTheme();
   const calendlyLink = "https://calendly.com/aiwaverider8/30min";
   
-  // Data arrays for cards
+  // Data for interactive cards
   const monetizingMethods = [
     {
-      icon: '🎯',
+      icon: <FaBullseye className="text-cyan-400" />,
       title: 'AI Tool Affiliate Marketing',
-      description: 'Learn best practices to promote AI tools, and earn commissions by recommending tools to companies. I will provide the step-by-step for creating marketing assets for reviews and making recommendations your audience loves.'
+      description: 'Learn best practices to promote AI tools, and earn commissions by recommending tools to companies. I\'ll provide the step-by-step for creating marketing assets for reviews and making recommendations your audience loves.'
     },
     {
-      icon: '⚙️',
+      icon: <FaGear className="text-cyan-400" />,
       title: 'n8n Automation Workflows',
-      description: 'Create and sell powerful automation workflows using n8n that save businesses 100s of hours per month. Learn how to create custom solutions, and price them so they are a no-brainer for any B2B or B2C business.'
+      description: 'Create and sell powerful automation workflows using n8n that save businesses 100s of hours per month. Learn how to create custom solutions, and price them so they\'re a no-brainer for any B2B or B2C business.'
     },
     {
-      icon: '💼',
+      icon: <FaBriefcase className="text-cyan-400" />,
       title: 'AI Consulting Services',
-      description: 'Provide strategic AI consulting to help businesses identify automation opportunities, implement AI solutions, and optimize their operations. Charge $250-$500/hour for your expertise and AI implementation services.'
+      description: 'Provide strategic AI consulting to help businesses identify automation opportunities, implement AI solutions, and optimize their operations. Charge $250-$500/hour for your expertise & AI implementation services.'
     },
     {
-      icon: '💬',
+      icon: <FaCommentDots className="text-cyan-400" />,
       title: 'Teaching & Training Programs',
       description: 'Share your knowledge and help others build their own AI businesses. Create courses, coaching programs, and training materials that teach others marketing, workflow creation, and AI consulting skills.'
     }
@@ -60,32 +60,32 @@ const HomePage = () => {
   
   const obstacles = [
     {
-      icon: '✕',
+      icon: <FaTimes className="text-red-400" />,
       title: 'Technical Overwhelm',
       description: 'Many believe you need advanced technical skills to build automation workflows or understand AI tools. My approach focuses on no-code solutions and practical business applications that anyone can master.'
     },
     {
-      icon: '?',
+      icon: <FaQuestion className="text-yellow-400" />,
       title: 'Not Knowing Where to Start',
       description: 'The AI space is vast and constantly evolving. I provide a clear roadmap and step-by-step system that eliminates confusion and gets you generating income quickly with proven strategies.'
     },
     {
-      icon: '👥',
+      icon: <FaUsers className="text-blue-400" />,
       title: 'Finding Clients',
       description: 'Identifying businesses that need AI automation and convincing them to invest can be challenging. I share my proven outreach methods and client acquisition strategies that consistently land high-value projects.'
     },
     {
-      icon: '$',
+      icon: <FaDollarSign className="text-green-400" />,
       title: 'Pricing Your Services',
       description: 'Determining what to charge for automation workflows, consulting, or affiliate commissions is complex. I provide detailed pricing frameworks and value-based strategies that maximize your earnings while delivering clear ROI.'
     },
     {
-      icon: '⇅',
+      icon: <FaChartLine className="text-purple-400" />,
       title: 'Scaling Your Business',
       description: 'Moving from one-off projects to a scalable business model is difficult. I teach systems and processes for building recurring revenue streams through automation workflows, consulting retainers, and affiliate partnerships.'
     },
     {
-      icon: '🔄',
+      icon: <FaClock className="text-orange-400" />,
       title: 'Staying Updated',
       description: 'AI tools and technologies change rapidly, making it hard to stay current. I provide ongoing training and updates on the latest tools, strategies, and market opportunities to keep you ahead of the curve.'
     }
@@ -109,17 +109,52 @@ const HomePage = () => {
     window.open(calendlyLink, '_blank');
   };
 
-  // Load Tone.js and initialize audio
+  // Modal functions
+  const openModal = (item) => {
+    setModalContent(item);
+    setModalOpen(true);
+    playClickSound();
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setModalContent(null);
+  };
+
+  // Sound functions
+  const playHoverSound = async () => {
+    if (audioContextRef.current && hoverSynthRef.current) {
+      try {
+        if (audioContextRef.current.context.state === 'suspended') {
+          await audioContextRef.current.context.resume();
+        }
+        hoverSynthRef.current.triggerAttackRelease('C5', '8n');
+      } catch (error) {
+        console.log('Audio error:', error);
+      }
+    }
+  };
+
+  const playClickSound = async () => {
+    if (audioContextRef.current && clickSynthRef.current) {
+      try {
+        if (audioContextRef.current.context.state === 'suspended') {
+          await audioContextRef.current.context.resume();
+        }
+        clickSynthRef.current.triggerAttackRelease(['C4', 'E4', 'G4'], '8n');
+      } catch (error) {
+        console.log('Audio error:', error);
+      }
+    }
+  };
+
+  // Initialize Tone.js audio system
   useEffect(() => {
     const loadToneJS = async () => {
       try {
-        // Dynamically import Tone.js
         const Tone = await import('tone');
-        
-        // Initialize audio context
         audioContextRef.current = Tone;
         
-        // Create synthesizers
         hoverSynthRef.current = new Tone.PolySynth(Tone.Synth, {
           oscillator: { type: 'fatsine' },
           volume: -20,
@@ -132,35 +167,22 @@ const HomePage = () => {
           envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }
         }).toDestination();
         
-              // Sound effects loaded
+        console.log('🎵 HomePage sound effects loaded!');
       } catch (error) {
-              // Tone.js not available, continuing without sound effects
+        console.log('🔇 Tone.js not available for HomePage');
       }
     };
-
     loadToneJS();
   }, []);
 
   // Initialize particles
   useEffect(() => {
     const loadParticles = () => {
-      // Load particles.js from CDN
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
-
-              // Debug: Check script loading
       script.onload = () => {
-
         if (window.particlesJS) {
-          // Wait for DOM to be ready and container to exist
-          const initParticles = () => {
-            const container = document.querySelector('#particles-js');
-            if (!container) {
-              setTimeout(initParticles, 50);
-              return;
-            }
-            try {
-              window.particlesJS('particles-js', {
+          window.particlesJS('particles-js-home', {
             "particles": {
               "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
               "color": { "value": "#00ffff" },
@@ -170,69 +192,20 @@ const HomePage = () => {
               "line_linked": { "enable": true, "distance": 150, "color": "#00ffff", "opacity": 0.4, "width": 1 },
               "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
             },
-                "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, "modes": { "repulse": { "distance": 100, "duration": 0.4 }, "push": { "particles_nb": 4 } } },
-                "retina_detect": true
-              });
-
-            } catch (error) {
-              console.error('❌ Error initializing particles:', error);
-            }
-          };
-
-          // Start the initialization process - wait longer for DOM to be ready
-          setTimeout(() => {
-            setTimeout(initParticles, 100);
-          }, 500);
-        } else {
-          console.error('❌ particlesJS is not available after script load');
-        }
-      };
-
-      script.onerror = () => {
-
-        // Try alternative CDN
-        const altScript = document.createElement('script');
-        altScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js';
-        altScript.onload = () => {
-          if (window.particlesJS) {
-            window.particlesJS('particles-js', {
-              "particles": {
-                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-                "color": { "value": "#00ffff" },
-                "shape": { "type": "circle" },
-                "opacity": { "value": 0.5, "random": false },
-                "size": { "value": 3, "random": true },
-                "line_linked": { "enable": true, "distance": 150, "color": "#00ffff", "opacity": 0.4, "width": 1 },
-                "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
-              },
-              "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, "modes": { "repulse": { "distance": 100, "duration": 0.4 }, "push": { "particles_nb": 4 } } },
+            "interactivity": { 
+              "detect_on": "canvas", 
+              "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, 
+              "modes": { "repulse": { "distance": 100, "duration": 0.4 }, "push": { "particles_nb": 4 } } 
+            },
             "retina_detect": true
           });
-          }
-        };
-        altScript.onerror = () => {
-          console.error('❌ Alternative CDN also failed to load');
-        };
-        document.head.appendChild(altScript);
+          console.log('✨ HomePage particles loaded!');
+        }
       };
-
       document.head.appendChild(script);
     };
-
     loadParticles();
   }, []);
-
-  // Keyboard event listener for modal
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && modalOpen) {
-        closeModal();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [modalOpen]);
 
   // Simulate loading state for demonstration
   useEffect(() => {
@@ -287,355 +260,147 @@ const HomePage = () => {
     }
   ];
   
-  // Modal functions
-  const openModal = (item) => {
-    playClickSound();
-    setModalContent(item);
-    setModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalOpen(false);
-    setModalContent(null);
-  };
-
-  // Sound effect functions
-  const playHoverSound = async () => {
-    if (audioContextRef.current && hoverSynthRef.current) {
-      try {
-        if (audioContextRef.current.context.state !== 'running') {
-          await audioContextRef.current.start();
-        }
-        hoverSynthRef.current.triggerAttackRelease('C5', '8n');
-        } catch (error) {
-          // Audio error - continuing without sound
-        }
-    }
-  };
-
-  const playClickSound = async () => {
-    if (audioContextRef.current && clickSynthRef.current) {
-      try {
-        if (audioContextRef.current.context.state !== 'running') {
-          await audioContextRef.current.start();
-        }
-        clickSynthRef.current.triggerAttackRelease(['C4', 'E4', 'G4'], '8n');
-        } catch (error) {
-          // Audio error - continuing without sound
-        }
-    }
-  };
-
   return (
-    <div className={`${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'} relative`} ref={topRef} style={{ backgroundColor: darkMode ? '#111827' : 'hsla(305, 71.20%, 75.50%, 0.22)', color: darkMode ? '#e0e0e0' : '#1e293b', overflowX: 'hidden', position: 'relative', minHeight: '100vh', zIndex: 10 }}>
-      {/* Cinematic gradient backdrop (behind particles) */}
-      <div className="bg-movie-gradient fixed inset-0" style={{ zIndex: -2 }} aria-hidden="true"></div>
-
-      {/* Particle Background */}
-      <div id="particles-js" className="fixed inset-0 w-full h-full" style={{ zIndex: 5, backgroundColor: 'transparent', pointerEvents: 'none' }}></div>
-
-
-      {/* CSS Animations */}
-      <style>{`
-        body {
-          font-family: 'Roboto', 'Inter', sans-serif;
-          background-color: #0a0a1a;
-          color: #e0e0e0;
-          overflow-x: hidden;
-          transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        /* Light mode body styling */
-        :global(.light) body {
-          background-color: #f8fafc;
-          color: #1e293b;
-        }
-
-        /* Cinematic moving gradient backdrop */
-        .bg-movie-gradient {
-          background: radial-gradient(60% 60% at 20% 20%, rgba(10, 10, 26, 0.8) 0%, rgba(0, 0, 0, 0.0) 60%),
-                      radial-gradient(50% 50% at 80% 30%, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.0) 60%),
-                      radial-gradient(40% 40% at 50% 80%, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.0) 60%);
-          animation: gradient-drift 18s ease-in-out infinite alternate;
-          filter: blur(0.5px);
-        }
-
-        /* Light mode gradient */
-        :global(.light) .bg-movie-gradient {
-          background: radial-gradient(60% 60% at 20% 20%, rgba(59, 130, 246, 0.4) 0%, rgba(255, 255, 255, 0.0) 60%),
-                      radial-gradient(50% 50% at 80% 30%, rgba(147, 51, 234, 0.3) 0%, rgba(255, 255, 255, 0.0) 60%),
-                      radial-gradient(40% 40% at 50% 80%, rgba(16, 185, 129, 0.15) 0%, rgba(255, 255, 255, 0.0) 60%);
-        }
-
-        @keyframes gradient-drift {
-          0%   { transform: translate3d(0,0,0) scale(1); }
-          50%  { transform: translate3d(-1.5%, 1%, 0) scale(1.02); }
-          100% { transform: translate3d(1%, -1.5%, 0) scale(1.03); }
-        }
-
-        #particles-js {
-          position: fixed !important;
-          width: 100% !important;
-          height: 100% !important;
-          top: 0 !important;
-          left: 0 !important;
-          z-index: 0 !important;
-          background: transparent !important;
-          pointer-events: none !important;
-        }
-
-        #particles-js canvas {
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          pointer-events: none !important;
-          z-index: 1 !important;
-          display: block !important;
-          background: transparent !important;
-        }
-
-        html {
-          scroll-behavior: smooth;
-        }
-
-        @keyframes fadeIn {
-          to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes floatIn {
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes subtle-glow {
-          from { text-shadow: 0 0 15px rgba(0, 255, 255, 0.5); }
-          to { text-shadow: 0 0 25px rgba(0, 255, 255, 0.8); }
-        }
-
-        @keyframes subtle-float {
-          0%, 100% { transform: translateY(0) translateX(0); }
-          50% { transform: translateY(-20px) translateX(0); }
-        }
-
-        .futuristic-card {
-          background-color: rgba(16, 16, 32, 0.5);
-          border: 1px solid rgba(0, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
-          box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-          animation: pulse-glow 4s infinite alternate;
-          font-family: 'Roboto', 'Inter', sans-serif;
-        }
-
-        .futuristic-card:hover {
-          transform: translateY(-10px) scale(1.03);
-          box-shadow: 0 0 35px rgba(0, 255, 255, 0.5);
-          border-color: rgba(0, 255, 255, 0.5);
-        }
-
-        @keyframes pulse-glow {
-          from {
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-          }
-          to {
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
-          }
-        }
-
-        .icon-container {
-          background-color: rgba(0, 255, 255, 0.1);
-          border-radius: 50%;
-          width: 50px;
-          height: 50px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-          color: #00ffff;
-          text-shadow: 0 0 10px #00ffff;
-        }
-
-        .hero-title, .hero-content, .hero-checklist, .hero-buttons {
-          font-family: 'Roboto', 'Inter', sans-serif;
-        }
-
-        .hero-checklist > * {
-          animation: slideUp 1s ease-out forwards;
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        
-        .hero-checklist > *:nth-child(1) { animation-delay: 0.8s; }
-        .hero-checklist > *:nth-child(2) { animation-delay: 1.0s; }
-        .hero-checklist > *:nth-child(3) { animation-delay: 1.2s; }
-
-        .hero-buttons > * {
-          animation: fadeIn 1s ease-out forwards;
-          opacity: 0;
-        }
-        
-        .hero-buttons > *:nth-child(1) { animation-delay: 1.5s; }
-        .hero-buttons > *:nth-child(2) { animation-delay: 1.7s; }
-
-        .hero-image img {
-          animation: floatIn 2s 0.5s ease-in-out forwards, subtle-float 5s ease-in-out infinite;
-          opacity: 0;
-          transform: translateX(50px);
-        }
-
-        .card {
-          background-color: rgba(16, 16, 32, 0.5);
-          border: 1px solid rgba(0, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
-          box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-          animation: pulse-glow 4s infinite alternate;
-        }
-
-        .card:hover {
-          transform: translateY(-10px) scale(1.03);
-          box-shadow: 0 0 35px rgba(0, 255, 255, 0.5);
-          border-color: rgba(0, 255, 255, 0.5);
-        }
-
-        @keyframes pulse-glow {
-          from {
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-          }
-          to {
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
-          }
-        }
-
-        .icon-container {
-          background-color: rgba(0, 255, 255, 0.1);
-          border-radius: 50%;
-          width: 50px;
-          height: 50px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-          color: #00ffff;
-          text-shadow: 0 0 10px #00ffff;
-        }
-
-        .modal {
-          background-color: rgba(10, 10, 26, 0.9);
-          backdrop-filter: blur(15px);
-          border: 1px solid rgba(0, 255, 255, 0.3);
-          box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
-        }
-
-        @keyframes typing {
-          from { width: 0 }
-          to { width: 100% }
-        }
-
-        .typewriter-text {
-          font-family: 'Roboto Mono', monospace;
-          overflow: hidden;
-          white-space: pre-wrap;
-          animation: typing 2s steps(40, end);
-          width: 100%;
-        }
-      `}</style>
+    <div className={`${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`} ref={topRef}>
       {/* Floating navigation that appears when scrolling */}
       <FloatingNav scrollRefs={scrollRefs} />
       
-      {/* Cinematic Hero Section */}
-      <div className="hero-section container mx-auto px-4 text-left" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div className="hero-content" style={{ animation: 'fadeIn 1s ease-out forwards', opacity: 0 }}>
-            <h1 className="hero-title text-4xl md:text-6xl font-bold mb-6 text-white" style={{ 
-              animation: 'slideUp 1s 0.5s ease-out forwards, subtle-glow 3s infinite alternate', 
-              opacity: 0, 
-              transform: 'translateY(20px)',
-                textShadow: '0 0 15px rgba(0, 255, 255, 0.5)'
-            }}>Master AI Automation & Build Your Digital Empire</h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-8 opacity-90">Learn how to monetize AI through affiliate marketing, sell powerful n8n automation workflows, and provide high-value AI consulting services. Build a $5,000-$25,000/month business in the AI revolution.</p>
-            <ul className="hero-checklist space-y-3 mb-8 text-gray-200">
-              <li className="flex items-center" style={{ animation: 'slideUp 1s 0.8s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
-                <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>No coding experience required
-                  </li>
-              <li className="flex items-center" style={{ animation: 'slideUp 1s 1.0s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
-                <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>Start earning $5,000-$25,000/month with proven strategies
-              </li>
-              <li className="flex items-center" style={{ animation: 'slideUp 1s 1.2s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
-                <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>Launch your first AI automation workflow in 7 days
-              </li>
-              </ul>
-            <div className="hero-buttons flex items-center space-x-4">
-              <Link to="/monetization-paths" className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg shadow-blue-600/30" style={{ animation: 'fadeIn 1s 1.5s ease-out forwards', opacity: 0 }}>Explore Business Models</Link>
-              <a
+      {/* Use centralized PageHeader component */}
+      <PageHeader />
+
+      {/* Hero Section */}
+      <section className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'}`}>
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col lg:flex-row items-center">
+            <div className="lg:w-1/2 lg:pr-10 mb-10 lg:mb-0">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-teal-400">Master AI Automation</span> & Build Your Digital Empire
+              </h1>
+              <p className="text-xl md:text-2xl mb-8 max-w-2xl">
+                Learn how to monetize AI through affiliate marketing, sell powerful n8n automation workflows, and provide high-value AI consulting services. Build a $5,000-$25,000/month business in the AI revolution.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
+
+                <a href="#monetization-paths" onClick={scrollToMonetizationPaths} className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-full font-bold text-lg transition-all hover:shadow-lg inline-flex items-center justify-center">
+                  Explore Business Models <FaArrowRight className="ml-2" />
+                </a>
+
+                <a 
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                  className="bg-green-500 hover:bg-green-400 text-gray-900 font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg shadow-green-500/30"
-                style={{ animation: 'fadeIn 1s 1.7s ease-out forwards', opacity: 0 }}
-                >
-                  JOIN COMMUNITY
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
+              >
+                <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
               </div>
+              
+              <div className={`flex items-center space-x-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
+                <FaCheck className="text-green-500" />
+                <span>No coding experience required</span>
+              </div>
+              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
+                <FaCheck className="text-green-500" />
+                <span>Start earning $5,000-$25,000/month with proven strategies</span>
             </div>
-          <div className="hero-image hidden md:block">
-            <img src="https://assets-global.website-files.com/6451a1bb0965213560667023/6476e3435c23d3326372f4e3_n8n-product-multi-trigger-p-1080.png" alt="AI Waverider Illustration" className="w-full h-auto" style={{ animation: 'floatIn 2s 0.5s ease-in-out forwards, subtle-float 5s ease-in-out infinite', opacity: 0, transform: 'translateX(50px)' }} />
+              <div className={`flex items-center space-x-2 mt-2 ${darkMode ? 'text-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl font-bold' : 'text-base md:text-lg lg:text-xl xl:text-2xl font-bold'}`}>
+                <FaCheck className="text-green-500" />
+                <span>Launch your first AI automation workflow in 7 days</span>
+              </div>
+            </div>
+            <div className="lg:w-1/2">
+              <img 
+                src={aiHeroPage} 
+                alt="AI Waverider" 
+                className="rounded-lg shadow-2xl w-full max-w-lg mx-auto transform hover:-translate-y-2 transition-transform duration-300" 
+                onError={(e) => { e.target.src = 'https://placehold.co/800x600/blue/white?text=AI+Waverider'; }}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* YouAreYouWant section with arrow diagrams */}
       {/* <YouAreYouWant /> */}
 
       {/* Monetization Paths */}
-      <section ref={monetizationPathsRef} id="monetization-paths" className="py-20 relative">
+      <section ref={monetizationPathsRef} id="monetization-paths" className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-        <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white" style={{ textShadow: '0 0 15px rgba(0, 255, 255, 0.5)' }}>
-          4 Proven Ways To Monetize AI
-        </h2>
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-gray-300">
-          Discover the core business models top-performing automation figures in the AI space, plus how I teach others to replicate my success.
-        </p>
+            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              4 Proven Ways To Monetize AI
+            </h2>
+            <p className={`max-w-3xl mx-auto text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Discover the exact business models I use to generate consistent income in the AI space, plus how I teach others to replicate my success.
+            </p>
           </div>
-        
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
-          {monetizingMethods.map((method, index) => (
-              <div 
-              key={index} 
-                className="futuristic-card rounded-lg p-6 cursor-pointer text-left"
-                onMouseEnter={playHoverSound}
-                onClick={() => openModal(method)}
-              >
-                <div className="flex items-center mb-4">
-                  <div className="icon-container mr-4 text-3xl">
-                    {method.icon}
-                  </div>
-                  <h3 className="text-xl font-bold text-white">{method.title}</h3>
+            {/* Card 1 - AI Tool Affiliate Marketing */}
+            <div className={`rounded-xl overflow-hidden shadow-lg transition-all hover:shadow-2xl ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'}`}>
+              <div className="p-6">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 ${darkMode ? 'bg-blue-600' : 'bg-blue-500'} text-white`}>
+                  <FaHandshake className="text-2xl" />
                 </div>
-                <p className="text-gray-400">
-                  {method.description.substring(0, 100)}...
+                <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>AI Tool Affiliate Marketing</h3>
+                <p className={`mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Partner with leading AI companies to earn 20-50% commissions by recommending tools to businesses. I'll teach you my proven strategy for identifying high-converting AI tools and building relationships with potential clients.
+                </p>
+                <p className={`font-semibold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                  Potential Income: $2,000-$15,000/month
                 </p>
               </div>
-          ))}
-        </div>
+            </div>
+
+            {/* Card 2 - n8n Automation Workflows */}
+            <div className={`rounded-xl overflow-hidden shadow-lg transition-all hover:shadow-2xl ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'}`}>
+              <div className="p-6">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 ${darkMode ? 'bg-purple-600' : 'bg-purple-500'} text-white`}>
+                  <FaCogs className="text-2xl" />
+                </div>
+                <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>n8n Automation Workflows</h3>
+                <p className={`mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Create and sell powerful automation workflows using n8n that save businesses 10-40 hours per week. From lead generation to customer service automation, these digital products sell for $297-$2,997 each.
+                </p>
+                <p className={`font-semibold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                  Potential Income: $3,000-$20,000/month
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3 - AI Consulting Services */}
+            <div className={`rounded-xl overflow-hidden shadow-lg transition-all hover:shadow-2xl ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'}`}>
+              <div className="p-6">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 ${darkMode ? 'bg-green-600' : 'bg-green-500'} text-white`}>
+                  <FaUserGraduate className="text-2xl" />
+                </div>
+                <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>AI Consulting Services</h3>
+                <p className={`mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Provide strategic AI consulting to help businesses identify automation opportunities, implement AI solutions, and optimize their operations. Charge $200-$500/hour for your expertise in AI integration and workflow optimization.
+                </p>
+                <p className={`font-semibold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                  Potential Income: $8,000-$50,000/month
+                </p>
+              </div>
+            </div>
+
+            {/* Card 4 - Teaching & Training */}
+            <div className={`rounded-xl overflow-hidden shadow-lg transition-all hover:shadow-2xl ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'}`}>
+              <div className="p-6">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 ${darkMode ? 'bg-orange-600' : 'bg-orange-500'} text-white`}>
+                  <FaLightbulb className="text-2xl" />
+                </div>
+                <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Teaching & Training Programs</h3>
+                <p className={`mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Share your knowledge and help others build their own AI businesses. Create courses, coaching programs, and training materials that teach affiliate marketing, workflow creation, and AI consulting strategies.
+                </p>
+                <p className={`font-semibold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                  Potential Income: $5,000-$100,000/month
+                </p>
+              </div>
+            </div>
+          </div>
 
           <div className="text-center mt-16">
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -650,43 +415,102 @@ const HomePage = () => {
               >
                 <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
-      </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Obstacles Section */}
-      <section ref={obstaclesRef} id="obstacles" className="py-20 relative">
+      <section ref={obstaclesRef} className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-        <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white" style={{ textShadow: '0 0 15px rgba(0, 255, 255, 0.5)' }}>
-          Common Obstacles To Building an AI Business
-        </h2>
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-gray-300">
-          These are the key challenges that prevent most people from successfully building a profitable AI business.
-        </p>
+            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              Common Obstacles To Building an AI Business
+            </h2>
+            <p className={`max-w-3xl mx-auto text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              These are the key challenges that prevent most people from successfully building a profitable AI business
+            </p>
           </div>
-        
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {obstacles.map((obstacle, index) => (
-              <div 
-              key={index} 
-                className="futuristic-card rounded-lg p-6 cursor-pointer text-left"
-                onMouseEnter={playHoverSound}
-                onClick={() => openModal(obstacle)}
-              >
-                <div className="flex items-center mb-4">
-                  <div className="icon-container mr-4 text-3xl">
-                    {obstacle.icon}
-                  </div>
-                  <h3 className="text-xl font-bold text-white">{obstacle.title}</h3>
+            {/* Obstacle 1 */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white shadow-md'}`}>
+              <div className="flex items-center mb-6">
+                <div className={`w-12 h-12 rounded-full ${darkMode ? 'bg-red-500' : 'bg-red-500'} flex items-center justify-center text-white mr-4`}>
+                  <FaTimes />
                 </div>
-                <p className="text-gray-400">
-                  {obstacle.description.substring(0, 100)}...
-                </p>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Technical Overwhelm</h3>
               </div>
-          ))}
-        </div>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Many believe you need advanced technical skills to build automation workflows or understand AI tools. My approach focuses on no-code solutions and practical business applications that anyone can master.
+              </p>
+            </div>
+
+            {/* Obstacle 2 */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white shadow-md'}`}>
+              <div className="flex items-center mb-6">
+                <div className={`w-12 h-12 rounded-full ${darkMode ? 'bg-orange-500' : 'bg-orange-500'} flex items-center justify-center text-white mr-4`}>
+                  <FaQuestion />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Not Knowing Where to Start</h3>
+              </div>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                The AI space is vast and constantly evolving. I provide a clear roadmap and step-by-step system that eliminates confusion and gets you generating income quickly with proven strategies.
+              </p>
+            </div>
+
+            {/* Obstacle 3 */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white shadow-md'}`}>
+              <div className="flex items-center mb-6">
+                <div className={`w-12 h-12 rounded-full ${darkMode ? 'bg-yellow-500' : 'bg-yellow-500'} flex items-center justify-center text-white mr-4`}>
+                  <FaUserFriends />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Finding Clients</h3>
+              </div>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Identifying businesses that need AI automation and convincing them to invest can be challenging. I share my proven outreach methods and client acquisition strategies that consistently land high-value projects.
+              </p>
+            </div>
+
+            {/* Obstacle 4 */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white shadow-md'}`}>
+              <div className="flex items-center mb-6">
+                <div className={`w-12 h-12 rounded-full ${darkMode ? 'bg-green-500' : 'bg-green-500'} flex items-center justify-center text-white mr-4`}>
+                  <FaDollarSign />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Pricing Your Services</h3>
+              </div>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Determining what to charge for automation workflows, consulting, or affiliate commissions is complex. I provide detailed pricing frameworks and value-based strategies that maximize your earnings while delivering clear ROI.
+              </p>
+            </div>
+
+            {/* Obstacle 5 */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white shadow-md'}`}>
+              <div className="flex items-center mb-6">
+                <div className={`w-12 h-12 rounded-full ${darkMode ? 'bg-blue-500' : 'bg-blue-500'} flex items-center justify-center text-white mr-4`}>
+                  <FaClock />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Scaling Your Business</h3>
+              </div>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Moving from one-off projects to a scalable business model is difficult. I teach systems and processes for building recurring revenue streams through automation workflows, consulting retainers, and affiliate partnerships.
+              </p>
+            </div>
+
+            {/* Obstacle 6 */}
+            <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-white shadow-md'}`}>
+              <div className="flex items-center mb-6">
+                <div className={`w-12 h-12 rounded-full ${darkMode ? 'bg-purple-500' : 'bg-purple-500'} flex items-center justify-center text-white mr-4`}>
+                  <FaRandom />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Staying Updated</h3>
+              </div>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                AI tools and technologies change rapidly, making it hard to stay current. I provide ongoing training and updates on the latest tools, strategies, and market opportunities to keep you ahead of the curve.
+              </p>
+            </div>
+          </div>
 
           <div className="text-center mt-16">
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -701,13 +525,13 @@ const HomePage = () => {
               >
                 <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
-      </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Solution Section */}
-      <section ref={whoItsForRef} id="community" className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <section ref={whoItsForRef} className={`py-20 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -978,9 +802,9 @@ const HomePage = () => {
                   <span>Multiple six-figure income potential</span>
                 </li>
               </ul>
-        </div>
-      </div>
-
+            </div>
+          </div>
+          
           {/* And Much More */}
           <div className="text-center mb-16">
             <h3 className="text-5xl font-bold text-white">...AND MUCH MORE</h3>
@@ -1139,13 +963,13 @@ const HomePage = () => {
           
           <div className="text-center mt-12">
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button 
+              <button 
                 onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
                 className="px-10 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-xl transition-all inline-flex items-center"
-            >
+              >
                 START MY AI BUSINESS JOURNEY
                 <FaArrowRight className="ml-3" />
-            </button>
+              </button>
               <a 
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
@@ -1272,7 +1096,7 @@ const HomePage = () => {
       </section>
 
       {/* Dedicated Consultation Call Section */}
-      <section className={`py-16 ${darkMode ? 'bg-gray-900' : 'bg-indigo-50'}`}>
+      <section className={`py-16 ${darkMode ? 'bg-indigo-900' : 'bg-indigo-50'}`}>
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2
@@ -1312,51 +1136,8 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 relative" style={{ zIndex: 10 }}>
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-gray-300 text-sm">
-            © 2025 AI Waverider. All rights reserved. Built with 🚀 and AI.
-          </p>
-        </div>
-      </footer>
-
-      {/* Modal for detailed view */}
-      {modalOpen && modalContent && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
-          onClick={(e) => e.target === e.currentTarget && closeModal()}
-        >
-          <div className="w-full max-w-3xl rounded-lg shadow-lg p-8 relative" style={{
-            backgroundColor: 'rgba(10, 10, 26, 0.9)',
-            backdropFilter: 'blur(15px)',
-            border: '1px solid rgba(0, 255, 255, 0.3)',
-            boxShadow: '0 0 50px rgba(0, 255, 255, 0.3)'
-          }}>
-            <button 
-              onClick={closeModal}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl transition-colors"
-            >
-              &times;
-            </button>
-            <div className="flex items-center mb-6">
-              <div className="icon-container mr-4 text-3xl">
-                {modalContent.icon}
-              </div>
-              <h2 className="text-3xl font-bold text-white">{modalContent.title}</h2>
-            </div>
-            <p className="text-gray-300 text-lg leading-relaxed" style={{
-              fontFamily: "'Roboto Mono', monospace",
-              animation: 'typing 2s steps(40, end)'
-            }}>
-              {modalContent.description}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default HomePage;
+export default HomePage; 

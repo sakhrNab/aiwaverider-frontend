@@ -49,10 +49,23 @@ export const PAYMENT = {
     // Backward compatible single client id (if provided)
     CLIENT_ID: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
     CURRENCY: 'USD',
-    INTENT: 'capture'
+    INTENT: 'capture',
+    // Plan IDs for different environments
+    PLAN_ID_LIVE: import.meta.env.VITE_PAYPAL_PLAN_ID_LIVE,
+    PLAN_ID_SANDBOX: import.meta.env.VITE_PAYPAL_PLAN_ID_SANDBOX || 'P-5AX73474PL747521LNDQ27HQ',
+    // Backward compatible single plan id (if provided)
+    PLAN_ID: import.meta.env.VITE_PAYPAL_PLAN_ID || 'P-5AX73474PL747521LNDQ27HQ'
   },
   ENABLE_SIMULATION: ENV.DEV && (import.meta.env.VITE_ENABLE_PAYMENT_SIMULATION === 'true'),
   ALLOWED_CURRENCIES: ['USD', 'EUR', 'GBP']
+};
+
+// Helper function to get the correct PayPal plan ID based on environment
+export const getPayPalPlanId = () => {
+  const env = PAYMENT.PAYPAL.ENV;
+  if (env === 'live') return PAYMENT.PAYPAL.PLAN_ID_LIVE || PAYMENT.PAYPAL.PLAN_ID;
+  if (env === 'sandbox') return PAYMENT.PAYPAL.PLAN_ID_SANDBOX || PAYMENT.PAYPAL.PLAN_ID;
+  return PAYMENT.PAYPAL.PLAN_ID;
 };
 
 // External Services

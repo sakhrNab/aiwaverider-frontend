@@ -122,7 +122,11 @@ const AppContent = () => {
           {isAgentsRoute ? (
             <AgentHeader openSignUpModal={openSignUpModal} />
           ) : (
-            <Header openSignUpModal={openSignUpModal} isFixedOnHome={location.pathname === '/' && !isAgentsRoute} />
+            <Header
+              openSignUpModal={openSignUpModal}
+              isFixedOnHome={location.pathname === '/' && !isAgentsRoute}
+              isHomePage={location.pathname === '/'}
+            />
           )}
 
           <div className="flex-grow">

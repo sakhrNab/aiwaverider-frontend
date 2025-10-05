@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { toast } from 'react-toastify';
 import { api } from '../../api/core/apiConfig';
+import { getPayPalPlanId } from '../../config/config';
 
 const SubscriptionButton = ({ planId, onConfirmed = () => {}, disabled = false }) => {
   const [{ options }, dispatch] = usePayPalScriptReducer();
-  const activePlanId = planId || 'P-2ST68221RA053825MNDQ2DWQ';
+  const activePlanId = planId || getPayPalPlanId();
 
   // Update PayPal options for subscription
   useEffect(() => {

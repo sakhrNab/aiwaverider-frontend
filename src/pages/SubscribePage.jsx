@@ -2,15 +2,25 @@ import React, { useContext, useMemo } from 'react';
 import { AuthContext } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
 import SubscriptionButton from '../components/checkout/SubscriptionButton.jsx';
+import { usePayPalPlan } from '../hooks/usePayPalPlan.js';
 import './SubscribePage.css';
 
 const SubscribePage = () => {
 	const { user } = useContext(AuthContext);
 	const { darkMode } = useTheme();
+	const { plan, loading: planLoading } = usePayPalPlan();
 
 	const isSubscribed = useMemo(() => {
 		try { return localStorage.getItem('subscription_status') === 'active'; } catch { return false; }
 	}, []);
+
+	// Extract pricing info from plan
+	const pricing = useMemo(() => {
+		if (!plan?.billing_cycles?.[0]?.pricing_scheme?.fixed_price) {
+			return { currency: 'USD', value: '29.99' };
+		}
+		return plan.billing_cycles[0].pricing_scheme.fixed_price;
+	}, [plan]);
 
 	return (
 		<div className={`subscribe-hero min-h-screen ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -24,10 +34,19 @@ const SubscribePage = () => {
 
 				<div className="mt-10 grid md:grid-cols-2 gap-6 items-stretch">
 					<div className="glass-panel p-6 rounded-2xl shadow-xl">
-						<h2 className="text-2xl font-bold mb-2">All‑Access Monthly</h2>
+						<h2 className="text-2xl font-bold mb-2">{plan?.name || 'All‑Access Monthly'}</h2>
 						<div className="flex items-end gap-2 mb-4">
-							<span className="text-4xl font-extrabold">€50</span>
-							<span className="text-sm opacity-70">/month</span>
+							{planLoading ? (
+								<span className="text-4xl font-extrabold animate-pulse">Loading...</span>
+							) : (
+								<>
+									<span className="text-4xl font-extrabold">
+										{pricing.currency === 'USD' ? '$' : pricing.currency === 'EUR' ? '€' : pricing.currency}
+										{pricing.value}
+									</span>
+									<span className="text-sm opacity-70">/month</span>
+								</>
+							)}
 						</div>
 						<ul className="space-y-2 text-sm opacity-95">
 							<li>• Unlimited downloads of all paid agents</li>
