@@ -2029,7 +2029,7 @@ const AgentDetail = () => {
   };
 
   // Enhanced mobile download choice dialog
-  const showMobileDownloadChoice = (downloadUrl, filename) => {
+  const showMobileDownloadChoice = (downloadUrl, filename, downloadResult) => {
     toast.dismiss();
     
     toast(
@@ -2057,7 +2057,7 @@ const AgentDetail = () => {
               className="choice-button download-button"
               onClick={() => {
                 closeToast();
-                handleMobileDownload(downloadUrl, filename);
+                handleMobileDownload(downloadUrl, filename, downloadResult);
               }}
             >
               <span role="img" aria-label="download">📦</span>
@@ -2082,77 +2082,96 @@ const AgentDetail = () => {
   };
 
   // Enhanced mobile download handler - creates ZIP on frontend for better mobile compatibility
-  const handleMobileDownload = async (downloadUrl, filename) => {
+  const handleMobileDownload = async (downloadUrl, filename, downloadResult) => {
     try {
       console.log('[MOBILE] Creating ZIP file for mobile download');
       console.log('[MOBILE] Agent ID:', agentId);
-      console.log('[MOBILE] Download URL:', downloadUrl);
+      console.log('[MOBILE] Download URL from response:', downloadUrl);
       
       // Create a new ZIP instance
       const zip = new JSZip();
       
-      // Skip the main JSON file - we'll only include deliverables
-      console.log('[MOBILE] Skipping main JSON file, will only include deliverables');
+      // Use data from the free-download response - no additional API calls needed
+      console.log('[MOBILE] Using data from free-download response');
+      console.log('[MOBILE] Download result:', downloadResult);
       
-      // Add a README file with instructions
-      const readmeContent = `# ${agent.title || agentId}
+      // Add JSON file using the content from the free-download response (no second call needed)
+      if (downloadResult && downloadResult.jsonFileContent) {
+        console.log('[MOBILE] Adding JSON file from free-download response content');
+        try {
+          const jsonFileName = agent.jsonFile?.originalName || 'workflow.json';
+          zip.file(jsonFileName, downloadResult.jsonFileContent);
+          console.log(`[MOBILE] Successfully added ${jsonFileName} to ZIP from response content`);
+        } catch (jsonError) {
+          console.warn(`[MOBILE] Error adding JSON from response:`, jsonError.message);
+        }
+      } else {
+        console.warn('[MOBILE] No JSON file content available in free-download response');
+        console.log('[MOBILE] Download result keys:', downloadResult ? Object.keys(downloadResult) : 'No download result');
+        
+        // Fallback: try to fetch JSON via proxy if content not available
+        if (downloadUrl) {
+          console.log('[MOBILE] Falling back to proxy fetch for JSON file');
+          try {
+            const proxyUrl = `/api/agents/${encodeURIComponent(agentId)}/download?url=${encodeURIComponent(downloadUrl)}`;
+            const jsonResponse = await fetch(proxyUrl, {
+              method: 'GET',
+              mode: 'cors',
+              credentials: 'omit'
+            });
+            
+            if (jsonResponse.ok) {
+              const jsonContent = await jsonResponse.text();
+              const jsonFileName = agent.jsonFile?.originalName || 'workflow.json';
+              zip.file(jsonFileName, jsonContent);
+              console.log(`[MOBILE] Successfully added ${jsonFileName} to ZIP via proxy fallback`);
+            } else {
+              console.warn(`[MOBILE] Proxy fallback failed: ${jsonResponse.status} ${jsonResponse.statusText}`);
+            }
+          } catch (proxyError) {
+            console.warn(`[MOBILE] Proxy fallback error:`, proxyError.message);
+          }
+        }
+      }
+      
+      // Add TXT file from deliverables (generate directly, no API call needed)
+      if (agent.deliverables && Array.isArray(agent.deliverables)) {
+        console.log(`[MOBILE] Found ${agent.deliverables.length} deliverables to process`);
+        for (let i = 0; i < agent.deliverables.length; i++) {
+          const deliverable = agent.deliverables[i];
+          if (deliverable.fileName && deliverable.fileName.endsWith('.txt')) {
+            try {
+              console.log(`[MOBILE] Processing TXT deliverable: ${deliverable.fileName}`);
+              
+              // Generate setup guide directly for TXT files
+              const setupGuideContent = `# ${agent.title || agentId} - Setup Guide
 
-This ZIP file contains the workflow files for the AI agent.
+${deliverable.description || 'Step-by-step installation and configuration instructions'}
 
-## Files included:
-${agent.deliverables && agent.deliverables.length > 0 
-  ? agent.deliverables.map(d => `- ${d.fileName} - ${d.description || 'Workflow file'}`).join('\n')
-  : '- No additional files available'
-}
+## Prerequisites
+- n8n instance (self-hosted or cloud)
+- Required credentials configured in n8n
+- Basic understanding of n8n workflows
 
-## How to use:
-1. Import the JSON file into your n8n instance
-2. Configure the required credentials
-3. Run the workflow
+## Installation Steps
+1. Import the JSON workflow file into your n8n instance
+2. Configure the required credentials in n8n
+3. Test the workflow with sample data
+4. Set up any necessary webhooks or triggers
+5. Deploy the workflow for production use
 
-## Support:
+## Configuration
+- Review all nodes in the workflow
+- Update any hardcoded values as needed
+- Test each step individually before running the full workflow
+
+## Support
 If you need help, please contact support at AIWaverider.
 
 Generated on: ${new Date().toISOString()}
 `;
-      
-      zip.file('README.txt', readmeContent);
-      
-      // Add deliverables to the ZIP
-      if (agent.deliverables && Array.isArray(agent.deliverables)) {
-        for (const deliverable of agent.deliverables) {
-          if (deliverable.downloadUrl && deliverable.fileName) {
-            try {
-              console.log(`[MOBILE] Adding deliverable: ${deliverable.fileName}`);
-              
-              // Handle different URL formats
-              let deliverableUrl = deliverable.downloadUrl;
-              
-              // Convert gs:// URLs to https:// URLs
-              if (deliverable.downloadUrl.startsWith('gs://')) {
-                deliverableUrl = deliverable.downloadUrl.replace('gs://', 'https://storage.googleapis.com/');
-                console.log(`[MOBILE] Converted gs:// URL to: ${deliverableUrl}`);
-              }
-              
-              // Use proxy for Google Storage URLs
-              if (deliverableUrl.includes('storage.googleapis.com') || deliverableUrl.includes('firebasestorage.app')) {
-                deliverableUrl = `/api/agents/${encodeURIComponent(agentId)}/download?url=${encodeURIComponent(deliverableUrl)}`;
-                console.log(`[MOBILE] Using proxy for deliverable: ${deliverableUrl}`);
-              }
-              
-              const deliverableResponse = await fetch(deliverableUrl, {
-                method: 'GET',
-                mode: 'cors',
-                credentials: 'omit'
-              });
-              
-              if (deliverableResponse.ok) {
-                const deliverableContent = await deliverableResponse.text();
-                zip.file(deliverable.fileName, deliverableContent);
-                console.log(`[MOBILE] Successfully added ${deliverable.fileName} to ZIP`);
-              } else {
-                console.warn(`[MOBILE] Failed to fetch ${deliverable.fileName}: ${deliverableResponse.status} ${deliverableResponse.statusText}`);
-              }
+              zip.file(deliverable.fileName, setupGuideContent);
+              console.log(`[MOBILE] Successfully generated and added ${deliverable.fileName} to ZIP`);
             } catch (deliverableError) {
               console.warn(`[MOBILE] Failed to add deliverable ${deliverable.fileName}:`, deliverableError.message);
             }
@@ -2162,7 +2181,9 @@ Generated on: ${new Date().toISOString()}
       
       // Generate the ZIP file
       console.log('[MOBILE] Generating ZIP file...');
+      console.log('[MOBILE] Files in ZIP:', Object.keys(zip.files));
       const zipBlob = await zip.generateAsync({ type: 'blob' });
+      console.log('[MOBILE] ZIP blob size:', zipBlob.size, 'bytes');
       
       // Create download link
       const url = window.URL.createObjectURL(zipBlob);
@@ -2171,6 +2192,7 @@ Generated on: ${new Date().toISOString()}
       link.download = `${agentId}.zip`;
       link.style.display = 'none';
       
+      console.log('[MOBILE] Triggering download...');
       document.body.appendChild(link);
       link.click();
       
@@ -2348,7 +2370,7 @@ Generated on: ${new Date().toISOString()}
                   console.log('Mobile device detected, showing download choice dialog');
                   
                   // Show choice dialog for mobile users
-                  showMobileDownloadChoice(downloadUrl, filename);
+                  showMobileDownloadChoice(downloadUrl, filename, downloadResult);
                   return; // Exit early for mobile
                 } else {
                   // For desktop, use direct proxy download
