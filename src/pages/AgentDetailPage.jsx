@@ -2078,9 +2078,25 @@ const AgentDetail = () => {
   const handleMobileDownload = async (downloadUrl, filename) => {
     try {
       console.log('[MOBILE] Attempting direct download for mobile');
+      console.log('[MOBILE] Download URL:', downloadUrl);
+      console.log('[MOBILE] Filename:', filename);
       
       // Try to use the backend proxy for better mobile compatibility
       const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
+      console.log('[MOBILE] Proxy URL:', proxyUrl);
+      
+      // Test the proxy URL first
+      try {
+        const testResponse = await fetch(proxyUrl, { method: 'HEAD' });
+        console.log('[MOBILE] Proxy test response:', testResponse.status, testResponse.statusText);
+        
+        if (!testResponse.ok) {
+          throw new Error(`Proxy test failed: ${testResponse.status} ${testResponse.statusText}`);
+        }
+      } catch (testError) {
+        console.error('[MOBILE] Proxy test failed:', testError);
+        throw new Error(`Proxy unavailable: ${testError.message}`);
+      }
       
       // Create a hidden link and trigger download
       const link = document.createElement('a');
@@ -2200,6 +2216,9 @@ const AgentDetail = () => {
           finalUrl: downloadUrl
         });
         
+        console.log('Full download result:', downloadResult);
+        console.log('Agent data from download result:', downloadResult.agent);
+        
         if (downloadUrl && typeof downloadUrl === 'string' && downloadUrl.trim() !== '') {
           try {
             console.log('Download URL found:', downloadUrl);
@@ -2239,6 +2258,13 @@ const AgentDetail = () => {
             }
             
             const isGoogleStorage = downloadUrl.includes('storage.googleapis.com') || downloadUrl.includes('firebasestorage.app');
+            const hasGoogleAuth = downloadUrl.includes('GoogleAccessId') || downloadUrl.includes('Signature');
+            
+            console.log('URL Analysis:', {
+              isGoogleStorage,
+              hasGoogleAuth,
+              url: downloadUrl
+            });
             
             if (isGoogleStorage) {
               console.log('Using backend proxy for Google Storage download to avoid CORS');
@@ -2246,6 +2272,7 @@ const AgentDetail = () => {
               try {
                 // Use the correct proxy endpoint with the file URL as a query parameter
                 const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
+                console.log('Proxy URL:', proxyUrl);
 
                 // Universal download approach that works on both mobile and desktop
                 console.log('Creating download link for all devices');
@@ -2262,6 +2289,27 @@ const AgentDetail = () => {
                   showMobileDownloadChoice(downloadUrl, filename);
                   return; // Exit early for mobile
                 } else {
+                  // Test the proxy URL first for desktop too
+                  try {
+                    console.log('[DESKTOP] Testing proxy URL:', proxyUrl);
+                    const testResponse = await fetch(proxyUrl, { 
+                      method: 'HEAD',
+                      mode: 'cors',
+                      credentials: 'omit'
+                    });
+                    console.log('[DESKTOP] Proxy test response:', testResponse.status, testResponse.statusText);
+                    console.log('[DESKTOP] Proxy test headers:', Object.fromEntries(testResponse.headers.entries()));
+                    
+                    if (!testResponse.ok) {
+                      const errorText = await testResponse.text().catch(() => 'No error details');
+                      console.error('[DESKTOP] Proxy test error details:', errorText);
+                      throw new Error(`Proxy test failed: ${testResponse.status} ${testResponse.statusText} - ${errorText}`);
+                    }
+                  } catch (testError) {
+                    console.error('[DESKTOP] Proxy test failed:', testError);
+                    throw new Error(`Proxy unavailable: ${testError.message}`);
+                  }
+                  
                   link.style.display = 'none';
                   document.body.appendChild(link);
                   link.click();
@@ -2280,6 +2328,57 @@ const AgentDetail = () => {
                 
               } catch (proxyError) {
                 console.error('Backend proxy download failed:', proxyError);
+                
+                // For Google Storage URLs with auth, try direct download as fallback
+                if (hasGoogleAuth) {
+                  console.log('Proxy failed for authenticated Google Storage URL, trying direct download');
+                  
+                  try {
+                    // Try direct download for authenticated Google Storage URLs
+                    const response = await fetch(downloadUrl, {
+                      method: 'GET',
+                      mode: 'cors',
+                      credentials: 'omit',
+                      headers: {
+                        'Accept': 'application/json, application/octet-stream, */*'
+                      }
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+                    }
+                    
+                    console.log('Direct download successful, creating blob');
+                    
+                    const responseText = await response.text();
+                    const blob = new Blob([responseText], { 
+                      type: 'application/octet-stream'
+                    });
+                    
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    link.style.display = 'none';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    setTimeout(() => {
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                    }, 100);
+                    
+                    showToast('success', '📥 File downloaded successfully via direct method!', {
+                      autoClose: 3000
+                    });
+                    
+                    return; // Exit successfully
+                  } catch (directError) {
+                    console.error('Direct download also failed:', directError);
+                    // Continue to show proxy error
+                  }
+                }
                 
                 // Show specific error toast for proxy failure
                 showToast('error', '❌ Download failed: Server proxy error. Please try again or contact support.', {
