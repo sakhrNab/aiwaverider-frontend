@@ -2261,6 +2261,27 @@ Generated on: ${new Date().toISOString()}
             setDownloadCount(prev => prev + 1);
           }
           
+          // Clear frontend cache to ensure fresh data on next load
+          try {
+            const cacheKey = `agent:${agentId}:no_reviews`;
+            const cacheKeyWithReviews = `agent:${agentId}:with_reviews`;
+            localStorage.removeItem(cacheKey);
+            localStorage.removeItem(cacheKeyWithReviews);
+            console.log('[CACHE] Cleared localStorage cache for agent after download');
+            
+            // Also clear from agent store if it exists
+            if (window.useAgentStore) {
+              const store = window.useAgentStore.getState();
+              if (store && store.agents) {
+                // Force refresh the agent store data
+                store.refreshAgents();
+                console.log('[CACHE] Triggered agent store refresh');
+              }
+            }
+          } catch (cacheError) {
+            console.warn('[CACHE] Error clearing localStorage cache:', cacheError);
+          }
+          
           if (downloadResult.agent.likes) {
             if (Array.isArray(downloadResult.agent.likes)) {
               setLikesCount(downloadResult.agent.likes.length);
