@@ -30,6 +30,21 @@ const AppContent = () => {
   const openSignInModal = () => setIsSignInModalOpen(true);
   const closeSignInModal = () => setIsSignInModalOpen(false);
   
+  // Make modal functions globally available
+  useEffect(() => {
+    window.openSignUpModal = openSignUpModal;
+    window.openSignInModal = openSignInModal;
+    window.closeSignUpModal = closeSignUpModal;
+    window.closeSignInModal = closeSignInModal;
+    
+    return () => {
+      delete window.openSignUpModal;
+      delete window.openSignInModal;
+      delete window.closeSignUpModal;
+      delete window.closeSignInModal;
+    };
+  }, []);
+  
   // Use custom hook for robust scroll restoration
   useScrollToTop();
 

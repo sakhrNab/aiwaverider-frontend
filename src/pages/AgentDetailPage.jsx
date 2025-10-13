@@ -598,12 +598,18 @@ const EmptyReviewsState = ({ user, darkMode }) => {
         </button>
       ) : (
         <div className="auth-prompt-buttons" style={{ gap: '12px', marginTop: '16px' }}>
-          <Link 
-            to="/sign-in"
+          <button 
             className="signin-button"
+            onClick={() => {
+              if (typeof window.openSignInModal === 'function') {
+                window.openSignInModal();
+              } else {
+                document.dispatchEvent(new CustomEvent('open-signin-modal'));
+              }
+            }}
           >
             Sign In to Review
-          </Link>
+          </button>
           <button 
             className="signup-button"
             onClick={() => {
