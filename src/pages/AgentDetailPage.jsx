@@ -2021,6 +2021,103 @@ const AgentDetail = () => {
     });
   };
 
+  // Enhanced mobile download choice dialog
+  const showMobileDownloadChoice = (downloadUrl, filename) => {
+    toast.dismiss();
+    
+    toast(
+      ({ closeToast }) => (
+        <div className="mobile-download-choice">
+          <div className="choice-header">
+            <span role="img" aria-label="mobile">📱</span>
+            <h4>How would you like to get this file?</h4>
+          </div>
+          <div className="choice-options">
+            <button 
+              className="choice-button open-button"
+              onClick={() => {
+                closeToast();
+                window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+                showToast('info', '📱 File opened in new tab. Use "Download" or "Save As" from your browser menu.', {
+                  autoClose: 6000
+                });
+              }}
+            >
+              <span role="img" aria-label="open">👁️</span>
+              Open in Browser
+            </button>
+            <button 
+              className="choice-button download-button"
+              onClick={() => {
+                closeToast();
+                handleMobileDownload(downloadUrl, filename);
+              }}
+            >
+              <span role="img" aria-label="download">📥</span>
+              Download File
+            </button>
+          </div>
+          <div className="choice-note">
+            <small>💡 Tip: "Open in Browser" lets you view the file, "Download File" tries to save it directly</small>
+          </div>
+        </div>
+      ),
+      {
+        position: "bottom-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: true,
+        closeButton: true,
+        className: 'mobile-download-choice-toast',
+        toastId: 'mobile-download-choice'
+      }
+    );
+  };
+
+  // Enhanced mobile download handler
+  const handleMobileDownload = async (downloadUrl, filename) => {
+    try {
+      console.log('[MOBILE] Attempting direct download for mobile');
+      
+      // Try to use the backend proxy for better mobile compatibility
+      const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
+      
+      // Create a hidden link and trigger download
+      const link = document.createElement('a');
+      link.href = proxyUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
+      }, 100);
+      
+      showToast('success', '📥 Download started! Check your downloads folder.', {
+        autoClose: 3000
+      });
+      
+    } catch (error) {
+      console.error('[MOBILE] Download failed:', error);
+      
+      // Fallback: copy URL to clipboard
+      try {
+        await navigator.clipboard.writeText(downloadUrl);
+        showToast('warning', '📋 Download URL copied to clipboard. Paste it in a new tab to download.', {
+          autoClose: 8000
+        });
+      } catch (clipboardError) {
+        showToast('error', '❌ Download failed. Please try again or contact support.', {
+          autoClose: 5000
+        });
+      }
+    }
+  };
+
   // Enhanced direct download handler
   const handleDirectDownload = async () => {
     // Free agents don't require authentication - removed this restriction
@@ -2103,8 +2200,6 @@ const AgentDetail = () => {
           finalUrl: downloadUrl
         });
         
-
-        
         if (downloadUrl && typeof downloadUrl === 'string' && downloadUrl.trim() !== '') {
           try {
             console.log('Download URL found:', downloadUrl);
@@ -2114,9 +2209,33 @@ const AgentDetail = () => {
             try {
               validUrl = new URL(downloadUrl);
               console.log('Download URL is valid:', validUrl.href);
+              
+              // Additional validation
+              if (!['https:'].includes(validUrl.protocol)) {
+                throw new Error('Only HTTPS URLs are allowed for security');
+              }
+              
+              if (!validUrl.hostname.includes('storage.googleapis.com') && 
+                  !validUrl.hostname.includes('firebasestorage.app')) {
+                console.warn('Non-Google Storage URL detected, may have CORS issues');
+              }
+              
             } catch (urlError) {
               console.error('Invalid download URL format:', downloadUrl, urlError);
-              throw new Error(`Invalid download URL format: ${downloadUrl}`);
+              throw new Error(`Invalid download URL format: ${urlError.message}`);
+            }
+            
+            // Generate filename
+            const urlParts = downloadUrl.split('/');
+            let filename = urlParts[urlParts.length - 1];
+            if (filename.includes('?')) {
+              filename = filename.split('?')[0];
+            }
+            if (!filename || !filename.includes('.')) {
+              filename = `${agent.title || 'agent'}.json`;
+            }
+            if (!filename.endsWith('.json')) {
+              filename = filename.replace(/\.[^/.]+$/, '') + '.json';
             }
             
             const isGoogleStorage = downloadUrl.includes('storage.googleapis.com') || downloadUrl.includes('firebasestorage.app');
@@ -2125,22 +2244,9 @@ const AgentDetail = () => {
               console.log('Using backend proxy for Google Storage download to avoid CORS');
               
               try {
-
                 // Use the correct proxy endpoint with the file URL as a query parameter
                 const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
 
-                const urlParts = downloadUrl.split('/');
-                let filename = urlParts[urlParts.length - 1];
-                if (filename.includes('?')) {
-                  filename = filename.split('?')[0];
-                }
-                if (!filename || !filename.includes('.')) {
-                  filename = `${agent.title || 'agent'}.json`;
-                }
-                if (!filename.endsWith('.json')) {
-                  filename = filename.replace(/\.[^/.]+$/, '') + '.json';
-                }
-                
                 // Universal download approach that works on both mobile and desktop
                 console.log('Creating download link for all devices');
                 
@@ -2150,56 +2256,14 @@ const AgentDetail = () => {
                 
                 // For mobile compatibility, add additional attributes
                 if (isMobileDevice()) {
-                  console.log('Mobile device detected, using enhanced link approach');
-                  link.target = '_blank';
-                  link.rel = 'noopener noreferrer';
-                  // Don't hide the link on mobile - some browsers need visible elements
-                  link.style.position = 'absolute';
-                  link.style.left = '-9999px';
-                  link.style.opacity = '0';
+                  console.log('Mobile device detected, showing download choice dialog');
+                  
+                  // Show choice dialog for mobile users
+                  showMobileDownloadChoice(downloadUrl, filename);
+                  return; // Exit early for mobile
                 } else {
                   link.style.display = 'none';
-                }
-                
-                document.body.appendChild(link);
-                
-                // Mobile-specific handling: bypass fetch restrictions by using direct navigation
-                if (isMobileDevice()) {
-                  console.log('[MOBILE] Using direct navigation for mobile download');
-                  
-                  // Clean up the link element since we won't use it
-                  document.body.removeChild(link);
-                  
-                  // Mobile browsers handle direct navigation to Firebase Storage URLs well
-                  // The file will open in a new tab where users can use "Save As" 
-                  try {
-                    window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-                    
-                    showToast('info', '📱 File opened in new tab. Use "Download" or "Save As" from your browser menu to save the file.', {
-                      autoClose: 6000
-                    });
-                    
-                    console.log('[MOBILE] Direct navigation completed successfully');
-                    return; // Exit early for mobile
-                    
-                  } catch (mobileError) {
-                    console.error('[MOBILE] Direct navigation failed:', mobileError);
-                    
-                    // Ultimate fallback: copy URL to clipboard
-                    try {
-                      navigator.clipboard.writeText(downloadUrl);
-                      showToast('warning', '📋 Download URL copied to clipboard. Paste it in your browser to download the file.', {
-                        autoClose: 8000
-                      });
-                    } catch (clipboardError) {
-                      console.error('[MOBILE] Clipboard fallback failed:', clipboardError);
-                      showToast('error', '❌ Download failed. Please try again or contact support.', {
-                        autoClose: 5000
-                      });
-                    }
-                    return;
-                  }
-                } else {
+                  document.body.appendChild(link);
                   link.click();
                   console.log('Desktop download link clicked');
                   
@@ -2253,20 +2317,6 @@ const AgentDetail = () => {
               const url = window.URL.createObjectURL(blob);
               const link = document.createElement('a');
               link.href = url;
-              
-              const urlParts = downloadUrl.split('/');
-              let filename = urlParts[urlParts.length - 1];
-              if (filename.includes('?')) {
-                filename = filename.split('?')[0];
-              }
-              if (!filename || !filename.includes('.')) {
-                filename = `${agent.title || 'agent'}.json`;
-              }
-              
-              if (!filename.endsWith('.json')) {
-                filename = filename.replace(/\.[^/.]+$/, '') + '.json';
-              }
-              
               link.download = filename;
               link.style.display = 'none';
               
@@ -2307,49 +2357,11 @@ const AgentDetail = () => {
               
               // Mobile-friendly fallback
               if (isMobileDevice()) {
-                console.log('Mobile fallback: using window.open with _blank');
-
-                
-                try {
-                  const downloadWindow = window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-                  if (downloadWindow) {
-
-                    showToast('info', '📥 Download opened in new tab! Save the file manually if needed.', {
-                      autoClose: 8000
-                    });
-                    // Close the window after a delay to clean up
-                    setTimeout(() => {
-                      try {
-                        downloadWindow.close();
-
-                      } catch (e) {
-                        // Window might already be closed by user or browser
-
-                      }
-                    }, 5000);
-                  } else {
-                    throw new Error('Popup blocked or failed to open');
-                  }
-                } catch (e) {
-                  console.error('Mobile window.open fallback failed:', e);
-
-                  showToast('warning', '⚠️ Please copy this link and paste it in a new tab: ' + downloadUrl, {
-                    autoClose: 15000
-                  });
-                }
+                console.log('Mobile fallback: showing choice dialog');
+                showMobileDownloadChoice(downloadUrl, filename);
               } else {
                 const link = document.createElement('a');
                 link.href = downloadUrl;
-                
-                const urlParts = downloadUrl.split('/');
-                let filename = urlParts[urlParts.length - 1];
-                if (filename.includes('?')) {
-                  filename = filename.split('?')[0];
-                }
-                if (!filename || !filename.includes('.')) {
-                  filename = `${agent.title || 'agent'}.json`;
-                }
-                
                 link.download = filename;
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
@@ -2367,11 +2379,6 @@ const AgentDetail = () => {
             } catch (finalError) {
               console.error('All download methods failed:', finalError);
               
-              if (isMobileDevice()) {
-
-
-              }
-              
               showToast('warning', '⚠️ Automatic download failed due to browser security. Here is the direct download link: ' + downloadUrl + ' - Please copy and paste this URL in a new tab to download the file.', {
                 autoClose: 15000
               });
@@ -2381,12 +2388,6 @@ const AgentDetail = () => {
           console.warn('No valid download URL provided in response');
           console.warn('Download result:', downloadResult);
           
-          if (isMobileDevice()) {
-            console.error('[MOBILE] No download URL found - this might be why mobile download is failing');
-
-
-          }
-          
           showToast('error', '❌ No download file found. The agent might not have a file attached. Please contact support.', {
             autoClose: 8000
           });
@@ -2394,11 +2395,6 @@ const AgentDetail = () => {
       } else {
         const errorMessage = downloadResult.error || downloadResult.message || 'Download failed';
         console.error('Download API returned error:', errorMessage);
-        
-        if (isMobileDevice()) {
-
-
-        }
         
         // Show specific error toast based on the error type
         let toastMessage = '❌ Download failed';
@@ -2429,11 +2425,6 @@ const AgentDetail = () => {
       }
     } catch (error) {
       console.error('Error downloading free agent:', error);
-      
-      if (isMobileDevice()) {
-
-
-      }
       
       let userMessage = '❌ Download failed. ';
       if (error.message.includes('CORS')) {

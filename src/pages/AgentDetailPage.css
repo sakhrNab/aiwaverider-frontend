@@ -1899,6 +1899,98 @@ body {
   box-shadow: var(--shadow-xl);
 }
 
+/* Mobile Download Choice Dialog */
+.mobile-download-choice {
+  padding: 20px;
+  text-align: center;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.choice-header {
+  margin-bottom: 20px;
+}
+
+.choice-header h4 {
+  margin: 8px 0 0 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.choice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.choice-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-base);
+  min-height: 48px;
+}
+
+.open-button {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.open-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.download-button {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.download-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.choice-note {
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.choice-note small {
+  display: block;
+  margin-top: 8px;
+}
+
+/* Mobile Download Choice Toast Styling */
+.mobile-download-choice-toast {
+  background: var(--background-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius-lg) !important;
+  box-shadow: var(--shadow-xl) !important;
+  backdrop-filter: blur(10px);
+}
+
+.mobile-download-choice-toast .Toastify__close-button {
+  color: var(--text-light) !important;
+  opacity: 0.7;
+}
+
+.mobile-download-choice-toast .Toastify__close-button:hover {
+  opacity: 1;
+}
+
 /* Responsive Design Enhancements */
 @media (min-width: 768px) {
   .agent-detail-content {

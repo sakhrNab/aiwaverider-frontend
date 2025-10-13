@@ -368,10 +368,10 @@ const Agents = () => {
     }
   };
 
-  // Derive categories from ALL agents (not filtered), with 'All' as the first option
+  // Derive categories from ALL agents, but filter out empty categories
   const availableCategories = React.useMemo(() => {
-    // Use allAgents instead of filtered agents to show all available categories
-    // If allAgents is empty or not available, fall back to agents
+    // ALWAYS use allAgents to get the complete list of categories
+    // This ensures categories don't change when filters are applied
     const sourceAgents = allAgents && allAgents.length > 0 ? allAgents : agents;
     
     if (!sourceAgents || sourceAgents.length === 0) {
@@ -380,21 +380,36 @@ const Agents = () => {
     
     console.log(`📊 Deriving categories from ${sourceAgents.length} agents (allAgents: ${allAgents?.length || 0}, filtered agents: ${agents?.length || 0})`);
     
-    const categorySet = new Set();
+    // Get all possible categories from all agents
+    const allCategorySet = new Set();
     sourceAgents.forEach(agent => {
       if (Array.isArray(agent.categories)) {
         agent.categories.forEach(cat => { 
-          if (cat && typeof cat === 'string') categorySet.add(cat.trim()); 
+          if (cat && typeof cat === 'string') allCategorySet.add(cat.trim()); 
         });
       } else if (typeof agent.category === 'string' && agent.category.trim()) {
-        categorySet.add(agent.category.trim());
+        allCategorySet.add(agent.category.trim());
       }
     });
     
-    const categories = Array.from(categorySet).sort();
-    console.log(`📊 Available categories: ${categories.length} total`);
+    // Filter out categories that have NO agents at all in the database
+    // This ensures we only show categories that actually have agents
+    const categoriesWithAgents = Array.from(allCategorySet).filter(category => {
+      // Check if this category has any agents in the complete database
+      return sourceAgents.some(agent => {
+        if (Array.isArray(agent.categories)) {
+          return agent.categories.some(cat => cat && cat.trim() === category);
+        } else if (typeof agent.category === 'string') {
+          return agent.category.trim() === category;
+        }
+        return false;
+      });
+    });
+    
+    const categories = categoriesWithAgents.sort();
+    console.log(`📊 Available categories: ${categories.length} total (filtered out empty categories from complete database)`);
     return ['All', ...categories];
-  }, [allAgents, agents]); // Depend on both allAgents and agents as fallback
+  }, [allAgents, agents]); // Remove searchQuery dependency to prevent re-filtering
 
   // Render the agent grid with appropriate filtering
   const renderAgentGrid = () => {
