@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { FaStar, FaRegStar, FaDownload, FaHeart, FaRegHeart, FaLink, FaComment, FaShare, FaCheckCircle, FaShoppingCart, FaTrash, FaFileAlt, FaFileCode, FaTag, FaFilePdf, FaFileWord, FaFileExcel, FaFileArchive, FaFileImage, FaRocket, FaBolt, FaGem, FaLightbulb, FaShieldAlt, FaTrophy } from 'react-icons/fa';
+import JSZip from 'jszip';
 import { 
   toggleWishlist, 
   toggleAgentLike,
@@ -2053,12 +2054,12 @@ const AgentDetail = () => {
                 handleMobileDownload(downloadUrl, filename);
               }}
             >
-              <span role="img" aria-label="download">📥</span>
-              Download File
+              <span role="img" aria-label="download">📦</span>
+              Download as ZIP
             </button>
           </div>
           <div className="choice-note">
-            <small>💡 Tip: "Open in Browser" lets you view the file, "Download File" tries to save it directly</small>
+            <small>💡 Tip: "Open in Browser" lets you view the file, "Download as ZIP" bundles everything for easy mobile download</small>
           </div>
         </div>
       ),
@@ -2074,41 +2075,113 @@ const AgentDetail = () => {
     );
   };
 
-  // Enhanced mobile download handler
+  // Enhanced mobile download handler - creates ZIP on frontend for better mobile compatibility
   const handleMobileDownload = async (downloadUrl, filename) => {
     try {
-      console.log('[MOBILE] Attempting direct download for mobile');
+      console.log('[MOBILE] Creating ZIP file for mobile download');
+      console.log('[MOBILE] Agent ID:', agentId);
       console.log('[MOBILE] Download URL:', downloadUrl);
-      console.log('[MOBILE] Filename:', filename);
       
-      // Try to use the backend proxy for better mobile compatibility
-      const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
-      console.log('[MOBILE] Proxy URL:', proxyUrl);
+      // Create a new ZIP instance
+      const zip = new JSZip();
       
-      // Use proxy directly for mobile download
-      console.log('[MOBILE] Using proxy for download');
+      // Skip the main JSON file - we'll only include deliverables
+      console.log('[MOBILE] Skipping main JSON file, will only include deliverables');
       
-      // Create a hidden link and trigger download
+      // Add a README file with instructions
+      const readmeContent = `# ${agent.title || agentId}
+
+This ZIP file contains the workflow files for the AI agent.
+
+## Files included:
+${agent.deliverables && agent.deliverables.length > 0 
+  ? agent.deliverables.map(d => `- ${d.fileName} - ${d.description || 'Workflow file'}`).join('\n')
+  : '- No additional files available'
+}
+
+## How to use:
+1. Import the JSON file into your n8n instance
+2. Configure the required credentials
+3. Run the workflow
+
+## Support:
+If you need help, please contact support at AIWaverider.
+
+Generated on: ${new Date().toISOString()}
+`;
+      
+      zip.file('README.txt', readmeContent);
+      
+      // Add deliverables to the ZIP
+      if (agent.deliverables && Array.isArray(agent.deliverables)) {
+        for (const deliverable of agent.deliverables) {
+          if (deliverable.downloadUrl && deliverable.fileName) {
+            try {
+              console.log(`[MOBILE] Adding deliverable: ${deliverable.fileName}`);
+              
+              // Handle different URL formats
+              let deliverableUrl = deliverable.downloadUrl;
+              
+              // Convert gs:// URLs to https:// URLs
+              if (deliverable.downloadUrl.startsWith('gs://')) {
+                deliverableUrl = deliverable.downloadUrl.replace('gs://', 'https://storage.googleapis.com/');
+                console.log(`[MOBILE] Converted gs:// URL to: ${deliverableUrl}`);
+              }
+              
+              // Use proxy for Google Storage URLs
+              if (deliverableUrl.includes('storage.googleapis.com') || deliverableUrl.includes('firebasestorage.app')) {
+                deliverableUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(deliverableUrl)}`;
+                console.log(`[MOBILE] Using proxy for deliverable: ${deliverableUrl}`);
+              }
+              
+              const deliverableResponse = await fetch(deliverableUrl, {
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'omit'
+              });
+              
+              if (deliverableResponse.ok) {
+                const deliverableContent = await deliverableResponse.text();
+                zip.file(deliverable.fileName, deliverableContent);
+                console.log(`[MOBILE] Successfully added ${deliverable.fileName} to ZIP`);
+              } else {
+                console.warn(`[MOBILE] Failed to fetch ${deliverable.fileName}: ${deliverableResponse.status} ${deliverableResponse.statusText}`);
+              }
+            } catch (deliverableError) {
+              console.warn(`[MOBILE] Failed to add deliverable ${deliverable.fileName}:`, deliverableError.message);
+            }
+          }
+        }
+      }
+      
+      // Generate the ZIP file
+      console.log('[MOBILE] Generating ZIP file...');
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(zipBlob);
       const link = document.createElement('a');
-      link.href = proxyUrl;
-      link.download = filename;
+      link.href = url;
+      link.download = `${agentId}.zip`;
       link.style.display = 'none';
       
       document.body.appendChild(link);
       link.click();
       
+      // Clean up
       setTimeout(() => {
         if (document.body.contains(link)) {
           document.body.removeChild(link);
         }
+        window.URL.revokeObjectURL(url);
       }, 100);
       
-      showToast('success', '📥 Download started! Check your downloads folder.', {
-        autoClose: 3000
+      showToast('success', '📦 ZIP file created and downloaded! Contains JSON file and instructions.', {
+        autoClose: 4000
       });
       
     } catch (error) {
-      console.error('[MOBILE] Download failed:', error);
+      console.error('[MOBILE] ZIP creation failed:', error);
       
       // Fallback: copy URL to clipboard
       try {
@@ -2235,17 +2308,17 @@ const AgentDetail = () => {
             }
             
             // Generate filename
-            const urlParts = downloadUrl.split('/');
-            let filename = urlParts[urlParts.length - 1];
-            if (filename.includes('?')) {
-              filename = filename.split('?')[0];
-            }
-            if (!filename || !filename.includes('.')) {
-              filename = `${agent.title || 'agent'}.json`;
-            }
-            if (!filename.endsWith('.json')) {
-              filename = filename.replace(/\.[^/.]+$/, '') + '.json';
-            }
+                const urlParts = downloadUrl.split('/');
+                let filename = urlParts[urlParts.length - 1];
+                if (filename.includes('?')) {
+                  filename = filename.split('?')[0];
+                }
+                if (!filename || !filename.includes('.')) {
+                  filename = `${agent.title || 'agent'}.json`;
+                }
+                if (!filename.endsWith('.json')) {
+                  filename = filename.replace(/\.[^/.]+$/, '') + '.json';
+                }
             
             const isGoogleStorage = downloadUrl.includes('storage.googleapis.com') || downloadUrl.includes('firebasestorage.app');
             const hasGoogleAuth = downloadUrl.includes('GoogleAccessId') || downloadUrl.includes('Signature');
@@ -2263,15 +2336,8 @@ const AgentDetail = () => {
                 // Use the correct proxy endpoint with the file URL as a query parameter
                 const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
                 console.log('Proxy URL:', proxyUrl);
-
-                // Universal download approach that works on both mobile and desktop
-                console.log('Creating download link for all devices');
                 
-                const link = document.createElement('a');
-                link.href = proxyUrl;
-                link.download = filename;
-                
-                // For mobile compatibility, add additional attributes
+                // Mobile vs Desktop download approach
                 if (isMobileDevice()) {
                   console.log('Mobile device detected, showing download choice dialog');
                   
@@ -2337,7 +2403,7 @@ const AgentDetail = () => {
                     link.style.display = 'none';
                     
                     document.body.appendChild(link);
-                    link.click();
+                  link.click();
                     
                     setTimeout(() => {
                       document.body.removeChild(link);
@@ -2345,9 +2411,9 @@ const AgentDetail = () => {
                     }, 100);
                     
                     showToast('success', '📥 File downloaded successfully via direct method!', {
-                      autoClose: 3000
-                    });
-                    
+                    autoClose: 3000
+                  });
+                  
                     return; // Exit successfully
                   } catch (directError) {
                     console.error('Direct download also failed:', directError);
@@ -2426,47 +2492,11 @@ const AgentDetail = () => {
               autoClose: 5000
             });
             
-            try {
-              console.log('Using final fallback method - opening download URL');
-              
-              // Generate filename for fallback
-              const urlParts = downloadUrl.split('/');
-              let fallbackFilename = urlParts[urlParts.length - 1];
-              if (fallbackFilename.includes('?')) {
-                fallbackFilename = fallbackFilename.split('?')[0];
-              }
-              if (!fallbackFilename || !fallbackFilename.includes('.')) {
-                fallbackFilename = `${agent.title || 'agent'}.json`;
-              }
-              
-              // Mobile-friendly fallback
-              if (isMobileDevice()) {
-                console.log('Mobile fallback: showing choice dialog');
-                showMobileDownloadChoice(downloadUrl, filename);
-              } else {
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = filename;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                link.style.display = 'none';
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                showToast('info', '📥 Download link opened in new tab. If the file displays instead of downloading, right-click and select "Save As..." to download manually.', {
-                  autoClose: 10000
-                });
-              }
-              
-            } catch (finalError) {
-              console.error('All download methods failed:', finalError);
-              
-              showToast('warning', '⚠️ Automatic download failed due to browser security. Here is the direct download link: ' + downloadUrl + ' - Please copy and paste this URL in a new tab to download the file.', {
-                autoClose: 15000
-              });
-            }
+            // If all methods fail, show error and retry option
+            console.error('All download methods failed');
+            showToast('error', '❌ Download failed. Please try again or contact support if the issue persists.', {
+              autoClose: 5000
+            });
           }
         } else {
           console.warn('No valid download URL provided in response');
