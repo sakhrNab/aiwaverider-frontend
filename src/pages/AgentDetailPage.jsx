@@ -2136,7 +2136,7 @@ Generated on: ${new Date().toISOString()}
               
               // Use proxy for Google Storage URLs
               if (deliverableUrl.includes('storage.googleapis.com') || deliverableUrl.includes('firebasestorage.app')) {
-                deliverableUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(deliverableUrl)}`;
+                deliverableUrl = `/api/agents/${encodeURIComponent(agentId)}/download?url=${encodeURIComponent(deliverableUrl)}`;
                 console.log(`[MOBILE] Using proxy for deliverable: ${deliverableUrl}`);
               }
               
@@ -2340,7 +2340,7 @@ Generated on: ${new Date().toISOString()}
               
               try {
                 // Use the correct proxy endpoint with the file URL as a query parameter
-                const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
+                const proxyUrl = `/api/agents/${encodeURIComponent(agentId)}/download?url=${encodeURIComponent(downloadUrl)}`;
                 console.log('Proxy URL:', proxyUrl);
                 
                 // Mobile vs Desktop download approach

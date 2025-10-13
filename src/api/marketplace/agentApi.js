@@ -148,7 +148,7 @@ export const deleteAgent = async (agentId) => {
 export const subscribeToAgent = async (agentId, planId) => {
   try {
     console.log(`[API] Subscribing to agent ${agentId} with plan ${planId}`);
-    const response = await api.post(`/api/agents/${agentId}/subscribe`, { planId });
+    const response = await api.post(`/api/agents/${encodeURIComponent(agentId)}/subscribe`, { planId });
     return response.data;
   } catch (error) {
     console.error(`Error subscribing to agent ${agentId}:`, error);
@@ -895,7 +895,7 @@ export const downloadFreeAgent = async (agentId) => {
       }
     }
     
-    const response = await api.post(`/api/agents/${agentId}/free-download`, {}, config);
+    const response = await api.post(`/api/agents/${encodeURIComponent(agentId)}/free-download`, {}, config);
     
     console.log(`[API] Free agent download response:`, response.data);
     
@@ -953,7 +953,7 @@ export const downloadFreeAgent = async (agentId) => {
 export const incrementAgentDownloadCount = async (agentId) => {
   try {
     console.log(`[API] Incrementing download count for agent ${agentId}`);
-    const response = await api.post(`/api/agents/${agentId}/increment-downloads`);
+    const response = await api.post(`/api/agents/${encodeURIComponent(agentId)}/increment-downloads`);
     return {
       success: true,
       downloadCount: response.data?.downloadCount,
@@ -1015,7 +1015,7 @@ export const recordAgentDownload = async (agentId) => {
 export const addAgentReview = async (agentId, { content, rating }) => {
   try {
     const headers = await getAuthHeaders();
-    const response = await api.post(`/api/agents/${agentId}/reviews`, { content, rating }, { headers });
+    const response = await api.post(`/api/agents/${encodeURIComponent(agentId)}/reviews`, { content, rating }, { headers });
     return response.data;
   } catch (error) {
     const message = error?.response?.data?.error || error.message || 'Failed to add review';
