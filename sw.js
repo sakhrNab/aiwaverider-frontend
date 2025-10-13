@@ -206,6 +206,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip chrome-extension and other unsupported schemes
+  if (url.protocol === 'chrome-extension:' || 
+      url.protocol === 'moz-extension:' || 
+      url.protocol === 'safari-extension:' ||
+      url.protocol === 'edge-extension:') {
+    return;
+  }
+
   // Skip any query parameters that indicate filtering
   if (url.search.includes('priceMin') || 
       url.search.includes('priceMax') || 
