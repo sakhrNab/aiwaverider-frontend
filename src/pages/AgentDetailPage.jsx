@@ -2082,22 +2082,11 @@ const AgentDetail = () => {
       console.log('[MOBILE] Filename:', filename);
       
       // Try to use the backend proxy for better mobile compatibility
-      // Don't double-encode the agentId - it's already URL-encoded from the route
       const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
       console.log('[MOBILE] Proxy URL:', proxyUrl);
       
-      // Test the proxy URL first
-      try {
-        const testResponse = await fetch(proxyUrl, { method: 'HEAD' });
-        console.log('[MOBILE] Proxy test response:', testResponse.status, testResponse.statusText);
-        
-        if (!testResponse.ok) {
-          throw new Error(`Proxy test failed: ${testResponse.status} ${testResponse.statusText}`);
-        }
-      } catch (testError) {
-        console.error('[MOBILE] Proxy test failed:', testError);
-        throw new Error(`Proxy unavailable: ${testError.message}`);
-      }
+      // Use proxy directly for mobile download
+      console.log('[MOBILE] Using proxy for download');
       
       // Create a hidden link and trigger download
       const link = document.createElement('a');
@@ -2272,7 +2261,6 @@ const AgentDetail = () => {
               
               try {
                 // Use the correct proxy endpoint with the file URL as a query parameter
-                // Don't double-encode the agentId - it's already URL-encoded from the route
                 const proxyUrl = `/api/agents/${agentId}/download?url=${encodeURIComponent(downloadUrl)}`;
                 console.log('Proxy URL:', proxyUrl);
 
@@ -2291,28 +2279,13 @@ const AgentDetail = () => {
                   showMobileDownloadChoice(downloadUrl, filename);
                   return; // Exit early for mobile
                 } else {
-                  // Test the proxy URL first for desktop too
-                  try {
-                    console.log('[DESKTOP] Testing proxy URL:', proxyUrl);
-                    const testResponse = await fetch(proxyUrl, { 
-                      method: 'HEAD',
-                      mode: 'cors',
-                      credentials: 'omit'
-                    });
-                    console.log('[DESKTOP] Proxy test response:', testResponse.status, testResponse.statusText);
-                    console.log('[DESKTOP] Proxy test headers:', Object.fromEntries(testResponse.headers.entries()));
-                    
-                    if (!testResponse.ok) {
-                      const errorText = await testResponse.text().catch(() => 'No error details');
-                      console.error('[DESKTOP] Proxy test error details:', errorText);
-                      throw new Error(`Proxy test failed: ${testResponse.status} ${testResponse.statusText} - ${errorText}`);
-                    }
-                  } catch (testError) {
-                    console.error('[DESKTOP] Proxy test failed:', testError);
-                    throw new Error(`Proxy unavailable: ${testError.message}`);
-                  }
-                  
+                  // For desktop, use direct proxy download
+                  console.log('[DESKTOP] Using proxy for download');
+                  const link = document.createElement('a');
+                  link.href = proxyUrl;
+                  link.download = filename;
                   link.style.display = 'none';
+                  
                   document.body.appendChild(link);
                   link.click();
                   console.log('Desktop download link clicked');
@@ -2331,45 +2304,55 @@ const AgentDetail = () => {
               } catch (proxyError) {
                 console.error('Backend proxy download failed:', proxyError);
                 
-                // For Google Storage URLs, don't try direct download due to CORS restrictions
-                if (isGoogleStorage) {
-                  console.log('Google Storage URL - proxy failed, showing manual download option');
+                // For Google Storage URLs with auth, try direct download as fallback
+                if (hasGoogleAuth) {
+                  console.log('Proxy failed for authenticated Google Storage URL, trying direct download');
                   
-                  // Show manual download option instead of trying direct download
-                  showToast('warning', '⚠️ Automatic download failed. Please try the manual download link below.', {
-                    autoClose: 8000
-                  });
-                  
-                  // Create a manual download modal
-                  const manualDownloadDiv = document.createElement('div');
-                  manualDownloadDiv.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: white;
-                    border: 2px solid #007bff;
-                    border-radius: 8px;
-                    padding: 20px;
-                    z-index: 10000;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-                    max-width: 500px;
-                    text-align: center;
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                  `;
-                  
-                  manualDownloadDiv.innerHTML = `
-                    <h3 style="margin: 0 0 15px 0; color: #333;">Manual Download Required</h3>
-                    <p style="margin: 0 0 15px 0; color: #666;">The automatic download failed. Please copy and paste this link in a new tab:</p>
-                    <input type="text" value="${downloadUrl}" readonly style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; word-break: break-all;">
-                    <div style="margin-top: 15px;">
-                      <button onclick="navigator.clipboard.writeText('${downloadUrl}').then(() => alert('Link copied to clipboard!'))" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; margin-right: 10px; cursor: pointer;">Copy Link</button>
-                      <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Close</button>
-                    </div>
-                  `;
-                  
-                  document.body.appendChild(manualDownloadDiv);
-                  return; // Exit early, don't try other methods
+                  try {
+                    // Try direct download for authenticated Google Storage URLs
+                    const response = await fetch(downloadUrl, {
+                      method: 'GET',
+                      mode: 'cors',
+                      credentials: 'omit',
+                      headers: {
+                        'Accept': 'application/json, application/octet-stream, */*'
+                      }
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+                    }
+                    
+                    console.log('Direct download successful, creating blob');
+                    
+                    const responseText = await response.text();
+                    const blob = new Blob([responseText], { 
+                      type: 'application/octet-stream'
+                    });
+                    
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    link.style.display = 'none';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    setTimeout(() => {
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                    }, 100);
+                    
+                    showToast('success', '📥 File downloaded successfully via direct method!', {
+                      autoClose: 3000
+                    });
+                    
+                    return; // Exit successfully
+                  } catch (directError) {
+                    console.error('Direct download also failed:', directError);
+                    // Continue to show proxy error
+                  }
                 }
                 
                 // Show specific error toast for proxy failure
@@ -2459,11 +2442,11 @@ const AgentDetail = () => {
               // Mobile-friendly fallback
               if (isMobileDevice()) {
                 console.log('Mobile fallback: showing choice dialog');
-                showMobileDownloadChoice(downloadUrl, fallbackFilename);
+                showMobileDownloadChoice(downloadUrl, filename);
               } else {
                 const link = document.createElement('a');
                 link.href = downloadUrl;
-                link.download = fallbackFilename;
+                link.download = filename;
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
                 link.style.display = 'none';
