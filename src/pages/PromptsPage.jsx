@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { FaExternalLinkAlt, FaSearch, FaTimes, FaSync, FaLightbulb } from 'react-icons/fa';
-import PageHeader from '../components/layout/PageHeader';
 import { Link, useNavigate } from 'react-router-dom';
 import './AIToolsPage.css'; // Reuse the same CSS
 import { useTheme } from '../contexts/ThemeContext';
@@ -367,8 +366,6 @@ const PromptsPage = () => {
 
   return (
     <div className={`min-h-screen pb-16 ${darkMode ? "dark bg-[#2D1846]" : "bg-gray-50"} ${themeClasses}`}>
-      {/* Use centralized PageHeader component */}
-      <PageHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto mt-8">
           {/* Page header using global class */}

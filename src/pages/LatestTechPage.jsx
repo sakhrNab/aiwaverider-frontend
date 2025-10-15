@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FaCalendarAlt, FaEye, FaHeart, FaComment } from 'react-icons/fa';
-import PageHeader from '../components/layout/PageHeader';
 import { PostsContext } from '../contexts/PostsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { HashLoader } from 'react-spinners';
@@ -133,8 +132,6 @@ const LatestTech = () => {
   
   return (
     <div className={`min-h-screen pb-16 ${darkMode ? "dark bg-[#2D1846]" : "bg-gray-50"} ${themeClasses}`}>
-      {/* Use centralized PageHeader component */}
-      <PageHeader />
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto mt-8">

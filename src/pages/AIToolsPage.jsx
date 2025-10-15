@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { FaExternalLinkAlt, FaSearch, FaTimes, FaSync } from 'react-icons/fa';
-import PageHeader from '../components/layout/PageHeader';
 import { useNavigate } from 'react-router-dom';
 import './AIToolsPage.css';
 import { useTheme } from '../contexts/ThemeContext';
@@ -380,7 +379,6 @@ const AITools = () => {
 
   return (
     <div className={`min-h-screen pb-16 ${darkMode ? "dark bg-[#2D1846]" : "bg-gray-50"} ${themeClasses}`}>
-      <PageHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto mt-8">
           {/* Page header */}

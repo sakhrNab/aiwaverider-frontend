@@ -282,7 +282,7 @@ const Header = ({ openSignUpModal, isFixedOnHome = false, isHomePage = false }) 
       ? 'homepage-transparent absolute'
       : darkMode
         ? 'bg-gradient-to-r from-gray-900/90 via-indigo-950/80 to-gray-900/90 border-b border-indigo-700/30 shadow-lg shadow-indigo-900/20 backdrop-blur-xl'
-        : 'bg-gradient-to-r from-white/95 via-blue-50/90 to-indigo-50/95 border-b border-indigo-200/50 shadow-lg shadow-indigo-200/20 backdrop-blur-xl'
+        : 'bg-gradient-to-r from-blue-600/90 via-indigo-500/80 to-purple-500/90 border-b border-indigo-300 shadow-lg shadow-indigo-500/20 backdrop-blur-xl'
   } transition-all duration-300 ${isFixedOnHome ? 'fixed w-full left-0' : ''}`;
 
   // Spacer height to avoid content jump when fixed

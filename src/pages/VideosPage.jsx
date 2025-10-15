@@ -6,7 +6,6 @@ import PlatformSection from '../components/videos/PlatformSection';
 import VideosService from '../services/videosService';
 import { toast } from 'react-toastify';
 import { db } from '../utils/firebase';
-import PageHeader from '../components/layout/PageHeader';
 import '../styles/animations.css'; // Import animations
 
 // Platform SVG Icons - Enhanced with gradients and better styling
@@ -488,8 +487,6 @@ const VideosPage = () => {
 
   return (
     <div className={`min-h-screen pb-16 ${darkMode ? "dark bg-[#2D1846]" : "bg-gray-50"} bg-gradient-to-br from-[#4158D0] via-[#C850C0] to-[#FFCC70] stars-pattern`}>
-      {/* Use centralized PageHeader component */}
-      <PageHeader />
 
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30">

@@ -8,7 +8,6 @@ import FilterSidebar from '../components/agents/FilterSidebar';
 import AgentCard from '../components/agents/AgentCard';
 import { useTheme } from '../contexts/ThemeContext';
 import {FaArrowRight, FaExclamationTriangle, FaBars, FaTimes, FaFilter, FaSync } from 'react-icons/fa';
-import PageHeader from '../components/layout/PageHeader';
 // import AgentHeader from '../components/layout/AgentHeader';
 import { HashLoader } from 'react-spinners';
 import useAgentStore from '../store/agentStore';
