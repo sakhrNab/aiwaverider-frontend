@@ -491,7 +491,7 @@ const About = () => {
                 
                 .card-details li {
                   margin-bottom: 0.5rem;
-                  color: ${darkMode ? '#E0E0FF' : '#374151'};
+                  color: ${darkMode ? '#E0E0FF' : '#4B5563'};
                   font-size: 0.95rem;
                 }
                 
@@ -528,8 +528,8 @@ const About = () => {
                   <div className="card-close">&times;</div>
                   <div className="card-front">
                     <div className="text-4xl mb-4">⚙️</div>
-                    <h3 className="text-xl font-bold mb-3 text-white">Custom Software Development</h3>
-                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                    <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Custom Software Development</h3>
+                    <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       <strong>Built with Cursor AI, GitHub Copilot, and live coding sessions.</strong> 
                       We deliver production-ready applications 3x faster and 50% cheaper than traditional development.
                     </p>
@@ -551,8 +551,8 @@ const About = () => {
                   <div className="card-close">&times;</div>
                   <div className="card-front">
                     <div className="text-4xl mb-4">☁️</div>
-                    <h3 className="text-xl font-bold mb-3 text-white">Enterprise SaaS Platforms</h3>
-                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                    <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Enterprise SaaS Platforms</h3>
+                    <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       <strong>React, Node.js, PostgreSQL, AWS/Azure architecture.</strong> 
                       Scalable multi-tenant platforms with 99.9% uptime, delivered in 8-12 weeks.
                     </p>
@@ -574,8 +574,8 @@ const About = () => {
                   <div className="card-close">&times;</div>
                   <div className="card-front">
                     <div className="text-4xl mb-4">📱</div>
-                    <h3 className="text-xl font-bold mb-3 text-white">Native Mobile Applications</h3>
-                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                    <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Native Mobile Applications</h3>
+                    <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       <strong>React Native, Swift, Kotlin development.</strong> 
                       Production-ready iOS and Android apps with 4.8+ App Store ratings, delivered in 6-10 weeks.
                     </p>
@@ -597,8 +597,8 @@ const About = () => {
                   <div className="card-close">&times;</div>
                   <div className="card-front">
                     <div className="text-4xl mb-4">⚡️</div>
-                    <h3 className="text-xl font-bold mb-3 text-white">N8N Automation Workflows</h3>
-                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                    <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>N8N Automation Workflows</h3>
+                    <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       <strong>Custom N8N workflows that save 20+ hours/week.</strong> 
                       Connect 200+ apps and automate complex business processes with zero coding required.
                     </p>
@@ -619,8 +619,8 @@ const About = () => {
                   <div className="card-close">&times;</div>
                   <div className="card-front">
                     <div className="text-4xl mb-4">🤖</div>
-                    <h3 className="text-xl font-bold mb-3 text-white">AI Tool Implementation</h3>
-                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                    <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>AI Tool Implementation</h3>
+                    <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       <strong>Strategic AI adoption with proven ROI.</strong> 
                       We've helped 50+ businesses increase productivity by 40% using ChatGPT, Claude, and custom AI solutions.
                     </p>
@@ -641,8 +641,8 @@ const About = () => {
                   <div className="card-close">&times;</div>
                   <div className="card-front">
                     <div className="text-4xl mb-4">🧠</div>
-                    <h3 className="text-xl font-bold mb-3 text-white">AI Strategy Consulting</h3>
-                    <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-200">
+                    <h3 className={`text-xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>AI Strategy Consulting</h3>
+                    <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       <strong>End-to-end AI transformation for enterprises.</strong> 
                       From strategy to implementation, we help Fortune 500 companies integrate AI across all departments.
                     </p>
