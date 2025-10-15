@@ -2227,14 +2227,13 @@ Generated on: ${new Date().toISOString()}
 
   // Enhanced direct download handler
   const handleDirectDownload = async () => {
-    // Free agents don't require authentication - removed this restriction
-    // if (!user) {
-    //   showToast('info', '👋 Please sign in to download this amazing free agent!', {
-    //     icon: "👋",
-    //     autoClose: 4000
-    //   });
-    //   return;
-    // }
+    if (!user) {
+      showToast('info', '👋 Please sign in to download this amazing free agent!', {
+        icon: "👋",
+        autoClose: 4000
+      });
+      return;
+    }
     
     try {
       setLoading(true);
