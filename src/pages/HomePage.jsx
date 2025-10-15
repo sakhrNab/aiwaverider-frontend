@@ -870,6 +870,54 @@ const HomePage = () => {
           font-family: 'Roboto', 'Inter', sans-serif;
         }
 
+        /* Responsive hero content for 700-1000px range */
+        @media (min-width: 700px) and (max-width: 1000px) {
+          .hero-content {
+            max-width: 100%;
+            padding: 0 1rem;
+          }
+          
+          .hero-title {
+            font-size: 2.5rem !important;
+            line-height: 1.2 !important;
+          }
+          
+          .hero-checklist li {
+            font-size: 0.9rem !important;
+            line-height: 1.4 !important;
+          }
+          
+          .hero-buttons {
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+          }
+          
+          .hero-buttons a {
+            width: 100% !important;
+            text-align: center !important;
+            font-size: 0.9rem !important;
+            padding: 0.75rem 1rem !important;
+          }
+        }
+
+        /* Mobile-first responsive design */
+        @media (max-width: 699px) {
+          .hero-content {
+            text-align: center;
+            padding: 0 0.5rem;
+          }
+          
+          .hero-title {
+            font-size: 2rem !important;
+            line-height: 1.1 !important;
+          }
+          
+          .hero-checklist li {
+            font-size: 0.85rem !important;
+            text-align: left;
+          }
+        }
+
         .hero-checklist > * {
           animation: slideUp 1s ease-out forwards;
           opacity: 0;
@@ -944,39 +992,42 @@ const HomePage = () => {
       
       {/* Cinematic Hero Section */}
       <div className="hero-section container mx-auto px-4 text-left homepage-section" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div className="hero-content" style={{ animation: 'fadeIn 1s ease-out forwards', opacity: 0 }}>
-            <h1 className={`hero-title text-4xl md:text-6xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-white'}`} style={{ 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full max-w-7xl">
+          <div className="hero-content w-full" style={{ animation: 'fadeIn 1s ease-out forwards', opacity: 0 }}>
+            <h1 className={`hero-title text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight ${darkMode ? 'text-white' : 'text-white'}`} style={{ 
               animation: 'slideUp 1s 0.5s ease-out forwards, subtle-glow 3s infinite alternate', 
               opacity: 0, 
               transform: 'translateY(20px)',
               textShadow: darkMode ? '0 0 15px rgba(0, 255, 255, 0.5)' : '0 0 15px rgba(59, 130, 246, 0.3)'
             }}>Master AI Automation & Build Your Digital Empire</h1>
-            <p className={`text-lg md:text-xl mb-8 opacity-90 ${darkMode ? 'text-gray-300' : 'text-gray-200'}`}>Learn how to monetize AI through affiliate marketing, sell powerful n8n automation workflows, and provide high-value AI consulting services. Build a $5,000-$25,000/month business in the AI revolution.</p>
-            <ul className={`hero-checklist space-y-3 mb-8 ${darkMode ? 'text-gray-200' : 'text-gray-300'}`}>
-              <li className="flex items-center" style={{ animation: 'slideUp 1s 0.8s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
-                <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <p className={`text-base sm:text-lg md:text-xl mb-6 sm:mb-8 opacity-90 leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-200'}`}>Learn how to monetize AI through affiliate marketing, sell powerful n8n automation workflows, and provide high-value AI consulting services. Build a $5,000-$25,000/month business in the AI revolution.</p>
+            <ul className={`hero-checklist space-y-2 sm:space-y-3 mb-6 sm:mb-8 ${darkMode ? 'text-gray-200' : 'text-gray-300'}`}>
+              <li className="flex items-start sm:items-center" style={{ animation: 'slideUp 1s 0.8s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-cyan-400 flex-shrink-0 mt-0.5 sm:mt-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>No coding experience required
+                </svg>
+                <span className="text-sm sm:text-base">No coding experience required</span>
                   </li>
-              <li className="flex items-center" style={{ animation: 'slideUp 1s 1.0s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
-                <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <li className="flex items-start sm:items-center" style={{ animation: 'slideUp 1s 1.0s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-cyan-400 flex-shrink-0 mt-0.5 sm:mt-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>Start earning $5,000-$25,000/month with proven strategies
+                </svg>
+                <span className="text-sm sm:text-base">Start earning $5,000-$25,000/month with proven strategies</span>
               </li>
-              <li className="flex items-center" style={{ animation: 'slideUp 1s 1.2s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
-                <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <li className="flex items-start sm:items-center" style={{ animation: 'slideUp 1s 1.2s ease-out forwards', opacity: 0, transform: 'translateY(20px)' }}>
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-cyan-400 flex-shrink-0 mt-0.5 sm:mt-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>Launch your first AI automation workflow in 7 days
+                </svg>
+                <span className="text-sm sm:text-base">Launch your first AI automation workflow in 7 days</span>
               </li>
               </ul>
-            <div className="hero-buttons flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
-              <Link to="/monetization-paths" className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg shadow-blue-600/30" style={{ animation: 'fadeIn 1s 1.5s ease-out forwards', opacity: 0 }}>Explore Business Models</Link>
+            <div className="hero-buttons flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 lg:space-x-4">
+              <Link to="/monetization-paths" className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 sm:px-6 rounded-lg transition duration-300 shadow-lg shadow-blue-600/30 text-center text-sm sm:text-base" style={{ animation: 'fadeIn 1s 1.5s ease-out forwards', opacity: 0 }}>Explore Business Models</Link>
               <a
                 href="https://calendly.com/aiwaverider8/30min"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg shadow-yellow-500/30"
+                className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-4 sm:px-6 rounded-lg transition duration-300 shadow-lg shadow-yellow-500/30 text-center text-sm sm:text-base"
                 style={{ animation: 'fadeIn 1s 1.6s ease-out forwards', opacity: 0 }}
               >
                 Book a FREE Consultation
@@ -985,7 +1036,7 @@ const HomePage = () => {
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                  className="bg-green-500 hover:bg-green-400 text-gray-900 font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg shadow-green-500/30"
+                  className="bg-green-500 hover:bg-green-400 text-gray-900 font-bold py-3 px-4 sm:px-6 rounded-lg transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base"
                 style={{ animation: 'fadeIn 1s 1.7s ease-out forwards', opacity: 0 }}
                 >
                   JOIN COMMUNITY
@@ -1013,11 +1064,11 @@ const HomePage = () => {
 
 
             </div>
-          <div className="hero-image hidden md:block">
+          <div className="hero-image hidden lg:block">
             <img 
               src={aiHeroPage} 
               alt="AI Waverider Illustration" 
-              className="w-full h-auto hero-illustration" 
+              className="w-full h-auto hero-illustration max-w-lg mx-auto" 
               style={{ 
                 animation: 'heroFloatIn 2s ease-out 0.5s forwards, heroFloat 6s ease-in-out 2.5s infinite', 
                 opacity: 0, 
