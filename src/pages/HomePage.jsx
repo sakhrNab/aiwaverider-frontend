@@ -867,7 +867,7 @@ const HomePage = () => {
         }
 
         .hero-title, .hero-content, .hero-checklist, .hero-buttons {
-          font-family: 'Roboto', 'Inter', sans-serif;
+          font-family: 'Roboto', 'Inter', sans-serif; padding-top: 40px;
         }
 
         /* Responsive hero content for 700-1000px range */
