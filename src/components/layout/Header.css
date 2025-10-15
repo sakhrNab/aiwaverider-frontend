@@ -1019,6 +1019,42 @@ body.menu-open .mobile-menu * {
   }
 }
 
+/* Ensure hamburger button shows in the 800-1000px range - HIGH SPECIFICITY */
+@media (min-width: 800px) and (max-width: 999px) {
+  .mobile-menu-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
+  }
+  
+  /* Hide navigation in this range */
+  .custom-1000\:flex {
+    display: none !important;
+  }
+  
+  /* Override any conflicting rules that might hide the button with higher specificity */
+  .main-header .mobile-menu-btn,
+  .main-header .flex.items-center.space-x-3 .mobile-menu-btn,
+  button.mobile-menu-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
+  }
+}
+
+/* Additional override to ensure button shows in 800-1000px range */
+@media (min-width: 800px) and (max-width: 999px) {
+  /* Target the specific button element with maximum specificity */
+  .main-header .container .flex.items-center.space-x-3 button.mobile-menu-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
+  }
+}
+
 /* Force mobile menu button visibility on small screens */
 @media (max-width: 768px) {
   .mobile-menu-btn {
@@ -1189,7 +1225,7 @@ body.menu-open .mobile-menu * {
 }
 
 /* Custom breakpoint for 1000px */
-@media (min-width: 800px) {
+@media (min-width: 1000px) {
   .custom-1000\:flex {
     display: flex !important;
   }
