@@ -552,7 +552,7 @@ const VideosPage = () => {
               </h1>
               <p className={`
                 text-lg sm:text-xl max-w-3xl mx-auto mb-8
-                ${darkMode ? 'text-gray-300' : 'text-gray-600'}
+                ${darkMode ? 'text-gray-300' : 'text-gray-300'}
               `}>
                 Discover trending videos from YouTube, TikTok, and Instagram all in one place
               </p>
@@ -575,7 +575,7 @@ const VideosPage = () => {
                       w-full px-6 py-4 pl-12 pr-16 rounded-2xl border
                       ${darkMode 
                         ? 'bg-gray-800/60 border-gray-700/50 text-white placeholder-gray-400' 
-                        : 'bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500'
+                        : 'bg-white/40 border-gray-300/50 text-gray-200 placeholder-gray-800'
                       }
                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                       backdrop-blur-sm transition-all duration-300 ease-out
@@ -599,8 +599,8 @@ const VideosPage = () => {
                     absolute left-4 top-1/2 transform -translate-y-1/2 
                     transition-all duration-300 ease-out
                     ${searchQuery && searchQuery.trim() 
-                      ? `scale-110 ${darkMode ? 'text-blue-400' : 'text-blue-600'}` 
-                      : `${darkMode ? 'text-gray-400 group-hover:text-blue-400' : 'text-gray-500 group-hover:text-blue-600'}`
+                      ? `scale-110 ${darkMode ? 'text-blue-400' : 'text-blue-700'}` 
+                      : `${darkMode ? 'text-gray-400 group-hover:text-blue-400' : 'text-gray-600 group-hover:text-blue-700'}`
                     }
                   `}>
                     <svg 
@@ -651,13 +651,13 @@ const VideosPage = () => {
                     `}>
                       <kbd className={`
                         px-1.5 py-0.5 rounded text-xs font-mono
-                        ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
+                        ${darkMode ? 'bg-gray-700/50 border border-gray-600/50 text-gray-300' : 'bg-gray-200/80 border border-gray-400/50 text-gray-700'}
                       `}>
                         {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}
                       </kbd>
                       <kbd className={`
                         px-1.5 py-0.5 rounded text-xs font-mono
-                        ${darkMode ? 'bg-gray-700/50 border border-gray-600/50' : 'bg-gray-100/50 border border-gray-300/50'}
+                        ${darkMode ? 'bg-gray-700/50 border border-gray-600/50 text-gray-300' : 'bg-gray-200/80 border border-gray-400/50 text-gray-700'}
                       `}>
                         K
                       </kbd>
@@ -1145,7 +1145,7 @@ const VideosPage = () => {
                   w-full px-6 py-3 pl-12 pr-14 rounded-xl border
                   ${darkMode 
                     ? 'bg-gray-800/80 border-gray-600/50 text-white placeholder-gray-300' 
-                    : 'bg-white/80 border-gray-300/50 text-gray-900 placeholder-gray-400'
+                    : 'bg-white/80 border-gray-300/50 text-gray-900 placeholder-gray-600'
                   }
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                   backdrop-blur-sm transition-all duration-300 ease-out
@@ -1157,7 +1157,7 @@ const VideosPage = () => {
               {/* Search Icon */}
               <div className={`
                 absolute left-4 top-1/2 transform -translate-y-1/2 
-                ${darkMode ? 'text-blue-400' : 'text-blue-600'}
+                ${darkMode ? 'text-blue-400' : 'text-blue-700'}
                 transition-all duration-300
               `}>
                 <svg 

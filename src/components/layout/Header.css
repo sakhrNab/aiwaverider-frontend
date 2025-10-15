@@ -648,6 +648,24 @@ body.menu-open .mobile-menu * {
   background-color: rgba(0, 188, 212, 0.1);
 }
 
+/* Improve contrast for navigation links in light mode */
+.light .main-header .nav-link,
+body.light .main-header .nav-link,
+[data-theme="light"] .main-header .nav-link,
+:not(.dark) .main-header .nav-link {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.light .main-header .nav-link:hover,
+body.light .main-header .nav-link:hover,
+[data-theme="light"] .main-header .nav-link:hover,
+:not(.dark) .main-header .nav-link:hover {
+  color: #00bcd4 !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 .auth-buttons {
   display: flex;
   align-items: center;
