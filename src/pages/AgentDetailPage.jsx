@@ -2372,6 +2372,13 @@ Generated on: ${new Date().toISOString()}
             fontFamily: 'var(--font-family)'
           }
         });
+
+        // Show Skool community invitation after successful download
+        setTimeout(() => {
+          if (typeof window.openSkoolModal === 'function') {
+            window.openSkoolModal('download');
+          }
+        }, 2000);
         
         let downloadUrl = downloadResult.downloadUrl || 
                          downloadResult.agent?.downloadUrl || 

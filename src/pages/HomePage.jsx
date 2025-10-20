@@ -1024,22 +1024,23 @@ const HomePage = () => {
             <div className="hero-buttons flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 lg:space-x-4">
               <Link to="/monetization-paths" className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 sm:px-6 rounded-lg transition duration-300 shadow-lg shadow-blue-600/30 text-center text-sm sm:text-base" style={{ animation: 'fadeIn 1s 1.5s ease-out forwards', opacity: 0 }}>Explore Business Models</Link>
               <a
-                href="https://calendly.com/aiwaverider8/30min"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-4 sm:px-6 rounded-lg transition duration-300 shadow-lg shadow-yellow-500/30 text-center text-sm sm:text-base"
-                style={{ animation: 'fadeIn 1s 1.6s ease-out forwards', opacity: 0 }}
-              >
-                Book a FREE Consultation
-              </a>
-              <a
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                  className="bg-green-500 hover:bg-green-400 text-gray-900 font-bold py-3 px-4 sm:px-6 rounded-lg transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base"
+                  className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-4 sm:px-6 rounded-lg transition duration-300 shadow-lg shadow-yellow-500/30 text-center text-sm sm:text-base"
                 style={{ animation: 'fadeIn 1s 1.7s ease-out forwards', opacity: 0 }}
                 >
                   JOIN COMMUNITY
+              </a>
+              <a
+                href="https://calendly.com/aiwaverider8/30min"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-green-500 hover:bg-green-400 text-gray-900 font-bold py-3 px-4 sm:px-6 rounded-lg transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base"
+
+                style={{ animation: 'fadeIn 1s 1.6s ease-out forwards', opacity: 0 }}
+              >
+                Book a FREE Consultation
               </a>
               </div>
 
@@ -1169,7 +1170,8 @@ const HomePage = () => {
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base' : 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base'} hover:shadow-lg`}
+
               >
                 <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
@@ -1281,7 +1283,7 @@ const HomePage = () => {
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-full font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base' : 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base'} hover:shadow-lg`}
               >
                 <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
@@ -1373,7 +1375,7 @@ const HomePage = () => {
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-lg font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-lg font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base' : 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base'} hover:shadow-lg`}
               >
                 <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
@@ -1583,7 +1585,7 @@ const HomePage = () => {
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-6 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-xl sm:text-2xl transition-all inline-flex items-center border-2 border-green-400 hover:shadow-lg"
+                className="px-8 py-6 bg-yellow-500 hover:bg-yellow-400  text-gray-900 rounded-xl font-bold text-xl sm:text-2xl transition-all inline-flex items-center border-2 border-green-400 hover:shadow-lg"
               >
                 <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
@@ -1725,7 +1727,7 @@ const HomePage = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button 
                 onClick={() => document.dispatchEvent(new CustomEvent('open-signup-modal'))}
-                className="px-10 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-xl transition-all inline-flex items-center"
+                className="px-10 py-4 bg-red-500 hover:bg-red-600 text-gray-900 rounded-full font-bold text-xl transition-all inline-flex items-center"
             >
                 START MY AI BUSINESS JOURNEY
                 <FaArrowRight className="ml-3" />
@@ -1734,7 +1736,7 @@ const HomePage = () => {
                 href="https://www.skool.com/ai-waverider-community-2071"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-6 py-4 rounded-full font-bold text-xl transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
+                className={`px-6 py-4 rounded-full font-bold text-xl transition-all inline-flex items-center ${darkMode ? 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base' : 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base'} hover:shadow-lg`}
               >
                 <FaUsers className="mr-2" /> JOIN COMMUNITY
               </a>
@@ -1831,27 +1833,6 @@ const HomePage = () => {
               </div>
             </details>
           </div>
-
-          <div className="text-center mt-16">
-            <div className="bg-blue-400 hover:bg-blue-500 inline-block transition-all rounded-xl shadow-lg overflow-hidden cursor-pointer" onClick={openCalendlyConsultation}>
-              <div className="px-16 py-6 font-bold text-2xl text-white flex items-center justify-center gap-3">
-                <FaCalendarAlt /> BOOK FREE Strategy Call
-              </div>
-              <div className="bg-transparent text-white text-sm py-2">
-                Discover Your Best AI Business Model
-              </div>
-            </div>
-            <div className="mt-4">
-              <a 
-                href="https://www.skool.com/ai-waverider-community-2071"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`px-8 py-4 rounded-xl font-bold text-lg transition-all inline-flex items-center ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-lg`}
-              >
-                <FaUsers className="mr-2" /> JOIN COMMUNITY
-              </a>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -1883,7 +1864,7 @@ const HomePage = () => {
                   href="https://www.skool.com/ai-waverider-community-2071"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`px-8 py-5 rounded-full font-bold text-xl transition-all inline-flex items-center gap-3 ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500' : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'} hover:shadow-xl`}
+                  className={`px-8 py-5 rounded-full font-bold text-xl transition-all inline-flex items-center gap-3 ${darkMode ? 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base' : 'bg-yellow-500 hover:bg-yellow-400 text-gray-900  border-2 transition duration-300 shadow-lg shadow-green-500/30 text-center text-sm sm:text-base'} hover:shadow-xl`}
                 >
                   <FaUsers /> JOIN COMMUNITY
                 </a>

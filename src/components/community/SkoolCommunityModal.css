@@ -1,0 +1,365 @@
+/* Skool Community Modal Styles */
+.skool-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.skool-modal-overlay.dark-mode {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.skool-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  animation: skoolModalSlideIn 0.3s ease-out;
+}
+
+.skool-modal.dark-mode {
+  background: #1a1a1a;
+  border: 1px solid #333;
+}
+
+.skool-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  z-index: 1;
+}
+
+.skool-modal-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.skool-modal.dark-mode .skool-modal-close {
+  color: #ccc;
+}
+
+.skool-modal.dark-mode .skool-modal-close:hover {
+  background: #333;
+  color: white;
+}
+
+.skool-main-content {
+  padding: 30px;
+}
+
+.skool-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.skool-icon {
+  font-size: 48px;
+  color: #667eea;
+  margin-bottom: 15px;
+}
+
+.skool-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.skool-modal.dark-mode .skool-header h2 {
+  color: white;
+}
+
+.skool-message {
+  margin-bottom: 30px;
+}
+
+.main-message {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 25px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.skool-modal.dark-mode .main-message {
+  color: #ccc;
+}
+
+.community-benefits {
+  margin-bottom: 25px;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9ff;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+.skool-modal.dark-mode .benefit-item {
+  background: #2a2a2a;
+  border-left-color: #667eea;
+}
+
+.benefit-icon {
+  font-size: 20px;
+  color: #667eea;
+  margin-right: 15px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.benefit-content h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 5px 0;
+}
+
+.skool-modal.dark-mode .benefit-content h4 {
+  color: white;
+}
+
+.benefit-content p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.skool-modal.dark-mode .benefit-content p {
+  color: #ccc;
+}
+
+.founding-member-highlight {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.founding-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.founding-text {
+  font-size: 15px;
+  margin: 0;
+  line-height: 1.4;
+  opacity: 0.95;
+}
+
+.skool-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.skool-btn {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.skool-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary-btn {
+  background: #eab308; /* bg-yellow-500 */
+  color: #111827; /* text-gray-900 */
+  box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4);
+  border: none;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: #facc15; /* hover:bg-yellow-400 */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(250, 204, 21, 0.6);
+}
+
+.secondary-btn {
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #e0e0e0;
+}
+
+.skool-modal.dark-mode .secondary-btn {
+  background: #333;
+  color: #ccc;
+  border-color: #555;
+}
+
+.secondary-btn:hover:not(:disabled) {
+  background: #e0e0e0;
+  border-color: #ccc;
+}
+
+.skool-modal.dark-mode .secondary-btn:hover:not(:disabled) {
+  background: #444;
+  border-color: #666;
+}
+
+.skool-footer {
+  text-align: center;
+}
+
+.footer-note {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.skool-modal.dark-mode .footer-note {
+  color: #999;
+}
+
+/* Animations */
+@keyframes skoolModalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .skool-modal {
+    width: 95%;
+    margin: 10px;
+    max-height: 95vh;
+  }
+  
+  .skool-main-content {
+    padding: 20px;
+  }
+  
+  .skool-header h2 {
+    font-size: 24px;
+  }
+  
+  .skool-icon {
+    font-size: 40px;
+  }
+  
+  .benefit-item {
+    padding: 12px;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .benefit-icon {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+  
+  .skool-btn {
+    padding: 14px 18px;
+    font-size: 15px;
+    width: 100%;
+  }
+  
+  .skool-actions {
+    gap: 10px;
+  }
+  
+  .founding-member-highlight {
+    padding: 15px;
+  }
+  
+  .founding-badge {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .skool-modal {
+    width: 98%;
+    margin: 5px;
+  }
+  
+  .skool-main-content {
+    padding: 15px;
+  }
+  
+  .skool-header h2 {
+    font-size: 20px;
+  }
+  
+  .skool-icon {
+    font-size: 36px;
+  }
+  
+  .main-message {
+    font-size: 14px;
+  }
+  
+  .benefit-content h4 {
+    font-size: 14px;
+  }
+  
+  .benefit-content p {
+    font-size: 13px;
+  }
+  
+  .skool-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .footer-note {
+    font-size: 13px;
+  }
+}

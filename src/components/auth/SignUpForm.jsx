@@ -163,6 +163,13 @@ const SignUp = ({ isOpen, onClose, prefillEmail, redirectPath }) => {
           if (isModalView) {
             handleClose();
           }
+          
+          // Show Skool community invitation after successful signup
+          setTimeout(() => {
+            if (typeof window.openSkoolModal === 'function') {
+              window.openSkoolModal('signup');
+            }
+          }, 1500);
         }, 100);
       }
     } catch (err) {

@@ -6,6 +6,7 @@ import AgentHeader from '../layout/AgentHeader';
 import Footer from '../layout/Footer';
 import SignUp from '../auth/SignUpForm';
 import SignIn from '../auth/SignInForm';
+import SkoolCommunityModal from '../community/SkoolCommunityModal';
 import AppRoutes from '../../routes/routes.jsx';
 import ChatBot from '../common/ChatBot';
 import BackToTop from '../common/BackToTop';
@@ -18,6 +19,8 @@ import useScrollToTop from '../../hooks/useScrollToTop';
 const AppContent = () => {
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+  const [isSkoolModalOpen, setIsSkoolModalOpen] = useState(false);
+  const [skoolModalTrigger, setSkoolModalTrigger] = useState('signup');
   const location = useLocation();
   const [pageTitle, setPageTitle] = useState('');
   const [prefillEmail, setPrefillEmail] = useState('');
@@ -29,6 +32,11 @@ const AppContent = () => {
   const closeSignUpModal = () => setIsSignUpModalOpen(false);
   const openSignInModal = () => setIsSignInModalOpen(true);
   const closeSignInModal = () => setIsSignInModalOpen(false);
+  const openSkoolModal = (trigger = 'signup') => {
+    setSkoolModalTrigger(trigger);
+    setIsSkoolModalOpen(true);
+  };
+  const closeSkoolModal = () => setIsSkoolModalOpen(false);
   
   // Make modal functions globally available
   useEffect(() => {
@@ -36,12 +44,16 @@ const AppContent = () => {
     window.openSignInModal = openSignInModal;
     window.closeSignUpModal = closeSignUpModal;
     window.closeSignInModal = closeSignInModal;
+    window.openSkoolModal = openSkoolModal;
+    window.closeSkoolModal = closeSkoolModal;
     
     return () => {
       delete window.openSignUpModal;
       delete window.openSignInModal;
       delete window.closeSignUpModal;
       delete window.closeSignInModal;
+      delete window.openSkoolModal;
+      delete window.closeSkoolModal;
     };
   }, []);
   
@@ -156,6 +168,12 @@ const AppContent = () => {
           {location.pathname !== '/sign-in' && (
             <SignIn isOpen={isSignInModalOpen} onClose={closeSignInModal} redirectPath={location.pathname} />
           )}
+
+          <SkoolCommunityModal 
+            isOpen={isSkoolModalOpen} 
+            onClose={closeSkoolModal} 
+            triggerSource={skoolModalTrigger}
+          />
 
           <CookieConsent />
         </div>

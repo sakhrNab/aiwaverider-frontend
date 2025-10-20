@@ -108,7 +108,7 @@ const SignIn = ({ isOpen, onClose, redirectPath }) => {
     }
 
     try {
-      const data = await signIn(formData);
+      const data = await signIn(formData.usernameOrEmail, formData.password);
       if (data.firebaseUser) {
         clearLockInfo();
         setAttempts(0);
