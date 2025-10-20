@@ -2228,7 +2228,7 @@ ${deliverable.description || 'Step-by-step installation and configuration instru
 - Test each step individually before running the full workflow
 
 ## Support
-If you need help, please contact support at AIWaverider.
+If you need help, please contact support@aiwaverider.com
 
 Generated on: ${new Date().toISOString()}
 `;

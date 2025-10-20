@@ -531,7 +531,7 @@ const CheckoutSuccess = () => {
                   <>
                     <li>Download your agent template from your email</li>
                     <li>Follow the instructions to start using your new AI agent</li>
-                    <li>If you need help, contact our support team</li>
+                    <li>If you need help, contact our support team at <a href="mailto:support@aiwaverider.com">support@aiwaverider.com</a></li>
                   </>
                 )}
               </ul>
