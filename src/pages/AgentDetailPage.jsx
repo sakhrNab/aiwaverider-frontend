@@ -2081,6 +2081,68 @@ const AgentDetail = () => {
     );
   };
 
+  // Enhanced sign-in required toast with action buttons
+  const showSignInRequiredToast = () => {
+    toast.dismiss();
+    
+    toast(
+      ({ closeToast }) => (
+        <div className="signin-required-toast">
+          <div className="signin-header">
+            <span role="img" aria-label="signin">👋</span>
+            <h4>Sign in to Download</h4>
+          </div>
+          <div className="signin-message">
+            <p>Please sign in to download this amazing free agent!</p>
+            <p>Join thousands of users who are already using our AI agents.</p>
+          </div>
+          <div className="signin-actions">
+            <button 
+              className="signin-toast-button signin-btn"
+              onClick={() => {
+                closeToast();
+                if (typeof window.openSignInModal === 'function') {
+                  window.openSignInModal();
+                } else {
+                  document.dispatchEvent(new CustomEvent('open-signin-modal'));
+                }
+              }}
+            >
+              <span role="img" aria-label="signin">🔑</span>
+              Sign In
+            </button>
+            <button 
+              className="signin-toast-button signup-btn"
+              onClick={() => {
+                closeToast();
+                if (typeof window.openSignUpModal === 'function') {
+                  window.openSignUpModal();
+                } else {
+                  document.dispatchEvent(new CustomEvent('open-signup-modal'));
+                }
+              }}
+            >
+              <span role="img" aria-label="signup">✨</span>
+              Sign Up
+            </button>
+          </div>
+          <div className="signin-note">
+            <small>💡 Free to join • Instant access • No credit card required</small>
+          </div>
+        </div>
+      ),
+      {
+        position: "bottom-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: true,
+        closeButton: true,
+        className: 'signin-required-toast',
+        toastId: 'signin-required'
+      }
+    );
+  };
+
   // Enhanced mobile download handler - creates ZIP on frontend for better mobile compatibility
   const handleMobileDownload = async (downloadUrl, filename, downloadResult) => {
     try {
@@ -2228,10 +2290,7 @@ Generated on: ${new Date().toISOString()}
   // Enhanced direct download handler
   const handleDirectDownload = async () => {
     if (!user) {
-      showToast('info', '👋 Please sign in to download this amazing free agent!', {
-        icon: "👋",
-        autoClose: 4000
-      });
+      showSignInRequiredToast();
       return;
     }
     

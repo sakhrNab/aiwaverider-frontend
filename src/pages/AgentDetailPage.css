@@ -2320,3 +2320,225 @@ body {
     --border-light: rgba(255, 255, 255, 0.2);
   }
 }
+
+/* Sign-in Required Toast Styles */
+.signin-required-toast {
+  background: var(--background-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-xl);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.signin-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.signin-header span {
+  font-size: 24px;
+}
+
+.signin-header h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.signin-message {
+  margin-bottom: 20px;
+}
+
+.signin-message p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.signin-message p:last-child {
+  margin-bottom: 0;
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.signin-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.signin-toast-button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.signin-toast-button.signin-btn {
+  background: var(--primary-color);
+  color: white;
+}
+
+.signin-toast-button.signin-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.signin-toast-button.signup-btn {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.signin-toast-button.signup-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.signin-note {
+  margin-top: 12px;
+}
+
+.signin-note small {
+  font-size: 12px;
+  color: var(--text-light);
+  line-height: 1.4;
+}
+
+/* Mobile Download Choice Toast Styles */
+.mobile-download-choice {
+  background: var(--background-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-xl);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.choice-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.choice-header span {
+  font-size: 24px;
+}
+
+.choice-header h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.choice-options {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.choice-button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.choice-button.open-button {
+  background: var(--info-color);
+  color: white;
+}
+
+.choice-button.open-button:hover {
+  background: #3182ce;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.choice-button.download-button {
+  background: var(--success-color);
+  color: white;
+}
+
+.choice-button.download-button:hover {
+  background: #38a169;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.choice-note {
+  margin-top: 12px;
+}
+
+.choice-note small {
+  font-size: 12px;
+  color: var(--text-light);
+  line-height: 1.4;
+}
+
+/* Mobile Toast Responsive Styles */
+@media (max-width: 768px) {
+  .signin-required-toast,
+  .mobile-download-choice {
+    max-width: 350px;
+    padding: 16px;
+    margin: 0 16px;
+  }
+  
+  .signin-header h4,
+  .choice-header h4 {
+    font-size: 16px;
+  }
+  
+  .signin-message p {
+    font-size: 13px;
+  }
+  
+  .signin-actions,
+  .choice-options {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .signin-toast-button,
+  .choice-button {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+  
+  .signin-note small,
+  .choice-note small {
+    font-size: 11px;
+  }
+}
