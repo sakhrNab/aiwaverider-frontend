@@ -491,9 +491,9 @@ const Agents = () => {
                   <span className={`${darkMode ? 'text-green-300' : 'text-green-200'} text-sm font-medium`}>
                     🚀 Limited Time: 100% Free
                   </span>
-                  <Link to="/subscribe" className="ml-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-semibold shadow hover:opacity-90">
+                  <span className="ml-3 px-3 py-1.5 rounded-full bg-gray-400 text-gray-600 text-xs font-semibold cursor-not-allowed opacity-60">
                     Or get All‑Access (€50/mo)
-                  </Link>
+                  </span>
                 </div>
 
                 {/* Main Headline */}
