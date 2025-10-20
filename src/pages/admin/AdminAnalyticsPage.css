@@ -23,23 +23,24 @@
 
 .time-range-selector button {
   padding: 8px 16px;
-  background-color: #f5f5f5;
+  background-color: #000000;
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s;
+  color: rgb(255, 255, 255) !important;
 }
 
 .time-range-selector button:hover {
-  background-color: #e6f7ff;
+  background-color: #77b4d1;
   border-color: #1890ff;
 }
 
 .time-range-selector button.active {
   background-color: #1890ff;
   border-color: #1890ff;
-  color: white;
+  color: rgb(0, 0, 0) !important;
 }
 
 .error-message {
@@ -118,6 +119,10 @@
   background-color: #fa8c16;
 }
 
+.metric-icon.visitors {
+  background-color: #13c2c2;
+}
+
 .metric-content {
   flex: 1;
 }
@@ -153,6 +158,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
+  min-height: 300px;
 }
 
 .chart-container h2 {
@@ -163,7 +169,7 @@
 }
 
 .chart {
-  height: 300px;
+  height: 350px;
   display: flex;
   flex-direction: column;
 }
@@ -172,8 +178,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  height: 250px;
-  margin-bottom: 10px;
+  height: 280px;
+  margin-bottom: 20px;
 }
 
 .chart-bar {
@@ -188,6 +194,14 @@
 
 .chart-bar.user-growth {
   background-color: #52c41a;
+}
+
+.chart-bar.visitors {
+  background-color: #722ed1;
+}
+
+.chart-bar.downloads {
+  background-color: #fa8c16;
 }
 
 .chart-bar:hover .tooltip {
@@ -228,12 +242,16 @@
 .chart-label {
   flex: 1;
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 0 4px;
+  padding: 0 2px;
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.2;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Top Agents Section */
@@ -274,6 +292,309 @@
   background-color: #f5f5f5;
 }
 
+/* Debug styles to ensure table content is visible */
+.top-agents-table tbody tr {
+  display: table-row !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.top-agents-table tbody td {
+  display: table-cell !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #333 !important;
+  background-color: transparent !important;
+}
+
+/* Detailed User Information Styles */
+.detailed-user-info-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.detailed-user-info-section h2 {
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.user-info-card {
+  background: white;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.user-info-card h3 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 0.5rem;
+}
+
+.user-list, .download-list, .purchase-list, .visit-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.user-item, .download-item, .purchase-item, .visit-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  font-size: 0.9rem;
+}
+
+.user-email, .download-agent, .purchase-agent, .visit-page {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.user-username, .download-user, .purchase-user, .visit-user {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.user-role, .download-type, .purchase-amount, .visit-product {
+  color: #495057;
+  font-size: 0.85rem;
+}
+
+.user-date, .download-date, .purchase-date, .visit-date {
+  color: #6c757d;
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+    /* Responsive design for detailed user info */
+    @media (max-width: 768px) {
+      .user-item, .download-item, .purchase-item, .visit-item {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+      }
+      
+      .user-date, .download-date, .purchase-date, .visit-date {
+        text-align: left;
+      }
+    }
+
+    /* Comprehensive User Activity Table Styles */
+    .comprehensive-user-activity-section {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+    }
+
+    .comprehensive-user-activity-section h2 {
+      margin-bottom: 1.5rem;
+      color: #2c3e50;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .user-activity-table-container {
+      overflow-x: auto;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-activity-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .user-activity-table th {
+      background: #f8f9fa;
+      color: #495057;
+      font-weight: 600;
+      padding: 1rem 0.75rem;
+      text-align: left;
+      border-bottom: 2px solid #e9ecef;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .user-activity-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #e9ecef;
+      vertical-align: top;
+    }
+
+    .user-activity-table tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .rank-cell {
+      text-align: center;
+      width: 80px;
+    }
+
+    .rank-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    .rank-badge.rank-1 {
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      color: #333;
+    }
+
+    .rank-badge.rank-2 {
+      background: linear-gradient(135deg, #c0c0c0, #e5e5e5);
+      color: #333;
+    }
+
+    .rank-badge.rank-3 {
+      background: linear-gradient(135deg, #cd7f32, #daa520);
+      color: white;
+    }
+
+    .rank-badge.rank-other {
+      background: #6c757d;
+      color: white;
+    }
+
+    .user-cell {
+      min-width: 200px;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .user-email {
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 0.85rem;
+    }
+
+    .user-username {
+      color: #6c757d;
+      font-size: 0.8rem;
+    }
+
+    .agent-cell {
+      min-width: 150px;
+      color: #495057;
+    }
+
+    .activity-cell {
+      min-width: 120px;
+      color: #495057;
+      font-size: 0.85rem;
+    }
+
+    .revenue-cell {
+      text-align: right;
+      font-weight: 600;
+      color: #28a745;
+      min-width: 80px;
+    }
+
+    .visits-cell {
+      text-align: center;
+      color: #495057;
+      min-width: 80px;
+    }
+
+    .date-cell {
+      min-width: 100px;
+      color: #6c757d;
+      font-size: 0.8rem;
+    }
+
+    .no-data {
+      text-align: center;
+      color: #6c757d;
+      font-style: italic;
+      padding: 2rem;
+    }
+
+/* Responsive design for charts */
+@media (max-width: 768px) {
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-container {
+    min-height: 250px;
+  }
+  
+  .chart {
+    height: 300px;
+  }
+  
+  .chart-bars {
+    height: 220px;
+    margin-bottom: 15px;
+  }
+  
+  .chart-label {
+    font-size: 10px;
+    min-height: 20px;
+    padding: 0 1px;
+  }
+}
+
+/* Responsive design for user activity table */
+@media (max-width: 1200px) {
+  .user-activity-table {
+    font-size: 0.8rem;
+  }
+  
+  .user-activity-table th,
+  .user-activity-table td {
+    padding: 0.5rem 0.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .comprehensive-user-activity-section {
+    padding: 1rem;
+  }
+  
+  .user-activity-table-container {
+    font-size: 0.75rem;
+  }
+  
+  .user-activity-table th,
+  .user-activity-table td {
+    padding: 0.4rem 0.3rem;
+  }
+  
+  .user-cell {
+    min-width: 150px;
+  }
+  
+  .agent-cell {
+    min-width: 100px;
+  }
+}
+
 .growth-indicator {
   display: inline-block;
   padding: 2px 6px;
@@ -290,6 +611,37 @@
 .growth-indicator.negative {
   background-color: #fff1f0;
   color: #ff4d4f;
+}
+
+.agent-type {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.agent-type.free {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.agent-type.paid {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive adjustments */

@@ -1,12 +1,43 @@
-import React from 'react';
-import { FaDollarSign, FaShoppingCart, FaBox, FaUsers, FaImage } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaDollarSign, FaShoppingCart, FaBox, FaUsers, FaImage, FaSpinner } from 'react-icons/fa';
 import AdminLayout from '../../components/layout/AdminLayout';
+import { getDashboardStats } from '../../api/admin/adminAnalyticsApi';
 import './AdminDashboardPage.css';
 
 /**
  * Admin Dashboard page with overview statistics
  */
 const Dashboard = () => {
+  const [stats, setStats] = useState({
+    agents: { total: 0, free: 0, paid: 0 },
+    users: { total: 0, active: 0 },
+    orders: { total: 0, revenue: 0 }
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch dashboard stats on component mount
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      const response = await getDashboardStats();
+      if (response.success) {
+        setStats(response.stats);
+      } else {
+        setError('Failed to load dashboard statistics');
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+      setError('Failed to load dashboard statistics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Product data
   const recentSales = [
     {
@@ -107,6 +138,14 @@ const Dashboard = () => {
         <div className="dashboard-header">
           <h1>Admin Dashboard</h1>
           <p className="dashboard-subtitle">Welcome to your admin dashboard</p>
+          {error && (
+            <div className="error-message">
+              <p>{error}</p>
+              <button onClick={fetchDashboardStats} className="retry-button">
+                Retry
+              </button>
+            </div>
+          )}
         </div>
         
         {/* Stats Cards */}
@@ -118,7 +157,15 @@ const Dashboard = () => {
                 <FaDollarSign />
               </span>
             </div>
-            <div className="stat-value">$0.00</div>
+            <div className="stat-value">
+              {loading ? (
+                <FaSpinner className="animate-spin" />
+              ) : error ? (
+                'Error'
+              ) : (
+                `$${stats.orders.revenue.toFixed(2)}`
+              )}
+            </div>
             <div className="stat-description">Lifetime revenue from all orders</div>
           </div>
           
@@ -129,7 +176,15 @@ const Dashboard = () => {
                 <FaShoppingCart />
               </span>
             </div>
-            <div className="stat-value">0</div>
+            <div className="stat-value">
+              {loading ? (
+                <FaSpinner className="animate-spin" />
+              ) : error ? (
+                'Error'
+              ) : (
+                stats.orders.total
+              )}
+            </div>
             <div className="stat-description">Total orders placed</div>
           </div>
           
@@ -140,7 +195,15 @@ const Dashboard = () => {
                 <FaBox />
               </span>
             </div>
-            <div className="stat-value">10</div>
+            <div className="stat-value">
+              {loading ? (
+                <FaSpinner className="animate-spin" />
+              ) : error ? (
+                'Error'
+              ) : (
+                stats.agents.total
+              )}
+            </div>
             <div className="stat-description">Active products in store</div>
           </div>
           
@@ -151,7 +214,15 @@ const Dashboard = () => {
                 <FaUsers />
               </span>
             </div>
-            <div className="stat-value">5</div>
+            <div className="stat-value">
+              {loading ? (
+                <FaSpinner className="animate-spin" />
+              ) : error ? (
+                'Error'
+              ) : (
+                stats.users.total
+              )}
+            </div>
             <div className="stat-description">Registered user accounts</div>
           </div>
         </div>

@@ -30,31 +30,52 @@ export const clearTokenCache = () => {
 
 // Get auth token with caching to reduce Firebase API calls
 export const getAuthToken = async () => {
+  console.log('[API] getAuthToken called');
+  
   // Check for cached token that's still valid
   if (cachedToken && tokenExpirationTime && Date.now() < tokenExpirationTime) {
-    // Using cached token
+    console.log('[API] Using cached token');
     return cachedToken;
   }
 
   try {
     // Current user from Firebase
     const user = auth.currentUser;
+    console.log('[API] Firebase currentUser:', !!user);
+    
     if (!user) {
-      console.warn('[API] No current user, returning null token');
+      // Try to get token from localStorage as fallback
+      const storedToken = localStorage.getItem('authToken');
+      console.log('[API] No Firebase user, checking localStorage token:', !!storedToken);
+      if (storedToken) {
+        console.log('[API] Using stored token from localStorage');
+        return storedToken;
+      }
+      console.warn('[API] No current user and no stored token, returning null');
       return null;
     }
 
     // Get fresh token
-    // Getting fresh token from Firebase
+    console.log('[API] Getting fresh token from Firebase');
     const token = await user.getIdToken(true);
     
     // Cache token with 55 minute expiration (just under Firebase's 60 minute limit)
     cachedToken = token;
     tokenExpirationTime = Date.now() + (55 * 60 * 1000);
     
+    console.log('[API] Got fresh token from Firebase');
     return token;
   } catch (error) {
     console.error('[API] Error getting auth token:', error);
+    
+    // Try to get token from localStorage as fallback
+    const storedToken = localStorage.getItem('authToken');
+    console.log('[API] Error occurred, checking localStorage fallback:', !!storedToken);
+    if (storedToken) {
+      console.log('[API] Using stored token from localStorage as fallback');
+      return storedToken;
+    }
+    
     return null;
   }
 };
@@ -95,8 +116,12 @@ api.interceptors.request.use(async (config) => {
     
     // For all other endpoints, add token if available
     const token = await getAuthToken();
+    console.log(`[API] Request to ${config.url} - Token available: ${!!token}`);
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+      console.log(`[API] Added Authorization header for ${config.url}`);
+    } else {
+      console.warn(`[API] No token available for ${config.url}`);
     }
     
     return config;

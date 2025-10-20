@@ -4,9 +4,15 @@ import {
   FaChartBar, 
   FaChartPie, 
   FaCalendarAlt,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaSpinner,
+  FaEye,
+  FaDownload
 } from 'react-icons/fa';
 import AdminLayout from '../../components/layout/AdminLayout';
+import { 
+  getAnalyticsData
+} from '../../api/admin/adminAnalyticsApi';
 import './AdminAnalyticsPage.css';
 
 /**
@@ -15,16 +21,23 @@ import './AdminAnalyticsPage.css';
 const Analytics = () => {
   const [timeRange, setTimeRange] = useState('week');
   const [metrics, setMetrics] = useState({
-    totalSales: 0,
-    totalUsers: 0,
-    newUsers: 0,
-    activeAgents: 0,
-    salesData: [],
-    userGrowthData: [],
-    topAgents: []
+    sales: { total: 0, data: [] },
+    users: { total: 0, new: 0, active: 0, data: [] },
+    agents: { total: 0, free: 0, paid: 0, downloads: 0 },
+    orders: { total: 0, revenue: 0, data: [] },
+    visitors: { total: 0, data: [] }
   });
+  const [topAgents, setTopAgents] = useState([]);
+  const [detailedUserInfo, setDetailedUserInfo] = useState({
+    users: [],
+    agents: [],
+    orders: [],
+    visitors: []
+  });
+  const [userActivity, setUserActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
   
   // Fetch analytics data on component mount and when timeRange changes
   useEffect(() => {
@@ -33,98 +46,50 @@ const Analytics = () => {
   
   // Function to fetch analytics data
   const fetchAnalyticsData = async (range) => {
+    // TEMPORARILY DISABLED CACHE FOR TESTING
+    const now = Date.now();
+    // if (now - lastFetchTime < 30000 && topAgents.length > 0 && timeRange === range) {
+    //   return;
+    // }
+    
     setLoading(true);
     try {
-      // In a real application, this would be an API call
-      // For now, we'll simulate with a timeout and mock data
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Fetch consolidated analytics data (includes everything)
+      const analyticsResponse = await getAnalyticsData(range);
       
-      // Generate mock data based on the selected time range
-      const mockData = generateMockData(range);
-      setMetrics(mockData);
+      if (analyticsResponse.success) {
+        const data = analyticsResponse.data;
+        
+        // Set metrics (includes detailed user info)
+        setMetrics(data);
+        
+        // Set top agents from the consolidated data
+        setTopAgents(data.topAgents || []);
+        
+        // Set detailed user info from the consolidated data
+        setDetailedUserInfo({
+          users: data.users.detailed || [],
+          agents: data.agents.detailed || [],
+          orders: data.orders.detailed || [],
+          visitors: data.visitors.detailed || []
+        });
+        
+        // Set user activity data
+        setUserActivity(data.userActivity || []);
+      } else {
+        setError('Failed to load analytics data');
+      }
+      
+      setLastFetchTime(now);
       setError(null);
     } catch (err) {
-      console.error('Error fetching analytics data:', err);
       setError('Failed to load analytics data. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
   
-  // Generate mock data based on the selected time range
-  const generateMockData = (range) => {
-    // Different data for different time ranges
-    let salesData = [];
-    let userGrowthData = [];
-    let totalSales = 0;
-    let totalUsers = 0;
-    let newUsers = 0;
-    
-    // Generate data points based on the selected range
-    const dataPoints = range === 'week' ? 7 : range === 'month' ? 30 : 12;
-    const labels = generateLabels(range, dataPoints);
-    
-    for (let i = 0; i < dataPoints; i++) {
-      // Generate random sales data
-      const sales = Math.floor(Math.random() * 1000) + 500;
-      salesData.push({ label: labels[i], value: sales });
-      totalSales += sales;
-      
-      // Generate random user growth data
-      const users = Math.floor(Math.random() * 20) + 5;
-      userGrowthData.push({ label: labels[i], value: users });
-      newUsers += users;
-    }
-    
-    totalUsers = 150 + newUsers;
-    
-    // Generate top agents data
-    const topAgents = [
-      { id: 1, name: 'AI Writing Assistant', sales: 2450, growth: 15 },
-      { id: 2, name: 'Design Helper Pro', sales: 1980, growth: 8 },
-      { id: 3, name: 'Code Reviewer', sales: 1540, growth: 12 },
-      { id: 4, name: 'Data Analyzer', sales: 1350, growth: -3 },
-      { id: 5, name: 'Language Translator', sales: 1120, growth: 5 }
-    ];
-    
-    return {
-      totalSales,
-      totalUsers,
-      newUsers,
-      activeAgents: 42,
-      salesData,
-      userGrowthData,
-      topAgents
-    };
-  };
   
-  // Generate labels for the charts based on the selected time range
-  const generateLabels = (range, count) => {
-    const labels = [];
-    const today = new Date();
-    
-    if (range === 'week') {
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      for (let i = 0; i < count; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        labels.unshift(days[date.getDay()]);
-      }
-    } else if (range === 'month') {
-      for (let i = 0; i < count; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        labels.unshift(`${date.getMonth() + 1}/${date.getDate()}`);
-      }
-    } else {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      for (let i = 0; i < count; i++) {
-        labels.unshift(months[i]);
-      }
-    }
-    
-    return labels;
-  };
   
   // Format currency
   const formatCurrency = (amount) => {
@@ -186,8 +151,14 @@ const Analytics = () => {
                   <FaChartLine />
                 </div>
                 <div className="metric-content">
-                  <h3>Total Sales</h3>
-                  <div className="metric-value">{formatCurrency(metrics.totalSales)}</div>
+                  <h3>Total Revenue</h3>
+                  <div className="metric-value">
+                    {loading ? (
+                      <FaSpinner className="animate-spin" />
+                    ) : (
+                      formatCurrency(metrics.sales.total)
+                    )}
+                  </div>
                   <div className="metric-label">Last {timeRange}</div>
                 </div>
               </div>
@@ -198,8 +169,14 @@ const Analytics = () => {
                 </div>
                 <div className="metric-content">
                   <h3>Total Users</h3>
-                  <div className="metric-value">{metrics.totalUsers}</div>
-                  <div className="metric-label">{metrics.newUsers} new users</div>
+                  <div className="metric-value">
+                    {loading ? (
+                      <FaSpinner className="animate-spin" />
+                    ) : (
+                      metrics.users.total
+                    )}
+                  </div>
+                  <div className="metric-label">{metrics.users.new} new users</div>
                 </div>
               </div>
               
@@ -208,20 +185,32 @@ const Analytics = () => {
                   <FaChartPie />
                 </div>
                 <div className="metric-content">
-                  <h3>Active Agents</h3>
-                  <div className="metric-value">{metrics.activeAgents}</div>
-                  <div className="metric-label">Generating revenue</div>
+                  <h3>Total Agents</h3>
+                  <div className="metric-value">
+                    {loading ? (
+                      <FaSpinner className="animate-spin" />
+                    ) : (
+                      metrics.agents.total
+                    )}
+                  </div>
+                  <div className="metric-label">{metrics.agents.free} free, {metrics.agents.paid} paid</div>
                 </div>
               </div>
               
               <div className="metric-card">
-                <div className="metric-icon date">
-                  <FaCalendarAlt />
+                <div className="metric-icon visitors">
+                  <FaEye />
                 </div>
                 <div className="metric-content">
-                  <h3>Time Period</h3>
-                  <div className="metric-value">{timeRange.charAt(0).toUpperCase() + timeRange.slice(1)}</div>
-                  <div className="metric-label">Current view</div>
+                  <h3>Visitors</h3>
+                  <div className="metric-value">
+                    {loading ? (
+                      <FaSpinner className="animate-spin" />
+                    ) : (
+                      metrics.visitors.total
+                    )}
+                  </div>
+                  <div className="metric-label">Page views last {timeRange}</div>
                 </div>
               </div>
             </div>
@@ -229,15 +218,15 @@ const Analytics = () => {
             {/* Charts Section */}
             <div className="charts-section">
               <div className="chart-container">
-                <h2>Sales Trend</h2>
+                <h2>Revenue Trend</h2>
                 <div className="chart">
                   <div className="chart-bars">
-                    {metrics.salesData.map((item, index) => (
+                    {metrics.sales.data.map((item, index) => (
                       <div 
                         key={index} 
                         className="chart-bar"
                         style={{ 
-                          height: `${(item.value / getMaxValue(metrics.salesData)) * 100}%` 
+                          height: `${(item.value / getMaxValue(metrics.sales.data)) * 100}%` 
                         }}
                       >
                         <div className="tooltip">{formatCurrency(item.value)}</div>
@@ -245,7 +234,7 @@ const Analytics = () => {
                     ))}
                   </div>
                   <div className="chart-labels">
-                    {metrics.salesData.map((item, index) => (
+                    {metrics.sales.data.map((item, index) => (
                       <div key={index} className="chart-label">{item.label}</div>
                     ))}
                   </div>
@@ -256,12 +245,12 @@ const Analytics = () => {
                 <h2>User Growth</h2>
                 <div className="chart">
                   <div className="chart-bars">
-                    {metrics.userGrowthData.map((item, index) => (
+                    {metrics.users.data.map((item, index) => (
                       <div 
                         key={index} 
                         className="chart-bar user-growth"
                         style={{ 
-                          height: `${(item.value / getMaxValue(metrics.userGrowthData)) * 100}%` 
+                          height: `${(item.value / getMaxValue(metrics.users.data)) * 100}%` 
                         }}
                       >
                         <div className="tooltip">{item.value} users</div>
@@ -269,8 +258,58 @@ const Analytics = () => {
                     ))}
                   </div>
                   <div className="chart-labels">
-                    {metrics.userGrowthData.map((item, index) => (
+                    {metrics.users.data.map((item, index) => (
                       <div key={index} className="chart-label">{item.label}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="chart-container">
+                <h2>Visitors Trend</h2>
+                <div className="chart">
+                  <div className="chart-bars">
+                    {metrics.visitors.data.map((item, index) => (
+                      <div 
+                        key={index} 
+                        className="chart-bar visitors"
+                        style={{ 
+                          height: `${(item.value / getMaxValue(metrics.visitors.data)) * 100}%` 
+                        }}
+                      >
+                        <div className="tooltip">{item.value} visitors</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="chart-labels">
+                    {metrics.visitors.data.map((item, index) => (
+                      <div key={index} className="chart-label">{item.label}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="chart-container">
+                <h2>Agent Downloads Trend</h2>
+                <div className="chart">
+                  <div className="chart-bars">
+                    {topAgents.slice(0, 7).map((agent, index) => (
+                      <div 
+                        key={agent.id} 
+                        className="chart-bar downloads"
+                        style={{ 
+                          height: `${(agent.downloads / Math.max(...topAgents.slice(0, 7).map(a => a.downloads))) * 100}%` 
+                        }}
+                      >
+                        <div className="tooltip">{agent.downloads} downloads</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="chart-labels">
+                    {topAgents.slice(0, 7).map((agent, index) => (
+                      <div key={agent.id} className="chart-label" title={agent.name}>
+                        {agent.name.length > 15 ? agent.name.substring(0, 15) + '...' : agent.name}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -285,25 +324,198 @@ const Analytics = () => {
                   <tr>
                     <th>Rank</th>
                     <th>Agent Name</th>
-                    <th>Total Sales</th>
-                    <th>Growth</th>
+                    <th>Downloads</th>
+                    <th>Revenue</th>
+                    <th>Type</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {metrics.topAgents.map((agent, index) => (
-                    <tr key={agent.id}>
-                      <td>{index + 1}</td>
-                      <td>{agent.name}</td>
-                      <td>{formatCurrency(agent.sales)}</td>
-                      <td>
-                        <span className={`growth-indicator ${agent.growth >= 0 ? 'positive' : 'negative'}`}>
-                          {agent.growth >= 0 ? '+' : ''}{agent.growth}%
-                        </span>
+                  {topAgents.length > 0 ? (
+                    topAgents.map((agent, index) => (
+                      <tr key={agent.id}>
+                        <td>{index + 1}</td>
+                        <td>{agent.name}</td>
+                        <td>{agent.downloads}</td>
+                        <td>{formatCurrency(agent.revenue)}</td>
+                        <td>
+                          <span className={`agent-type ${agent.isFree ? 'free' : 'paid'}`}>
+                            {agent.isFree ? 'Free' : 'Paid'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                        {loading ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            <FaSpinner className="animate-spin" />
+                            Loading top agents...
+                          </div>
+                        ) : (
+                          <div>
+                            <p>No agent data available</p>
+                            <p style={{ fontSize: '12px', marginTop: '4px' }}>
+                              Debug: topAgents.length = {topAgents.length}
+                            </p>
+                          </div>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
+            </div>
+            
+      {/* Comprehensive User Activity Table */}
+      <div className="comprehensive-user-activity-section">
+        <h2>User Activity Overview</h2>
+        <div className="user-activity-table-container">
+          <table className="user-activity-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>User</th>
+                <th>Agent Name</th>
+                <th>Download/Purchase</th>
+                <th>Revenue</th>
+                <th>Nr of Visits</th>
+                <th>Last Time Visited</th>
+                <th>Last Time Logged In</th>
+              </tr>
+            </thead>
+            <tbody>
+              {userActivity.length > 0 ? (
+                userActivity.slice(0, 20).map((user, index) => (
+                  <tr key={user.userId}>
+                    <td className="rank-cell">
+                      <span className={`rank-badge rank-${user.rank <= 3 ? user.rank : 'other'}`}>
+                        #{user.rank}
+                      </span>
+                    </td>
+                    <td className="user-cell">
+                      <div className="user-info">
+                        <div className="user-email">{user.userEmail}</div>
+                        <div className="user-username">{user.username}</div>
+                      </div>
+                    </td>
+                    <td className="agent-cell">{user.agentName}</td>
+                    <td className="activity-cell">{user.downloadPurchase}</td>
+                    <td className="revenue-cell">${user.revenue.toFixed(2)}</td>
+                    <td className="visits-cell">{user.numberOfVisits}</td>
+                    <td className="date-cell">
+                      {user.lastTimeVisited 
+                        ? new Date(user.lastTimeVisited.seconds * 1000).toLocaleDateString()
+                        : 'Never'
+                      }
+                    </td>
+                    <td className="date-cell">
+                      {user.lastTimeLoggedIn 
+                        ? new Date(user.lastTimeLoggedIn.seconds * 1000).toLocaleDateString()
+                        : 'Never'
+                      }
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" className="no-data">
+                    {loading ? 'Loading user activity...' : 'No user activity data available'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Detailed User Information */}
+      <div className="detailed-user-info-section">
+        <h2>Detailed User Information</h2>
+              
+              {/* Recent Users */}
+              <div className="user-info-card">
+                <h3>Recent Users ({detailedUserInfo.users.length})</h3>
+                <div className="user-list">
+                  {detailedUserInfo.users.length > 0 ? (
+                    detailedUserInfo.users.slice(0, 10).map((user, index) => (
+                      <div key={user.id} className="user-item">
+                        <div className="user-email">{user.email}</div>
+                        <div className="user-username">{user.username}</div>
+                        <div className="user-role">{user.role}</div>
+                        <div className="user-date">
+                          {user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No recent users found</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Recent Downloads */}
+              <div className="user-info-card">
+                <h3>Recent Downloads ({detailedUserInfo.agents.length})</h3>
+                <div className="download-list">
+                  {detailedUserInfo.agents.length > 0 ? (
+                    detailedUserInfo.agents.slice(0, 10).map((download, index) => (
+                      <div key={download.id} className="download-item">
+                        <div className="download-agent">{download.agentName}</div>
+                        <div className="download-user">User: {download.userId}</div>
+                        <div className="download-type">{download.agentType}</div>
+                        <div className="download-date">
+                          {download.downloadDate ? new Date(download.downloadDate.seconds * 1000).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No recent downloads found</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Recent Purchases */}
+              <div className="user-info-card">
+                <h3>Recent Purchases ({detailedUserInfo.orders.length})</h3>
+                <div className="purchase-list">
+                  {detailedUserInfo.orders.length > 0 ? (
+                    detailedUserInfo.orders.slice(0, 10).map((purchase, index) => (
+                      <div key={purchase.id} className="purchase-item">
+                        <div className="purchase-agent">{purchase.agentName}</div>
+                        <div className="purchase-user">User: {purchase.userId}</div>
+                        <div className="purchase-amount">{formatCurrency(purchase.amount)}</div>
+                        <div className="purchase-date">
+                          {purchase.purchaseDate ? new Date(purchase.purchaseDate.seconds * 1000).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No recent purchases found</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Recent Visits */}
+              <div className="user-info-card">
+                <h3>Recent Visits ({detailedUserInfo.visitors.length})</h3>
+                <div className="visit-list">
+                  {detailedUserInfo.visitors.length > 0 ? (
+                    detailedUserInfo.visitors.slice(0, 10).map((visit, index) => (
+                      <div key={visit.id} className="visit-item">
+                        <div className="visit-page">{visit.pagePath}</div>
+                        <div className="visit-user">User: {visit.userId}</div>
+                        <div className="visit-product">{visit.productId ? `Product: ${visit.productId}` : 'General visit'}</div>
+                        <div className="visit-date">
+                          {visit.visitDate ? new Date(visit.visitDate.seconds * 1000).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No recent visits found</p>
+                  )}
+                </div>
+              </div>
             </div>
           </>
         )}
