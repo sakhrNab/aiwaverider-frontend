@@ -138,8 +138,8 @@ const LikeButton = ({ postId, initialLikes = [], className = '' }) => {
           
           // Log success or failure
           // console.log(`[LikeButton] Like status updated for post ${postId}, new status: ${
-            user?.uid && updatedLikes.includes(user?.uid) ? 'liked' : 'not liked'
-          }`);
+          //   user?.uid && updatedLikes.includes(user?.uid) ? 'liked' : 'not liked'
+          // }`);
         } else {
           console.warn(`[LikeButton] Unexpected response format for post ${postId}:`, response);
           // Revert optimistic update due to unexpected response

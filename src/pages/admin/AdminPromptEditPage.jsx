@@ -172,10 +172,10 @@ const AdminPromptEditPage = () => {
       };
       
       // console.log('Submitting prompt with data:', {
-        ...promptData,
-        additionalHTML: promptData.additionalHTML ? `${promptData.additionalHTML.substring(0, 50)}...` : null,
-        hasImageFile: !!imageFile
-      });
+      //   ...promptData,
+      //   additionalHTML: promptData.additionalHTML ? `${promptData.additionalHTML.substring(0, 50)}...` : null,
+      //   hasImageFile: !!imageFile
+      // });
       
       let result;
       if (isNewPrompt) {
