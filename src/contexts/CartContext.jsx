@@ -34,7 +34,7 @@ export const CartProvider = ({ children }) => {
       // Only log in development
       if (process.env.NODE_ENV === 'development') {
         // console.log('Loading cart from localStorage:', 
-          savedCart ? `${savedCart.length} characters` : 'empty');
+          // savedCart ? `${savedCart.length} characters` : 'empty');
       }
       
       if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {

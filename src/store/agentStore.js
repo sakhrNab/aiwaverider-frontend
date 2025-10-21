@@ -427,15 +427,15 @@ const useAgentStore = create(
         
         // console.log('🔍 ApplyFilters: Starting with NEW backend architecture');
         // console.log('🔍 Parameters:', {
-          category: selectedCategory,
-          filter: selectedFilter,
-          search: searchQuery,
-          priceRange: selectedPrice,
-          rating: selectedRating,
-          tags: selectedTags,
-          features: selectedFeatures,
-          resetPagination
-        });
+        //   category: selectedCategory,
+        //   filter: selectedFilter,
+        //   search: searchQuery,
+        //   priceRange: selectedPrice,
+        //   rating: selectedRating,
+        //   tags: selectedTags,
+        //   features: selectedFeatures,
+        //   resetPagination
+        // });
         
         try {
           set({ isLoading: true });
@@ -469,12 +469,12 @@ const useAgentStore = create(
           const response = await fetchAgents(apiParams);
           
           // console.log('🔍 NEW Backend API Response:', {
-            agentsCount: response?.agents?.length || 0,
-            fromCache: response?.fromCache,
-            total: response?.totalCount,
-            hasMore: response?.hasMore,
-            mode: response?.mode
-          });
+          //   agentsCount: response?.agents?.length || 0,
+          //   fromCache: response?.fromCache,
+          //   total: response?.totalCount,
+          //   hasMore: response?.hasMore,
+          //   mode: response?.mode
+          // });
 
           if (!response || !response.agents) {
             console.warn('No data returned from fetchAgents');
@@ -737,12 +737,12 @@ const useAgentStore = create(
             });
             
             // console.log('🔍 LoadMoreAgents pagination update:', {
-              newCurrentPage: pagination.currentPage + 1,
-              newHasMore: response.hasMore || false,
-              newLastVisibleId: response.lastVisibleId || null,
-              totalAgentsNow: updatedAgents.length,
-              totalItems: response.totalCount || state.pagination.totalItems
-            });
+            //   newCurrentPage: pagination.currentPage + 1,
+            //   newHasMore: response.hasMore || false,
+            //   newLastVisibleId: response.lastVisibleId || null,
+            //   totalAgentsNow: updatedAgents.length,
+            //   totalItems: response.totalCount || state.pagination.totalItems
+            // });
           } else {
             // console.log('📋 LoadMoreAgents: No more agents received');
             set({
