@@ -2027,58 +2027,6 @@ const AgentDetail = () => {
     });
   };
 
-  // Enhanced mobile download choice dialog
-  const showMobileDownloadChoice = (downloadUrl, filename, downloadResult) => {
-    toast.dismiss();
-    
-    toast(
-      ({ closeToast }) => (
-        <div className="mobile-download-choice">
-          <div className="choice-header">
-            <span role="img" aria-label="mobile">📱</span>
-            <h4>How would you like to get this file?</h4>
-          </div>
-          <div className="choice-options">
-            <button 
-              className="choice-button open-button"
-              onClick={() => {
-                closeToast();
-                window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-                showToast('info', '📱 File opened in new tab. Use "Download" or "Save As" from your browser menu.', {
-                  autoClose: 6000
-                });
-              }}
-            >
-              <span role="img" aria-label="open">👁️</span>
-              Open in Browser
-            </button>
-            <button 
-              className="choice-button download-button"
-              onClick={() => {
-                closeToast();
-                handleMobileDownload(downloadUrl, filename, downloadResult);
-              }}
-            >
-              <span role="img" aria-label="download">📦</span>
-              Download as ZIP
-            </button>
-          </div>
-          <div className="choice-note">
-            <small>💡 Tip: "Open in Browser" lets you view the file, "Download as ZIP" bundles everything for easy mobile download</small>
-          </div>
-        </div>
-      ),
-      {
-        position: "bottom-center",
-        autoClose: false,
-        closeOnClick: false,
-        draggable: true,
-        closeButton: true,
-        className: 'mobile-download-choice-toast',
-        toastId: 'mobile-download-choice'
-      }
-    );
-  };
 
   // Enhanced sign-in required toast with action buttons
   const showSignInRequiredToast = () => {
@@ -2142,37 +2090,37 @@ const AgentDetail = () => {
     );
   };
 
-  // Enhanced mobile download handler - creates ZIP on frontend for better mobile compatibility
-  const handleMobileDownload = async (downloadUrl, filename, downloadResult) => {
+  // Enhanced download handler - creates ZIP on frontend for better compatibility across all devices
+  const handleZipDownload = async (downloadUrl, filename, downloadResult) => {
     try {
-      // console.log('[MOBILE] Creating ZIP file for mobile download');
-      // console.log('[MOBILE] Agent ID:', agentId);
-      // console.log('[MOBILE] Download URL from response:', downloadUrl);
+      // console.log('[ZIP] Creating ZIP file for download');
+      // console.log('[ZIP] Agent ID:', agentId);
+      // console.log('[ZIP] Download URL from response:', downloadUrl);
       
       // Create a new ZIP instance
       const zip = new JSZip();
       
       // Use data from the free-download response - no additional API calls needed
-      // console.log('[MOBILE] Using data from free-download response');
-      // console.log('[MOBILE] Download result:', downloadResult);
+      // console.log('[ZIP] Using data from free-download response');
+      // console.log('[ZIP] Download result:', downloadResult);
       
       // Add JSON file using the content from the free-download response (no second call needed)
       if (downloadResult && downloadResult.jsonFileContent) {
-        // console.log('[MOBILE] Adding JSON file from free-download response content');
+        // console.log('[ZIP] Adding JSON file from free-download response content');
         try {
           const jsonFileName = agent.jsonFile?.originalName || 'workflow.json';
           zip.file(jsonFileName, downloadResult.jsonFileContent);
-          // console.log(`[MOBILE] Successfully added ${jsonFileName} to ZIP from response content`);
+          // console.log(`[ZIP] Successfully added ${jsonFileName} to ZIP from response content`);
         } catch (jsonError) {
-          console.warn(`[MOBILE] Error adding JSON from response:`, jsonError.message);
+          console.warn(`[ZIP] Error adding JSON from response:`, jsonError.message);
         }
       } else {
-        console.warn('[MOBILE] No JSON file content available in free-download response');
-        // console.log('[MOBILE] Download result keys:', downloadResult ? Object.keys(downloadResult) : 'No download result');
+        console.warn('[ZIP] No JSON file content available in free-download response');
+        // console.log('[ZIP] Download result keys:', downloadResult ? Object.keys(downloadResult) : 'No download result');
         
         // Fallback: try to fetch JSON via proxy if content not available
         if (downloadUrl) {
-          // console.log('[MOBILE] Falling back to proxy fetch for JSON file');
+          // console.log('[ZIP] Falling back to proxy fetch for JSON file');
           try {
             const proxyUrl = `/api/agents/${encodeURIComponent(agentId)}/download?url=${encodeURIComponent(downloadUrl)}`;
             const jsonResponse = await fetch(proxyUrl, {
@@ -2185,24 +2133,24 @@ const AgentDetail = () => {
               const jsonContent = await jsonResponse.text();
               const jsonFileName = agent.jsonFile?.originalName || 'workflow.json';
               zip.file(jsonFileName, jsonContent);
-              // console.log(`[MOBILE] Successfully added ${jsonFileName} to ZIP via proxy fallback`);
+              // console.log(`[ZIP] Successfully added ${jsonFileName} to ZIP via proxy fallback`);
             } else {
-              console.warn(`[MOBILE] Proxy fallback failed: ${jsonResponse.status} ${jsonResponse.statusText}`);
+              console.warn(`[ZIP] Proxy fallback failed: ${jsonResponse.status} ${jsonResponse.statusText}`);
             }
           } catch (proxyError) {
-            console.warn(`[MOBILE] Proxy fallback error:`, proxyError.message);
+            console.warn(`[ZIP] Proxy fallback error:`, proxyError.message);
           }
         }
       }
       
       // Add TXT file from deliverables (generate directly, no API call needed)
       if (agent.deliverables && Array.isArray(agent.deliverables)) {
-        // console.log(`[MOBILE] Found ${agent.deliverables.length} deliverables to process`);
+        // console.log(`[ZIP] Found ${agent.deliverables.length} deliverables to process`);
         for (let i = 0; i < agent.deliverables.length; i++) {
           const deliverable = agent.deliverables[i];
           if (deliverable.fileName && deliverable.fileName.endsWith('.txt')) {
             try {
-              // console.log(`[MOBILE] Processing TXT deliverable: ${deliverable.fileName}`);
+              // console.log(`[ZIP] Processing TXT deliverable: ${deliverable.fileName}`);
               
               // Generate setup guide directly for TXT files
               const setupGuideContent = `# ${agent.title || agentId} - Setup Guide
@@ -2232,19 +2180,19 @@ If you need help, please contact support@aiwaverider.com
 Generated on: ${new Date().toISOString()}
 `;
               zip.file(deliverable.fileName, setupGuideContent);
-              // console.log(`[MOBILE] Successfully generated and added ${deliverable.fileName} to ZIP`);
+              // console.log(`[ZIP] Successfully generated and added ${deliverable.fileName} to ZIP`);
             } catch (deliverableError) {
-              console.warn(`[MOBILE] Failed to add deliverable ${deliverable.fileName}:`, deliverableError.message);
+              console.warn(`[ZIP] Failed to add deliverable ${deliverable.fileName}:`, deliverableError.message);
             }
           }
         }
       }
       
       // Generate the ZIP file
-      // console.log('[MOBILE] Generating ZIP file...');
-      // console.log('[MOBILE] Files in ZIP:', Object.keys(zip.files));
+      // console.log('[ZIP] Generating ZIP file...');
+      // console.log('[ZIP] Files in ZIP:', Object.keys(zip.files));
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      // console.log('[MOBILE] ZIP blob size:', zipBlob.size, 'bytes');
+      // console.log('[ZIP] ZIP blob size:', zipBlob.size, 'bytes');
       
       // Create download link
       const url = window.URL.createObjectURL(zipBlob);
@@ -2253,7 +2201,7 @@ Generated on: ${new Date().toISOString()}
       link.download = `${agentId}.zip`;
       link.style.display = 'none';
       
-      // console.log('[MOBILE] Triggering download...');
+      // console.log('[ZIP] Triggering download...');
       document.body.appendChild(link);
       link.click();
       
@@ -2265,12 +2213,12 @@ Generated on: ${new Date().toISOString()}
         window.URL.revokeObjectURL(url);
       }, 100);
       
-      showToast('success', '📦 ZIP file created and downloaded! Contains JSON file and instructions.', {
+      showToast('success', '📥 Download completed! Check your downloads folder for the ZIP file.', {
         autoClose: 4000
       });
       
     } catch (error) {
-      console.error('[MOBILE] ZIP creation failed:', error);
+      console.error('[ZIP] ZIP creation failed:', error);
       
       // Fallback: copy URL to clipboard
       try {
@@ -2474,35 +2422,11 @@ Generated on: ${new Date().toISOString()}
                 const proxyUrl = `/api/agents/${encodeURIComponent(agentId)}/download?url=${encodeURIComponent(downloadUrl)}`;
                 // console.log('Proxy URL:', proxyUrl);
                 
-                // Mobile vs Desktop download approach
-                if (isMobileDevice()) {
-                  // console.log('Mobile device detected, showing download choice dialog');
-                  
-                  // Show choice dialog for mobile users
-                  showMobileDownloadChoice(downloadUrl, filename, downloadResult);
-                  return; // Exit early for mobile
-                } else {
-                  // For desktop, use direct proxy download
-                  // console.log('[DESKTOP] Using proxy for download');
-                  const link = document.createElement('a');
-                  link.href = proxyUrl;
-                  link.download = filename;
-                  link.style.display = 'none';
-                  
-                  document.body.appendChild(link);
-                  link.click();
-                  // console.log('Desktop download link clicked');
-                  
-                  showToast('success', '📥 Download started! Check your downloads folder.', {
-                    autoClose: 3000
-                  });
-                  
-                  setTimeout(() => {
-                    if (document.body.contains(link)) {
-                      document.body.removeChild(link);
-                    }
-                  }, 100);
-                }
+                // Use ZIP download approach for both mobile and desktop (1:1 behavior)
+                // console.log('Using ZIP download approach for consistent behavior across all devices');
+                
+                // Use the same ZIP download handler for both mobile and desktop
+                await handleZipDownload(downloadUrl, filename, downloadResult);
                 
               } catch (proxyError) {
                 console.error('Backend proxy download failed:', proxyError);
