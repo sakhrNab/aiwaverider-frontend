@@ -130,7 +130,7 @@ const SignUp = ({ isOpen, onClose, prefillEmail, redirectPath }) => {
   // NEW: Handle successful signup response
   const handleSuccessfulSignup = useCallback(async (result, method = 'email') => {
     try {
-      console.log('[SignUp] Processing successful signup:', result);
+      // console.log('[SignUp] Processing successful signup:', result);
       
       // Handle the signup response data
       if (result.user || result.profile) {
@@ -217,7 +217,7 @@ const SignUp = ({ isOpen, onClose, prefillEmail, redirectPath }) => {
         confirmPassword: formData.password, // Same as password since we removed confirm field
       };
 
-      console.log('[SignUp] Attempting email signup:', { email: signupData.email, username });
+      // console.log('[SignUp] Attempting email signup:', { email: signupData.email, username });
       const result = await signUp(signupData);
       
       if (result && (result.user || result.firebaseUser)) {
@@ -256,11 +256,11 @@ const SignUp = ({ isOpen, onClose, prefillEmail, redirectPath }) => {
     setIsLoading(true);
     
     try {
-      console.log('[SignUp] Attempting Google signup');
+      // console.log('[SignUp] Attempting Google signup');
       const result = await signUpWithGoogle();
       
       if (result && result.firebaseUser) {
-        console.log('[SignUp] Google signup successful:', result);
+        // console.log('[SignUp] Google signup successful:', result);
         await handleSuccessfulSignup(result, 'social');
       }
     } catch (error) {
@@ -286,11 +286,11 @@ const SignUp = ({ isOpen, onClose, prefillEmail, redirectPath }) => {
     setIsLoading(true);
     
     try {
-      console.log('[SignUp] Attempting Microsoft signup');
+      // console.log('[SignUp] Attempting Microsoft signup');
       const result = await signUpWithMicrosoft();
       
       if (result && result.firebaseUser) {
-        console.log('[SignUp] Microsoft signup successful:', result);
+        // console.log('[SignUp] Microsoft signup successful:', result);
         await handleSuccessfulSignup(result, 'social');
       }
     } catch (error) {

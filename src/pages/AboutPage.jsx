@@ -35,9 +35,9 @@ const About = () => {
           envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }
         }).toDestination();
         
-        console.log('🎵 Sound effects loaded successfully!');
+        // console.log('🎵 Sound effects loaded successfully!');
       } catch (error) {
-        console.log('🔇 Tone.js not available, continuing without sound effects');
+        // console.log('🔇 Tone.js not available, continuing without sound effects');
       }
     };
 
@@ -69,11 +69,11 @@ const About = () => {
             },
             "retina_detect": true
           });
-          console.log('✨ Particles loaded successfully!');
+          // console.log('✨ Particles loaded successfully!');
         }
       };
       script.onerror = () => {
-        console.log('🔇 Particles.js failed to load, continuing without particle background');
+        // console.log('🔇 Particles.js failed to load, continuing without particle background');
       };
       document.head.appendChild(script);
     };
@@ -124,12 +124,12 @@ const About = () => {
       const detailList = card.querySelector('.card-details ul');
       const lines = Array.from(detailList.querySelectorAll('li')).map(li => li.innerText);
       
-      console.log('Lines to animate:', lines); // Debug log
+      // console.log('Lines to animate:', lines); // Debug log
       detailList.innerHTML = ''; // Clear list for animation
       
       for (let i = 0; i < lines.length; i++) {
         const lineText = lines[i];
-        console.log(`Animating line ${i}:`, lineText); // Debug log
+        // console.log(`Animating line ${i}:`, lineText); // Debug log
         const newLi = document.createElement('li');
         detailList.appendChild(newLi);
         
@@ -159,7 +159,7 @@ const About = () => {
             }
             hoverSynthRef.current.triggerAttackRelease('C5', '8n');
           } catch (error) {
-            console.log('Audio error:', error);
+            // console.log('Audio error:', error);
           }
         }
       });
@@ -177,7 +177,7 @@ const About = () => {
             }
             clickSynthRef.current.triggerAttackRelease(['C3', 'G3', 'C4'], '4n');
           } catch (error) {
-            console.log('Audio error:', error);
+            // console.log('Audio error:', error);
           }
         }
         
@@ -303,7 +303,7 @@ const About = () => {
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl transition-colors duration-200 cursor-pointer relative z-30`}
-                    onClick={() => console.log('LinkedIn clicked')}
+                    onClick={() => // console.log('LinkedIn clicked')}
                     style={{ zIndex: 30 }}
                   >
                     <FaLinkedin />
@@ -313,7 +313,7 @@ const About = () => {
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} text-2xl transition-colors duration-200 cursor-pointer relative z-30`}
-                    onClick={() => console.log('GitHub clicked')}
+                    onClick={() => // console.log('GitHub clicked')}
                     style={{ zIndex: 30 }}
                   >
                     <FaGithub />
@@ -323,7 +323,7 @@ const About = () => {
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="text-xl hover:text-pink-600 transition-colors duration-200 cursor-pointer relative z-30"
-                    onClick={() => console.log('TikTok clicked')}
+                    onClick={() => // console.log('TikTok clicked')}
                     style={{ zIndex: 30 }}
                   >
                     <FontAwesomeIcon icon={faTiktok} />

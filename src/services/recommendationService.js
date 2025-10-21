@@ -12,7 +12,7 @@
 
 // API URL - adjust based on your environment
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-console.log('Recommendation Service initialized with API_URL:', API_URL);
+// console.log('Recommendation Service initialized with API_URL:', API_URL);
 
 // Import the product data utilities and agent utilities
 import { getFeaturedProducts, getRelatedProducts } from '../utils/productData';
@@ -71,18 +71,18 @@ export const getPersonalizedRecommendations = async (options = {}) => {
       useHistory = true
     } = options;
 
-    console.log('Getting personalized recommendations with options:', options);
+    // console.log('Getting personalized recommendations with options:', options);
     
     // Try first with the real-agents endpoint that guarantees real agents
     try {
       const realAgentsUrl = `${API_URL}/api/recommendations/real-agents?limit=${limit}`;
-      console.log(`First attempting to fetch from real-agents endpoint: ${realAgentsUrl}`);
+      // console.log(`First attempting to fetch from real-agents endpoint: ${realAgentsUrl}`);
       
       const response = await fetch(realAgentsUrl);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Received agents from real-agents endpoint:', data);
+        // console.log('Received agents from real-agents endpoint:', data);
         
         if (data.recommendations && data.recommendations.length > 0) {
           // These should already be formatted correctly
@@ -90,7 +90,7 @@ export const getPersonalizedRecommendations = async (options = {}) => {
         }
       }
       
-      console.log('Real-agents endpoint failed or returned no data, trying standard endpoint');
+      // console.log('Real-agents endpoint failed or returned no data, trying standard endpoint');
     } catch (error) {
       console.warn('Real-agents endpoint failed:', error.message);
       // Continue to try other methods
@@ -109,7 +109,7 @@ export const getPersonalizedRecommendations = async (options = {}) => {
         queryParams.append('useHistory', useHistory);
       }
 
-      console.log(`Fetching personalized recommendations from: ${API_URL}/api/recommendations?${queryParams}`);
+      // console.log(`Fetching personalized recommendations from: ${API_URL}/api/recommendations?${queryParams}`);
       
       const token = localStorage.getItem('authToken');
       const headers = {
@@ -118,9 +118,9 @@ export const getPersonalizedRecommendations = async (options = {}) => {
       
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
-        console.log('Using authentication token for recommendations');
+        // console.log('Using authentication token for recommendations');
       } else {
-        console.log('No authentication token available - fetching anonymous recommendations');
+        // console.log('No authentication token available - fetching anonymous recommendations');
       }
       
       const response = await fetch(`${API_URL}/api/recommendations?${queryParams}`, {
@@ -134,7 +134,7 @@ export const getPersonalizedRecommendations = async (options = {}) => {
       }
       
       const data = await response.json();
-      console.log('Received recommendations from main API:', data);
+      // console.log('Received recommendations from main API:', data);
       
       // Validate and format the recommendations
       if (data.recommendations && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
@@ -166,7 +166,7 @@ export const getPersonalizedRecommendations = async (options = {}) => {
  * @returns {Promise<Array>} - Array of recommended agents
  */
 const getAgentRecommendations = async (limit = 3, forceRefresh = false) => {
-  console.log('Getting agent recommendations from store', { limit, forceRefresh });
+  // console.log('Getting agent recommendations from store', { limit, forceRefresh });
   
   try {
     // Get data from agentStore
@@ -174,7 +174,7 @@ const getAgentRecommendations = async (limit = 3, forceRefresh = false) => {
     
     // Check if we need to load data first
     if (forceRefresh || !store.lastLoadTime || store.allAgents.length === 0) {
-      console.log('Store data not available or refresh requested, loading data...');
+      // console.log('Store data not available or refresh requested, loading data...');
       await store.loadInitialData(forceRefresh);
     }
     
@@ -184,20 +184,20 @@ const getAgentRecommendations = async (limit = 3, forceRefresh = false) => {
     // First try to get recommended agents using the store method
     const recommendedFromStore = updatedStore.getRecommendedAgents(limit);
     if (recommendedFromStore && recommendedFromStore.length > 0) {
-      console.log('Using recommendedAgents from store method:', recommendedFromStore.length);
+      // console.log('Using recommendedAgents from store method:', recommendedFromStore.length);
       return formatRecommendations(recommendedFromStore);
     }
     
     // Next try to get featured agents using the store method
     const featuredFromStore = updatedStore.getFeaturedAgents(limit);
     if (featuredFromStore && featuredFromStore.length > 0) {
-      console.log('Using featuredAgents from store method:', featuredFromStore.length);
+      // console.log('Using featuredAgents from store method:', featuredFromStore.length);
       return formatRecommendations(featuredFromStore);
     }
     
     // Last resort: use allAgents and sort by rating
     if (updatedStore.allAgents && updatedStore.allAgents.length > 0) {
-      console.log('Using sorted allAgents from store:', updatedStore.allAgents.length);
+      // console.log('Using sorted allAgents from store:', updatedStore.allAgents.length);
       // Sort by rating
       const topRated = [...updatedStore.allAgents].sort((a, b) => {
         const aRating = a.rating?.average || 0;
@@ -217,19 +217,19 @@ const getAgentRecommendations = async (limit = 3, forceRefresh = false) => {
     
     // Fall back to direct API calls as absolute last resort
     try {
-      console.log('Using direct API calls as fallback');
+      // console.log('Using direct API calls as fallback');
       
       // Try to get featured agents with forceRefresh flag
       const featuredAgents = await fetchFeaturedAgents(limit, { forceRefresh: true });
     if (featuredAgents && featuredAgents.length > 0) {
-        console.log('Using featured agents from direct API call:', featuredAgents.length);
+        // console.log('Using featured agents from direct API call:', featuredAgents.length);
       return formatRecommendations(featuredAgents);
     }
     
     // If no featured agents, try top rated
       const topRatedAgents = await fetchAgents('All', 'Top Rated', 1, { limit });
     if (topRatedAgents && topRatedAgents.length > 0) {
-        console.log('Using top rated agents from direct API call:', topRatedAgents.length);
+        // console.log('Using top rated agents from direct API call:', topRatedAgents.length);
       return formatRecommendations(topRatedAgents);
     }
     } catch (apiError) {
@@ -250,7 +250,7 @@ const getAgentRecommendations = async (limit = 3, forceRefresh = false) => {
  * @returns {Array} - Array of recommended products
  */
 const getFallbackRecommendations = (limit = 3, excludeProductId = null) => {
-  console.log('Using local fallback recommendations');
+  // console.log('Using local fallback recommendations');
   
   // If we have a product ID to exclude, try to get related products
   let localRecommendations = [];
@@ -293,7 +293,7 @@ export const trackProductView = async (productId) => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    console.log(`Tracking view for product ${productId} at ${API_URL}/api/recommendations/track-view`);
+    // console.log(`Tracking view for product ${productId} at ${API_URL}/api/recommendations/track-view`);
     
     // Fix the URL to use the correct endpoint
     const response = await fetch(`${API_URL}/api/recommendations/track-view`, {
@@ -308,7 +308,7 @@ export const trackProductView = async (productId) => {
       return;
     }
     
-    console.log(`Product view tracked: ${productId}`);
+    // console.log(`Product view tracked: ${productId}`);
   } catch (error) {
     // Silently fail tracking to not disrupt user experience
     console.error('Error tracking product view:', error);
@@ -326,7 +326,7 @@ export const getRecentlyViewedProducts = async (limit = 5) => {
     const token = localStorage.getItem('authToken');
     
     if (!token) {
-      console.log('No auth token found for recent views');
+      // console.log('No auth token found for recent views');
       return [];
     }
     
@@ -384,7 +384,7 @@ export const createImageErrorHandler = (fallbackText) => (e) => {
     return;
   }
   
-  console.log('Image loading error:', e.target.src);
+  // console.log('Image loading error:', e.target.src);
   
   // Mark the image as having been handled
   e.target.dataset.errorHandled = 'true';
@@ -501,7 +501,7 @@ export const getRecommendationsForPurchase = async (options = {}) => {
       limit = 3 
     } = options;
     
-    console.log('Fetching recommendations for purchase with options:', options);
+    // console.log('Fetching recommendations for purchase with options:', options);
     
     // Try to get from cache first
     const cacheKey = 'recent_purchase_recommendations';
@@ -511,7 +511,7 @@ export const getRecommendationsForPurchase = async (options = {}) => {
         const parsedData = JSON.parse(cachedData);
         // Check if cache is fresh (less than 10 minutes old)
         if (parsedData.timestamp && (Date.now() - parsedData.timestamp) < 10 * 60 * 1000) {
-          console.log('Using cached recommendations from session storage');
+          // console.log('Using cached recommendations from session storage');
           return parsedData.recommendations;
         }
       } catch (e) {
@@ -532,7 +532,7 @@ export const getRecommendationsForPurchase = async (options = {}) => {
       ).pop() : 
       category;
     
-    console.log('Finding recommendations for category:', targetCategory);
+    // console.log('Finding recommendations for category:', targetCategory);
     
     // Analyze purchased items for attributes to determine recommendation strategy
     const purchasedAttributes = {
@@ -566,12 +566,12 @@ export const getRecommendationsForPurchase = async (options = {}) => {
       else if (price < 10) purchasedAttributes.priceTier = 'low';
     });
     
-    console.log('Analyzed purchased attributes:', purchasedAttributes);
+    // console.log('Analyzed purchased attributes:', purchasedAttributes);
     
     // Get the store and ensure it's loaded
     const store = useAgentStore.getState();
     if (!store.allAgents || store.allAgents.length === 0) {
-      console.log('Store data not available, loading data first');
+      // console.log('Store data not available, loading data first');
       await store.loadInitialData();
     }
     
@@ -601,7 +601,7 @@ export const getRecommendationsForPurchase = async (options = {}) => {
       if (categoryFiltered.length >= limit) {
         filteredAgents = categoryFiltered;
       } else {
-        console.log(`Not enough agents in category ${targetCategory}, using all categories`);
+        // console.log(`Not enough agents in category ${targetCategory}, using all categories`);
       }
     }
     

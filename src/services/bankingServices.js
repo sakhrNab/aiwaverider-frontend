@@ -151,7 +151,7 @@ export const getBicFromIban = async (iban) => {
   iban = iban.replace(/\s+/g, '').toUpperCase();
   
   try {
-    console.log(`Using OpenIBAN service to look up BIC code for IBAN: ${iban}`);
+    // console.log(`Using OpenIBAN service to look up BIC code for IBAN: ${iban}`);
     
     // Use the OpenIBAN API which is free and doesn't require API keys
     const openIbanUrl = `https://openiban.com/validate/${iban}?getBIC=true&validateBankCode=true`;
@@ -171,8 +171,8 @@ export const getBicFromIban = async (iban) => {
       const data = await response.json();
       
       if (data.valid && data.bankData && data.bankData.bic) {
-        console.log(`Successfully retrieved BIC: ${data.bankData.bic} for IBAN: ${iban}`);
-        console.log(`Bank: ${data.bankData.name}`);
+        // console.log(`Successfully retrieved BIC: ${data.bankData.bic} for IBAN: ${iban}`);
+        // console.log(`Bank: ${data.bankData.name}`);
         return { 
           bic: data.bankData.bic, 
           requiresManualEntry: false, 
@@ -217,7 +217,7 @@ export const getBicFromIban = async (iban) => {
     const apiKey = import.meta.env.VITE_BIC_API_KEY;
     
     if (apiUrl && apiKey) {
-      console.log(`Falling back to secondary BIC API service for bank identifier: ${bankIdentifier}`);
+      // console.log(`Falling back to secondary BIC API service for bank identifier: ${bankIdentifier}`);
       
       try {
         const response = await fetch(`${apiUrl}?api_key=${apiKey}&country=${countryCode}&identifier=${bankIdentifier}&format=json`, {
@@ -235,7 +235,7 @@ export const getBicFromIban = async (iban) => {
         const data = await response.json();
         
         if (data.success && data.bic) {
-          console.log(`Successfully retrieved BIC: ${data.bic} for bank identifier: ${bankIdentifier}`);
+          // console.log(`Successfully retrieved BIC: ${data.bic} for bank identifier: ${bankIdentifier}`);
           return { 
             bic: data.bic, 
             requiresManualEntry: false, 

@@ -58,9 +58,9 @@ const { user, token } = useContext(AuthContext);
     }
 
     // const idTokenResult = await currentUser.getIdTokenResult();
-    // console.log('currentUser', currentUser);
-    // console.log('idTokenResult', idTokenResult);
-// console.log('idTokenResult.claims.role', idTokenResult.claims.role);
+    // // console.log('currentUser', currentUser);
+    // // console.log('idTokenResult', idTokenResult);
+// // console.log('idTokenResult.claims.role', idTokenResult.claims.role);
     try {
       //  Get the ID token and check claims
         if (user.role !== 'admin') {
@@ -68,7 +68,7 @@ setError('Only admins can create posts.');
         return;
       }
     } catch (error) {
-      console.log('Error fetching To: ', error);
+      // console.log('Error fetching To: ', error);
       setError('Authentication Error');
     }
 
@@ -94,9 +94,9 @@ setError('Only admins can create posts.');
 
     try {
       const response = await createPost(postData, token);
-  console.log('Create Post Response2', response.post);
+  // console.log('Create Post Response2', response.post);
       if (response.post) {
-        console.log('Post created successfully:', response.post);
+        // console.log('Post created successfully:', response.post);
         addPostToCache(response.post);
         setSuccessMessage('Post created successfully!');
         setFormData({

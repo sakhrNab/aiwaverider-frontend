@@ -12,9 +12,9 @@ const ApiTestPage = () => {
     setStatus('loading');
     setError(null);
     try {
-      console.log(`Testing API endpoint: ${endpoint}`);
+      // console.log(`Testing API endpoint: ${endpoint}`);
       const result = await axios.get(endpoint);
-      console.log('API response:', result);
+      // console.log('API response:', result);
       setResponse(result.data);
       setStatus('success');
       return result.data;
@@ -50,16 +50,16 @@ const ApiTestPage = () => {
     setError(null);
     try {
       // Try using the native fetch API instead of axios
-      console.log(`Testing with fetch API: /api/ai-tools/${promptId}`);
+      // console.log(`Testing with fetch API: /api/ai-tools/${promptId}`);
       const response = await fetch(`/api/ai-tools/${promptId}`);
-      console.log('Fetch response status:', response.status);
+      // console.log('Fetch response status:', response.status);
       
       if (!response.ok) {
         throw new Error(`Fetch failed with status: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log('Fetch response data:', data);
+      // console.log('Fetch response data:', data);
       setResponse(data);
       setStatus('success');
     } catch (err) {

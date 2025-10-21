@@ -106,7 +106,7 @@ export const updateAgentPrice = async (agentId, priceData) => {
       priceDetails: normalizedPriceData
     };
     
-    console.log('Sending normalized price data to backend:', payload);
+    // console.log('Sending normalized price data to backend:', payload);
     
     // Make request to update agent price
     const response = await fetch(`${API_URL}/api/agent/${baseAgentId}/price${cacheBuster}`, {
@@ -126,7 +126,7 @@ export const updateAgentPrice = async (agentId, priceData) => {
     
     // Parse and return updated price data
     const updatedPrice = await response.json();
-    console.log('Received updated price from backend:', updatedPrice);
+    // console.log('Received updated price from backend:', updatedPrice);
     return updatedPrice;
   } catch (error) {
     console.error('Error updating agent price:', error);

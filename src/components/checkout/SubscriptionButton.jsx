@@ -29,11 +29,11 @@ const SubscriptionButton = ({ planId, onConfirmed = () => {}, disabled = false }
       style={{ layout: 'vertical' }}
       fundingSource="paypal"
       createSubscription={(data, actions) => {
-        console.log('Creating subscription with plan ID:', activePlanId);
+        // console.log('Creating subscription with plan ID:', activePlanId);
         return actions.subscription.create({ plan_id: activePlanId });
       }}
       onApprove={async (data) => {
-        console.log('Subscription approved:', data);
+        // console.log('Subscription approved:', data);
         try {
           const res = await api.post('/api/payments/paypal/subscriptions/confirm', { subscriptionID: data.subscriptionID });
           if (res.data?.success) {
@@ -53,7 +53,7 @@ const SubscriptionButton = ({ planId, onConfirmed = () => {}, disabled = false }
         toast.error('PayPal subscription failed. Please try again.');
       }}
       onCancel={() => {
-        console.log('Subscription cancelled by user');
+        // console.log('Subscription cancelled by user');
         toast.info('Subscription cancelled.');
       }}
       disabled={disabled}

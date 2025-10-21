@@ -179,7 +179,7 @@ const EmailComposer = () => {
         throw new Error('No valid recipients selected');
       }
       
-      console.log(`Sending ${emailType} email to ${recipientUsers.length} recipients`);
+      // console.log(`Sending ${emailType} email to ${recipientUsers.length} recipients`);
       
       // Use the emailService for all email types
       let result;
@@ -194,7 +194,7 @@ const EmailComposer = () => {
         }
         
         // Log email addresses for debugging
-        console.log(`Sending to ${emailAddresses.length} email addresses:`, emailAddresses);
+        // console.log(`Sending to ${emailAddresses.length} email addresses:`, emailAddresses);
         
         // Extract user IDs for these users
         const userIds = recipientUsers.map(user => user.id).filter(Boolean);
@@ -216,8 +216,8 @@ const EmailComposer = () => {
           payload.updateType = emailType === 'agent' ? 'new_agents' : 'new_tools';
           
           // Add console logging for debugging
-          console.log(`Preparing ${emailType} update with type ${payload.updateType}`);
-          console.log(`Selected ${userIds.length} user IDs:`, userIds);
+          // console.log(`Preparing ${emailType} update with type ${payload.updateType}`);
+          // console.log(`Selected ${userIds.length} user IDs:`, userIds);
         } else {
           // For custom emails, use subject as is
           payload.subject = subject;
@@ -227,7 +227,7 @@ const EmailComposer = () => {
         
         try {
           result = await sendCustomEmail(payload);
-          console.log(`${emailType} email sent successfully:`, result);
+          // console.log(`${emailType} email sent successfully:`, result);
         } catch (error) {
           console.error(`Error sending ${emailType} email:`, error);
           throw error;
@@ -263,7 +263,7 @@ const EmailComposer = () => {
       }
       
       // Log success details
-      console.log('Email sending successful:', result);
+      // console.log('Email sending successful:', result);
       
       if (result.data && result.data.sentCount) {
         toast.success(`Email successfully sent to ${result.data.sentCount} recipients!`);

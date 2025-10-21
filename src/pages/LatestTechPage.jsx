@@ -110,7 +110,7 @@ const LatestTech = () => {
   // Add a handler for post clicks to increment views
   const handlePostClick = (e, postId) => {
     // Don't prevent default navigation, but increment the view count
-    console.log(`[LatestTech] Incrementing view for post ${postId} on click`);
+    // console.log(`[LatestTech] Incrementing view for post ${postId} on click`);
     
     // Fire and forget - don't wait for the response or handle errors
     // This ensures navigation continues smoothly regardless of view count success
@@ -119,7 +119,7 @@ const LatestTech = () => {
         if (response.success === false) {
           console.warn(`[LatestTech] View increment failed but continuing navigation:`, response.error);
         } else {
-          console.log(`[LatestTech] View increment response:`, response);
+          // console.log(`[LatestTech] View increment response:`, response);
         }
       })
       .catch(error => {

@@ -48,7 +48,7 @@ const handleErrorResponse = async (response) => {
   try {
     // Try to get the response text first
     responseText = await response.text();
-    console.log(`Error response (${response.status}):`, responseText);
+    // console.log(`Error response (${response.status}):`, responseText);
     
     // Try to parse as JSON if possible
     if (responseText) {
@@ -78,7 +78,7 @@ const handleErrorResponse = async (response) => {
     };
   }
   
-  console.log('Parsed error data:', errorData);
+  // console.log('Parsed error data:', errorData);
   
   // Create enhanced error object
   const error = new Error(errorData.message || `Request failed with status ${response.status}`);

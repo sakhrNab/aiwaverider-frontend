@@ -178,7 +178,7 @@ export const runAllHealthChecks = async () => {
  */
 export const scheduleHealthChecks = (interval = 300000) => { // Default: 5 minutes
   if (!ENV.PROD) {
-    console.log('Periodic health checks are only enabled in production');
+    // console.log('Periodic health checks are only enabled in production');
     return null;
   }
   

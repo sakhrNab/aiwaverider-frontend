@@ -135,7 +135,7 @@ const ManageAgents = () => {
       apiId = apiId.substring(6); // Remove 'agent-' prefix
     }
 
-    console.log(`Preparing agent ID for API: ${agentId} → ${apiId}`);
+    // console.log(`Preparing agent ID for API: ${agentId} → ${apiId}`);
     return apiId;
   };
 
@@ -164,18 +164,18 @@ const ManageAgents = () => {
       const isEditMode = !!selectedAgent;
 
       if (!forceRefresh && isCacheValid(cachedAgent, isEditMode)) {
-        console.log(
-          `Using cached data for agent ${sanitizedAgentId} (${Math.round((Date.now() - cachedAgent.timestamp) / 1000)}s old)`,
-        );
+        // console.log(
+        //   `Using cached data for agent ${sanitizedAgentId} (${Math.round((Date.now() - cachedAgent.timestamp) / 1000)}s old)`,
+        // );
         return cachedAgent.data;
       }
 
       // If this is a mock agent, we know the backend doesn't have it
       // So we'll create a mock agent without making an API call
       if (isMockAgent) {
-        console.log(
-          `Creating/refreshing mock data for agent ${sanitizedAgentId}`,
-        );
+        // console.log(
+        //   `Creating/refreshing mock data for agent ${sanitizedAgentId}`,
+        // );
         // Create a mock agent with basic properties
         const mockAgent = {
           id: sanitizedAgentId,
@@ -213,9 +213,9 @@ const ManageAgents = () => {
       }
 
       // No valid cache and not a mock agent, fetch from server
-      console.log(
-        `Fetching fresh data for agent ${sanitizedAgentId}, API ID: ${apiAgentId}`,
-      );
+      // console.log(
+      //   `Fetching fresh data for agent ${sanitizedAgentId}, API ID: ${apiAgentId}`,
+      // );
       try {
         // Important: Use the prepared API ID for the request
         const agent = await apiRequest(
@@ -339,7 +339,7 @@ const ManageAgents = () => {
 
   // Function to invalidate cache for an agent
   const invalidateAgentCache = (agentId) => {
-    console.log(`Invalidating cache for agent ${agentId}`);
+    // console.log(`Invalidating cache for agent ${agentId}`);
     setAgentCache((prev) => {
       const newCache = { ...prev };
       delete newCache[agentId];
@@ -355,7 +355,7 @@ const ManageAgents = () => {
       import("../../utils/auth").then(({ generateMockFirebaseToken }) => {
         const mockToken = generateMockFirebaseToken();
         localStorage.setItem("authToken", mockToken);
-        console.log("Mock Firebase-like JWT token set for development");
+        // console.log("Mock Firebase-like JWT token set for development");
 
         // After setting token, fetch agents
         fetchAgents();
@@ -399,7 +399,7 @@ const ManageAgents = () => {
   const apiRequest = async (url, method, data = null, queryParams = {}) => {
     try {
       // Log all API requests for debugging
-      console.log(`API Request: ${method} ${url}`, { data, queryParams });
+      // console.log(`API Request: ${method} ${url}`, { data, queryParams });
 
       // Generate auth headers for every request
       const headers = await getAuthHeaders();
@@ -428,19 +428,19 @@ const ManageAgents = () => {
       }
 
       // Send the request
-      console.log(`API Request: ${method} ${requestUrl}`, options);
+      // console.log(`API Request: ${method} ${requestUrl}`, options);
       const response = await fetch(requestUrl, options);
 
       // Log the response status and headers
-      console.log(`API Response: ${response.status} ${response.statusText}`);
-      console.log(
-        `Response headers:`,
-        Object.fromEntries([...response.headers.entries()]),
-      );
+      // console.log(`API Response: ${response.status} ${response.statusText}`);
+      // console.log(
+      //   `Response headers:`,
+      //   Object.fromEntries([...response.headers.entries()]),
+      // );
 
       // Special handling for 204 No Content responses
       if (response.status === 204) {
-        console.log("Received 204 No Content response, treating as success");
+        // console.log("Received 204 No Content response, treating as success");
         return {
           success: true,
           message: "Operation completed successfully",
@@ -514,7 +514,7 @@ const ManageAgents = () => {
 
       // Generate a mock response for development purposes
       if (process.env.NODE_ENV === "development" && url.includes("/price")) {
-        console.log(` Generating mock response for ${method} ${url}`);
+        // console.log(` Generating mock response for ${method} ${url}`);
         return generateMockPriceData();
       }
 
@@ -664,7 +664,7 @@ const ManageAgents = () => {
     try {
       // If API is offline, go straight to mock data
       if (apiStatus.checked && !apiStatus.isOnline) {
-        console.log("Using mock data because API is offline");
+        // console.log("Using mock data because API is offline");
         const mockData = generateMockAgents();
         setAgents(mockData);
         return;
@@ -687,11 +687,11 @@ const ManageAgents = () => {
 
       // Check if data has agents property
       if (data.agents) {
-        console.log(
-          "✅ Agents fetched successfully:",
-          data.agents.length,
-          "agents",
-        );
+        // console.log(
+        //   "✅ Agents fetched successfully:",
+        //   data.agents.length,
+        //   "agents",
+        // );
 
         // Clear the entire cache to ensure fresh data
         setAgentCache({});
@@ -773,7 +773,7 @@ const ManageAgents = () => {
     try {
       // Call the helper function to delete the agent
       const result = await deleteAgentHelper(agentToDelete.id);
-      console.log("Delete result from helper:", result);
+      // console.log("Delete result from helper:", result);
 
       // Only show success if the operation was actually successful
       if (result.success) {
@@ -782,7 +782,7 @@ const ManageAgents = () => {
 
         // Show success notification
         toast.success("Agent deleted successfully");
-        console.log("✅ Agent deleted successfully");
+        // console.log("✅ Agent deleted successfully");
       } else {
         // Show error notification
         toast.error(result.message || "Failed to delete agent");
@@ -814,7 +814,7 @@ const ManageAgents = () => {
   // Function to handle agent edit button click
   const handleEditClick = (agent) => {
     try {
-      console.log("Edit clicked for agent:", agent);
+      // console.log("Edit clicked for agent:", agent);
       if (!agent || !agent.id) {
         console.error("Cannot edit agent: Missing agent ID");
         showToast("Invalid agent data. Cannot edit.", "error");
@@ -834,7 +834,7 @@ const ManageAgents = () => {
         id: sanitizedAgentId,
       };
       
-      console.log("Sanitized agent being sent to form:", sanitizedAgent);
+      // console.log("Sanitized agent being sent to form:", sanitizedAgent);
 
       // Check if we have a recent cache entry for this agent
       const cachedAgent = agentCache[sanitizedAgentId];
@@ -843,16 +843,16 @@ const ManageAgents = () => {
 
       if (isRecentCache) {
         // If we have recent cache data, use it immediately and open the form
-        console.log("Using recently cached data for edit form:", cachedAgent.data);
+        // console.log("Using recently cached data for edit form:", cachedAgent.data);
         setSelectedAgent(cachedAgent.data);
         setShowAgentForm(true);
 
         // For mock agents, skip the refresh entirely
         if (isMockAgent) {
-          console.log(
-            "Skipping background refresh for mock agent:",
-            sanitizedAgentId,
-          );
+          // console.log(
+          //   "Skipping background refresh for mock agent:",
+          //   sanitizedAgentId,
+          // );
           return;
         }
 
@@ -860,9 +860,9 @@ const ManageAgents = () => {
         const cacheAge = Date.now() - cachedAgent.timestamp;
         if (cacheAge > 10000) {
           // 10 seconds
-          console.log(
-            "Cache is older than 10 seconds, refreshing in background",
-          );
+          // console.log(
+          //   "Cache is older than 10 seconds, refreshing in background",
+          // );
           refreshAgentInBackground(sanitizedAgentId);
         }
       } else {
@@ -899,26 +899,26 @@ const ManageAgents = () => {
       const isMockAgent = agentId.toString().startsWith("agent-");
 
       if (isMockAgent) {
-        console.log(
-          `Agent ${agentId} is a mock agent, skipping backend refresh`,
-        );
+        // console.log(
+        //   `Agent ${agentId} is a mock agent, skipping backend refresh`,
+        // );
 
         // Get the agent from cache directly
         const cachedAgent = agentCache[agentId];
         if (cachedAgent && cachedAgent.data) {
-          console.log("Using cached mock agent data:", cachedAgent.data);
+          // console.log("Using cached mock agent data:", cachedAgent.data);
           setSelectedAgent(cachedAgent.data);
           return;
         }
       }
 
-      console.log(`Refreshing agent data in background for ID: ${agentId}`);
+      // console.log(`Refreshing agent data in background for ID: ${agentId}`);
       // Get fresh agent data with price included to minimize API calls
       // Pass true for skipPriceRequest parameter to get price in the main call
       const refreshedAgent = await getAgentWithCache(agentId, true, true);
 
       if (refreshedAgent) {
-        console.log("Got refreshed agent data:", refreshedAgent);
+        // console.log("Got refreshed agent data:", refreshedAgent);
         // Update the form with the refreshed data
         setSelectedAgent(refreshedAgent);
       } else {
@@ -945,7 +945,7 @@ const ManageAgents = () => {
       // Get the agent ID from the selected agent
       const agentId = selectedAgent?.id;
       
-      console.log('Submitting agent form with data:', agentData);
+      // console.log('Submitting agent form with data:', agentData);
 
       // Separate price data from agent data
       const {
@@ -968,7 +968,7 @@ const ManageAgents = () => {
         discountPercentage: discountPercentage || 0
       };
       
-      console.log('Price payload:', pricePayload);
+      // console.log('Price payload:', pricePayload);
       
       let savedAgent;
       
@@ -987,11 +987,11 @@ const ManageAgents = () => {
         // Handle update case
         if (updateAgentWithPrice) {
           // Use the combined update if available (more efficient)
-          console.log('Using combined update for agent and price');
+          // console.log('Using combined update for agent and price');
           savedAgent = await updateAgentWithPrice(agentId, agentDataWithoutPrice, pricePayload);
         } else {
           // Fall back to just updating the agent data
-          console.log('Falling back to separate agent update');
+          // console.log('Falling back to separate agent update');
         savedAgent = await apiRequest(`/api/agents/${agentId}`, 'PUT', agentDataWithoutPrice);
         }
       } else {
@@ -1010,7 +1010,7 @@ const ManageAgents = () => {
         // Also clear server-side cache by calling the refresh-cache endpoint
         try {
           const cacheResponse = await apiRequest('/api/agents/refresh-cache', 'GET');
-          console.log('Cache refresh response:', cacheResponse);
+          // console.log('Cache refresh response:', cacheResponse);
         } catch (cacheError) {
           console.warn('Failed to refresh server cache:', cacheError);
           // Continue anyway since local cache is cleared
@@ -1037,18 +1037,6 @@ const ManageAgents = () => {
       return null;
     } finally {
       setFormSubmitting(false);
-    }
-  };
-
-  // Function to handle sorting
-  const handleSort = (field) => {
-    if (sortField === field) {
-      // Toggle direction if same field
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      // New field, default to ascending
-      setSortField(field);
-      setSortDirection("asc");
     }
   };
 
@@ -1126,50 +1114,6 @@ const ManageAgents = () => {
     return "N/A";
   };
 
-  // Add a function to run the price data migration
-  const runPriceMigration = async () => {
-    try {
-      // Show confirmation toast
-      toast.loading("Starting price data migration. This may take a while...", {
-        id: "migration",
-      });
-
-      // Call the migration API endpoint
-      const result = await apiRequest(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/agent-prices/migrate`,
-        "POST",
-      );
-
-      // Show success toast with results
-      toast.success(
-        <div>
-          <strong>Price Migration Completed</strong>
-          <p>Total agents: {result.totalAgents}</p>
-          <p>Updated: {result.updated}</p>
-          <p>Errors: {result.errors?.length || 0}</p>
-        </div>,
-        { duration: 5000, id: "migration" },
-      );
-
-      // If there were errors, show them in the console
-      if (result.errors?.length > 0) {
-        console.warn("Migration completed with errors:", result.errors);
-      }
-
-      // Refresh agent data after migration
-      fetchAgents();
-    } catch (error) {
-      console.error("Error running price migration:", error);
-      toast.error(
-        <div>
-          <strong>Migration Failed</strong>
-          <p>{error.message || "An unknown error occurred"}</p>
-        </div>,
-        { duration: 5000, id: "migration" },
-      );
-    }
-  };
-
   // Helper function to generate placeholder image for agent icons
   const generateAgentIconPlaceholder = (agent) => {
     // First try to extract initials from the agent name
@@ -1197,13 +1141,13 @@ const ManageAgents = () => {
   const getAgentImageUrl = (agent) => {
     // Check for different possible image URL locations
     if (agent.imageUrl && isSafeImageUrl(agent.imageUrl)) {
-      console.log("Using agent.imageUrl:", agent.imageUrl);
+      // console.log("Using agent.imageUrl:", agent.imageUrl);
       return agent.imageUrl;
     }
     
     // Check if image info exists in a nested structure
     if (agent.image && agent.image.url && isSafeImageUrl(agent.image.url)) {
-      console.log("Using agent.image.url:", agent.image.url);
+      // console.log("Using agent.image.url:", agent.image.url);
       return agent.image.url;
     }
     
@@ -1212,7 +1156,7 @@ const ManageAgents = () => {
       try {
         const parsedData = JSON.parse(agent.data);
         if (parsedData.imageUrl && isSafeImageUrl(parsedData.imageUrl)) {
-          console.log("Using parsed data.imageUrl:", parsedData.imageUrl);
+          // console.log("Using parsed data.imageUrl:", parsedData.imageUrl);
           return parsedData.imageUrl;
         }
       } catch (e) {
@@ -1220,7 +1164,7 @@ const ManageAgents = () => {
       }
     }
     
-    console.log("No valid image URL found, using placeholder for:", agent.id);
+    // console.log("No valid image URL found, using placeholder for:", agent.id);
     return null;
   };
   
@@ -1228,13 +1172,13 @@ const ManageAgents = () => {
   const getAgentIconUrl = (agent) => {
     // Check for different possible icon URL locations
     if (agent.iconUrl && isSafeImageUrl(agent.iconUrl)) {
-      console.log("Using agent.iconUrl:", agent.iconUrl);
+      // console.log("Using agent.iconUrl:", agent.iconUrl);
       return agent.iconUrl;
     }
     
     // Check if icon info exists in a nested structure
     if (agent.icon && agent.icon.url && isSafeImageUrl(agent.icon.url)) {
-      console.log("Using agent.icon.url:", agent.icon.url);
+      // console.log("Using agent.icon.url:", agent.icon.url);
       return agent.icon.url;
     }
     
@@ -1243,7 +1187,7 @@ const ManageAgents = () => {
       try {
         const parsedData = JSON.parse(agent.data);
         if (parsedData.iconUrl && isSafeImageUrl(parsedData.iconUrl)) {
-          console.log("Using parsed data.iconUrl:", parsedData.iconUrl);
+          // console.log("Using parsed data.iconUrl:", parsedData.iconUrl);
           return parsedData.iconUrl;
         }
       } catch (e) {
@@ -1254,11 +1198,11 @@ const ManageAgents = () => {
     // If no icon URL is found, try to use the image URL
     const imageUrl = getAgentImageUrl(agent);
     if (imageUrl) {
-      console.log("Using image as icon fallback");
+      // console.log("Using image as icon fallback");
       return imageUrl;
     }
     
-    console.log("No valid icon URL found, using placeholder for:", agent.id);
+    // console.log("No valid icon URL found, using placeholder for:", agent.id);
     return null;
   };
 
@@ -1775,7 +1719,7 @@ const ManageAgents = () => {
     try {
       toast.info('Refreshing server cache...');
       const response = await apiRequest('/api/agents/refresh-cache', 'GET');
-      console.log('Cache refresh response:', response);
+      // console.log('Cache refresh response:', response);
       toast.success(`Server cache cleared: ${response.message || 'Success'}`);
       
       // Also refresh the agents list

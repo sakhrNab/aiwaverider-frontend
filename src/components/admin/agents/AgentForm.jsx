@@ -132,6 +132,8 @@ const AgentForm = ({ agent, onSubmit, onCancel, onFieldChange, hideOnSubmit = fa
       id: user?.uid || ''
     },
     isFree: false,
+    paddleCompliant: false,
+    pricingTier: 'free',
     priceDetails: {
       basePrice: 0,
       discountedPrice: 0,
@@ -246,6 +248,10 @@ const AgentForm = ({ agent, onSubmit, onCancel, onFieldChange, hideOnSubmit = fa
     
     // Add consistent priceDetails to the form data
     combinedAgent.priceDetails = priceDetails;
+    
+    // Set default values for new fields if not present
+    combinedAgent.paddleCompliant = combinedAgent.paddleCompliant ?? false;
+    combinedAgent.pricingTier = combinedAgent.pricingTier ?? 'free';
     
     // Handle image URLs (from nested objects or direct properties)
     if (combinedAgent.image && combinedAgent.image.url) {
@@ -1323,6 +1329,32 @@ const AgentForm = ({ agent, onSubmit, onCancel, onFieldChange, hideOnSubmit = fa
             />
             <span>Subscription-based</span>
           </label>
+        </div>
+        
+        <div className="form-group checkbox-group">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              name="paddleCompliant"
+              checked={formData.paddleCompliant}
+              onChange={handleCheckboxChange}
+            />
+            <span>Paddle Payment Compliant</span>
+          </label>
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="pricingTier">Pricing Tier</label>
+          <select
+            id="pricingTier"
+            name="pricingTier"
+            value={formData.pricingTier}
+            onChange={handleInputChange}
+          >
+            <option value="free">Free</option>
+            <option value="premium">Premium</option>
+            <option value="subscription">Subscription</option>
+          </select>
         </div>
         
         {!formData.isFree && (

@@ -397,7 +397,7 @@ const AgentCard = memo(({ agent }) => {
 
   // Handle image loading errors
   const handleImageError = useCallback(() => {
-    console.log(`Image error for agent: ${agent.id}`);
+    // console.log(`Image error for agent: ${agent.id}`);
     setImageError(true);
   }, [agent.id]);
 

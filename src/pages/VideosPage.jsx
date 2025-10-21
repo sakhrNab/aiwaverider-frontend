@@ -212,7 +212,7 @@ const VideosPage = () => {
   // Handle video play action
   const handleVideoPlay = useCallback((video) => {
     // You can implement custom video player here or just open the original URL
-    console.log('Playing video:', video);
+    // console.log('Playing video:', video);
     window.open(video.originalUrl, '_blank', 'noopener,noreferrer');
   }, []);
 
@@ -306,8 +306,8 @@ const VideosPage = () => {
     setIsSubmitting(true);
 
     try {
-      console.log('=== handleFormSubmit ===');
-      console.log('Form data:', JSON.stringify(editFormData, null, 2));
+      // console.log('=== handleFormSubmit ===');
+      // console.log('Form data:', JSON.stringify(editFormData, null, 2));
       
       // Basic validation - only URL is required
       if (!editFormData.originalUrl) {
@@ -367,7 +367,7 @@ const VideosPage = () => {
         videoData.likes = parseInt(editFormData.likes);
       }
 
-      console.log('Final video data to send:', JSON.stringify(videoData, null, 2));
+      // console.log('Final video data to send:', JSON.stringify(videoData, null, 2));
       
       // Validate required fields one more time
       if (!videoData.platform || !videoData.originalUrl || !videoData.addedBy) {
@@ -380,9 +380,9 @@ const VideosPage = () => {
         return;
       }
 
-      console.log('Sending video to VideosService.addVideo...');
+      // console.log('Sending video to VideosService.addVideo...');
       const result = await VideosService.addVideo(videoData);
-      console.log('VideosService.addVideo result:', result);
+      // console.log('VideosService.addVideo result:', result);
       
       toast.success('Video added successfully!');
       setShowEditModal(false);
@@ -469,7 +469,7 @@ const VideosPage = () => {
         updatedAt: new Date()
       }, { merge: true });
       
-      console.log('Admin role set successfully');
+      // console.log('Admin role set successfully');
       toast.success('Admin role set! Please refresh the page.');
     } catch (error) {
       console.error('Error setting admin role:', error);

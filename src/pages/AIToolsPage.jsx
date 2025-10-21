@@ -144,10 +144,10 @@ const AITools = () => {
     const fallbackIcon = iconMap[toolName] || iconMap[tool.keyword] || iconMap["default"];
     
     if (fallbackIcon) {
-      console.log(`Image load error for ${tool.title}, using icon fallback`);
+      // console.log(`Image load error for ${tool.title}, using icon fallback`);
       img.src = fallbackIcon;
     } else {
-      console.log(`Image load error for ${tool.title}, generating SVG fallback`);
+      // console.log(`Image load error for ${tool.title}, generating SVG fallback`);
       
       const bgColor = getToolColor(tool.title);
       const textColor = 'ffffff';

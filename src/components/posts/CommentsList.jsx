@@ -41,14 +41,14 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
       }
 
       try {
-        console.log(`[CommentsList] Making API request to ${isLiked ? 'unlike' : 'like'} comment ${commentId} for post ${postId}`);
+        // console.log(`[CommentsList] Making API request to ${isLiked ? 'unlike' : 'like'} comment ${commentId} for post ${postId}`);
         const response = isLiked 
           ? await unlikeComment(postId, commentId)
           : await likeComment(postId, commentId);
         
         // Verify response contains the updatedComment
         if (response && response.updatedComment) {
-          console.log(`[CommentsList] ${isLiked ? 'Unlike' : 'Like'} comment API response successful for comment ${commentId}`);
+          // console.log(`[CommentsList] ${isLiked ? 'Unlike' : 'Like'} comment API response successful for comment ${commentId}`);
           
           // Important: Using updatedComment to update the cache
           // This ensures we don't affect unrelated data like post likes
@@ -83,11 +83,11 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
     }
     
     if (likingComments.has(comment.id)) {
-      console.log('Already processing like action for this comment');
+      // console.log('Already processing like action for this comment');
       return;
     }
 
-    console.log(`Handling toggle like for comment: ${comment.id}`);
+    // console.log(`Handling toggle like for comment: ${comment.id}`);
     
     // Make sure likes array is properly initialized
     const commentLikes = Array.isArray(comment.likes) ? comment.likes : [];
@@ -102,7 +102,7 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
           ? commentLikes.filter(id => id !== user.uid)
           : [...commentLikes, user.uid]
       };
-      console.log('Applying optimistic update for comment like');
+      // console.log('Applying optimistic update for comment like');
       updateCommentInCache(postId, updatedComment);
     };
 
@@ -112,7 +112,7 @@ const CommentsList = ({ postId, comments, onAuthRequired, refreshComments }) => 
         ...comment,
         likes: originalLikes
       };
-      console.log('Reverting optimistic update for comment like');
+      // console.log('Reverting optimistic update for comment like');
       updateCommentInCache(postId, revertedComment);
     };
 

@@ -12,17 +12,17 @@ const pendingRequests = new Map();
 const CACHE_EXPIRY = 5 * 60 * 1000;
 // Function to get token with caching
 const getTokenWithCache = async (currentUser) => {
-  console.log('getTokenWithCache called');
+  // console.log('getTokenWithCache called');
   const now = Date.now();
   
   // If we have a cached token that's not expired and not close to expiring, use it
   if (cachedToken && tokenExpirationTime && now < tokenExpirationTime - (5 * 60 * 1000)) {
-    console.log('Using cached token, expires in:', Math.round((tokenExpirationTime - now) / 1000), 'seconds');
+    // console.log('Using cached token, expires in:', Math.round((tokenExpirationTime - now) / 1000), 'seconds');
     return cachedToken;
   }
 
   try {
-    console.log('Getting fresh token, old token expires in:', tokenExpirationTime ? Math.round((tokenExpirationTime - now) / 1000) : 'N/A', 'seconds');
+    // console.log('Getting fresh token, old token expires in:', tokenExpirationTime ? Math.round((tokenExpirationTime - now) / 1000) : 'N/A', 'seconds');
     // Force refresh the token
     const token = await currentUser.getIdToken(true);
     
@@ -31,7 +31,7 @@ const getTokenWithCache = async (currentUser) => {
     // Firebase tokens expire in 1 hour, we'll refresh 5 minutes before
     tokenExpirationTime = now + (55 * 60 * 1000);
     
-    console.log('New token obtained and cached, expires in:', Math.round((tokenExpirationTime - now) / 1000), 'seconds');
+    // console.log('New token obtained and cached, expires in:', Math.round((tokenExpirationTime - now) / 1000), 'seconds');
     return token;
   } catch (error) {
     console.error('Error refreshing token:', error);
@@ -82,7 +82,7 @@ export const getAgentById = async (agentId, options = {}) => {
       url += `?${queryParams.join('&')}`;
     }
     
-    console.log(`[API] Fetching agent ${agentId} with fresh data`, options);
+    // console.log(`[API] Fetching agent ${agentId} with fresh data`, options);
     
     // Set headers to bypass caching layers
     const headers = {
@@ -102,7 +102,7 @@ export const getAgentById = async (agentId, options = {}) => {
 // Create a new agent
 export const createAgent = async (agentData) => {
   try {
-    console.log('[API] Creating new agent:', agentData);
+    // console.log('[API] Creating new agent:', agentData);
     const response = await api.post('/api/agents', agentData);
     return response.data;
   } catch (error) {
@@ -114,7 +114,7 @@ export const createAgent = async (agentData) => {
 // Update an agent
 export const updateAgent = async (agentId, agentData) => {
   try {
-    console.log(`[API] Updating agent ${agentId}:`, agentData);
+    // console.log(`[API] Updating agent ${agentId}:`, agentData);
     const response = await api.put(`/api/agents/${agentId}`, agentData);
     return response.data;
   } catch (error) {
@@ -126,7 +126,7 @@ export const updateAgent = async (agentId, agentData) => {
 // Delete an agent
 export const deleteAgent = async (agentId) => {
   try {
-    console.log(`[API] Deleting agent ${agentId}`);
+    // console.log(`[API] Deleting agent ${agentId}`);
     const response = await api.delete(`/api/agents/${agentId}`);
     return response.data;
   } catch (error) {
@@ -147,7 +147,7 @@ export const deleteAgent = async (agentId) => {
 // Subscribe to an agent
 export const subscribeToAgent = async (agentId, planId) => {
   try {
-    console.log(`[API] Subscribing to agent ${agentId} with plan ${planId}`);
+    // console.log(`[API] Subscribing to agent ${agentId} with plan ${planId}`);
     const response = await api.post(`/api/agents/${encodeURIComponent(agentId)}/subscribe`, { planId });
     return response.data;
   } catch (error) {
@@ -159,7 +159,7 @@ export const subscribeToAgent = async (agentId, planId) => {
 // Update agent price
 export const updateAgentPrice = async (agentId, priceData) => {
   try {
-    console.log(`[API] Updating price for agent ${agentId}:`, priceData);
+    // console.log(`[API] Updating price for agent ${agentId}:`, priceData);
     const response = await api.put(`/api/agents/${agentId}/price`, priceData);
     return response.data;
   } catch (error) {
@@ -244,7 +244,7 @@ export const fetchAgents = async (params = {}) => {
       bypassCache = false
     } = params;
     
-    console.log('🚀 fetchAgents called with NEW backend architecture:', params);
+    // console.log('🚀 fetchAgents called with NEW backend architecture:', params);
     
     // Create query params for the NEW backend API
     const queryParams = new URLSearchParams();
@@ -296,18 +296,18 @@ export const fetchAgents = async (params = {}) => {
     }
     
     const url = `/api/agents?${queryParams.toString()}`;
-    console.log(`[API] NEW Backend URL: ${url}`);
+    // console.log(`[API] NEW Backend URL: ${url}`);
     
     const response = await api.get(url);
     const responseData = response.data;
     
-    console.log(`✅ NEW Backend Response:`, {
-      agentsCount: responseData?.agents?.length || 0,
-      fromCache: responseData?.fromCache,
-      totalCount: responseData?.totalCount,
-      hasMore: responseData?.hasMore,
-      mode: responseData?.mode
-    });
+    // console.log(`✅ NEW Backend Response:`, {
+    //   agentsCount: responseData?.agents?.length || 0,
+    //   fromCache: responseData?.fromCache,
+    //   totalCount: responseData?.totalCount,
+    //   hasMore: responseData?.hasMore,
+    //   mode: responseData?.mode
+    // });
     
     // Return the response in the expected format
     return {
@@ -363,7 +363,7 @@ export const fetchFeaturedAgents = async (limit = 6, options = {}) => {
     }
     
     const url = `/api/agents/featured?${queryParams.toString()}`;
-    console.log(`[API] Fetching featured agents with limit ${limit}`);
+    // console.log(`[API] Fetching featured agents with limit ${limit}`);
     
     const response = await api.get(url);
     return response.data?.agents || [];
@@ -379,7 +379,7 @@ export const fetchFeaturedAgents = async (limit = 6, options = {}) => {
  */
 export const fetchWishlists = async () => {
   try {
-    console.log(`[API] Fetching user wishlists`);
+    // console.log(`[API] Fetching user wishlists`);
     const response = await api.get('/api/user/wishlists');
     return response.data?.wishlists || [];
   } catch (error) {
@@ -522,7 +522,7 @@ export const getAgentsCount = async (category = null) => {
     const queryString = queryParams.toString();
     const url = `/api/agents/count${queryString ? `?${queryString}` : ''}`;
     
-    console.log(`[API] Getting agents count${category ? ` for category "${category}"` : ''}`);
+    // console.log(`[API] Getting agents count${category ? ` for category "${category}"` : ''}`);
     const response = await api.get(url);
     
     return response.data?.count || response.data?.totalCount || 0;
@@ -538,7 +538,7 @@ export const getAgentsCount = async (category = null) => {
  */
 export const checkApiStatus = async () => {
   try {
-    console.log(`Checking API status at ${API_URL}/api/health`);
+    // console.log(`Checking API status at ${API_URL}/api/health`);
     
     // Make a simple GET request to the status endpoint
     const response = await fetch(`${API_URL}/api/health`, {
@@ -548,7 +548,7 @@ export const checkApiStatus = async () => {
       }
     });
     
-    console.log(`API status response: ${response.status}`);
+    // console.log(`API status response: ${response.status}`);
     
     if (response.ok) {
       return {
@@ -590,7 +590,7 @@ export const checkApiStatus = async () => {
  */
 export const deletePost = async (postId, token) => {
   try {
-    console.log(`[API] Deleting post ${postId}`);
+    // console.log(`[API] Deleting post ${postId}`);
     
     // Set up headers with authentication if token is provided
     const headers = {};
@@ -638,7 +638,7 @@ export const fetchAgentById = async (agentId, options = {}) => {
       timestamp = Date.now() 
     } = options;
     
-    console.log(`Attempting to fetch agent with ID: ${agentId}`, { skipCache });
+    // console.log(`Attempting to fetch agent with ID: ${agentId}`, { skipCache });
     
     // Validate agent ID format
     if (!agentId || typeof agentId !== 'string') {
@@ -652,7 +652,7 @@ export const fetchAgentById = async (agentId, options = {}) => {
     // Check for a pending request for this exact agent
     // This prevents duplicate requests when components mount simultaneously
     if (pendingAgentRequests[cacheKey]) {
-      console.log(`Using pending request for agent ${agentId}`);
+      // console.log(`Using pending request for agent ${agentId}`);
       try {
         return await pendingAgentRequests[cacheKey];
       } catch (error) {
@@ -673,17 +673,17 @@ export const fetchAgentById = async (agentId, options = {}) => {
           
           // Use cache if it's less than the cache duration old
           if (now - cacheTime < AGENT_CACHE_DURATION) {
-            console.log(`Using cached data for agent ${agentId}`);
+            // console.log(`Using cached data for agent ${agentId}`);
             return { ...parsedData, fromCache: true };
           } else {
-            console.log(`Cache expired for agent ${agentId}, fetching fresh data`);
+            // console.log(`Cache expired for agent ${agentId}, fetching fresh data`);
           }
         }
       } catch (cacheError) {
         console.warn('Error reading from cache:', cacheError);
       }
     } else {
-      console.log(`Skipping cache for agent ${agentId} as requested`);
+      // console.log(`Skipping cache for agent ${agentId} as requested`);
     }
     
     // Special handling for different ID formats
@@ -697,10 +697,10 @@ export const fetchAgentById = async (agentId, options = {}) => {
     let endpoint = `/api/agents/${agentId}`;
     
     if (isFirebaseId) {
-      console.log('Detected Firebase-style document ID, using doc endpoint');
+      // console.log('Detected Firebase-style document ID, using doc endpoint');
       endpoint = `/api/agents/doc/${agentId}`;
     } else if (isStandardAgentId) {
-      console.log('Detected standard agent-XX format ID, using specific route');
+      // console.log('Detected standard agent-XX format ID, using specific route');
       // For agent-XX format, just use it directly
     }
     
@@ -727,9 +727,9 @@ export const fetchAgentById = async (agentId, options = {}) => {
     const requestPromise = (async () => {
       try {
         // Make the API request
-        console.log(`Making request to: ${endpoint}`);
+        // console.log(`Making request to: ${endpoint}`);
         const response = await api.get(endpoint, { signal });
-        console.log('Successfully fetched agent from API');
+        // console.log('Successfully fetched agent from API');
         
         let responseData;
         
@@ -773,7 +773,7 @@ export const fetchAgentById = async (agentId, options = {}) => {
         try {
           const cachedData = localStorage.getItem(cacheKey);
           if (cachedData) {
-            console.log(`API call failed, using cached data for agent ${agentId}`);
+            // console.log(`API call failed, using cached data for agent ${agentId}`);
             return JSON.parse(cachedData);
           }
         } catch (cacheError) {
@@ -872,7 +872,7 @@ export const getUserLikeStatus = async (agentId) => {
  */
 export const downloadFreeAgent = async (agentId) => {
   try {
-    console.log(`[API] Downloading free agent ${agentId}`);
+    // console.log(`[API] Downloading free agent ${agentId}`);
     
     // Use the free-download endpoint which doesn't require authentication
     // Create config without auth headers for mobile compatibility
@@ -888,16 +888,16 @@ export const downloadFreeAgent = async (agentId) => {
       try {
         const token = await currentUser.getIdToken();
         config.headers.Authorization = `Bearer ${token}`;
-        console.log(`[API] Including optional authentication for logged in user`);
+        // console.log(`[API] Including optional authentication for logged in user`);
       } catch (authError) {
-        console.log(`[API] Could not get auth token, proceeding without authentication:`, authError);
+        // console.log(`[API] Could not get auth token, proceeding without authentication:`, authError);
         // Continue without auth - free downloads don't require it
       }
     }
     
     const response = await api.post(`/api/agents/${encodeURIComponent(agentId)}/free-download`, {}, config);
     
-    console.log(`[API] Free agent download response:`, response.data);
+    // console.log(`[API] Free agent download response:`, response.data);
     
     // Note: We don't need to call incrementAgentDownloadCount or recordAgentDownload
     // because the /free-download endpoint already handles these operations server-side
@@ -952,7 +952,7 @@ export const downloadFreeAgent = async (agentId) => {
  */
 export const incrementAgentDownloadCount = async (agentId) => {
   try {
-    console.log(`[API] Incrementing download count for agent ${agentId}`);
+    // console.log(`[API] Incrementing download count for agent ${agentId}`);
     const response = await api.post(`/api/agents/${encodeURIComponent(agentId)}/increment-downloads`);
     return {
       success: true,

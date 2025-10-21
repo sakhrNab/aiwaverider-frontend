@@ -110,7 +110,7 @@ const PaymentSuccessRecommendations = ({ purchasedItems, currency = 'USD', limit
 
   // Handle image loading errors
   const handleImageError = (e) => {
-    console.log(`Image error for product recommendation`);
+    // console.log(`Image error for product recommendation`);
     
     // Get the product title from the alt text
     const productTitle = e.target.alt || 'Product';

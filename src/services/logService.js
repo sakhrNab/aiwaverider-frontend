@@ -29,7 +29,7 @@ export const initializeErrorMonitoring = async () => {
         tracesSampleRate: MONITORING.SENTRY.TRACES_SAMPLE_RATE,
       });
       sentryCaptureInitialized = true;
-      console.log('Sentry initialized for error monitoring');
+      // console.log('Sentry initialized for error monitoring');
     }
 
     // Initialize LogRocket
@@ -67,7 +67,7 @@ export const initializeErrorMonitoring = async () => {
         }
       });
       logRocketInitialized = true;
-      console.log('LogRocket initialized for session recording');
+      // console.log('LogRocket initialized for session recording');
       
       // Connect LogRocket with Sentry if both are available
       if (sentryCaptureInitialized) {
@@ -232,7 +232,7 @@ export const logTransaction = (transactionId, status, type, metadata = {}) => {
   
   // Log to console in non-production
   if (!ENV.PROD) {
-    console.log(`[TRANSACTION] ${type} ${status}: ${transactionId}`, transactionLog);
+    // console.log(`[TRANSACTION] ${type} ${status}: ${transactionId}`, transactionLog);
   }
   
   // In production, send to analytics

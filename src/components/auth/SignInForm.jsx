@@ -165,7 +165,7 @@ const SignIn = ({ isOpen, onClose, redirectPath }) => {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      console.log('Starting Google sign-in from SignIn component');
+      // console.log('Starting Google sign-in from SignIn component');
       
       const userData = await signInWithGoogle();
       
@@ -181,7 +181,7 @@ const SignIn = ({ isOpen, onClose, redirectPath }) => {
         return; // Exit with network error
       }
       
-      console.log('SignIn component received user data:', userData);
+      // console.log('SignIn component received user data:', userData);
       
       if (userData) {
         // Clear any lockout status
@@ -232,7 +232,7 @@ const SignIn = ({ isOpen, onClose, redirectPath }) => {
   const handleMicrosoftSignIn = async () => {
     try {
       setIsLoading(true);
-      console.log('Starting Microsoft sign-in from SignIn component');
+      // console.log('Starting Microsoft sign-in from SignIn component');
       
       const userData = await signInWithMicrosoft();
       
@@ -248,7 +248,7 @@ const SignIn = ({ isOpen, onClose, redirectPath }) => {
         return; // Exit with network error
       }
       
-      console.log('SignIn component received user data:', userData);
+      // console.log('SignIn component received user data:', userData);
       
       if (userData) {
         // Clear any lockout status

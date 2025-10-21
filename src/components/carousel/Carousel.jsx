@@ -22,7 +22,7 @@ const Carousel = ({ userPreferences, searchQuery }) => {
   // Process and organize carousel data
   const processCarouselData = useCallback(() => {
     if (!carouselData || !userPreferences) {
-      console.log('Missing data:', { carouselData: !!carouselData, userPreferences: !!userPreferences });
+      // console.log('Missing data:', { carouselData: !!carouselData, userPreferences: !!userPreferences });
       return [];
     }
 
@@ -37,7 +37,7 @@ const Carousel = ({ userPreferences, searchQuery }) => {
       );
 
       if (availableCategories.length === 0) {
-        console.log('No categories with posts found');
+        // console.log('No categories with posts found');
         return [];
       }
       
@@ -69,7 +69,7 @@ const Carousel = ({ userPreferences, searchQuery }) => {
         
         // If no matches found in any category
         if (Object.keys(filteredCarouselData).length === 0) {
-          console.log('No matching posts found for query:', searchQuery);
+          // console.log('No matching posts found for query:', searchQuery);
         }
       }
 
@@ -93,7 +93,7 @@ const Carousel = ({ userPreferences, searchQuery }) => {
         return b.posts.length - a.posts.length;
       });
 
-      console.log('Processed categories:', categoriesWithPriority.map(c => ({
+      // console.log('Processed categories:', categoriesWithPriority.map(c => ({
         category: c.category,
         priority: c.priority,
         postsCount: c.posts.length

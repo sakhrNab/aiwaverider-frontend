@@ -154,7 +154,6 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
     
     // Check if the current user has liked this agent
     if (user && agentId) {
-      console.log(`Checking if user has liked agent. User ID: ${user.uid}, Agent ID: ${agentId}`);
       
       const checkUserLiked = async () => {
         try {
@@ -171,7 +170,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
                               (typeof like === 'object' && like.userId === user.uid) || 
                               like === user.uid
                             );
-            console.log(`Determined like status from props: ${userLiked}`);
+            // console.log(`Determined like status from props: ${userLiked}`);
             setLiked(userLiked);
             setInitialStateLoaded(true);
             return;
@@ -186,7 +185,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
               const now = Date.now();
               
               if (now - cacheTime < 5 * 60 * 1000) {
-                console.log(`Using cached like status for agent ${agentId}`);
+                // console.log(`Using cached like status for agent ${agentId}`);
                 setLiked(parsedStatus.liked || false);
                 if (parsedStatus.likesCount !== undefined) {
                   setLikeCount(parsedStatus.likesCount);
@@ -200,10 +199,10 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
           }
 
           // Fetch from API if no valid cache
-          console.log('No valid cached like data, fetching from API');
+          // console.log('No valid cached like data, fetching from API');
           const likeStatus = await getUserLikeStatus(agentId);
           const isLiked = likeStatus.liked || false;
-          console.log(`API check: User has liked agent: ${isLiked}`);
+          // console.log(`API check: User has liked agent: ${isLiked}`);
           setLiked(isLiked);
           
           if (likeStatus.likesCount !== undefined) {
@@ -229,7 +228,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
       
       checkUserLiked();
     } else {
-      console.log("No user or agent ID, setting initialStateLoaded = true");
+      // console.log("No user or agent ID, setting initialStateLoaded = true");
       setInitialStateLoaded(true);
     }
   }, [user, agentId]);
@@ -279,7 +278,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
   // Enhanced confirm toast with better UX
   const showConfirmToast = () => {
     toast.dismiss();
-    console.log("Showing unlike confirmation dialog");
+    // console.log("Showing unlike confirmation dialog");
     
     toast(
       ({ closeToast }) => (
@@ -291,7 +290,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
             <button 
               onClick={() => {
                 closeToast();
-                console.log("Unlike confirmed, calling processLikeToggle()");
+                // console.log("Unlike confirmed, calling processLikeToggle()");
                 processLikeToggle();
               }}
               className="confirm-toast-button confirm"
@@ -301,7 +300,7 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
             <button 
               onClick={() => {
                 closeToast();
-                console.log("Unlike cancelled");
+                // console.log("Unlike cancelled");
               }}
               className="confirm-toast-button cancel"
             >
@@ -329,9 +328,9 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
     setIsLoading(true);
     
     try {
-      console.log('Sending toggle like request to server');
+      // console.log('Sending toggle like request to server');
       const response = await toggleAgentLike(agentId);
-      console.log('Server response:', response);
+      // console.log('Server response:', response);
       
       if (response.success) {
         const didLike = response.liked;
@@ -413,11 +412,11 @@ const LikeButton = ({ agentId, initialLikes = 0, onLikeUpdate }) => {
     if (isLoading || !initialStateLoaded) return;
     
     if (liked) {
-      console.log("Agent is liked, showing confirmation dialog");
+      // console.log("Agent is liked, showing confirmation dialog");
       showConfirmToast();
       return;
     } else {
-      console.log("Agent is not liked, directly toggling like");
+      // console.log("Agent is not liked, directly toggling like");
     }
     
     processLikeToggle();
@@ -1219,7 +1218,7 @@ const AgentDetail = () => {
   
   // Enhanced setup realtime updates
   const setupRealtimeUpdates = (agentId, setAgentFn, setLikesFn, setDownloadFn) => {
-    console.log('Setting up periodic updates for agent:', agentId);
+    // console.log('Setting up periodic updates for agent:', agentId);
   };
   
   const isLoadingRef = useRef(false);
@@ -1230,18 +1229,18 @@ const AgentDetail = () => {
     if (dataLoaded || !agentId || loadAttempt.current >= MAX_LOAD_ATTEMPTS || isLoadingRef.current) return;
     
     isLoadingRef.current = true;
-    console.log(`Starting to load agent ${agentId}, attempt ${loadAttempt.current + 1}`);
+    // console.log(`Starting to load agent ${agentId}, attempt ${loadAttempt.current + 1}`);
     
     if ((!allAgents || allAgents.length === 0) && !(isStoreLoading || false)) {
       const shouldLoadAllAgents = loadAttempt.current > 0 || !agentId;
       
       if (shouldLoadAllAgents) {
-        console.log('Store is empty, loading initial data first');
+        // console.log('Store is empty, loading initial data first');
         loadInitialData(false).catch(err => {
           console.error('Failed to load initial store data:', err);
         });
       } else {
-        console.log('Skipping full agent store load since we only need a single agent');
+        // console.log('Skipping full agent store load since we only need a single agent');
       }
     }
     
@@ -1260,16 +1259,16 @@ const AgentDetail = () => {
           return;
         }
         
-        console.log(`Loading agent detail for ID: ${agentId}, from route: ${window.location.pathname}`);
+        // console.log(`Loading agent detail for ID: ${agentId}, from route: ${window.location.pathname}`);
         
-        console.log('Checking agent store for agent data...', allAgents);
+        // console.log('Checking agent store for agent data...', allAgents);
         if (allAgents && Array.isArray(allAgents) && allAgents.length > 0) {
           const storeAgent = allAgents.find(a => a.id === agentId || a._id === agentId);
           if (storeAgent && !loadAttempt.current) {
-            console.log('Using agent data from store:', storeAgent);
+            // console.log('Using agent data from store:', storeAgent);
             
             const hasReviews = storeAgent.reviews && Array.isArray(storeAgent.reviews) && storeAgent.reviews.length > 0;
-            console.log('Agent from store has reviews:', hasReviews ? storeAgent.reviews.length : 0);
+            // console.log('Agent from store has reviews:', hasReviews ? storeAgent.reviews.length : 0);
             
             setAgent(storeAgent);
             
@@ -1306,11 +1305,11 @@ const AgentDetail = () => {
           }
         }
         
-        console.log('Fetching agent data from API...');
+        // console.log('Fetching agent data from API...');
         
         const abortController = new AbortController();
         const timeoutId = setTimeout(() => {
-          console.log('Aborting initial agent fetch due to timeout');
+          // console.log('Aborting initial agent fetch due to timeout');
           abortController.abort('Initial load timeout');
           setError("Request timed out. Please try again later.");
           setLoading(false);
@@ -1324,12 +1323,12 @@ const AgentDetail = () => {
           await new Promise(resolve => setTimeout(resolve, 300));
           
           if (apiCallInProgressRef.current) {
-            console.log('API call already in progress, waiting...');
+            // console.log('API call already in progress, waiting...');
             await new Promise(resolve => setTimeout(resolve, 500));
           }
           
           apiCallInProgressRef.current = true;
-          console.log(`Making API call for agent ${agentId}`);
+          // console.log(`Making API call for agent ${agentId}`);
           
           const forceRefresh = window.location.search.includes('refresh=true');
           
@@ -1344,7 +1343,7 @@ const AgentDetail = () => {
             const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
             
             if (data.reviews && Array.isArray(data.reviews)) {
-              console.log(`Received ${data.reviews.length} fresh reviews with agent data, syncing with store`);
+              // console.log(`Received ${data.reviews.length} fresh reviews with agent data, syncing with store`);
               updateStoreReviews(agentId, data.reviews);
               reviewsFetchedRef.current = true;
               
@@ -1377,21 +1376,21 @@ const AgentDetail = () => {
           return;
         }
         
-        console.log('Raw API response for fetchAgentById:', data);
+        // console.log('Raw API response for fetchAgentById:', data);
         
         if (!data) {
           throw new Error("No agent data returned from API");
         }
         
-        console.log(`Successfully loaded agent data for ${agentId}`);
+        // console.log(`Successfully loaded agent data for ${agentId}`);
         
         try {
           localStorage.setItem(`agent_${agentId}`, JSON.stringify(data));
-          console.log(`Cached agent data for ${agentId} in localStorage`);
+          // console.log(`Cached agent data for ${agentId} in localStorage`);
           
           const existingAgent = (allAgents || []).find(a => a.id === agentId || a._id === agentId);
           if (!existingAgent) {
-            console.log('Adding agent to store for future reference');
+            // console.log('Adding agent to store for future reference');
             setAllAgents([...(allAgents || []), data]);
           }
         } catch (cacheError) {
@@ -1410,7 +1409,7 @@ const AgentDetail = () => {
           businessValue: data.businessValue || 'This professionally crafted AI agent delivers exceptional value through cutting-edge automation and intelligent optimization.'
         };
         
-        console.log('Sanitized agent data:', sanitizedData);
+        // console.log('Sanitized agent data:', sanitizedData);
         
         // Enhanced price details formatting
         if (data.priceDetails) {
@@ -1433,16 +1432,16 @@ const AgentDetail = () => {
         
         // Enhanced image handling
         if (!sanitizedData.imageUrl && sanitizedData.image && sanitizedData.image.url) {
-          console.log('Adding main imageUrl');
+          // console.log('Adding main imageUrl');
           sanitizedData.imageUrl = sanitizedData.image.url;
         } else if (!sanitizedData.imageUrl && sanitizedData.images && sanitizedData.images.length > 0) {
-          console.log('Adding image.url');
+          // console.log('Adding image.url');
           sanitizedData.imageUrl = sanitizedData.images[0];
         } else if (!sanitizedData.imageUrl && sanitizedData.iconUrl) {
-          console.log('Adding iconUrl');
+          // console.log('Adding iconUrl');
           sanitizedData.imageUrl = sanitizedData.iconUrl;
         } else if (!sanitizedData.imageUrl) {
-          console.log('Creating professional placeholder image');
+          // console.log('Creating professional placeholder image');
           sanitizedData.imageUrl = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23667eea;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23764ba2;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="300" fill="url(%23grad)"/%3E%3Ctext x="200" y="150" font-family="Arial" font-size="18" text-anchor="middle" fill="white" font-weight="bold"%3E${encodeURIComponent(sanitizedData.title)}%3C/text%3E%3C/svg%3E`;
         }
         
@@ -1469,7 +1468,7 @@ const AgentDetail = () => {
         }
         
         setAgent(sanitizedData);
-        console.log('Final agent data set in state:', sanitizedData);
+        // console.log('Final agent data set in state:', sanitizedData);
         
         // Enhanced initial data setup
         if (sanitizedData.reviews && Array.isArray(sanitizedData.reviews)) {
@@ -1514,17 +1513,17 @@ const AgentDetail = () => {
         isLoadingRef.current = false;
         
         if (err.name === 'AbortError' || (err.message && err.message.includes('aborted'))) {
-          console.log('Agent initial load was aborted due to timeout');
+          // console.log('Agent initial load was aborted due to timeout');
           
           try {
-            console.log('Attempting to load from cache after abort');
+            // console.log('Attempting to load from cache after abort');
             const cachedData = await fetchAgentById(agentId, { 
               skipCache: false,
               forceCache: true 
             });
             
             if (cachedData) {
-              console.log('Successfully loaded agent from cache after abort');
+              // console.log('Successfully loaded agent from cache after abort');
               setAgent(cachedData);
               setLoading(false);
               setDataLoaded(true);
@@ -1562,7 +1561,7 @@ const AgentDetail = () => {
     loadAgent();
     
     if (agentId && !viewTracked) {
-      console.log('Tracking product view for recommendations:', agentId);
+      // console.log('Tracking product view for recommendations:', agentId);
       setViewTracked(true);
     }
   }, [agentId, viewTracked]);
@@ -1576,10 +1575,10 @@ const AgentDetail = () => {
     
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        console.log('Page hidden, pausing polling');
+        // console.log('Page hidden, pausing polling');
         isPollingActive = false;
       } else {
-        console.log('Page visible, resuming polling');
+        // console.log('Page visible, resuming polling');
         isPollingActive = true;
       }
     };
@@ -1588,12 +1587,12 @@ const AgentDetail = () => {
     
     const fetchData = async () => {
       if (!isPollingActive) {
-        console.log('Skipping poll because page is not visible');
+        // console.log('Skipping poll because page is not visible');
         return;
       }
       
       if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-        console.log(`Stopping polling after ${consecutiveErrors} consecutive errors`);
+        // console.log(`Stopping polling after ${consecutiveErrors} consecutive errors`);
         if (intervalId) {
           clearInterval(intervalId);
         }
@@ -1605,19 +1604,19 @@ const AgentDetail = () => {
       const now = Date.now();
       
       if (backendErrorUntil > now) {
-        console.log(`Skipping poll because backend had errors. Will retry after ${new Date(backendErrorUntil).toLocaleTimeString()}`);
+        // console.log(`Skipping poll because backend had errors. Will retry after ${new Date(backendErrorUntil).toLocaleTimeString()}`);
         return;
       }
       
       try {
-        console.log('Manual polling for agent updates');
+        // console.log('Manual polling for agent updates');
         
         const abortController = new AbortController();
         
         let timeoutId = null;
         try {
           timeoutId = setTimeout(() => {
-            console.log('Aborting agent update poll due to timeout');
+            // console.log('Aborting agent update poll due to timeout');
             abortController.abort('Timeout');
           }, 15000);
           
@@ -1626,9 +1625,9 @@ const AgentDetail = () => {
           
           if (shouldSkipCache) {
             localStorage.setItem(`last_poll_${agentId}`, now.toString());
-            console.log('Polling with fresh data (skipping cache)');
+            // console.log('Polling with fresh data (skipping cache)');
           } else {
-            console.log('Polling with cached data if available');
+            // console.log('Polling with cached data if available');
           }
           
           const agentData = await fetchAgentById(agentId, { 
@@ -1682,9 +1681,9 @@ const AgentDetail = () => {
         
         if (error.name === 'AbortError' || error.code === 'ERR_CANCELED' || 
             (error.message && (error.message.includes('aborted') || error.message.includes('canceled')))) {
-          console.log('Agent update poll was aborted: ', error.message);
+          // console.log('Agent update poll was aborted: ', error.message);
         } else if (error.code === 'ERR_NETWORK') {
-          console.log('Network error during agent poll - will retry later');
+          // console.log('Network error during agent poll - will retry later');
         } else if (error.response && error.response.status === 404) {
           console.error('Agent not found (404) - stopping periodic updates');
           if (intervalId) {
@@ -1703,7 +1702,7 @@ const AgentDetail = () => {
     intervalId = setInterval(fetchData, 60 * 60 * 1000);
     
     return () => {
-      console.log('Cleaning up polling interval and visibility listener');
+      // console.log('Cleaning up polling interval and visibility listener');
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (intervalId) {
         clearInterval(intervalId);
@@ -1717,30 +1716,30 @@ const AgentDetail = () => {
       return;
     }
     
-    console.log('Checking if reviews need to be fetched or refreshed');
+    // console.log('Checking if reviews need to be fetched or refreshed');
     
     const updateStoreReviews = useAgentStore.getState().updateAgentReviews;
     
     const fetchReviews = async () => {
       try {
-        console.log('Checking if reviews need to be fetched or refreshed');
+        // console.log('Checking if reviews need to be fetched or refreshed');
         
         reviewsFetchedRef.current = true;
         
         const tabChanged = sessionStorage.getItem(`last_active_tab_${agentId}`) !== activeTab;
         if (tabChanged && activeTab === 'reviews') {
-          console.log('Tab changed to reviews');
+          // console.log('Tab changed to reviews');
           sessionStorage.setItem(`last_active_tab_${agentId}`, activeTab);
         }
         
         if (agent && agent.reviews && Array.isArray(agent.reviews)) {
-          console.log(`Using ${agent.reviews.length} reviews already included in agent data`);
+          // console.log(`Using ${agent.reviews.length} reviews already included in agent data`);
           
           setReviewCount(agent.reviews.length);
           
           localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
         } else if (agent) {
-          console.log('No reviews found in agent data');
+          // console.log('No reviews found in agent data');
           setReviewCount(0);
           
           if (!agent.reviews) {
@@ -1757,7 +1756,7 @@ const AgentDetail = () => {
           
           localStorage.setItem(`last_reviews_fetch_${agentId}`, Date.now().toString());
         } else {
-          console.log('No agent data available');
+          // console.log('No agent data available');
         }
       } catch (err) {
         console.error('Error processing reviews:', err);
@@ -1937,24 +1936,24 @@ const AgentDetail = () => {
     const validUrls = [];
     
     if (agent.image && typeof agent.image === 'object' && agent.image.url && !validUrls.includes(agent.image.url)) {
-      console.log('Adding image.url');
+      // console.log('Adding image.url');
       validUrls.push(agent.image.url);
     }
     
     if (agent.iconUrl && !validUrls.includes(agent.iconUrl)) {
-      console.log('Adding iconUrl');
+      // console.log('Adding iconUrl');
       validUrls.push(agent.iconUrl);
     }
     
     if (validUrls.length === 0) {
-      console.log('No valid images found, using professional placeholder');
+      // console.log('No valid images found, using professional placeholder');
       const title = agent.title || agent.name || 'Professional AI Agent';
       const placeholderUrl = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23667eea;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23764ba2;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="300" fill="url(%23grad)"/%3E%3Ctext x="200" y="150" font-family="Arial" font-size="18" text-anchor="middle" fill="white" font-weight="bold"%3E${encodeURIComponent(title)}%3C/text%3E%3C/svg%3E`;
       validUrls.push(placeholderUrl);
     }
     
     const uniqueUrls = [...new Set(validUrls)];
-    console.log(`Assembled ${uniqueUrls.length} unique image URLs for agent`);
+    // console.log(`Assembled ${uniqueUrls.length} unique image URLs for agent`);
     
     return uniqueUrls;
   };
@@ -1979,7 +1978,7 @@ const AgentDetail = () => {
       
       addToCart(product);
       
-      console.log('Showing cart toast with 3-second duration');
+      // console.log('Showing cart toast with 3-second duration');
       toast.success('🛒 Added to cart! Ready to unlock this amazing agent!', {
         autoClose: 3000, // Back to 3 seconds
         position: "bottom-right",
@@ -2146,34 +2145,34 @@ const AgentDetail = () => {
   // Enhanced mobile download handler - creates ZIP on frontend for better mobile compatibility
   const handleMobileDownload = async (downloadUrl, filename, downloadResult) => {
     try {
-      console.log('[MOBILE] Creating ZIP file for mobile download');
-      console.log('[MOBILE] Agent ID:', agentId);
-      console.log('[MOBILE] Download URL from response:', downloadUrl);
+      // console.log('[MOBILE] Creating ZIP file for mobile download');
+      // console.log('[MOBILE] Agent ID:', agentId);
+      // console.log('[MOBILE] Download URL from response:', downloadUrl);
       
       // Create a new ZIP instance
       const zip = new JSZip();
       
       // Use data from the free-download response - no additional API calls needed
-      console.log('[MOBILE] Using data from free-download response');
-      console.log('[MOBILE] Download result:', downloadResult);
+      // console.log('[MOBILE] Using data from free-download response');
+      // console.log('[MOBILE] Download result:', downloadResult);
       
       // Add JSON file using the content from the free-download response (no second call needed)
       if (downloadResult && downloadResult.jsonFileContent) {
-        console.log('[MOBILE] Adding JSON file from free-download response content');
+        // console.log('[MOBILE] Adding JSON file from free-download response content');
         try {
           const jsonFileName = agent.jsonFile?.originalName || 'workflow.json';
           zip.file(jsonFileName, downloadResult.jsonFileContent);
-          console.log(`[MOBILE] Successfully added ${jsonFileName} to ZIP from response content`);
+          // console.log(`[MOBILE] Successfully added ${jsonFileName} to ZIP from response content`);
         } catch (jsonError) {
           console.warn(`[MOBILE] Error adding JSON from response:`, jsonError.message);
         }
       } else {
         console.warn('[MOBILE] No JSON file content available in free-download response');
-        console.log('[MOBILE] Download result keys:', downloadResult ? Object.keys(downloadResult) : 'No download result');
+        // console.log('[MOBILE] Download result keys:', downloadResult ? Object.keys(downloadResult) : 'No download result');
         
         // Fallback: try to fetch JSON via proxy if content not available
         if (downloadUrl) {
-          console.log('[MOBILE] Falling back to proxy fetch for JSON file');
+          // console.log('[MOBILE] Falling back to proxy fetch for JSON file');
           try {
             const proxyUrl = `/api/agents/${encodeURIComponent(agentId)}/download?url=${encodeURIComponent(downloadUrl)}`;
             const jsonResponse = await fetch(proxyUrl, {
@@ -2186,7 +2185,7 @@ const AgentDetail = () => {
               const jsonContent = await jsonResponse.text();
               const jsonFileName = agent.jsonFile?.originalName || 'workflow.json';
               zip.file(jsonFileName, jsonContent);
-              console.log(`[MOBILE] Successfully added ${jsonFileName} to ZIP via proxy fallback`);
+              // console.log(`[MOBILE] Successfully added ${jsonFileName} to ZIP via proxy fallback`);
             } else {
               console.warn(`[MOBILE] Proxy fallback failed: ${jsonResponse.status} ${jsonResponse.statusText}`);
             }
@@ -2198,12 +2197,12 @@ const AgentDetail = () => {
       
       // Add TXT file from deliverables (generate directly, no API call needed)
       if (agent.deliverables && Array.isArray(agent.deliverables)) {
-        console.log(`[MOBILE] Found ${agent.deliverables.length} deliverables to process`);
+        // console.log(`[MOBILE] Found ${agent.deliverables.length} deliverables to process`);
         for (let i = 0; i < agent.deliverables.length; i++) {
           const deliverable = agent.deliverables[i];
           if (deliverable.fileName && deliverable.fileName.endsWith('.txt')) {
             try {
-              console.log(`[MOBILE] Processing TXT deliverable: ${deliverable.fileName}`);
+              // console.log(`[MOBILE] Processing TXT deliverable: ${deliverable.fileName}`);
               
               // Generate setup guide directly for TXT files
               const setupGuideContent = `# ${agent.title || agentId} - Setup Guide
@@ -2233,7 +2232,7 @@ If you need help, please contact support@aiwaverider.com
 Generated on: ${new Date().toISOString()}
 `;
               zip.file(deliverable.fileName, setupGuideContent);
-              console.log(`[MOBILE] Successfully generated and added ${deliverable.fileName} to ZIP`);
+              // console.log(`[MOBILE] Successfully generated and added ${deliverable.fileName} to ZIP`);
             } catch (deliverableError) {
               console.warn(`[MOBILE] Failed to add deliverable ${deliverable.fileName}:`, deliverableError.message);
             }
@@ -2242,10 +2241,10 @@ Generated on: ${new Date().toISOString()}
       }
       
       // Generate the ZIP file
-      console.log('[MOBILE] Generating ZIP file...');
-      console.log('[MOBILE] Files in ZIP:', Object.keys(zip.files));
+      // console.log('[MOBILE] Generating ZIP file...');
+      // console.log('[MOBILE] Files in ZIP:', Object.keys(zip.files));
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      console.log('[MOBILE] ZIP blob size:', zipBlob.size, 'bytes');
+      // console.log('[MOBILE] ZIP blob size:', zipBlob.size, 'bytes');
       
       // Create download link
       const url = window.URL.createObjectURL(zipBlob);
@@ -2254,7 +2253,7 @@ Generated on: ${new Date().toISOString()}
       link.download = `${agentId}.zip`;
       link.style.display = 'none';
       
-      console.log('[MOBILE] Triggering download...');
+      // console.log('[MOBILE] Triggering download...');
       document.body.appendChild(link);
       link.click();
       
@@ -2296,14 +2295,14 @@ Generated on: ${new Date().toISOString()}
     
     try {
       setLoading(true);
-      console.log('Starting download process for agent:', agentId);
+      // console.log('Starting download process for agent:', agentId);
       
       const downloadResult = await downloadFreeAgent(agentId);
-      console.log('Download API result:', downloadResult);
+      // console.log('Download API result:', downloadResult);
       
       if (downloadResult.success) {
         if (downloadResult.agent) {
-          console.log('Using agent data from download response to update UI');
+          // console.log('Using agent data from download response to update UI');
           
           setAgent(prev => ({
             ...prev,
@@ -2325,7 +2324,7 @@ Generated on: ${new Date().toISOString()}
             const cacheKeyWithReviews = `agent:${agentId}:with_reviews`;
             localStorage.removeItem(cacheKey);
             localStorage.removeItem(cacheKeyWithReviews);
-            console.log('[CACHE] Cleared localStorage cache for agent after download');
+            // console.log('[CACHE] Cleared localStorage cache for agent after download');
             
             // Also clear from agent store if it exists
             if (window.useAgentStore) {
@@ -2333,7 +2332,7 @@ Generated on: ${new Date().toISOString()}
               if (store && store.agents) {
                 // Force refresh the agent store data
                 store.refreshAgents();
-                console.log('[CACHE] Triggered agent store refresh');
+                // console.log('[CACHE] Triggered agent store refresh');
               }
             }
           } catch (cacheError) {
@@ -2348,7 +2347,7 @@ Generated on: ${new Date().toISOString()}
             }
           }
         } else {
-          console.log('No agent data in download response, incrementing download count locally');
+          // console.log('No agent data in download response, incrementing download count locally');
           setDownloadCount(prev => prev + 1);
         }
         
@@ -2385,26 +2384,26 @@ Generated on: ${new Date().toISOString()}
                          downloadResult.agent?.fileUrl || 
                          downloadResult.agent?.jsonFile?.url;
         
-        console.log('Checking for download URL in response:', {
-          topLevel: downloadResult.downloadUrl,
-          agentDownloadUrl: downloadResult.agent?.downloadUrl,
-          agentFileUrl: downloadResult.agent?.fileUrl,
-          jsonFileUrl: downloadResult.agent?.jsonFile?.url,
-          finalUrl: downloadUrl
-        });
+        // console.log('Checking for download URL in response:', {
+        //   topLevel: downloadResult.downloadUrl,
+        //   agentDownloadUrl: downloadResult.agent?.downloadUrl,
+        //   agentFileUrl: downloadResult.agent?.fileUrl,
+        //   jsonFileUrl: downloadResult.agent?.jsonFile?.url,
+        //   finalUrl: downloadUrl
+        // });
         
-        console.log('Full download result:', downloadResult);
-        console.log('Agent data from download result:', downloadResult.agent);
+        // console.log('Full download result:', downloadResult);
+        // console.log('Agent data from download result:', downloadResult.agent);
         
         if (downloadUrl && typeof downloadUrl === 'string' && downloadUrl.trim() !== '') {
           try {
-            console.log('Download URL found:', downloadUrl);
+            // console.log('Download URL found:', downloadUrl);
             
             // Validate download URL format
             let validUrl;
             try {
               validUrl = new URL(downloadUrl);
-              console.log('Download URL is valid:', validUrl.href);
+              // console.log('Download URL is valid:', validUrl.href);
               
               // Additional validation
               if (!['https:'].includes(validUrl.protocol)) {
@@ -2421,46 +2420,70 @@ Generated on: ${new Date().toISOString()}
               throw new Error(`Invalid download URL format: ${urlError.message}`);
             }
             
-            // Generate filename
-                const urlParts = downloadUrl.split('/');
-                let filename = urlParts[urlParts.length - 1];
-                if (filename.includes('?')) {
-                  filename = filename.split('?')[0];
-                }
-                if (!filename || !filename.includes('.')) {
-                  filename = `${agent.title || 'agent'}.json`;
-                }
-                if (!filename.endsWith('.json')) {
-                  filename = filename.replace(/\.[^/.]+$/, '') + '.json';
-                }
+            // Generate filename with proper sanitization (same as backend)
+            const cleanFileName = (originalName, agentTitle) => {
+              if (!originalName) return "automation-workflow.json";
+              
+              // Extract key terms from title for better filename
+              const titleWords = agentTitle.toLowerCase()
+                .replace(/[^\w\s]/g, '') // Remove special chars
+                .split(' ')
+                .filter(word => word.length > 3) // Keep meaningful words
+                .slice(0, 3); // Max 3 words
+              
+              // If we have meaningful title words, use them
+              if (titleWords.length > 0) {
+                return titleWords.join('-') + '-workflow.json';
+              }
+              
+              // Fallback: clean the original name
+              return originalName
+                .replace(/^\d+_/, '') // Remove ID numbers
+                .replace(/_/g, '-') // Replace underscores with dashes
+                .replace(/\s+/g, '-') // Replace spaces with dashes
+                .toLowerCase()
+                .replace(/[^a-z0-9\-\.]/g, '') // Keep only letters, numbers, dashes, dots
+                .replace(/\.json$/, '') + '.json';
+            };
+
+            // Get filename from URL or use agent data
+            const urlParts = downloadUrl.split('/');
+            let originalFilename = urlParts[urlParts.length - 1];
+            if (originalFilename.includes('?')) {
+              originalFilename = originalFilename.split('?')[0];
+            }
+            
+            // Use agent's jsonFile originalName if available, otherwise use URL filename
+            const sourceFilename = agent.jsonFile?.originalName || originalFilename || 'workflow.json';
+            const filename = cleanFileName(sourceFilename, agent.title || agentId);
             
             const isGoogleStorage = downloadUrl.includes('storage.googleapis.com') || downloadUrl.includes('firebasestorage.app');
             const hasGoogleAuth = downloadUrl.includes('GoogleAccessId') || downloadUrl.includes('Signature');
             
-            console.log('URL Analysis:', {
-              isGoogleStorage,
-              hasGoogleAuth,
-              url: downloadUrl
-            });
+            // console.log('URL Analysis:', {
+            //   isGoogleStorage,
+            //   hasGoogleAuth,
+            //   url: downloadUrl
+            // });
             
             if (isGoogleStorage) {
-              console.log('Using backend proxy for Google Storage download to avoid CORS');
+              // console.log('Using backend proxy for Google Storage download to avoid CORS');
               
               try {
                 // Use the correct proxy endpoint with the file URL as a query parameter
                 const proxyUrl = `/api/agents/${encodeURIComponent(agentId)}/download?url=${encodeURIComponent(downloadUrl)}`;
-                console.log('Proxy URL:', proxyUrl);
+                // console.log('Proxy URL:', proxyUrl);
                 
                 // Mobile vs Desktop download approach
                 if (isMobileDevice()) {
-                  console.log('Mobile device detected, showing download choice dialog');
+                  // console.log('Mobile device detected, showing download choice dialog');
                   
                   // Show choice dialog for mobile users
                   showMobileDownloadChoice(downloadUrl, filename, downloadResult);
                   return; // Exit early for mobile
                 } else {
                   // For desktop, use direct proxy download
-                  console.log('[DESKTOP] Using proxy for download');
+                  // console.log('[DESKTOP] Using proxy for download');
                   const link = document.createElement('a');
                   link.href = proxyUrl;
                   link.download = filename;
@@ -2468,7 +2491,7 @@ Generated on: ${new Date().toISOString()}
                   
                   document.body.appendChild(link);
                   link.click();
-                  console.log('Desktop download link clicked');
+                  // console.log('Desktop download link clicked');
                   
                   showToast('success', '📥 Download started! Check your downloads folder.', {
                     autoClose: 3000
@@ -2486,7 +2509,7 @@ Generated on: ${new Date().toISOString()}
                 
                 // For Google Storage URLs with auth, try direct download as fallback
                 if (hasGoogleAuth) {
-                  console.log('Proxy failed for authenticated Google Storage URL, trying direct download');
+                  // console.log('Proxy failed for authenticated Google Storage URL, trying direct download');
                   
                   try {
                     // Try direct download for authenticated Google Storage URLs
@@ -2503,7 +2526,7 @@ Generated on: ${new Date().toISOString()}
                       throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
                     }
                     
-                    console.log('Direct download successful, creating blob');
+                    // console.log('Direct download successful, creating blob');
                     
                     const responseText = await response.text();
                     const blob = new Blob([responseText], { 
@@ -2541,11 +2564,11 @@ Generated on: ${new Date().toISOString()}
                 });
                 
                 // Fall back to direct download
-                console.log('Falling back to direct download method');
+                // console.log('Falling back to direct download method');
                 throw new Error('Backend proxy download failed');
               }
             } else {
-              console.log('Attempting direct download for non-Google Storage URL');
+              // console.log('Attempting direct download for non-Google Storage URL');
               
               const response = await fetch(downloadUrl, {
                 method: 'GET',
@@ -2560,7 +2583,7 @@ Generated on: ${new Date().toISOString()}
                 throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
               }
               
-              console.log('Fetch successful, creating blob for download');
+              // console.log('Fetch successful, creating blob for download');
               
               const responseText = await response.text();
               
@@ -2582,7 +2605,7 @@ Generated on: ${new Date().toISOString()}
                 window.URL.revokeObjectURL(url);
               }, 100);
               
-              console.log('Download completed successfully via direct fetch');
+              // console.log('Download completed successfully via direct fetch');
               showToast('success', '📥 File downloaded successfully!', {
                 autoClose: 3000
               });

@@ -56,7 +56,7 @@ const CheckoutSuccess = () => {
       if (templatesData) {
         const templates = JSON.parse(templatesData);
         setDownloadTemplates(templates);
-        console.log(`Found ${templates.length} templates available for download`);
+        // console.log(`Found ${templates.length} templates available for download`);
         
         // If we have an order reference in session but not from URL, use it
         if (orderRef && !orderId) {
@@ -85,7 +85,7 @@ const CheckoutSuccess = () => {
     // If we have an order ID from URL parameters, use it directly
     if (orderIdFromParams) {
       setOrderId(orderIdFromParams);
-      console.log(`Using order ID from URL params: ${orderIdFromParams}`);
+      // console.log(`Using order ID from URL params: ${orderIdFromParams}`);
     }
     
     // Try to get purchased items from localStorage
@@ -108,7 +108,7 @@ const CheckoutSuccess = () => {
     if (paymentId && (status === 'success' || status === 'pending' || simulated)) {
       if (simulated) {
         // Handle simulated payment (test mode)
-        console.log('Handling simulated payment');
+        // console.log('Handling simulated payment');
         setOrderStatus('succeeded');
         setOrderId(paymentId);
         setIsLoading(false);
@@ -127,7 +127,7 @@ const CheckoutSuccess = () => {
         );
       } else if (paymentId === 'unknown' && orderIdFromParams) {
         // Special handling for credit card payments where we have an order ID but payment ID is unknown
-        console.log('Payment successful with unknown ID but order_id is available:', orderIdFromParams);
+        // console.log('Payment successful with unknown ID but order_id is available:', orderIdFromParams);
         setOrderStatus('succeeded');
         setIsLoading(false);
         
@@ -146,7 +146,7 @@ const CheckoutSuccess = () => {
       } else if (paymentId === 'unknown') {
         // Handle case where payment ID is unknown but status is success
         // This happens with some payment methods where the ID isn't returned properly
-        console.log('Payment successful but ID is unknown. Showing success page without API call.');
+        // console.log('Payment successful but ID is unknown. Showing success page without API call.');
         setOrderStatus('succeeded');
         setOrderId(generateOrderId());
         setIsLoading(false);
@@ -184,7 +184,7 @@ const CheckoutSuccess = () => {
       // If payment ID is unknown but we have an order ID, we can skip the status check
       // and mark payment as successful immediately
       if (paymentId === 'unknown' && orderId) {
-        console.log(`Marking payment as successful for unknown payment ID with order ID: ${orderId}`);
+        // console.log(`Marking payment as successful for unknown payment ID with order ID: ${orderId}`);
         setOrderStatus('succeeded');
         setStatusMessage('Your payment has been confirmed and your order is complete!');
         setStatusColor('text-green-600');
@@ -196,7 +196,7 @@ const CheckoutSuccess = () => {
       // If we have order_id but payment is still showing as processing,
       // and it's a card payment, assume it's already successful
       if (paymentType === 'payment_intent' && orderId && orderStatus === 'processing') {
-        console.log(`Card payment with order ID ${orderId} - assuming successful payment`);
+        // console.log(`Card payment with order ID ${orderId} - assuming successful payment`);
         setOrderStatus('succeeded');
         setStatusMessage('Your payment has been confirmed and your order is complete!');
         setStatusColor('text-green-600');
@@ -209,7 +209,7 @@ const CheckoutSuccess = () => {
       
       if (paymentType === 'sepa_credit_transfer') {
         endpoint = `/api/payments/sepa-credit-transfer/${paymentId}`;
-        console.log(`Checking SEPA payment status for ID: ${paymentId}`);
+        // console.log(`Checking SEPA payment status for ID: ${paymentId}`);
       } else if (paymentType === 'crypto') {
         endpoint = `/api/payments/crypto/${paymentId}`;
       } else if (paymentType.startsWith('stripe') || paymentId.startsWith('pi_')) {

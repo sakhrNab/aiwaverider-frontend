@@ -38,7 +38,7 @@ const checkApiAvailability = async () => {
   lastApiCheck = Date.now();
   
   try {
-    console.log(`[PostsContext] Checking API availability at ${BACKEND_URL}`);
+    // console.log(`[PostsContext] Checking API availability at ${BACKEND_URL}`);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
@@ -51,13 +51,13 @@ const checkApiAvailability = async () => {
     
     if (response.ok) {
       if (!isApiAvailable) {
-        console.log('[PostsContext] API is now available');
+        // console.log('[PostsContext] API is now available');
         toast.success('Connection to server restored');
       }
       isApiAvailable = true;
     } else {
       if (isApiAvailable) {
-        console.log('[PostsContext] API returned error status');
+        // console.log('[PostsContext] API returned error status');
         toast.error('Connection to server lost');
       }
       isApiAvailable = false;
@@ -292,11 +292,11 @@ export const PostsProvider = ({ children }) => {
 
   const getPostById = useCallback(
     async (postId, force = false) => {
-      console.log(`[PostsContext] Getting post ${postId}, force=${force}`);
+      // console.log(`[PostsContext] Getting post ${postId}, force=${force}`);
       
       // If not forcing a refresh and we have the post in cache, use it
       if (!force && postDetails[postId]) {
-        console.log(`[PostsContext] Using cached post ${postId}, views: ${postDetails[postId].views || 0}`);
+        // console.log(`[PostsContext] Using cached post ${postId}, views: ${postDetails[postId].views || 0}`);
         return postDetails[postId];
       }
       
@@ -305,7 +305,7 @@ export const PostsProvider = ({ children }) => {
         const data = await apiGetPostById(postId, force);
         
         if (data) {
-          console.log(`[PostsContext] Received post ${postId} from API, views: ${data.views || 0}`);
+          // console.log(`[PostsContext] Received post ${postId} from API, views: ${data.views || 0}`);
           
           // Update both our cache objects with the fresh data
           setPostDetails(prev => ({ ...prev, [postId]: data }));
@@ -364,11 +364,11 @@ export const PostsProvider = ({ children }) => {
   // Optimized fetchBatchComments with better caching and deduplication
   const fetchBatchComments = useCallback(async (postIds, force = false) => {
     if (!postIds || postIds.length === 0) {
-      console.log('[PostsContext] fetchBatchComments called with no postIds');
+      // console.log('[PostsContext] fetchBatchComments called with no postIds');
       return {};
     }
 
-    console.log(`[PostsContext] fetchBatchComments called for ${postIds.length} posts, force=${force}`);
+    // console.log(`[PostsContext] fetchBatchComments called for ${postIds.length} posts, force=${force}`);
     
     // Filter out null/undefined and get unique IDs
     const uniquePostIds = Array.from(new Set(postIds.filter(id => id)));
@@ -383,14 +383,14 @@ export const PostsProvider = ({ children }) => {
     
     // Check if this exact request is already in progress
     if (requestsInProgress[cacheKey]) {
-      console.log(`[PostsContext] Reusing in-progress request for batch comments: ${cacheKey}`);
+      // console.log(`[PostsContext] Reusing in-progress request for batch comments: ${cacheKey}`);
       return requestsInProgress[cacheKey];
     }
     
     // Check if API is available before making requests
     const apiAvailable = await checkApiAvailability();
     if (!apiAvailable && !force) {
-      console.log('[PostsContext] API unavailable, using cache only');
+      // console.log('[PostsContext] API unavailable, using cache only');
       // Return whatever we have in cache
       const cachedData = {};
       uniquePostIds.forEach(postId => {
@@ -418,20 +418,20 @@ export const PostsProvider = ({ children }) => {
       const isCacheFresh = (now - lastFetchTime) < CACHE_DURATION;
       
       if (commentsCache[postId] && isCacheFresh && !force) {
-        console.log(`[PostsContext] Using fresh cache for post ${postId}, age: ${(now - lastFetchTime)/1000}s`);
+        // console.log(`[PostsContext] Using fresh cache for post ${postId}, age: ${(now - lastFetchTime)/1000}s`);
         cachedData[postId] = commentsCache[postId];
         
         // Update loading state for this post immediately
         setLoadingComments(prev => ({ ...prev, [postId]: false }));
       } else {
-        console.log(`[PostsContext] Need to fetch comments for post ${postId}, cache age: ${(now - lastFetchTime)/1000}s`);
+        // console.log(`[PostsContext] Need to fetch comments for post ${postId}, cache age: ${(now - lastFetchTime)/1000}s`);
         postsNeedingFetch.push(postId);
       }
     });
     
     // If all posts were in cache and fresh, return immediately
     if (postsNeedingFetch.length === 0) {
-      console.log('[PostsContext] All comments available in cache, skipping API call');
+      // console.log('[PostsContext] All comments available in cache, skipping API call');
       return cachedData;
     }
     
@@ -451,7 +451,7 @@ export const PostsProvider = ({ children }) => {
         // Process posts in batches
         for (let i = 0; i < postsNeedingFetch.length; i += API_BATCH_SIZE) {
           const batchPostIds = postsNeedingFetch.slice(i, i + API_BATCH_SIZE);
-          console.log(`[PostsContext] Fetching batch ${Math.floor(i/API_BATCH_SIZE) + 1} with ${batchPostIds.length} posts`);
+          // console.log(`[PostsContext] Fetching batch ${Math.floor(i/API_BATCH_SIZE) + 1} with ${batchPostIds.length} posts`);
           
           try {
             // Build query string - joining IDs with commas for a single postIds parameter
@@ -459,7 +459,7 @@ export const PostsProvider = ({ children }) => {
             const queryString = `postIds=${batchPostIds.join(',')}`;
             const url = `${BACKEND_URL}/api/posts/batch-comments?${queryString}`;
             
-            console.log(`[PostsContext] Fetching from: ${url}`);
+            // console.log(`[PostsContext] Fetching from: ${url}`);
             
             const response = await fetch(url, {
               method: 'GET',
@@ -494,10 +494,10 @@ export const PostsProvider = ({ children }) => {
             // For each post in this failed batch, use cache if available (even if stale)
             batchPostIds.forEach(postId => {
               if (commentsCache[postId]) {
-                console.log(`[PostsContext] Using stale cache for post ${postId} due to fetch error`);
+                // console.log(`[PostsContext] Using stale cache for post ${postId} due to fetch error`);
                 commentsData[postId] = commentsCache[postId];
               } else {
-                console.log(`[PostsContext] No cache available for post ${postId}, using empty array`);
+                // console.log(`[PostsContext] No cache available for post ${postId}, using empty array`);
                 commentsData[postId] = [];
               }
             });
@@ -594,7 +594,7 @@ export const PostsProvider = ({ children }) => {
       return;
     }
     
-    console.log(`[PostsContext] Updating post ${updatedPost.id} in cache with views: ${updatedPost.views || 0}`);
+    // console.log(`[PostsContext] Updating post ${updatedPost.id} in cache with views: ${updatedPost.views || 0}`);
     
     // Update the post in the posts array
     setPosts(prev => 
@@ -653,7 +653,7 @@ export const PostsProvider = ({ children }) => {
             if (cachedData) {
               const { data, timestamp } = JSON.parse(cachedData);
               if (now - timestamp < CACHE_DURATION) {
-                console.log('Using cached carousel data');
+                // console.log('Using cached carousel data');
                 setCarouselData(data);
                 return data;
               }
@@ -661,7 +661,7 @@ export const PostsProvider = ({ children }) => {
           }
 
         setLoadingPosts(true);
-          console.log('Fetching fresh carousel data');
+          // console.log('Fetching fresh carousel data');
 
           // Fetch posts with optimized limit
           const response = await apiGetAllPosts('All', 20);
@@ -702,7 +702,7 @@ export const PostsProvider = ({ children }) => {
 
           // Fetch comments for visible posts ONLY if not skipped
           if (visiblePostIds.size > 0 && !skipComments) {
-            console.log('Fetching comments for carousel posts');
+            // console.log('Fetching comments for carousel posts');
             const commentsMap = await fetchBatchComments([...visiblePostIds], force);
             
             Object.keys(newCarouselData).forEach(category => {
@@ -712,7 +712,7 @@ export const PostsProvider = ({ children }) => {
               }));
             });
           } else {
-            console.log('Skipping comments fetch for carousel posts');
+            // console.log('Skipping comments fetch for carousel posts');
           }
 
           // Cache the results
@@ -766,13 +766,13 @@ export const PostsProvider = ({ children }) => {
       return;
     }
     
-    console.log(`[PostsContext] Updating comment ${updatedComment.id} in cache for post ${postId}`);
+    // console.log(`[PostsContext] Updating comment ${updatedComment.id} in cache for post ${postId}`);
     
     // First update the comments cache
     setCommentsCache(prev => {
       // Skip update if post doesn't exist in cache
       if (!prev[postId]) {
-        console.log(`[PostsContext] Post ${postId} not found in commentsCache, skipping comment update`);
+        // console.log(`[PostsContext] Post ${postId} not found in commentsCache, skipping comment update`);
         return prev;
       }
       
@@ -780,7 +780,7 @@ export const PostsProvider = ({ children }) => {
       const currentComments = Array.isArray(prev[postId]) ? prev[postId] : [];
       const commentIndex = currentComments.findIndex(c => c && c.id === updatedComment.id);
       
-      console.log(`[PostsContext] Comment ${updatedComment.id} ${commentIndex === -1 ? 'not found, adding new' : 'found, updating'} in commentsCache`);
+      // console.log(`[PostsContext] Comment ${updatedComment.id} ${commentIndex === -1 ? 'not found, adding new' : 'found, updating'} in commentsCache`);
       
       // Either add or update the comment
       const newComments = commentIndex === -1
@@ -798,7 +798,7 @@ export const PostsProvider = ({ children }) => {
     setPostDetails(prev => {
       // Skip if post doesn't exist in cache
       if (!prev[postId]) {
-        console.log(`[PostsContext] Post ${postId} not found in postDetails, skipping comment update`);
+        // console.log(`[PostsContext] Post ${postId} not found in postDetails, skipping comment update`);
         return prev;
       }
       

@@ -61,7 +61,7 @@ export const sendTestEmail = async (email, type = '', data = {}) => {
       ...data
     };
     
-    console.log(`Sending test ${type} email to: ${email}`);
+    // console.log(`Sending test ${type} email to: ${email}`);
     
     try {
       const response = await fetch(endpoint, {
@@ -173,7 +173,7 @@ export const sendCustomEmail = async (emailData) => {
               .map(user => user.id);
             
             // Log the conversion
-            console.log(`Converted ${payload.userIds.length} recipient emails to user IDs`);
+            // console.log(`Converted ${payload.userIds.length} recipient emails to user IDs`);
           } else {
             // Otherwise create a special payload for the backend to handle
             // Set the email addresses as the userIds temporarily 
@@ -185,7 +185,7 @@ export const sendCustomEmail = async (emailData) => {
               throw new Error('No valid email addresses provided');
             }
             
-            console.log(`Using ${payload.emailAddresses.length} email addresses for lookup`);
+            // console.log(`Using ${payload.emailAddresses.length} email addresses for lookup`);
           }
         }
       }
@@ -204,13 +204,13 @@ export const sendCustomEmail = async (emailData) => {
       }
       
       // Log detailed payload for debugging tool update emails
-      console.log('Tool update email payload:', JSON.stringify(payload, null, 2));
+      // console.log('Tool update email payload:', JSON.stringify(payload, null, 2));
       
     } else if (emailData.emailType) {
       console.warn(`Using default endpoint for email type: ${emailData.emailType}`);
     }
     
-    console.log(`Sending to ${endpoint} with payload:`, payload);
+    // console.log(`Sending to ${endpoint} with payload:`, payload);
     
     try {
       const response = await fetch(endpoint, {
@@ -352,7 +352,7 @@ export const updateEmailTemplate = async (templateType, templateData) => {
     
     const endpoint = `${API_URL}/api/email/templates/${templateType}`;
     
-    console.log(`Updating ${templateType} email template:`, templateData);
+    // console.log(`Updating ${templateType} email template:`, templateData);
     
     try {
       const response = await fetch(endpoint, {

@@ -31,7 +31,7 @@ microsoftProvider.addScope('profile');
  */
 const registerBackendUser = async (firebaseUser, additionalData = {}) => {
   try {
-    console.log('[AuthAPI] Registering backend user for:', firebaseUser.email);
+    // console.log('[AuthAPI] Registering backend user for:', firebaseUser.email);
     
     // Get the ID token for authentication
     const idToken = await firebaseUser.getIdToken();
@@ -48,7 +48,7 @@ const registerBackendUser = async (firebaseUser, additionalData = {}) => {
       phoneNumber: firebaseUser.phoneNumber || additionalData.phoneNumber || ''
     };
     
-    console.log('[AuthAPI] Sending backend registration request with data:', userData);
+    // console.log('[AuthAPI] Sending backend registration request with data:', userData);
     
     // Call backend signup endpoint with increased timeout
     const controller = new AbortController();
@@ -74,7 +74,7 @@ const registerBackendUser = async (firebaseUser, additionalData = {}) => {
       }
       
       const backendResponse = await response.json();
-      console.log('[AuthAPI] Backend registration successful:', backendResponse);
+      // console.log('[AuthAPI] Backend registration successful:', backendResponse);
       
       // Ensure we have complete profile data in the response
       const profileData = backendResponse.user || backendResponse.profile || {
@@ -133,7 +133,7 @@ const registerBackendUser = async (firebaseUser, additionalData = {}) => {
  */
 export const signUp = async (userData) => {
   try {
-    console.log('[AuthAPI] Starting email signup process for:', userData.email);
+    // console.log('[AuthAPI] Starting email signup process for:', userData.email);
     
     // Validate required fields
     if (!userData.email || !userData.password) {
@@ -152,7 +152,7 @@ export const signUp = async (userData) => {
     );
     
     const firebaseUser = userCredential.user;
-    console.log('[AuthAPI] Firebase user created successfully:', firebaseUser.uid);
+    // console.log('[AuthAPI] Firebase user created successfully:', firebaseUser.uid);
     
     // Store auth token immediately
     const idToken = await firebaseUser.getIdToken();
@@ -166,7 +166,7 @@ export const signUp = async (userData) => {
       phoneNumber: userData.phoneNumber || ''
     });
     
-    console.log('[AuthAPI] Email signup completed successfully');
+    // console.log('[AuthAPI] Email signup completed successfully');
     return result;
   } catch (error) {
     console.error('[AuthAPI] Email signup error:', error);
@@ -179,13 +179,13 @@ export const signUp = async (userData) => {
  */
 export const signUpWithGoogle = async () => {
   try {
-    console.log('[AuthAPI] Starting Google signup process');
+    // console.log('[AuthAPI] Starting Google signup process');
     
     // Use browserPopupRedirectResolver to fix popup issues
     const result = await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
     const firebaseUser = result.user;
     
-    console.log('[AuthAPI] Google Firebase user created:', firebaseUser.uid);
+    // console.log('[AuthAPI] Google Firebase user created:', firebaseUser.uid);
     
     // Store auth token immediately
     const idToken = await firebaseUser.getIdToken();
@@ -197,7 +197,7 @@ export const signUpWithGoogle = async () => {
       photoURL: firebaseUser.photoURL
     });
     
-    console.log('[AuthAPI] Google signup completed successfully');
+    // console.log('[AuthAPI] Google signup completed successfully');
     return backendResult;
   } catch (error) {
     console.error('[AuthAPI] Google signup error:', error);
@@ -222,13 +222,13 @@ export const signUpWithGoogle = async () => {
  */
 export const signUpWithMicrosoft = async () => {
   try {
-    console.log('[AuthAPI] Starting Microsoft signup process');
+    // console.log('[AuthAPI] Starting Microsoft signup process');
     
     // Use browserPopupRedirectResolver to fix popup issues
     const result = await signInWithPopup(auth, microsoftProvider, browserPopupRedirectResolver);
     const firebaseUser = result.user;
     
-    console.log('[AuthAPI] Microsoft Firebase user created:', firebaseUser.uid);
+    // console.log('[AuthAPI] Microsoft Firebase user created:', firebaseUser.uid);
     
     // Store auth token immediately
     const idToken = await firebaseUser.getIdToken();
@@ -240,7 +240,7 @@ export const signUpWithMicrosoft = async () => {
       photoURL: firebaseUser.photoURL
     });
     
-    console.log('[AuthAPI] Microsoft signup completed successfully');
+    // console.log('[AuthAPI] Microsoft signup completed successfully');
     return backendResult;
   } catch (error) {
     console.error('[AuthAPI] Microsoft signup error:', error);
@@ -265,7 +265,7 @@ export const signUpWithMicrosoft = async () => {
  */
 export const signIn = async (email, password) => {
   try {
-    console.log('[AuthAPI] Starting email sign in for:', email);
+    // console.log('[AuthAPI] Starting email sign in for:', email);
     
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
@@ -274,12 +274,12 @@ export const signIn = async (email, password) => {
     const idToken = await firebaseUser.getIdToken();
     localStorage.setItem('authToken', idToken);
     
-    console.log('[AuthAPI] Email sign in successful:', firebaseUser.uid);
+    // console.log('[AuthAPI] Email sign in successful:', firebaseUser.uid);
     
     // Create session with backend
     try {
       const response = await api.post('/api/auth/create-session', { idToken });
-      console.log('[AuthAPI] Backend session created:', response.data);
+      // console.log('[AuthAPI] Backend session created:', response.data);
       
       return {
         firebaseUser,
@@ -313,7 +313,7 @@ export const signIn = async (email, password) => {
  */
 export const signInWithGoogle = async () => {
   try {
-    console.log('[AuthAPI] Starting Google sign in');
+    // console.log('[AuthAPI] Starting Google sign in');
     
     const result = await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
     const firebaseUser = result.user;
@@ -322,12 +322,12 @@ export const signInWithGoogle = async () => {
     const idToken = await firebaseUser.getIdToken();
     localStorage.setItem('authToken', idToken);
     
-    console.log('[AuthAPI] Google sign in successful:', firebaseUser.uid);
+    // console.log('[AuthAPI] Google sign in successful:', firebaseUser.uid);
     
     // Create session with backend
     try {
       const response = await api.post('/api/auth/create-session', { idToken });
-      console.log('[AuthAPI] Backend session created:', response.data);
+      // console.log('[AuthAPI] Backend session created:', response.data);
       
       return {
         firebaseUser,
@@ -371,7 +371,7 @@ export const signInWithGoogle = async () => {
  */
 export const signInWithMicrosoft = async () => {
   try {
-    console.log('[AuthAPI] Starting Microsoft sign in');
+    // console.log('[AuthAPI] Starting Microsoft sign in');
     
     const result = await signInWithPopup(auth, microsoftProvider, browserPopupRedirectResolver);
     const firebaseUser = result.user;
@@ -380,12 +380,12 @@ export const signInWithMicrosoft = async () => {
     const idToken = await firebaseUser.getIdToken();
     localStorage.setItem('authToken', idToken);
     
-    console.log('[AuthAPI] Microsoft sign in successful:', firebaseUser.uid);
+    // console.log('[AuthAPI] Microsoft sign in successful:', firebaseUser.uid);
     
     // Create session with backend
     try {
       const response = await api.post('/api/auth/create-session', { idToken });
-      console.log('[AuthAPI] Backend session created:', response.data);
+      // console.log('[AuthAPI] Backend session created:', response.data);
       
       return {
         firebaseUser,
@@ -429,7 +429,7 @@ export const signInWithMicrosoft = async () => {
  */
 export const signOut = async () => {
   try {
-    console.log('[AuthAPI] Starting sign out process');
+    // console.log('[AuthAPI] Starting sign out process');
     
     // Sign out from Firebase
     await auth.signOut();
@@ -442,13 +442,13 @@ export const signOut = async () => {
     // Call backend signout
     try {
       await api.post('/api/auth/signout');
-      console.log('[AuthAPI] Backend signout successful');
+      // console.log('[AuthAPI] Backend signout successful');
     } catch (backendError) {
       console.warn('[AuthAPI] Backend signout failed:', backendError);
       // Continue with signout even if backend fails
     }
     
-    console.log('[AuthAPI] Sign out completed successfully');
+    // console.log('[AuthAPI] Sign out completed successfully');
   } catch (error) {
     console.error('[AuthAPI] Sign out error:', error);
     throw error;
@@ -460,9 +460,9 @@ export const signOut = async () => {
  */
 export const resetPassword = async (email) => {
   try {
-    console.log('[AuthAPI] Sending password reset email to:', email);
+    // console.log('[AuthAPI] Sending password reset email to:', email);
     await sendPasswordResetEmail(auth, email);
-    console.log('[AuthAPI] Password reset email sent successfully');
+    // console.log('[AuthAPI] Password reset email sent successfully');
   } catch (error) {
     console.error('[AuthAPI] Password reset error:', error);
     throw error;
@@ -474,9 +474,9 @@ export const resetPassword = async (email) => {
  */
 export const confirmPasswordReset = async (oobCode, newPassword) => {
   try {
-    console.log('[AuthAPI] Confirming password reset');
+    // console.log('[AuthAPI] Confirming password reset');
     await firebaseConfirmPasswordReset(auth, oobCode, newPassword);
-    console.log('[AuthAPI] Password reset confirmed successfully');
+    // console.log('[AuthAPI] Password reset confirmed successfully');
   } catch (error) {
     console.error('[AuthAPI] Password reset confirmation error:', error);
     throw error;
@@ -488,9 +488,9 @@ export const confirmPasswordReset = async (oobCode, newPassword) => {
  */
 export const verifyPasswordResetCode = async (oobCode) => {
   try {
-    console.log('[AuthAPI] Verifying password reset code');
+    // console.log('[AuthAPI] Verifying password reset code');
     const email = await firebaseVerifyPasswordResetCode(auth, oobCode);
-    console.log('[AuthAPI] Password reset code verified for:', email);
+    // console.log('[AuthAPI] Password reset code verified for:', email);
     return email;
   } catch (error) {
     console.error('[AuthAPI] Password reset code verification error:', error);

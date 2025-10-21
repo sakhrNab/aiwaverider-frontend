@@ -97,7 +97,7 @@ const FeaturedAgentCard = memo(({ agent }) => {
 
   // Handle image loading errors
   const handleImageError = useCallback((e) => {
-    console.log(`Image error for featured agent: ${agent.id}`);
+    // console.log(`Image error for featured agent: ${agent.id}`);
     setImageError(true);
     e.target.src = getPlaceholderImage();
     e.target.onerror = null;
@@ -343,13 +343,13 @@ const FeaturedAgents = memo(({ agents: propAgents = null }) => {
   useEffect(() => {
     // Prioritize props agents if provided (for parent component control)
     if (propAgents && propAgents.length > 0) {
-      console.log('FeaturedAgents: Using agents from props', propAgents.length);
+      // console.log('FeaturedAgents: Using agents from props', propAgents.length);
       setDisplayAgents(propAgents.slice(0, MAX_DOTS));
       setIsLoading(false);
     } 
     // Otherwise use store agents if available
     else if (storeAgents && storeAgents.length > 0) {
-      console.log('FeaturedAgents: Using agents from store', storeAgents.length);
+      // console.log('FeaturedAgents: Using agents from store', storeAgents.length);
       setDisplayAgents(storeAgents.slice(0, MAX_DOTS));
       setIsLoading(storeLoading);
     }

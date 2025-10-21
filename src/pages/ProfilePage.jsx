@@ -98,14 +98,14 @@ const ProfilePage = () => {
         
         // Check if we already have profile data in state
         if (profile && Object.keys(profile).length > 0) {
-          console.log('[Profile] Using existing profile state data');
+          // console.log('[Profile] Using existing profile state data');
           setLoading(false);
           return;
         }
         
         // Use cached data from AuthContext if available
         if (user && Object.keys(user).length > 0) {
-          console.log('[Profile] Using user data from AuthContext');
+          // console.log('[Profile] Using user data from AuthContext');
           updateProfileState(user);
           setLoading(false);
         }
@@ -116,19 +116,19 @@ const ProfilePage = () => {
           try {
             const { data, timestamp } = JSON.parse(cachedProfile);
             if (Date.now() - timestamp < CACHE_DURATION) {
-              console.log('[Profile] Using cached profile data');
+              // console.log('[Profile] Using cached profile data');
               updateProfileState(data);
               setLoading(false);
               return;
             } else {
-              console.log('[Profile] Cache expired, fetching fresh data');
+              // console.log('[Profile] Cache expired, fetching fresh data');
             }
           } catch (cacheError) {
             console.error('[Profile] Error parsing cached profile data:', cacheError);
           }
         }
 
-        console.log('[Profile] Fetching profile data from API');
+        // console.log('[Profile] Fetching profile data from API');
         const data = await getProfile();
         updateProfileState(data);
         
@@ -149,7 +149,7 @@ const ProfilePage = () => {
           const cachedProfile = localStorage.getItem(PROFILE_CACHE_KEY);
           if (cachedProfile) {
             const { data } = JSON.parse(cachedProfile);
-            console.log('[Profile] Using expired cache as fallback');
+            // console.log('[Profile] Using expired cache as fallback');
             updateProfileState(data);
           }
         } catch (fallbackError) {
@@ -165,7 +165,7 @@ const ProfilePage = () => {
       try {
         // Check if we already have community data in state
         if (communityInfo && Object.keys(communityInfo).length > 0) {
-          console.log('[Profile] Using existing community state data');
+          // console.log('[Profile] Using existing community state data');
           return;
         }
         
@@ -175,18 +175,18 @@ const ProfilePage = () => {
           try {
             const { data, timestamp } = JSON.parse(cachedCommunity);
             if (Date.now() - timestamp < CACHE_DURATION) {
-              console.log('[Profile] Using cached community data');
+              // console.log('[Profile] Using cached community data');
               setCommunityInfo(data);
               return;
             } else {
-              console.log('[Profile] Community cache expired, fetching fresh data');
+              // console.log('[Profile] Community cache expired, fetching fresh data');
             }
           } catch (cacheError) {
             console.error('[Profile] Error parsing cached community data:', cacheError);
           }
         }
 
-        console.log('[Profile] Fetching community data from API');
+        // console.log('[Profile] Fetching community data from API');
         const commData = await getCommunityInfo();
         setCommunityInfo(commData);
         
@@ -207,7 +207,7 @@ const ProfilePage = () => {
           const cachedCommunity = localStorage.getItem(COMMUNITY_CACHE_KEY);
           if (cachedCommunity) {
             const { data } = JSON.parse(cachedCommunity);
-            console.log('[Profile] Using expired community cache as fallback');
+            // console.log('[Profile] Using expired community cache as fallback');
             setCommunityInfo(data);
           }
         } catch (fallbackError) {
@@ -349,12 +349,12 @@ const ProfilePage = () => {
         }
 
         // Log the interests being sent
-        console.log('[Profile] Selected interests for update:', selectedInterests);
+        // console.log('[Profile] Selected interests for update:', selectedInterests);
         
         try {
           // Update interests
           const response = await updateInterests(selectedInterests);
-          console.log('[Profile] Update interests response:', response);
+          // console.log('[Profile] Update interests response:', response);
 
           if (response.success) {
             // Clear caches
@@ -436,12 +436,12 @@ const ProfilePage = () => {
       let updatedPhotoURL = profile.photoURL;
       if (imageFile) {
         try {
-          console.log('[Profile] Uploading profile image...');
+          // console.log('[Profile] Uploading profile image...');
           const formData = new FormData();
           formData.append('avatar', imageFile);
           
           const uploadResponse = await uploadProfileImage(imageFile);
-          console.log('[Profile] Upload response:', uploadResponse);
+          // console.log('[Profile] Upload response:', uploadResponse);
           
           if (uploadResponse && uploadResponse.photoURL) {
             updatedPhotoURL = uploadResponse.photoURL;
@@ -462,12 +462,12 @@ const ProfilePage = () => {
       };
 
       try {
-        console.log('[Profile] Updating profile with data:', { 
-          ...profile, 
-          displayName: updatedData.displayName, 
-          bio: updatedData.bio, 
-          photoURL: updatedPhotoURL 
-        });
+        // console.log('[Profile] Updating profile with data:', { 
+        //   ...profile, 
+        //   displayName: updatedData.displayName, 
+        //   bio: updatedData.bio, 
+        //   photoURL: updatedPhotoURL 
+        // });
         
         await updateProfile({ 
           ...profile, 

@@ -77,12 +77,12 @@ const ChatBot = () => {
 
   const sendMessageToAPI = async (messageText, currentMessages) => {
     try {
-      console.log('Sending chat message to API...');
+      // console.log('Sending chat message to API...');
       
       // Use the chatApi service instead of direct fetch
       const response = await chatApi.sendMessage(currentMessages.filter(msg => msg.role !== 'error'));
       
-      console.log('API Response:', response);
+      // console.log('API Response:', response);
       
       if (!response.success) {
         throw new Error(response.message || 'Failed to get response from chat API');

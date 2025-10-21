@@ -35,10 +35,10 @@ export const getProfile = async (retryCount = 0) => {
         const cacheDuration = 30 * 60 * 1000; // 30 minutes
         
         if (cacheAge < cacheDuration) {
-          console.log('[API] Using cached profile data', Math.round(cacheAge/1000) + 's old');
+          // console.log('[API] Using cached profile data', Math.round(cacheAge/1000) + 's old');
           return data;
         } else {
-          console.log('[API] Profile cache expired, fetching fresh data');
+          // console.log('[API] Profile cache expired, fetching fresh data');
           // Save the cached data for potential fallback
           cachedProfile = data;
         }
@@ -47,7 +47,7 @@ export const getProfile = async (retryCount = 0) => {
         // Continue to fetch fresh data
       }
     } else {
-      console.log('[API] No profile cache found, fetching fresh data');
+      // console.log('[API] No profile cache found, fetching fresh data');
     }
 
     // Get current Firebase user for token
@@ -62,7 +62,7 @@ export const getProfile = async (retryCount = 0) => {
       try {
         authToken = await currentUser.getIdToken(true);
         localStorage.setItem('authToken', authToken);
-        console.log('[API] Refreshed auth token');
+        // console.log('[API] Refreshed auth token');
       } catch (tokenError) {
         console.error('[API] Error getting auth token:', tokenError);
         throw new Error('Failed to get authentication token');
@@ -93,7 +93,7 @@ export const getProfile = async (retryCount = 0) => {
         
         // Fall back to cached data if available
         if (cachedProfile) {
-          console.log('[API] Using expired cache as fallback due to non-JSON response');
+          // console.log('[API] Using expired cache as fallback due to non-JSON response');
           return cachedProfile;
         }
         
@@ -112,7 +112,7 @@ export const getProfile = async (retryCount = 0) => {
             data: profileData,
             timestamp: Date.now()
           }));
-          console.log('[API] Profile data cached successfully');
+          // console.log('[API] Profile data cached successfully');
         } catch (cacheError) {
           console.error('[API] Error caching profile data:', cacheError);
           // Continue even if caching fails
@@ -124,19 +124,19 @@ export const getProfile = async (retryCount = 0) => {
         
         // If this is the first retry and we got 404, wait a moment and try again
         if (retryCount === 0) {
-          console.log('[API] Retrying profile fetch after 404...');
+          // console.log('[API] Retrying profile fetch after 404...');
           await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
           return getProfile(1); // Retry once
         }
         
         // After retry or if this is already a retry, fall back to cached data or Firebase user
         if (cachedProfile) {
-          console.log('[API] Using cached profile as fallback after 404');
+          // console.log('[API] Using cached profile as fallback after 404');
           return cachedProfile;
         }
         
         // Create profile from Firebase user
-        console.log('[API] Creating profile from Firebase user data after 404');
+        // console.log('[API] Creating profile from Firebase user data after 404');
         const mockProfile = createMockProfileFromFirebase(currentUser);
         return mockProfile;
       } else if (response.status === 401) {
@@ -147,7 +147,7 @@ export const getProfile = async (retryCount = 0) => {
           try {
             const newToken = await currentUser.getIdToken(true);
             localStorage.setItem('authToken', newToken);
-            console.log('[API] Token refreshed, retrying profile fetch...');
+            // console.log('[API] Token refreshed, retrying profile fetch...');
             return getProfile(1); // Retry with new token
           } catch (tokenError) {
             console.error('[API] Error refreshing token:', tokenError);
@@ -170,7 +170,7 @@ export const getProfile = async (retryCount = 0) => {
       
       // Use cached data if available
       if (cachedProfile) {
-        console.log('[API] Using cached profile as fallback');
+        // console.log('[API] Using cached profile as fallback');
         return cachedProfile;
       }
       
@@ -191,7 +191,7 @@ export const getProfile = async (retryCount = 0) => {
       const cachedData = localStorage.getItem(cacheKey);
       if (cachedData) {
         const { data } = JSON.parse(cachedData);
-        console.log('[API] Using expired profile cache as fallback due to error');
+        // console.log('[API] Using expired profile cache as fallback due to error');
         return data;
       }
     } catch (fallbackError) {
@@ -219,7 +219,7 @@ export const getProfile = async (retryCount = 0) => {
 // Update profile with fallback for non-JSON responses
 export const updateProfile = async (profileData) => {
   try {
-    console.log('[API] Sending profile update request:', profileData);
+    // console.log('[API] Sending profile update request:', profileData);
     
     // Get the current Firebase user
     const currentUser = firebase.auth().currentUser;
@@ -262,7 +262,7 @@ export const updateProfile = async (profileData) => {
       }
     }
     
-    console.log('[API] Prepared data for profile update:', dataToSave);
+    // console.log('[API] Prepared data for profile update:', dataToSave);
     
     // First, try to update the data in Firestore directly
     // This ensures the profile is updated even if the API endpoint fails
@@ -275,7 +275,7 @@ export const updateProfile = async (profileData) => {
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       
-      console.log('[API] User profile updated in Firestore');
+      // console.log('[API] User profile updated in Firestore');
     } catch (firestoreError) {
       console.error('[API] Error updating profile in Firestore:', firestoreError);
       // Continue to try the API route even if Firestore update fails
@@ -301,7 +301,7 @@ export const updateProfile = async (profileData) => {
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const data = await response.json();
-          console.log('[API] Profile update API response:', data);
+          // console.log('[API] Profile update API response:', data);
           
           // Clear cache after successful update
           localStorage.removeItem('profile_data');
@@ -321,7 +321,7 @@ export const updateProfile = async (profileData) => {
       const userDoc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
       if (userDoc.exists) {
         const userData = userDoc.data();
-        console.log('[API] Retrieved updated profile from Firestore:', userData);
+        // console.log('[API] Retrieved updated profile from Firestore:', userData);
         
         // Clear cache since we have fresh data
         localStorage.removeItem('profile_data');
@@ -359,17 +359,17 @@ export const updateInterests = async (interests) => {
       throw new Error('Interests must be an array');
     }
 
-    console.log('[API] Updating interests:', interests);
+    // console.log('[API] Updating interests:', interests);
     
     // Make the API call
     const response = await api.put('/api/profile/interests', { interests });
-    console.log('[API] Update interests response:', response.data);
+    // console.log('[API] Update interests response:', response.data);
     
     // Clear caches after successful update
     try {
       localStorage.removeItem('profile_data');
       localStorage.removeItem('community_data');
-      console.log('[API] Cleared profile and community caches after interests update');
+      // console.log('[API] Cleared profile and community caches after interests update');
     } catch (cacheError) {
       console.error('[API] Error clearing caches:', cacheError);
     }
@@ -461,17 +461,17 @@ export const getCommunityInfo = async () => {
         const cacheDuration = 30 * 60 * 1000; // 30 minutes
         
         if (cacheAge < cacheDuration) {
-          console.log('[API] Using cached community data', { cacheAge: Math.round(cacheAge/1000) + 's' });
+          // console.log('[API] Using cached community data', { cacheAge: Math.round(cacheAge/1000) + 's' });
           return data;
         } else {
-          console.log('[API] Community cache expired, fetching fresh data');
+          // console.log('[API] Community cache expired, fetching fresh data');
         }
       } catch (cacheError) {
         console.error('[API] Error parsing cached community data:', cacheError);
         // Continue to fetch fresh data
       }
     } else {
-      console.log('[API] No community cache found, fetching fresh data');
+      // console.log('[API] No community cache found, fetching fresh data');
     }
     
     // Fetch fresh data from API
@@ -484,7 +484,7 @@ export const getCommunityInfo = async () => {
         data: communityData,
         timestamp: Date.now()
       }));
-      console.log('[API] Community data cached successfully');
+      // console.log('[API] Community data cached successfully');
     } catch (cacheError) {
       console.error('[API] Error caching community data:', cacheError);
       // Continue even if caching fails
@@ -500,7 +500,7 @@ export const getCommunityInfo = async () => {
       const cachedData = localStorage.getItem(cacheKey);
       if (cachedData) {
         const { data } = JSON.parse(cachedData);
-        console.log('[API] Using expired community cache as fallback due to error');
+        // console.log('[API] Using expired community cache as fallback due to error');
         return data;
       }
     } catch (fallbackError) {
@@ -514,7 +514,7 @@ export const getCommunityInfo = async () => {
 // Upload Profile Avatar using Firebase Storage
 export const uploadProfileImage = async (file) => {
   try {
-    console.log('[API] Preparing to upload image:', file.name, file.type, file.size);
+    // console.log('[API] Preparing to upload image:', file.name, file.type, file.size);
     const formData = new FormData();
     formData.append('avatar', file);
     
@@ -522,7 +522,7 @@ export const uploadProfileImage = async (file) => {
     const response = await api.put('/api/profile/upload-avatar', formData, {
       // Do not set Content-Type header manually for FormData.
     });
-    console.log('[API] Image upload response:', response.data);
+    // console.log('[API] Image upload response:', response.data);
     
     // Clear profile cache after successful upload
     localStorage.removeItem('profile_data');

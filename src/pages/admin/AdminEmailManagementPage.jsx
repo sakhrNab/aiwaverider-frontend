@@ -125,7 +125,7 @@ const EmailManagement = () => {
       // Send test email using the emailService
       const result = await sendTestEmail(testEmail, type, emailData);
       
-      console.log(`Test ${type} email sent successfully to: ${testEmail}`);
+      // console.log(`Test ${type} email sent successfully to: ${testEmail}`);
       toast.success(`Test email sent successfully to ${testEmail}`);
     } catch (error) {
       handleEmailError(error, 'Failed to send test email');
@@ -181,7 +181,7 @@ const EmailManagement = () => {
       // Send custom email using the emailService
       const result = await sendCustomEmail(customEmail);
       
-      console.log('Email sending successful:', result);
+      // console.log('Email sending successful:', result);
       
       if (result.data && result.data.recipientCount) {
         toast.success(`Emails scheduled to be sent to ${result.data.recipientCount} users`);

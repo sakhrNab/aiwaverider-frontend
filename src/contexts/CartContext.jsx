@@ -33,7 +33,7 @@ export const CartProvider = ({ children }) => {
       
       // Only log in development
       if (process.env.NODE_ENV === 'development') {
-        console.log('Loading cart from localStorage:', 
+        // console.log('Loading cart from localStorage:', 
           savedCart ? `${savedCart.length} characters` : 'empty');
       }
       
@@ -41,7 +41,7 @@ export const CartProvider = ({ children }) => {
         const parsedCart = JSON.parse(savedCart);
         if (Array.isArray(parsedCart) && parsedCart.length > 0) {
           if (process.env.NODE_ENV === 'development') {
-            console.log('Restoring cart with items:', parsedCart.length);
+            // console.log('Restoring cart with items:', parsedCart.length);
           }
           setCart(parsedCart);
         }
@@ -65,7 +65,7 @@ export const CartProvider = ({ children }) => {
       storageInProgress.current = true;
       try {
         if (process.env.NODE_ENV === 'development') {
-          console.log('Saving cart to localStorage, items:', cartData.length);
+          // console.log('Saving cart to localStorage, items:', cartData.length);
         }
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartData));
       } catch (error) {

@@ -95,8 +95,8 @@ export const createStripeCheckout = async (data) => {
       ? data.paymentMethodTypes[0] 
       : 'card';
     
-    console.log('Creating UniPay payment session');
-    console.log('UniPay request data:', JSON.stringify(data, null, 2));
+    // console.log('Creating UniPay payment session');
+    // console.log('UniPay request data:', JSON.stringify(data, null, 2));
     
     const paymentData = {
       amount: data.cartTotal || data.amount,
@@ -150,7 +150,7 @@ export const createPaymentIntent = async (data) => {
       throw new Error('Amount and currency are required for payment');
     }
     
-    console.log('Creating payment intent:', { amount, currency, paymentMethodTypes });
+    // console.log('Creating payment intent:', { amount, currency, paymentMethodTypes });
     
     // Get cart items from localStorage if not provided
     let cartItems = items;
@@ -233,7 +233,7 @@ export const createPaymentIntent = async (data) => {
     }
     
     const result = await response.json();
-    console.log('Payment intent created successfully:', result);
+    // console.log('Payment intent created successfully:', result);
     
     return result;
   } catch (error) {
@@ -254,7 +254,7 @@ export const confirmCardPayment = async (clientSecret, paymentMethod) => {
   try {
     // In a real implementation, you might have additional server-side validation
     // or logging related to the payment confirmation
-    console.log('Confirming card payment with client secret');
+    // console.log('Confirming card payment with client secret');
     
     // Return a structured object for consistent API
     return {
@@ -306,7 +306,7 @@ export const checkCardPaymentStatus = async (paymentIntentId) => {
 export const getPaymentStatus = async (id, type = 'payment_intent') => {
   try {
     // Log what we're checking for diagnostic purposes
-    console.log(`Checking payment status for ${type} ${id}`);
+    // console.log(`Checking payment status for ${type} ${id}`);
     
     // Handle special payment types that use different endpoints
     if (type === 'sepa_credit_transfer') {
@@ -475,7 +475,7 @@ export const getThankYouRedirectUrl = (sessionId) => {
  */
 export const createCheckoutSession = async (data) => {
   try {
-    console.log('Creating checkout session with data:', JSON.stringify(data, null, 2));
+    // console.log('Creating checkout session with data:', JSON.stringify(data, null, 2));
     
     const response = await fetch(`${API_URL}/api/payments/create-checkout-session`, {
       method: 'POST',
@@ -499,7 +499,7 @@ export const createCheckoutSession = async (data) => {
     }
     
     const responseData = await response.json();
-    console.log('Checkout session created successfully:', responseData);
+    // console.log('Checkout session created successfully:', responseData);
     return responseData;
   } catch (error) {
     console.error('Error creating checkout session:', error);

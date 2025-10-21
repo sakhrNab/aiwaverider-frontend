@@ -136,14 +136,14 @@ const PostDetail = () => {
   const viewCountIncremented = useRef(false);
   const initialLoadComplete = useRef(false);
   
-  console.log(`[PostDetail] Component rendering for post ${postId}, viewIncremented=${viewCountIncremented.current}, initialLoad=${initialLoadComplete.current}`);
+  // console.log(`[PostDetail] Component rendering for post ${postId}, viewIncremented=${viewCountIncremented.current}, initialLoad=${initialLoadComplete.current}`);
   
   // Load post data once
   useEffect(() => {
     // Skip for create route
     if (postId === 'create') return;
     
-    console.log(`[PostDetail] useEffect for post loading triggered for ${postId}`);
+    // console.log(`[PostDetail] useEffect for post loading triggered for ${postId}`);
     
     // Clean up previous listener
     const cleanupListener = () => {
@@ -163,10 +163,10 @@ const PostDetail = () => {
       
       try {
         // Initial post load
-        console.log(`[PostDetail] Fetching post data for ${postId}`);
+        // console.log(`[PostDetail] Fetching post data for ${postId}`);
         const postData = await getPostById(postId);
         if (postData) {
-          console.log(`[PostDetail] Successfully loaded post data: ${postId}, views=${postData.views || 0}`);
+          // console.log(`[PostDetail] Successfully loaded post data: ${postId}, views=${postData.views || 0}`);
           setPost(postData);
           setAdditionalHTML(postData.additionalHTML || '');
           initialLoadComplete.current = true;
@@ -211,13 +211,13 @@ const PostDetail = () => {
   useEffect(() => {
     // Skip for create route or when no post is loaded yet
     if (!post || postId === 'create' || !initialLoadComplete.current) {
-      console.log(`[PostDetail] View increment skipped - conditions not met: post=${!!post}, initialLoad=${initialLoadComplete.current}`);
+      // console.log(`[PostDetail] View increment skipped - conditions not met: post=${!!post}, initialLoad=${initialLoadComplete.current}`);
       return;
     }
     
     // We only want to increment view once per component mount
     if (viewCountIncremented.current) {
-      console.log('[PostDetail] View already incremented for this session');
+      // console.log('[PostDetail] View already incremented for this session');
       return;
     }
     
@@ -225,7 +225,7 @@ const PostDetail = () => {
     // to prevent any possibility of multiple increments if the component re-renders quickly
     viewCountIncremented.current = true;
     
-    console.log(`[PostDetail] Incrementing view count for post: ${postId}, current views=${post.views || 0}`);
+    // console.log(`[PostDetail] Incrementing view count for post: ${postId}, current views=${post.views || 0}`);
     
     // Fire and forget - don't use await to avoid blocking
     incrementPostView(postId)
@@ -234,7 +234,7 @@ const PostDetail = () => {
         if (response.success === false) {
           console.warn(`[PostDetail] View increment failed: ${response.error}`);
         } else {
-          console.log(`[PostDetail] View increment succeeded`);
+          // console.log(`[PostDetail] View increment succeeded`);
         }
         
         // Always fetch fresh data to get current view count
@@ -242,7 +242,7 @@ const PostDetail = () => {
           getPostById(postId, true) // Force cache bypass
             .then(freshData => {
               if (freshData) {
-                console.log(`[PostDetail] Fresh post data received: views=${freshData.views}, previous=${post.views || 0}`);
+                // console.log(`[PostDetail] Fresh post data received: views=${freshData.views}, previous=${post.views || 0}`);
                 
                 // Update local state
                 setPost(prevPost => ({
@@ -269,7 +269,7 @@ const PostDetail = () => {
     
     // Cleanup function - this ensures we reset the increment flag when component unmounts
     return () => {
-      console.log(`[PostDetail] Component unmounting, resetting viewCountIncremented flag`);
+      // console.log(`[PostDetail] Component unmounting, resetting viewCountIncremented flag`);
       viewCountIncremented.current = false;
     };
     // Only run this effect when the post ID changes

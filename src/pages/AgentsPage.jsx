@@ -179,7 +179,7 @@ const Agents = () => {
       if (document.visibilityState === 'visible' && dataLoadedRef.current) {
         // Check if data needs refreshing (only if more than 30 minutes old)
         // Don't actually refresh automatically, leave that to user action
-        console.log('Page is visible - not auto-refreshing data to save quota');
+        // console.log('Page is visible - not auto-refreshing data to save quota');
       }
     };
     
@@ -202,15 +202,15 @@ const Agents = () => {
         (now - lastLoadTime > cacheExpiry);
       
       if (shouldFetchFromApi) {
-        console.log('Initial data load - fetching from API');
+        // console.log('Initial data load - fetching from API');
         loadInitialData().then(async () => {
           // Ensure we have the correct total count
           await updateTotalCount();
           dataLoadedRef.current = true;
-          console.log('Initial data loaded successfully from API');
+          // console.log('Initial data loaded successfully from API');
         });
       } else {
-        console.log('Using cached agent data from store');
+        // console.log('Using cached agent data from store');
         // Ensure we have the correct total count even with cached data
         updateTotalCount().then(() => {
           // Apply filters to the existing data
@@ -237,7 +237,7 @@ const Agents = () => {
       const queryFromUrl = queryParams.get('q');
       if (queryFromUrl) {
         setSearchQuery(queryFromUrl);
-        console.log('Search query from URL:', queryFromUrl);
+        // console.log('Search query from URL:', queryFromUrl);
       }
       // Don't clear the search query automatically
     }
@@ -258,7 +258,7 @@ const Agents = () => {
 
   // Improved search handlers
   const handleSearchSubmit = async (query = localSearchQuery) => {
-    console.log('🔍 SEARCH SUBMIT:', query);
+    // console.log('🔍 SEARCH SUBMIT:', query);
     setSearchQuery(query);
     
     // Update total count for search results
@@ -306,35 +306,35 @@ const Agents = () => {
   };
 
   const handleFilterChange = (filter) => {
-    console.log('Filter changed to:', filter);
+    // console.log('Filter changed to:', filter);
     setFilter(filter);
     // Apply filters with reset pagination for fresh results
     applyFilters(true);
   };
 
   const handlePriceChange = (newPriceRange) => {
-    console.log('Price changed to:', newPriceRange);
+    // console.log('Price changed to:', newPriceRange);
     setPrice(newPriceRange);
     // Apply filters with reset pagination for fresh results
     applyFilters(true);
   };
 
   const handleRatingChange = (rating) => {
-    console.log('Rating changed to:', rating);
+    // console.log('Rating changed to:', rating);
     setRating(rating);
     // Apply filters with reset pagination for fresh results
     applyFilters(true);
   };
   
   const handleTagChange = (tag) => {
-    console.log('Tags changed to:', tag);
+    // console.log('Tags changed to:', tag);
     toggleTag(tag);
     // Apply filters with reset pagination for fresh results
     applyFilters(true);
   };
   
   const handleFeatureChange = (feature) => {
-    console.log('Features changed to:', feature);
+    // console.log('Features changed to:', feature);
     toggleFeature(feature);
     // Apply filters with reset pagination for fresh results
     applyFilters(true);
@@ -377,7 +377,7 @@ const Agents = () => {
       return ['All']; // Fallback if agents not loaded yet
     }
     
-    console.log(`📊 Deriving categories from ${sourceAgents.length} agents (allAgents: ${allAgents?.length || 0}, filtered agents: ${agents?.length || 0})`);
+    // console.log(`📊 Deriving categories from ${sourceAgents.length} agents (allAgents: ${allAgents?.length || 0}, filtered agents: ${agents?.length || 0})`);
     
     // Get all possible categories from all agents
     const allCategorySet = new Set();
@@ -406,7 +406,7 @@ const Agents = () => {
     });
     
     const categories = categoriesWithAgents.sort();
-    console.log(`📊 Available categories: ${categories.length} total (filtered out empty categories from complete database)`);
+    // console.log(`📊 Available categories: ${categories.length} total (filtered out empty categories from complete database)`);
     return ['All', ...categories];
   }, [allAgents, agents]); // Remove searchQuery dependency to prevent re-filtering
 

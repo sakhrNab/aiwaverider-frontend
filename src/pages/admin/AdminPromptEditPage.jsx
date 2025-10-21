@@ -171,7 +171,7 @@ const AdminPromptEditPage = () => {
         isFeatured: isFeatured
       };
       
-      console.log('Submitting prompt with data:', {
+      // console.log('Submitting prompt with data:', {
         ...promptData,
         additionalHTML: promptData.additionalHTML ? `${promptData.additionalHTML.substring(0, 50)}...` : null,
         hasImageFile: !!imageFile

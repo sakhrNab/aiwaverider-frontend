@@ -28,22 +28,22 @@ const LikeButton = ({ postId, initialLikes = [], className = '' }) => {
     
     // Skip invalid states
     if (!postId) {
-      console.log('[LikeButton] Invalid postId, skipping effect');
+      // console.log('[LikeButton] Invalid postId, skipping effect');
       return;
     }
     
-    console.log(`[LikeButton] Checking like state for post ${postId}`);
+    // console.log(`[LikeButton] Checking like state for post ${postId}`);
     
     // Check if we have the post details in the context
     if (postDetails && postDetails[postId]) {
       const postData = postDetails[postId];
       const likesArray = postData.likes || [];
-      console.log(`[LikeButton] Using like data from context for post ${postId}, likes count: ${likesArray.length}`);
+      // console.log(`[LikeButton] Using like data from context for post ${postId}, likes count: ${likesArray.length}`);
       setLikes(likesArray.length);
       setIsLiked(user?.uid ? likesArray.includes(user.uid) : false);
     } else if (initialLikes) {
       // Fallback to props if no context data available
-      console.log(`[LikeButton] Using initialLikes for post ${postId}, count: ${initialLikes.length}`);
+      // console.log(`[LikeButton] Using initialLikes for post ${postId}, count: ${initialLikes.length}`);
       setLikes(initialLikes.length);
       setIsLiked(user?.uid ? initialLikes.includes(user.uid) : false);
     }
@@ -59,13 +59,13 @@ const LikeButton = ({ postId, initialLikes = [], className = '' }) => {
     debounce(async (optimisticUpdate, revertUpdate, requestId) => {
       // Check if component is still mounted
       if (!isMounted.current) {
-        console.log('[LikeButton] Component unmounted, cancelling API call');
+        // console.log('[LikeButton] Component unmounted, cancelling API call');
         return;
       }
       
       // Check if this request is still the current one
       if (requestId !== currentRequestId.current) {
-        console.log(`[LikeButton] Skipping stale request ${requestId}, current is ${currentRequestId.current}`);
+        // console.log(`[LikeButton] Skipping stale request ${requestId}, current is ${currentRequestId.current}`);
         return;
       }
       
@@ -84,20 +84,20 @@ const LikeButton = ({ postId, initialLikes = [], className = '' }) => {
       
       if (timeSinceLastCall < MIN_API_INTERVAL) {
         const waitTime = MIN_API_INTERVAL - timeSinceLastCall;
-        console.log(`[LikeButton] Throttling API call for post ${postId}, waiting ${waitTime}ms`);
+        // console.log(`[LikeButton] Throttling API call for post ${postId}, waiting ${waitTime}ms`);
         
         // Wait for the throttle time before continuing
         await new Promise(resolve => setTimeout(resolve, waitTime));
         
         // Check if component is still mounted after waiting
         if (!isMounted.current) {
-          console.log('[LikeButton] Component unmounted after throttle wait');
+          // console.log('[LikeButton] Component unmounted after throttle wait');
           return;
         }
         
         // Check if this request is still valid after waiting
         if (requestId !== currentRequestId.current) {
-          console.log(`[LikeButton] Request expired after throttle wait`);
+          // console.log(`[LikeButton] Request expired after throttle wait`);
           return;
         }
       }
@@ -106,22 +106,22 @@ const LikeButton = ({ postId, initialLikes = [], className = '' }) => {
       
       try {
         const actionType = isLiked ? 'unlike' : 'like';
-        console.log(`[LikeButton] Making API request to ${actionType} post ${postId}`);
+        // console.log(`[LikeButton] Making API request to ${actionType} post ${postId}`);
         
         const response = await toggleLike(postId);
         
         // After API call, check if component is still mounted and request is current
         if (!isMounted.current) {
-          console.log('[LikeButton] Component unmounted after API call, not updating state');
+          // console.log('[LikeButton] Component unmounted after API call, not updating state');
           return;
         }
         
         if (requestId !== currentRequestId.current) {
-          console.log(`[LikeButton] Request ${requestId} is stale, current is ${currentRequestId.current}`);
+          // console.log(`[LikeButton] Request ${requestId} is stale, current is ${currentRequestId.current}`);
           return;
         }
         
-        console.log(`[LikeButton] API response received for post ${postId}:`, response);
+        // console.log(`[LikeButton] API response received for post ${postId}:`, response);
         
         // Check if response contains the expected updatedPost
         if (response && response.updatedPost) {
@@ -137,7 +137,7 @@ const LikeButton = ({ postId, initialLikes = [], className = '' }) => {
           updatePostInCache(response.updatedPost);
           
           // Log success or failure
-          console.log(`[LikeButton] Like status updated for post ${postId}, new status: ${
+          // console.log(`[LikeButton] Like status updated for post ${postId}, new status: ${
             user?.uid && updatedLikes.includes(user?.uid) ? 'liked' : 'not liked'
           }`);
         } else {
@@ -183,11 +183,11 @@ const LikeButton = ({ postId, initialLikes = [], className = '' }) => {
     }
 
     if (isLoading) {
-      console.log(`[LikeButton] Ignoring like action - already processing for post ${postId}`);
+      // console.log(`[LikeButton] Ignoring like action - already processing for post ${postId}`);
       return;
     }
     
-    console.log(`[LikeButton] Handling like for post ${postId}, current status: ${isLiked ? 'liked' : 'not liked'}`);
+    // console.log(`[LikeButton] Handling like for post ${postId}, current status: ${isLiked ? 'liked' : 'not liked'}`);
     setIsLoading(true);
 
     // Store original state for revert
@@ -200,14 +200,14 @@ const LikeButton = ({ postId, initialLikes = [], className = '' }) => {
 
     // Optimistic update
     const optimisticUpdate = () => {
-      console.log(`[LikeButton] Applying optimistic update for post ${postId}`);
+      // console.log(`[LikeButton] Applying optimistic update for post ${postId}`);
       setIsLiked(!isLiked);
       setLikes(prev => !isLiked ? prev + 1 : prev - 1);
     };
 
     // Revert function for error cases
     const revertUpdate = () => {
-      console.log(`[LikeButton] Reverting optimistic update for post ${postId}`);
+      // console.log(`[LikeButton] Reverting optimistic update for post ${postId}`);
       setIsLiked(originalIsLiked);
       setLikes(originalLikes);
     };

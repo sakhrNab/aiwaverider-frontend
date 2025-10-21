@@ -74,7 +74,7 @@ const useAgentStore = create(
       
       // Review management actions
       addReviewToAgent: (agentId, newReview) => {
-        console.log(`Adding review to agent ${agentId} in store`, newReview);
+        // console.log(`Adding review to agent ${agentId} in store`, newReview);
         const { agents, allAgents } = get();
         
         // Update the main agents array
@@ -132,7 +132,7 @@ const useAgentStore = create(
       
       // Update all reviews for an agent (for refreshing page)
       updateAgentReviews: (agentId, reviews) => {
-        console.log(`Updating all reviews for agent ${agentId} in store`, reviews.length);
+        // console.log(`Updating all reviews for agent ${agentId} in store`, reviews.length);
         const { agents, allAgents } = get();
         
         // Update the main agents array
@@ -189,7 +189,7 @@ const useAgentStore = create(
       },
       
       removeReviewFromAgent: (agentId, reviewId) => {
-        console.log(`Removing review ${reviewId} from agent ${agentId} in store`);
+        // console.log(`Removing review ${reviewId} from agent ${agentId} in store`);
         const { agents, allAgents } = get();
         
         // Update the main agents array
@@ -269,7 +269,7 @@ const useAgentStore = create(
       
       // New method to refresh data after mutations (add/edit/delete)
       refreshAfterMutation: async () => {
-        console.log('Refreshing agent store after mutation');
+        // console.log('Refreshing agent store after mutation');
         // Clear the lastLoadTime to force a refresh
         set({ lastLoadTime: null });
         // Call loadInitialData with forceRefresh to get fresh data
@@ -282,7 +282,7 @@ const useAgentStore = create(
           const totalCount = await getAgentsCount(category);
           const { pagination } = get();
           
-          console.log(`📊 Updated total count: ${totalCount} for category: ${category || 'All'}`);
+          // console.log(`📊 Updated total count: ${totalCount} for category: ${category || 'All'}`);
           
           set({
             pagination: {
@@ -425,8 +425,8 @@ const useAgentStore = create(
           pagination
         } = state;
         
-        console.log('🔍 ApplyFilters: Starting with NEW backend architecture');
-        console.log('🔍 Parameters:', {
+        // console.log('🔍 ApplyFilters: Starting with NEW backend architecture');
+        // console.log('🔍 Parameters:', {
           category: selectedCategory,
           filter: selectedFilter,
           search: searchQuery,
@@ -463,12 +463,12 @@ const useAgentStore = create(
             bypassCache: false
           };
           
-          console.log('🔍 NEW Backend API Parameters:', apiParams);
+          // console.log('🔍 NEW Backend API Parameters:', apiParams);
           
           // Call the updated fetchAgents function with new parameters
           const response = await fetchAgents(apiParams);
           
-          console.log('🔍 NEW Backend API Response:', {
+          // console.log('🔍 NEW Backend API Response:', {
             agentsCount: response?.agents?.length || 0,
             fromCache: response?.fromCache,
             total: response?.totalCount,
@@ -496,7 +496,7 @@ const useAgentStore = create(
 
           const fixedAgents = fixPlaceholderUrls(response.agents);
           
-          console.log(`✅ Received ${fixedAgents.length} agents (fromCache: ${response.fromCache})`);
+          // console.log(`✅ Received ${fixedAgents.length} agents (fromCache: ${response.fromCache})`);
 
           // Update state with new agents and pagination info
           // Use response.totalCount if available, otherwise keep existing totalItems
@@ -517,7 +517,7 @@ const useAgentStore = create(
             }
           });
           
-          console.log('✅ Store updated successfully with NEW backend architecture');
+          // console.log('✅ Store updated successfully with NEW backend architecture');
           
         } catch (error) {
           console.error('Error in applyFilters:', error);
@@ -549,7 +549,7 @@ const useAgentStore = create(
           const cacheExpiry = get().cacheExpiry;
           
           if (!forceRefresh && lastLoad && (now - lastLoad < cacheExpiry) && get().agents.length > 0) {
-            console.log('✅ Using cached agent data from', Math.round((now - lastLoad)/1000), 'seconds ago');
+            // console.log('✅ Using cached agent data from', Math.round((now - lastLoad)/1000), 'seconds ago');
             set({ isLoading: false, isStoreLoading: false, isRecommendationsLoading: false });
             return;
           }
@@ -558,7 +558,7 @@ const useAgentStore = create(
           
           if (currentLoadId !== requestId) return;
           
-          console.log('🚀 Loading initial data with NEW backend architecture');
+          // console.log('🚀 Loading initial data with NEW backend architecture');
           
           // Load first page of agents using new parameters
           const apiParams = {
@@ -583,7 +583,7 @@ const useAgentStore = create(
           const fromCache = response.fromCache || false;
           const total = response.totalCount || agentsResponse.length;
           
-          console.log(`✅ Received ${agentsResponse.length} agents (fromCache: ${fromCache}, total: ${total})`);
+          // console.log(`✅ Received ${agentsResponse.length} agents (fromCache: ${fromCache}, total: ${total})`);
           
           const fixedAgents = fixPlaceholderUrls(agentsResponse);
           
@@ -599,7 +599,7 @@ const useAgentStore = create(
             }
           });
           categories = Array.from(categorySet).sort();
-          console.log(`✅ Derived ${categories.length} categories from agents`);
+          // console.log(`✅ Derived ${categories.length} categories from agents`);
           
           // Derive featured and recommended agents efficiently
           const featuredAgents = fixedAgents
@@ -616,7 +616,7 @@ const useAgentStore = create(
             })
             .slice(0, 10);
             
-          console.log(`📊 Derived ${featuredAgents.length} featured, ${recommendedAgents.length} recommended agents`);
+          // console.log(`📊 Derived ${featuredAgents.length} featured, ${recommendedAgents.length} recommended agents`);
           
           // Update store
           const currentPageSize = get().pagination.pageSize;
@@ -655,7 +655,7 @@ const useAgentStore = create(
           
           set({ tagCounts: tagCounter, featureCounts: featureCounter });
           
-          console.log('✅ Initial data loading completed successfully');
+          // console.log('✅ Initial data loading completed successfully');
           
         } catch (error) {
           console.error('Error in loadInitialData:', error);
@@ -682,11 +682,11 @@ const useAgentStore = create(
         
         // Don't load if already loading or no more data
         if (pagination.isLoadingMore || !pagination.hasMore) {
-          console.log('📋 LoadMoreAgents: Skipping - already loading or no more data', { isLoadingMore: pagination.isLoadingMore, hasMore: pagination.hasMore });
+          // console.log('📋 LoadMoreAgents: Skipping - already loading or no more data', { isLoadingMore: pagination.isLoadingMore, hasMore: pagination.hasMore });
           return;
         }
         
-        console.log('📋 LoadMoreAgents: Loading next page with lastVisibleId:', pagination.lastVisibleId);
+        // console.log('📋 LoadMoreAgents: Loading next page with lastVisibleId:', pagination.lastVisibleId);
         
         // Set loading state
         set({
@@ -718,7 +718,7 @@ const useAgentStore = create(
             // Fix placeholder URLs for new agents
             const newFixedAgents = fixPlaceholderUrls(response.agents);
             
-            console.log(`✅ LoadMoreAgents: Received ${newFixedAgents.length} more agents (fromCache: ${response.fromCache})`);
+            // console.log(`✅ LoadMoreAgents: Received ${newFixedAgents.length} more agents (fromCache: ${response.fromCache})`);
             
             // Append new agents to existing ones
             const updatedAgents = [...state.agents, ...newFixedAgents];
@@ -736,7 +736,7 @@ const useAgentStore = create(
               }
             });
             
-            console.log('🔍 LoadMoreAgents pagination update:', {
+            // console.log('🔍 LoadMoreAgents pagination update:', {
               newCurrentPage: pagination.currentPage + 1,
               newHasMore: response.hasMore || false,
               newLastVisibleId: response.lastVisibleId || null,
@@ -744,7 +744,7 @@ const useAgentStore = create(
               totalItems: response.totalCount || state.pagination.totalItems
             });
           } else {
-            console.log('📋 LoadMoreAgents: No more agents received');
+            // console.log('📋 LoadMoreAgents: No more agents received');
             set({
               pagination: {
                 ...pagination,
@@ -812,7 +812,7 @@ const useAgentStore = create(
 
       // Set all agents (for individual agent updates)
       setAllAgents: (agents) => {
-        console.log('Setting allAgents in store:', agents?.length || 0);
+        // console.log('Setting allAgents in store:', agents?.length || 0);
         set({ allAgents: agents || [] });
       }
     }),

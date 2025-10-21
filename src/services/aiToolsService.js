@@ -211,13 +211,13 @@ export const getAllAITools = async (forceRefresh = false) => {
       
       // If cache is still valid, use it
       if (now - timestamp < CACHE_DURATION) {
-        console.log('Using cached AI tools data');
+        // console.log('Using cached AI tools data');
         return JSON.parse(cachedData);
       }
     }
     
     // Fetch fresh data
-    console.log('Fetching fresh AI tools data');
+    // console.log('Fetching fresh AI tools data');
     const response = await axios.get(`${API_URL}/api/ai-tools`);
     
     if (response.data && response.data.data) {
@@ -252,7 +252,7 @@ export const getAllAITools = async (forceRefresh = false) => {
     // If there's an error but we have cached data, use it as fallback
     const cachedData = localStorage.getItem('ai_tools_cache');
     if (cachedData) {
-      console.log('Using cached AI tools data as fallback due to error');
+      // console.log('Using cached AI tools data as fallback due to error');
       return JSON.parse(cachedData);
     }
     
@@ -300,7 +300,7 @@ export const getAIToolById = async (id) => {
       const tools = JSON.parse(cachedData);
       const tool = tools.find(t => t.id === id);
       if (tool) {
-        console.log('Found tool in cache');
+        // console.log('Found tool in cache');
         return tool;
       }
     }
@@ -381,7 +381,7 @@ const invalidateCache = () => {
   try {
     localStorage.removeItem('ai_tools_cache');
     localStorage.removeItem('ai_tools_cache_timestamp');
-    console.log('AI tools cache cleared');
+    // console.log('AI tools cache cleared');
   } catch (error) {
     console.error('[AIToolsService] Error invalidating cache:', error);
   }

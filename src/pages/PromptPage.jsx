@@ -41,13 +41,13 @@ const PromptPage = () => {
         setLoading(true);
         setError(null);
         
-        console.log(`Fetching prompt with ID: ${id}`);
+        // console.log(`Fetching prompt with ID: ${id}`);
         
         // Fetch prompt using the new prompts API
         const promptData = await fetchPromptById(id);
         
         if (promptData) {
-          console.log('📊 Prompt data received:', {
+          // console.log('📊 Prompt data received:', {
             id: promptData.id,
             title: promptData.title,
             image: promptData.image,
@@ -98,7 +98,7 @@ const PromptPage = () => {
         try {
           await incrementPromptView(prompt.id);
           setViewIncremented(true);
-          console.log('✅ View count incremented for prompt:', prompt.id);
+          // console.log('✅ View count incremented for prompt:', prompt.id);
         } catch (error) {
           console.error('❌ Failed to increment view count:', error);
         }
@@ -622,12 +622,12 @@ const PromptPage = () => {
                   })
                 }}
                 onLoad={() => {
-                  console.log('✅ additionalHTML rendered');
+                  // console.log('✅ additionalHTML rendered');
                   // Check if images are present
                   const images = document.querySelectorAll('.rich-text-content img');
-                  console.log('🖼️ Found images in additionalHTML:', images.length);
+                  // console.log('🖼️ Found images in additionalHTML:', images.length);
                   images.forEach((img, index) => {
-                    console.log(`📷 Image ${index + 1}:`, {
+                    // console.log(`📷 Image ${index + 1}:`, {
                       src: img.src.substring(0, 50) + '...',
                       alt: img.alt,
                       className: img.className,
@@ -664,8 +664,8 @@ const PromptPage = () => {
                           alt={`Input for ${prompt.title}`}
                           className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
                           onClick={() => openImageModal(prompt.inputImage, `Input for ${prompt.title}`)}
-                          onLoad={() => console.log('✅ Input image loaded:', prompt.inputImage)}
-                          onError={(e) => console.log('❌ Input image failed to load:', e.target.src)}
+                          onLoad={() => // console.log('✅ Input image loaded:', prompt.inputImage)}
+                          onError={(e) => // console.log('❌ Input image failed to load:', e.target.src)}
                           title="Click to open in full screen"
                         />
                       </div>
@@ -685,8 +685,8 @@ const PromptPage = () => {
                           alt={`Result for ${prompt.title}`}
                           className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
                           onClick={() => openImageModal(prompt.image, `Result for ${prompt.title}`)}
-                          onLoad={() => console.log('✅ Result image loaded:', prompt.image)}
-                          onError={(e) => console.log('❌ Result image failed to load:', e.target.src)}
+                          onLoad={() => // console.log('✅ Result image loaded:', prompt.image)}
+                          onError={(e) => // console.log('❌ Result image failed to load:', e.target.src)}
                           title="Click to open in full screen"
                         />
                       </div>
@@ -720,8 +720,8 @@ const PromptPage = () => {
                   alt={prompt.title}
                         className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
                   onClick={() => openImageModal(prompt.image, prompt.title)}
-                  onLoad={() => console.log('✅ Main image loaded:', prompt.image)}
-                  onError={(e) => console.log('❌ Main image failed to load:', e.target.src)}
+                  onLoad={() => // console.log('✅ Main image loaded:', prompt.image)}
+                  onError={(e) => // console.log('❌ Main image failed to load:', e.target.src)}
                   title="Click to open in full screen"
                 />
               </div>
@@ -863,29 +863,29 @@ const PromptPage = () => {
                   <div className="text-wrap">
                     <strong>Created:</strong> {(() => {
                       try {
-                        console.log('🔍 Parsing createdAt:', prompt.createdAt, typeof prompt.createdAt);
+                        // console.log('🔍 Parsing createdAt:', prompt.createdAt, typeof prompt.createdAt);
                         
                         // Handle Firestore Timestamp objects
                         let date;
                         if (prompt.createdAt.toDate && typeof prompt.createdAt.toDate === 'function') {
                           // Firestore Timestamp object
-                          console.log('📅 Using toDate() method');
+                          // console.log('📅 Using toDate() method');
                           date = prompt.createdAt.toDate();
                         } else if (prompt.createdAt.seconds) {
                           // Timestamp with seconds property
-                          console.log('📅 Using seconds property:', prompt.createdAt.seconds);
+                          // console.log('📅 Using seconds property:', prompt.createdAt.seconds);
                           date = new Date(prompt.createdAt.seconds * 1000);
                         } else if (prompt.createdAt._seconds) {
                           // Alternative timestamp format
-                          console.log('📅 Using _seconds property:', prompt.createdAt._seconds);
+                          // console.log('📅 Using _seconds property:', prompt.createdAt._seconds);
                           date = new Date(prompt.createdAt._seconds * 1000);
                         } else {
                           // Regular date string or number
-                          console.log('📅 Using direct date conversion');
+                          // console.log('📅 Using direct date conversion');
                           date = new Date(prompt.createdAt);
                         }
                         
-                        console.log('📅 Parsed date:', date, 'isValid:', !isNaN(date.getTime()));
+                        // console.log('📅 Parsed date:', date, 'isValid:', !isNaN(date.getTime()));
                         return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
                       } catch (e) {
                         console.error('Error parsing createdAt:', e);
@@ -898,29 +898,29 @@ const PromptPage = () => {
                   <div className="text-wrap">
                     <strong>Updated:</strong> {(() => {
                       try {
-                        console.log('🔍 Parsing updatedAt:', prompt.updatedAt, typeof prompt.updatedAt);
+                        // console.log('🔍 Parsing updatedAt:', prompt.updatedAt, typeof prompt.updatedAt);
                         
                         // Handle Firestore Timestamp objects
                         let date;
                         if (prompt.updatedAt.toDate && typeof prompt.updatedAt.toDate === 'function') {
                           // Firestore Timestamp object
-                          console.log('📅 Using toDate() method for updatedAt');
+                          // console.log('📅 Using toDate() method for updatedAt');
                           date = prompt.updatedAt.toDate();
                         } else if (prompt.updatedAt.seconds) {
                           // Timestamp with seconds property
-                          console.log('📅 Using seconds property for updatedAt:', prompt.updatedAt.seconds);
+                          // console.log('📅 Using seconds property for updatedAt:', prompt.updatedAt.seconds);
                           date = new Date(prompt.updatedAt.seconds * 1000);
                         } else if (prompt.updatedAt._seconds) {
                           // Alternative timestamp format
-                          console.log('📅 Using _seconds property for updatedAt:', prompt.updatedAt._seconds);
+                          // console.log('📅 Using _seconds property for updatedAt:', prompt.updatedAt._seconds);
                           date = new Date(prompt.updatedAt._seconds * 1000);
                         } else {
                           // Regular date string or number
-                          console.log('📅 Using direct date conversion for updatedAt');
+                          // console.log('📅 Using direct date conversion for updatedAt');
                           date = new Date(prompt.updatedAt);
                         }
                         
-                        console.log('📅 Parsed updatedAt date:', date, 'isValid:', !isNaN(date.getTime()));
+                        // console.log('📅 Parsed updatedAt date:', date, 'isValid:', !isNaN(date.getTime()));
                         return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
                       } catch (e) {
                         console.error('Error parsing updatedAt:', e);

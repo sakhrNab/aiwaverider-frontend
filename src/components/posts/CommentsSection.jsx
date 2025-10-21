@@ -48,40 +48,40 @@ const CommentsSection = ({ postId }) => {
 
     const loadComments = async () => {
       if (!postId) {
-        console.log('[CommentsSection] No postId provided, skipping comment load');
+        // console.log('[CommentsSection] No postId provided, skipping comment load');
         setIsLoading(false);
         return;
       }
       
       // Skip if already initialized - this prevent double loading
       if (initRef.current) {
-        console.log(`[CommentsSection] Comments already initialized for post ${postId}, skipping reload`);
+        // console.log(`[CommentsSection] Comments already initialized for post ${postId}, skipping reload`);
         return;
       }
       
       try {
-        console.log(`[CommentsSection] Loading comments for post ${postId}`);
+        // console.log(`[CommentsSection] Loading comments for post ${postId}`);
         setIsLoading(true);
         
         // Check cache first and use it immediately to show content
         if (commentsCache[postId] && Array.isArray(commentsCache[postId])) {
-          console.log(`[CommentsSection] Found ${commentsCache[postId].length} cached comments for post ${postId}`);
+          // console.log(`[CommentsSection] Found ${commentsCache[postId].length} cached comments for post ${postId}`);
           setComments(commentsCache[postId]);
           
           // If cache is fresh (less than 30 seconds old), don't fetch fresh data right away
           const lastFetchTime = localStorage.getItem(`commentsLastFetch_${postId}`);
           if (lastFetchTime && (Date.now() - parseInt(lastFetchTime)) < 30000) {
-            console.log('[CommentsSection] Using fresh cache for comments, fetching in background');
+            // console.log('[CommentsSection] Using fresh cache for comments, fetching in background');
           setIsLoading(false);
           }
         } else {
-          console.log(`[CommentsSection] No cached comments found for post ${postId}`);
+          // console.log(`[CommentsSection] No cached comments found for post ${postId}`);
         }
         
         // Set a timeout to stop loading state after 10 seconds to prevent infinite loading
         timeoutId = setTimeout(() => {
           if (mounted.current && isLoading) {
-            console.log('[CommentsSection] Timeout reached, stopping loading state');
+            // console.log('[CommentsSection] Timeout reached, stopping loading state');
             setIsLoading(false);
             setError('Comments are taking longer than expected to load. Please try refreshing.');
           }
@@ -89,16 +89,16 @@ const CommentsSection = ({ postId }) => {
 
         try {
           // Always fetch fresh comments, even if we have cache
-          console.log(`[CommentsSection] Fetching fresh comments for post ${postId}`);
+          // console.log(`[CommentsSection] Fetching fresh comments for post ${postId}`);
           const commentsMap = await fetchBatchComments([postId], false);
           
           if (!mounted.current) {
-            console.log('[CommentsSection] Component unmounted before fetch completed');
+            // console.log('[CommentsSection] Component unmounted before fetch completed');
             return;
           }
             
           if (commentsMap && commentsMap[postId]) {
-            console.log(`[CommentsSection] Received ${commentsMap[postId].length} fresh comments for post ${postId}`);
+            // console.log(`[CommentsSection] Received ${commentsMap[postId].length} fresh comments for post ${postId}`);
             
             // Update state with fresh comments
             setComments(commentsMap[postId]);
@@ -107,7 +107,7 @@ const CommentsSection = ({ postId }) => {
             localStorage.setItem(`commentsLastFetch_${postId}`, Date.now().toString());
             setError(''); // Clear any previous errors
           } else {
-            console.log(`[CommentsSection] No comments returned for post ${postId}`);
+            // console.log(`[CommentsSection] No comments returned for post ${postId}`);
             // If we don't get comments, keep current cached comments if available
             if (!commentsCache[postId] || !Array.isArray(commentsCache[postId])) {
               setComments([]);
@@ -149,14 +149,14 @@ const CommentsSection = ({ postId }) => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      console.log(`[CommentsSection] Unmounting comments section for post ${postId}`);
+      // console.log(`[CommentsSection] Unmounting comments section for post ${postId}`);
     };
   }, [postId, fetchBatchComments, commentsCache]);
 
   // Update local comments when cache changes
   useEffect(() => {
     if (commentsCache[postId] && Array.isArray(commentsCache[postId])) {
-      console.log(`[CommentsSection] Updating comments from cache change for post ${postId}, count: ${commentsCache[postId].length}`);
+      // console.log(`[CommentsSection] Updating comments from cache change for post ${postId}, count: ${commentsCache[postId].length}`);
       setComments(commentsCache[postId]);
     }
   }, [commentsCache, postId]);
@@ -168,18 +168,18 @@ const handleAddComment = async () => {
 
   try {
     const response = await addComment(postId, { commentText: newComment.trim() });
-    console.log('Add comment response:', response); // Debug log
+    // console.log('Add comment response:', response); // Debug log
     
     // Check the structure of the response
     const commentData = response?.comment || response;
     
     if (commentData) {
       // Update local state first for immediate feedback
-      console.log('Adding comment to local state:', commentData);
+      // console.log('Adding comment to local state:', commentData);
       setComments(prev => [commentData, ...prev]);
       
       // Then update cache
-      console.log('Adding comment to cache:', commentData);
+      // console.log('Adding comment to cache:', commentData);
       addCommentToCache(postId, commentData);
       setNewComment('');
       setError('');

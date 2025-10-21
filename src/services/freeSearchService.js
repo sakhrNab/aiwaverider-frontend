@@ -57,7 +57,7 @@ class FreeSearchService {
       return;
     }
     
-    console.log(`🔍 FreeSearchService: Initializing with ${agentsData.length} agents`);
+    // console.log(`🔍 FreeSearchService: Initializing with ${agentsData.length} agents`);
     
     this.agents = agentsData.map(agent => ({
       ...agent,
@@ -71,7 +71,7 @@ class FreeSearchService {
     this.fuse = new Fuse(this.agents, this.fuseOptions);
     this.initialized = true;
     
-    console.log(`✅ FreeSearchService: Initialized successfully`);
+    // console.log(`✅ FreeSearchService: Initialized successfully`);
   }
   
   /**
@@ -99,7 +99,7 @@ class FreeSearchService {
       pageSize = 50
     } = options;
     
-    console.log(`🔍 FreeSearchService: Searching with query: "${searchQuery}"`);
+    // console.log(`🔍 FreeSearchService: Searching with query: "${searchQuery}"`);
     
     let results = this.agents;
     
@@ -111,7 +111,7 @@ class FreeSearchService {
         searchScore: result.score,
         searchMatches: result.matches
       }));
-      console.log(`📝 Search results: ${results.length} agents found for "${searchQuery}"`);
+      // console.log(`📝 Search results: ${results.length} agents found for "${searchQuery}"`);
     }
     
     // 2. CATEGORY FILTER: Filter by category
@@ -119,7 +119,7 @@ class FreeSearchService {
       results = results.filter(agent => 
         agent.category && agent.category.toLowerCase() === category.toLowerCase()
       );
-      console.log(`🏷️ Category filter: ${results.length} agents in "${category}"`);
+      // console.log(`🏷️ Category filter: ${results.length} agents in "${category}"`);
     }
     
     // 3. PRICE FILTER: Filter by price range
@@ -128,7 +128,7 @@ class FreeSearchService {
         const agentPrice = agent.normalizedPrice;
         return agentPrice >= priceRange.min && agentPrice <= priceRange.max;
       });
-      console.log(`💰 Price filter: ${results.length} agents in range $${priceRange.min}-$${priceRange.max}`);
+      // console.log(`💰 Price filter: ${results.length} agents in range $${priceRange.min}-$${priceRange.max}`);
     }
     
     // 4. RATING FILTER: Filter by minimum rating
@@ -137,7 +137,7 @@ class FreeSearchService {
         const agentRating = agent.rating?.average || 0;
         return agentRating >= rating;
       });
-      console.log(`⭐ Rating filter: ${results.length} agents with rating >= ${rating}`);
+      // console.log(`⭐ Rating filter: ${results.length} agents with rating >= ${rating}`);
     }
     
     // 5. TAGS FILTER: Filter by selected tags
@@ -146,7 +146,7 @@ class FreeSearchService {
         const agentTags = agent.tags || [];
         return tags.some(tag => agentTags.includes(tag));
       });
-      console.log(`🏷️ Tags filter: ${results.length} agents with tags [${tags.join(', ')}]`);
+      // console.log(`🏷️ Tags filter: ${results.length} agents with tags [${tags.join(', ')}]`);
     }
     
     // 6. FEATURES FILTER: Filter by selected features
@@ -155,7 +155,7 @@ class FreeSearchService {
         const agentFeatures = agent.features || [];
         return features.some(feature => agentFeatures.includes(feature));
       });
-      console.log(`🔧 Features filter: ${results.length} agents with features [${features.join(', ')}]`);
+      // console.log(`🔧 Features filter: ${results.length} agents with features [${features.join(', ')}]`);
     }
     
     // 7. SORTING: Apply selected sort filter
@@ -171,7 +171,7 @@ class FreeSearchService {
     const endTime = performance.now();
     const searchTime = Math.round(endTime - startTime);
     
-    console.log(`✅ FreeSearchService: Completed in ${searchTime}ms - ${paginatedResults.length}/${totalResults} agents (page ${page}/${totalPages})`);
+    // console.log(`✅ FreeSearchService: Completed in ${searchTime}ms - ${paginatedResults.length}/${totalResults} agents (page ${page}/${totalPages})`);
     
     return {
       agents: paginatedResults,
@@ -238,7 +238,7 @@ class FreeSearchService {
    * @returns {Array} - Sorted array
    */
   applySorting(results, sortFilter) {
-    console.log(`🔄 Applying sort: ${sortFilter}`);
+    // console.log(`🔄 Applying sort: ${sortFilter}`);
     
     switch (sortFilter) {
       case 'Top Rated':
