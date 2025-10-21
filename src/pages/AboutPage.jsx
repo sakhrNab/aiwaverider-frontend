@@ -303,7 +303,7 @@ const About = () => {
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'} text-2xl transition-colors duration-200 cursor-pointer relative z-30`}
-                    onClick={() => // console.log('LinkedIn clicked')}
+                    onClick={() =>  console.log('LinkedIn clicked')}
                     style={{ zIndex: 30 }}
                   >
                     <FaLinkedin />
@@ -313,7 +313,7 @@ const About = () => {
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} text-2xl transition-colors duration-200 cursor-pointer relative z-30`}
-                    onClick={() => // console.log('GitHub clicked')}
+                    onClick={() => console.log('GitHub clicked')}
                     style={{ zIndex: 30 }}
                   >
                     <FaGithub />
@@ -323,7 +323,7 @@ const About = () => {
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="text-xl hover:text-pink-600 transition-colors duration-200 cursor-pointer relative z-30"
-                    onClick={() => // console.log('TikTok clicked')}
+                    onClick={() => console.log('TikTok clicked')}
                     style={{ zIndex: 30 }}
                   >
                     <FontAwesomeIcon icon={faTiktok} />
