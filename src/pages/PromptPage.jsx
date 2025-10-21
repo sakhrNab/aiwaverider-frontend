@@ -48,18 +48,18 @@ const PromptPage = () => {
         
         if (promptData) {
           // console.log('📊 Prompt data received:', {
-            id: promptData.id,
-            title: promptData.title,
-            image: promptData.image,
-            inputImage: promptData.inputImage,
-            hasAdditionalHTML: !!promptData.additionalHTML,
-            additionalHTMLLength: promptData.additionalHTML?.length,
-            hasInputImage: !!promptData.inputImage,
-            hasResultImage: !!promptData.image,
-            createdAt: promptData.createdAt,
-            updatedAt: promptData.updatedAt,
-            viewCount: promptData.viewCount
-          });
+          //   id: promptData.id,
+          //   title: promptData.title,
+          //   image: promptData.image,
+          //   inputImage: promptData.inputImage,
+          //   hasAdditionalHTML: !!promptData.additionalHTML,
+          //   additionalHTMLLength: promptData.additionalHTML?.length,
+          //   hasInputImage: !!promptData.inputImage,
+          //   hasResultImage: !!promptData.image,
+          //   createdAt: promptData.createdAt,
+          //   updatedAt: promptData.updatedAt,
+          //   viewCount: promptData.viewCount
+          // });
           
           setPrompt(promptData);
           setLikeCount(promptData.likeCount || 0);
@@ -628,12 +628,12 @@ const PromptPage = () => {
                   // console.log('🖼️ Found images in additionalHTML:', images.length);
                   images.forEach((img, index) => {
                     // console.log(`📷 Image ${index + 1}:`, {
-                      src: img.src.substring(0, 50) + '...',
-                      alt: img.alt,
-                      className: img.className,
-                      naturalWidth: img.naturalWidth,
-                      naturalHeight: img.naturalHeight
-                    });
+                    //   src: img.src.substring(0, 50) + '...',
+                    //   alt: img.alt,
+                    //   className: img.className,
+                    //   naturalWidth: img.naturalWidth,
+                    //   naturalHeight: img.naturalHeight
+                    // });
                   });
                 }}
               />
@@ -664,8 +664,8 @@ const PromptPage = () => {
                           alt={`Input for ${prompt.title}`}
                           className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
                           onClick={() => openImageModal(prompt.inputImage, `Input for ${prompt.title}`)}
-                          onLoad={() => // console.log('✅ Input image loaded:', prompt.inputImage)}
-                          onError={(e) => // console.log('❌ Input image failed to load:', e.target.src)}
+                          onLoad={() =>  console.log('✅ Input image loaded:', prompt.inputImage)}
+                          onError={(e) =>  console.log('❌ Input image failed to load:', e.target.src)}
                           title="Click to open in full screen"
                         />
                       </div>
@@ -685,8 +685,8 @@ const PromptPage = () => {
                           alt={`Result for ${prompt.title}`}
                           className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
                           onClick={() => openImageModal(prompt.image, `Result for ${prompt.title}`)}
-                          onLoad={() => // console.log('✅ Result image loaded:', prompt.image)}
-                          onError={(e) => // console.log('❌ Result image failed to load:', e.target.src)}
+                          onLoad={() =>  console.log('✅ Result image loaded:', prompt.image)}
+                          onError={(e) => console.log('❌ Result image failed to load:', e.target.src)}
                           title="Click to open in full screen"
                         />
                       </div>
@@ -720,8 +720,8 @@ const PromptPage = () => {
                   alt={prompt.title}
                         className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity rounded-lg"
                   onClick={() => openImageModal(prompt.image, prompt.title)}
-                  onLoad={() => // console.log('✅ Main image loaded:', prompt.image)}
-                  onError={(e) => // console.log('❌ Main image failed to load:', e.target.src)}
+                  onLoad={() => console.log('✅ Main image loaded:', prompt.image)}
+                  onError={(e) => console.log('❌ Main image failed to load:', e.target.src)}
                   title="Click to open in full screen"
                 />
               </div>
