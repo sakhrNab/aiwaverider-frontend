@@ -231,6 +231,173 @@
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.8);
   line-height: 1.2;
+  margin-top: 0.5rem;
+}
+
+/* TikTok-style Video Card */
+.mk-video-card {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.mk-video-wrapper {
+  position: relative;
+  aspect-ratio: 9/16;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.mk-video-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  transform: scale(0.95);
+}
+
+.mk-play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.mk-play-icon {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+  transition: transform 0.3s ease;
+}
+
+.mk-video-wrapper:hover .mk-play-icon {
+  transform: scale(1.1);
+}
+
+.mk-video-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 70%, transparent 100%);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mk-video-play-small {
+  flex-shrink: 0;
+}
+
+.mk-video-count {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.mk-video-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.mk-video-info {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.mk-video-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.mk-video-description {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.mk-video-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.mk-stat-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  gap: 0.25rem;
+}
+
+.mk-video-engagement {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-style: italic;
+}
+
+/* Thumbnail image styles */
+.mk-thumb-image-wrapper {
+  position: relative;
+  aspect-ratio: 9/16;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  margin-bottom: 0.5rem;
+}
+
+.mk-thumb-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  transform: scale(0.95);
+}
+
+.mk-thumb-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+  padding: 0.5rem;
+  display: flex;
+  align-items: flex-end;
+}
+
+.mk-thumb-overlay .mk-thumb-views {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* Package cards */
@@ -393,6 +560,86 @@
   flex-wrap: wrap;
 }
 
+/* Add-on wrapper for tooltips */
+.mk-addon-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.mk-addon-wrapper .mk-stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mk-addon-wrapper:hover .mk-stat-card {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(234, 179, 8, 0.2);
+}
+
+/* Tooltip styling */
+.mk-addon-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  width: 280px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1000;
+  pointer-events: none;
+  text-align: left;
+}
+
+.mk-addon-wrapper:hover .mk-addon-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mk-addon-tooltip strong {
+  display: block;
+  color: #fbbf24;
+  margin-bottom: 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.mk-addon-tooltip p {
+  margin: 0;
+  color: #e5e7eb;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Tooltip arrow */
+.mk-addon-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #1f2937;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .mk-addon-tooltip {
+    width: 240px;
+    font-size: 0.8125rem;
+  }
+  
+  /* Make tooltips work on tap for mobile */
+  .mk-addon-wrapper:active .mk-addon-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
 
 
 /* Responsive design */
@@ -434,6 +681,33 @@
   
   .mk-carousel-thumbnails {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+  
+  .mk-video-card {
+    max-width: 100%;
+  }
+  
+  .mk-video-wrapper {
+    border-radius: 8px;
+  }
+  
+  .mk-play-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .mk-video-title {
+    font-size: 1.1rem;
+  }
+  
+  .mk-video-stats {
+    gap: 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .mk-thumb-image-wrapper {
+    aspect-ratio: 9/16;
+    max-height: 120px;
   }
 }
 

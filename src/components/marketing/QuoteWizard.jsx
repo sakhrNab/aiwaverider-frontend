@@ -159,7 +159,7 @@ ${formData.email}
               <div>
                 <label className="mk-text block mb-2">Industry</label>
                 <select
-                  className="mk-calculator-input"
+                  className="mk-calculator-input" style={{backgroundColor: '#4b5563', color: '#ffffff'}}
                   value={formData.industry}
                   onChange={(e) => updateFormData('industry', e.target.value)}
                 >
@@ -173,7 +173,7 @@ ${formData.email}
               <div>
                 <label className="mk-text block mb-2">Timeline</label>
                 <select
-                  className="mk-calculator-input"
+                  className="mk-calculator-input" style={{backgroundColor: '#4b5563', color: '#ffffff'}}
                   value={formData.timeline}
                   onChange={(e) => updateFormData('timeline', e.target.value)}
                 >
