@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FaLinkedin, FaGithub, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools, FaCogs, FaCloud, FaMobile, FaServer } from 'react-icons/fa';
+import { FaLinkedin, FaGithub, FaCode, FaLaptopCode, FaRobot, FaChartLine, FaBrain, FaTools, FaCogs, FaCloud, FaMobile, FaServer, FaFileAlt, FaDownload } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import sakhrProfileImg from '../assets/sakhr-profile.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -328,6 +328,20 @@ const About = () => {
                   >
                     <FontAwesomeIcon icon={faTiktok} />
                   </a>
+                </div>
+                {/* Media Kit Button */}
+                <div className="flex justify-center mb-6">
+                  <Link
+                    to="/media-kit"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/30' 
+                        : 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/30'
+                    }`}
+                  >
+                    <FaFileAlt className="text-sm" />
+                    <span className="text-sm">View Media Kit</span>
+                  </Link>
                 </div>
               </div>
               <p className="text-base leading-relaxed mb-4">
@@ -665,6 +679,34 @@ const About = () => {
                 Whether you're just starting your AI journey or looking to optimize existing systems, 
                 we're here to guide you every step of the way.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* For Media & Partners Section */}
+      <section className={`py-14 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} relative z-10`}>
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto">
+            <div className={`text-center mb-8 ${darkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg p-8 shadow-lg border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+              <h2 className={`text-2xl md:text-3xl font-bold mb-4 ${darkMode ? 'text-teal-300' : 'text-teal-600'}`}>
+                For Media & Partners
+              </h2>
+              <p className={`text-base md:text-lg mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Access our complete media kit with channel statistics, top-performing content, engagement metrics, 
+                and sponsorship packages. Perfect for brand partnerships, media inquiries, and collaboration opportunities.
+              </p>
+              <Link
+                to="/media-kit"
+                className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                  darkMode 
+                    ? 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white shadow-lg shadow-teal-600/30' 
+                    : 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white shadow-lg shadow-teal-600/30'
+                }`}
+              >
+                <FaDownload className="text-sm" />
+                <span>View Media Kit & Proof Pack</span>
+              </Link>
             </div>
           </div>
         </div>
