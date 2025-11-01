@@ -329,8 +329,8 @@ const About = () => {
                     <FontAwesomeIcon icon={faTiktok} />
                   </a>
                 </div>
-                {/* Media Kit Button */}
-                <div className="flex justify-center mb-6">
+                {/* Media Kit Buttons */}
+                <div className="flex justify-center gap-3 mb-6 flex-wrap">
                   <Link
                     to="/media-kit"
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
@@ -340,7 +340,18 @@ const About = () => {
                     }`}
                   >
                     <FaFileAlt className="text-sm" />
-                    <span className="text-sm">View Media Kit</span>
+                    <span className="text-sm">Personal Media Kit</span>
+                  </Link>
+                  <Link
+                    to="/media-kit-business"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/30' 
+                        : 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/30'
+                    }`}
+                  >
+                    <FaFileAlt className="text-sm" />
+                    <span className="text-sm">Business Media Kit</span>
                   </Link>
                 </div>
               </div>
@@ -693,20 +704,33 @@ const About = () => {
                 For Media & Partners
               </h2>
               <p className={`text-base md:text-lg mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Access our complete media kit with channel statistics, top-performing content, engagement metrics, 
-                and sponsorship packages. Perfect for brand partnerships, media inquiries, and collaboration opportunities.
+                Access our complete media kits with channel statistics, top-performing content, engagement metrics, 
+                automation services, and sponsorship packages. Perfect for brand partnerships, media inquiries, business automation needs, and collaboration opportunities.
               </p>
-              <Link
-                to="/media-kit"
-                className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                  darkMode 
-                    ? 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white shadow-lg shadow-teal-600/30' 
-                    : 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white shadow-lg shadow-teal-600/30'
-                }`}
-              >
-                <FaDownload className="text-sm" />
-                <span>View Media Kit & Proof Pack</span>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <Link
+                  to="/media-kit"
+                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                    darkMode 
+                      ? 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white shadow-lg shadow-teal-600/30' 
+                      : 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white shadow-lg shadow-teal-600/30'
+                  }`}
+                >
+                  <FaDownload className="text-sm" />
+                  <span>Personal Media Kit</span>
+                </Link>
+                <Link
+                  to="/media-kit-business"
+                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                    darkMode 
+                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-600/30' 
+                      : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-600/30'
+                  }`}
+                >
+                  <FaDownload className="text-sm" />
+                  <span>Business Media Kit</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const QuoteWizard = () => {
+const QuoteWizard = ({ type = 'personal' }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     budget: '',
@@ -18,14 +18,38 @@ const QuoteWizard = () => {
     { id: 4, title: 'Contact' }
   ];
 
-  const budgetOptions = [
+  // Business automation pricing
+  const businessBudgetOptions = [
+    { value: '997-1500', label: '€997 - €1,500', package: 'Starter Package - Ready-to-Use Workflows' },
+    { value: '1500-5000', label: '€1,500 - €5,000', package: 'Professional Package - Custom Workflows' },
+    { value: '5000-13000', label: '€5,000 - €13,000', package: 'Enterprise Package - Full Automation Suite' },
+    { value: '13000+', label: '€13,000+', package: 'Enterprise / Custom Solutions / Monthly Retainer' }
+  ];
+
+  // Personal media kit pricing (TikTok/content creation)
+  const personalBudgetOptions = [
     { value: '500-1000', label: '€500 - €1,000', package: 'Package A - Promo Reel' },
     { value: '1000-2000', label: '€1,000 - €2,000', package: 'Package B - Promo + Funnel' },
     { value: '2000-5000', label: '€2,000 - €5,000', package: 'Package C - Campaign' },
     { value: '5000+', label: '€5,000+', package: 'Package D - Monthly Retainer' }
   ];
 
-  const goalOptions = [
+  const budgetOptions = type === 'business' ? businessBudgetOptions : personalBudgetOptions;
+
+  // Business automation goals
+  const businessGoalOptions = [
+    'Process Automation',
+    'Social Media Automation',
+    'Content Creation Automation',
+    'Lead Generation & Nurturing',
+    'CRM Integration',
+    'Workflow Optimization',
+    'Team Productivity',
+    'Cost Reduction'
+  ];
+
+  // Personal media kit goals
+  const personalGoalOptions = [
     'Lead Generation',
     'Brand Awareness',
     'Product Launch',
@@ -33,6 +57,8 @@ const QuoteWizard = () => {
     'Sales Conversion',
     'Community Building'
   ];
+
+  const goalOptions = type === 'business' ? businessGoalOptions : personalGoalOptions;
 
   const industryOptions = [
     'SaaS/Technology',
@@ -44,12 +70,24 @@ const QuoteWizard = () => {
     'Other'
   ];
 
-  const timelineOptions = [
+  // Business automation timelines (longer for custom workflows)
+  const businessTimelineOptions = [
+    'ASAP (Rush - +€500)',
+    '1-2 weeks',
+    '2-4 weeks',
+    '1-2 months',
+    'Flexible timing'
+  ];
+
+  // Personal media kit timelines
+  const personalTimelineOptions = [
     'ASAP (Rush - +€200)',
     '1-2 weeks',
     '2-4 weeks',
     'Flexible timing'
   ];
+
+  const timelineOptions = type === 'business' ? businessTimelineOptions : personalTimelineOptions;
 
   const handleNext = () => {
     if (step < 4) setStep(step + 1);

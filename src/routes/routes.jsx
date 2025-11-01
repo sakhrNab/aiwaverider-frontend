@@ -28,6 +28,7 @@ const ApiTestPage = lazy(() => import('../pages/ApiTestPage'));
 const VideosPage = lazy(() => import('../pages/VideosPage'));
 const SubscribePage = lazy(() => import('../pages/SubscribePage'));
 const MediaKitPage = lazy(() => import('../pages/MediaKitPage'));
+const BusinessMediaKitPage = lazy(() => import('../pages/BusinessMediaKitPage'));
 const PackagePricingPage = lazy(() => import('../pages/PackagePricingPage'));
 
 // Legal pages
@@ -98,6 +99,7 @@ const AppRoutes = () => {
       <Route path="/monetization-paths" element={withSuspense(<MonetizationPaths />)} />
       <Route path="/ai-obstacle-solutions" element={withSuspense(<AIObstacleSolutions />)} />
       <Route path="/media-kit" element={withSuspense(<MediaKitPage />)} />
+      <Route path="/media-kit-business" element={withSuspense(<BusinessMediaKitPage />)} />
       <Route path="/packages/pricing" element={withSuspense(<PackagePricingPage />)} />
       
       {/* E-commerce */}

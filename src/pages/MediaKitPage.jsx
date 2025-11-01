@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import '../styles/marketing-pages.css';
 import { getTodayIsoDate, printCurrentPageAsPdf } from '../utils/pdf';
 import ROICalculator from '../components/marketing/ROICalculator';
@@ -205,7 +206,7 @@ const MediaKitPage = () => {
       <div className="mk-container">
         <div className="mk-header no-print">
           <h1 className="mk-title">Media Kit & Proof Pack</h1>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap items-center">
             <button
               onClick={() => {
                 document.getElementById('quote-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -218,6 +219,12 @@ const MediaKitPage = () => {
             <button onClick={handleDownload} className="mk-btn-secondary">
               Download PDF
             </button>
+            <Link
+              to="/media-kit-business"
+              className="mk-btn-secondary"
+            >
+              View Business Media Kit →
+            </Link>
           </div>
         </div>
 
