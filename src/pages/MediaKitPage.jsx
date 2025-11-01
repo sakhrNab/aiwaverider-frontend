@@ -20,7 +20,6 @@ const MediaKitPage = () => {
     printCurrentPageAsPdf(`media-kit_${today}`);
   };
 
-  // Screenshots data with actual TikTok metrics (sorted by views)
   const screenshots = [
     {
       title: "AI Video Generation",
@@ -73,20 +72,20 @@ const MediaKitPage = () => {
   ];
 
   const stats = [
-    { number: "1,916", label: "Followers" },
-    { number: "6,600+", label: "Total Likes" },
     { number: "167K", label: "Peak Video Views" },
-    { number: "341K", label: "Total Post Views" },
+    { number: "87x", label: "Reach Multiplier" },
     { number: "8.2%", label: "Engagement Rate" },
-    { number: "87x", label: "Reach Multiplier" }
+    { number: "341K", label: "Total Views" },
+    { number: "6,600+", label: "Total Likes" },
+    { number: "1,916", label: "Followers" }
   ];
 
   const performanceMetrics = [
     { title: "Peak Video Views", value: "167K", subtitle: "Single video performance" },
     { title: "Engagement Rate", value: "8.2%", subtitle: "3x industry average" },
     { title: "Reach Multiplier", value: "87x", subtitle: "Views beyond follower base" },
-    { title: "Total Shares", value: "100s", subtitle: "Organic content distribution" },
-    { title: "Response Time", value: "< 4h", subtitle: "Fast turnaround guaranteed" },
+    { title: "Total Shares", value: "100s", subtitle: "Organic distribution" },
+    { title: "Response Time", value: "< 4h", subtitle: "Fast turnaround" },
     { title: "Technical Capability", value: "Full Stack", subtitle: "Content + implementation" }
   ];
 
@@ -219,48 +218,165 @@ const MediaKitPage = () => {
             <button onClick={handleDownload} className="mk-btn-secondary">
               Download PDF
             </button>
-            <Link
-              to="/media-kit-business"
-              className="mk-btn-secondary"
-            >
+            <Link to="/media-kit-business" className="mk-btn-secondary">
               View Business Media Kit →
             </Link>
           </div>
         </div>
 
-        {/* Channel Header */}
+        {/* VISUAL HERO: Actual TikTok Content First! */}
         <div className="mk-glass-card">
-          <h2 className="mk-section-title">ai.wave.rider — AI Waverider</h2>
-          <p className="mk-text text-lg">AI Tools & Hacks | Unlock AI's Power</p>
-          <p className="mk-muted mt-2">
-            Creator specializing in viral AI automation content, marketing workflows, and no-code solutions.
-            Recent viral video reached <span className="mk-highlight">167K views</span> with an audience that actively engages at <span className="mk-highlight">3x industry average rates</span>.
-          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-6">
+            {/* Left: Minimal text */}
+            <div>
+              <div className="inline-block px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-sm font-bold mb-4 text-white">
+                🔥 167K Views on One Video
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                Viral AI Content That Drives Real Leads
+              </h1>
+              <p className="text-xl mk-muted mb-6">
+                TikTok creator specializing in AI tools with <span className="mk-highlight">87x reach multiplier</span> and <span className="mk-highlight">8.2% engagement</span> (3x industry average).
+              </p>
+              <div className="flex gap-4 flex-wrap">
+                <button
+                  onClick={() => {
+                    document.getElementById('proof-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="mk-btn-primary"
+                >
+                  See Proof →
+                </button>
+                <a
+                  href="https://tiktok.com/@ai.wave.rider"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mk-btn-secondary"
+                >
+                  View TikTok
+                </a>
+              </div>
+              <p className="text-sm text-gray-400 mt-4">
+                ⚡ Pilot pricing • 🎯 High-intent AI audience • 💰 Performance bonuses
+              </p>
+            </div>
 
-          <div className="mk-muted mt-3 p-3 bg-white bg-opacity-10 rounded-lg">
-            <strong>Building Case Study Portfolio:</strong> Limited pilot pricing available for brands ready to test our unique combination of viral content + technical implementation.
+            {/* Right: ACTUAL TIKTOK SCREENSHOT */}
+            <div className="relative">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-pink-500">
+                <img
+                  src={screenshots[0].image}
+                  alt="Viral TikTok Video"
+                  className="w-full"
+                />
+                {/* Play button overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                  <svg className="w-20 h-20 text-white drop-shadow-lg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+                {/* View count badge */}
+                <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  <span className="text-white font-bold text-lg">{screenshots[0].views}</span>
+                </div>
+              </div>
+
+              {/* Floating stats */}
+              <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 border-2 border-pink-500">
+                <div className="text-2xl font-bold text-pink-500">87x</div>
+                <div className="text-xs">reach multiplier</div>
+              </div>
+              <div className="absolute -top-4 -right-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 border-2 border-purple-500">
+                <div className="text-2xl font-bold text-purple-500">8.2%</div>
+                <div className="text-xs">engagement rate</div>
+              </div>
+            </div>
           </div>
 
-          {/* Trust Badges */}
-          <div className="flex flex-wrap gap-4 mt-4">
-            <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
-              <span className="mk-stat-number text-sm">87x</span>
-              <span className="mk-stat-label text-xs">Reach Multiplier</span>
+          {/* Quick info bar */}
+          <div className="border-t border-white border-opacity-10 pt-4">
+            <div className="flex flex-wrap gap-3 justify-center">
+              {[
+                { icon: '🎯', text: 'AI Tools Niche' },
+                { icon: '⚡', text: '< 4h Response' },
+                { icon: '🛡️', text: '100% Money-Back' },
+                { icon: '📊', text: 'Full Analytics' }
+              ].map((item, idx) => (
+                <div key={idx} className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
+                  <span className="text-lg mr-2">{item.icon}</span>
+                  <span className="text-xs">{item.text}</span>
+                </div>
+              ))}
             </div>
-            <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
-              <span className="mk-stat-number text-sm">100%</span>
-              <span className="mk-stat-label text-xs">Money-Back Guarantee</span>
+          </div>
+
+          {/* Pilot pricing callout */}
+          <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-700/50">
+            <strong>🎯 Building Portfolio:</strong> Pilot pricing available for AI tool brands. Same viral content + technical setup, reduced investment for first partnerships.
+          </div>
+        </div>
+
+        {/* VISUAL: Why Sponsor Us (Instead of text block) */}
+        <div className="mk-glass-card">
+          <h2 className="mk-section-title">Why AI Tool Brands Choose Us</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+            {/* Before: Other Creators */}
+            <div className="p-6 rounded-xl bg-red-900/20 border-2 border-red-700/50">
+              <div className="text-center mb-4">
+                <div className="text-5xl mb-2">❌</div>
+                <h3 className="text-xl font-bold">Other Creators</h3>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { icon: '📉', text: 'Low engagement (1-2%)' },
+                  { icon: '👥', text: 'General audience, not tech-focused' },
+                  { icon: '🎥', text: 'Video only, no funnel setup' },
+                  { icon: '❓', text: 'No tracking or lead routing' },
+                  { icon: '🐌', text: 'Slow response times' }
+                ].map((item, idx) => (
+                  <div key={idx} className="p-3 rounded-lg bg-red-800/30 flex items-center gap-3">
+                    <div className="text-2xl">{item.icon}</div>
+                    <div className="text-sm">{item.text}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
-              <span className="mk-stat-number text-sm">&lt; 4h</span>
-              <span className="mk-stat-label text-xs">Response Time</span>
+
+            {/* After: AI Waverider */}
+            <div className="p-6 rounded-xl bg-green-900/20 border-2 border-green-700/50">
+              <div className="text-center mb-4">
+                <div className="text-5xl mb-2">✅</div>
+                <h3 className="text-xl font-bold">AI Waverider</h3>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { icon: '🚀', text: 'High engagement (8.2%, 3x avg)' },
+                  { icon: '🎯', text: 'AI enthusiasts & early adopters' },
+                  { icon: '⚙️', text: 'Full funnel: video + ManyChat + tracking' },
+                  { icon: '📊', text: 'UTM tags + lead exports included' },
+                  { icon: '⚡', text: '< 4h response time' }
+                ].map((item, idx) => (
+                  <div key={idx} className="p-3 rounded-lg bg-green-800/30 flex items-center gap-3">
+                    <div className="text-2xl">{item.icon}</div>
+                    <div className="text-sm">{item.text}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Arrow (desktop only) */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-4xl hidden md:block">
+              →
             </div>
           </div>
         </div>
 
-        {/* Quick Stats */}
+        {/* VISUAL: Quick Stats 
         <div className="mk-glass-card">
-          <h2 className="mk-section-title">Channel Statistics</h2>
+          <h2 className="mk-section-title">Channel Performance</h2>
           <div className="mk-stats-grid">
             {stats.map((stat, index) => (
               <div key={index} className="mk-stat-card">
@@ -269,13 +385,18 @@ const MediaKitPage = () => {
               </div>
             ))}
           </div>
-        </div>
+          <div className="mt-6 text-center">
+            <p className="mk-muted">
+              <strong>What This Means:</strong> With only 1,916 followers, we reached <span className="mk-highlight">167K people</span> on one video—that's an <span className="mk-highlight">87x multiplier</span>. Your sponsored content gets seen by thousands beyond our immediate audience.
+            </p>
+          </div>
+        </div>*/}
 
-        {/* Top Performing Content */}
-        <div className="mk-glass-card">
-          <h2 className="mk-section-title">Top Performing Content (Proof)</h2>
-          <p className="mk-muted mb-4">
-            Recent viral content showing audience engagement and reach potential:
+        {/* VISUAL: Top Performing Content (Your Best Section - Keep and Enhance) */}
+        <div className="mk-glass-card" id="proof-section">
+          <h2 className="mk-section-title">🔥 Viral Content Proof</h2>
+          <p className="mk-muted mb-6 text-center">
+            Real TikTok videos showing engagement and reach potential for your brand:
           </p>
 
           {/* Carousel Container */}
@@ -289,25 +410,21 @@ const MediaKitPage = () => {
                       alt={screenshots[currentScreenshot].title}
                       className="mk-video-image"
                     />
-                    {/* Play button overlay */}
                     <div className="mk-play-overlay">
-                      <svg className="mk-play-icon" width="64" height="64" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                      <svg className="mk-play-icon" width="64" height="64" viewBox="0 0 24 24" fill="white">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                     </div>
-                    {/* Video footer with stats */}
                     <div className="mk-video-footer">
-                      <svg className="mk-video-play-small" width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+                      <svg className="mk-video-play-small" width="18" height="18" viewBox="0 0 24 24" fill="#fff">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                       <strong className="mk-video-count">{screenshots[currentScreenshot].views}</strong>
                     </div>
-                    {/* Pinned badge */}
                     {currentScreenshot === 0 && (
-                      <div className="mk-video-badge">Pinned</div>
+                      <div className="mk-video-badge">🔥 Viral</div>
                     )}
                   </div>
-                  {/* Video info below */}
                   <div className="mk-video-info">
                     <div className="mk-video-title">{screenshots[currentScreenshot].title}</div>
                     <div className="mk-video-description">{screenshots[currentScreenshot].description}</div>
@@ -330,7 +447,6 @@ const MediaKitPage = () => {
                 </div>
               </div>
 
-              {/* Navigation buttons */}
               <button
                 onClick={() => setCurrentScreenshot(prev => prev > 0 ? prev - 1 : screenshots.length - 1)}
                 className="mk-carousel-btn mk-carousel-prev"
@@ -347,7 +463,6 @@ const MediaKitPage = () => {
               </button>
             </div>
 
-            {/* Thumbnail navigation */}
             <div className="mk-carousel-thumbnails">
               {screenshots.map((screenshot, index) => (
                 <button
@@ -367,18 +482,56 @@ const MediaKitPage = () => {
             </div>
           </div>
 
-          <div className="mk-text mt-4">
-            <strong>Performance Note:</strong> AI Video Generation comparison reached 167K views (87x our follower base) and drove significant
-            profile visits, demonstrating strong organic reach potential in the AI automation niche.
+          <div className="mk-text mt-6 p-4 bg-white bg-opacity-10 rounded-lg">
+            <strong>💡 Why This Matters:</strong> These aren't vanity metrics. Our content reaches <span className="mk-highlight">high-intent AI tool users</span>—exactly the audience looking for solutions like yours. The 87x reach multiplier means your sponsored video gets seen far beyond our 1,916 followers.
+          </div>
+        </div>
+
+        {/* VISUAL: How It Works Timeline */}
+        <div className="mk-glass-card">
+          <h2 className="mk-section-title">How Sponsorship Works</h2>
+          <div className="relative mt-8">
+            {/* Timeline line */}
+            <div className="hidden md:block absolute top-20 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500"></div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+              {[
+                { num: 1, emoji: '💬', title: 'Quick Chat', desc: '15-min call to discuss your tool', color: 'pink' },
+                { num: 2, emoji: '🎬', title: 'Create Content', desc: 'We produce viral TikTok', color: 'purple' },
+                { num: 3, emoji: '⚙️', title: 'Setup Funnel', desc: 'ManyChat + tracking in place', color: 'blue' },
+                { num: 4, emoji: '📊', title: 'Track Results', desc: 'Daily leads + analytics', color: 'green' }
+              ].map((step, idx) => (
+                <div key={idx} className="text-center">
+                  <div className="relative mx-auto mb-6">
+                    <div className={`w-32 h-32 mx-auto rounded-2xl bg-gradient-to-br from-${step.color}-900 to-${step.color}-700 flex items-center justify-center border-4 border-gray-900 shadow-xl`}>
+                      <div className="text-5xl">{step.emoji}</div>
+                    </div>
+                    <div className={`absolute -top-2 -right-2 w-10 h-10 bg-${step.color}-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                      {step.num}
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                  <p className="text-sm text-gray-400">{step.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Performance Dashboard */}
+        {/* Performance Dashboard */}
         <div className="mk-glass-card">
-          <h2 className="mk-section-title">Real Performance Metrics</h2>
-          <p className="mk-muted mb-4">
-            Verified data from our TikTok channel showing content performance and engagement:
-          </p>
+          <h2 className="mk-section-title">Why Our Numbers Matter</h2>
+
+          {/* Story Context - NEW */}
+          <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-700/50">
+            <p className="text-sm">
+              <strong>The Truth About TikTok Creators:</strong> Most have inflated follower counts but terrible engagement (1-2%).
+              We're the opposite—small following, but <span className="mk-highlight">8.2% engagement</span> means our audience
+              is <span className="mk-highlight">genuinely interested in AI tools</span>. That's YOUR target market.
+            </p>
+          </div>
+
           <div className="mk-dashboard-grid">
             {performanceMetrics.map((metric, index) => (
               <div key={index} className="mk-metric-card">
@@ -388,11 +541,8 @@ const MediaKitPage = () => {
               </div>
             ))}
           </div>
-
-          <div className="mk-text mt-4 p-4 bg-white bg-opacity-10 rounded-lg">
-            <strong>Why These Numbers Matter:</strong> With only 1,916 followers, we've achieved 167K views on a single video (87x reach multiplier) and maintain 8.2% engagement—3x the industry average of 2-3%. This demonstrates our content resonates beyond our immediate audience and reaches high-intent viewers in the AI tools space.
-          </div>
         </div>
+
 
         {/* ROI Calculator */}
         <div className="mk-glass-card no-print">
@@ -404,13 +554,115 @@ const MediaKitPage = () => {
           <PackageComparison />
         </div>
 
+        {/* FAQ - Quick Objection Handling */}
+        {/* FAQ - Accordion Style (Interactive + Visual) */}
+        <div className="mk-glass-card">
+          <h2 className="mk-section-title">Quick Questions</h2>
+          <p className="mk-muted mb-6 text-center text-sm">
+            Common questions from brands considering sponsorships
+          </p>
+
+          <div className="max-w-3xl mx-auto space-y-3">
+            {[
+              {
+                icon: "🤔",
+                q: "What if my product isn't a good fit?",
+                a: "We'll tell you honestly on the discovery call. No wasted time. We only work with AI tools we genuinely believe in."
+              },
+              {
+                icon: "🎯",
+                q: "Do you guarantee results?",
+                a: "We guarantee effort + quality content. Results depend on your product-market fit. 30-day money-back guarantee if you're not satisfied with our work."
+              },
+              {
+                icon: "⚡",
+                q: "How long until I see leads?",
+                a: "Video goes live within 5-7 days (48-72h with rush add-on). Leads typically start flowing the same day we post."
+              },
+              {
+                icon: "✅",
+                q: "Can I see the video before it's posted?",
+                a: "Absolutely! You get revision rounds included in every package. We never post without your explicit approval."
+              },
+              {
+                icon: "📊",
+                q: "How do you track conversions?",
+                a: "UTM tags on all links, daily lead exports from ManyChat, and full performance dashboard access. Complete transparency."
+              },
+              {
+                icon: "💰",
+                q: "What about the performance bonus?",
+                a: "We track verified signups/leads through your funnel. You pay bonuses weekly via invoice. It's in our interest to drive real results."
+              }
+            ].map((item, idx) => (
+              <details
+                key={idx}
+                className="group p-4 rounded-lg bg-gradient-to-r from-purple-900/10 to-blue-900/10 border border-white border-opacity-10 hover:border-opacity-30 transition-all cursor-pointer"
+              >
+                <summary className="flex items-center gap-3 font-bold text-sm list-none">
+                  <span className="text-2xl">{item.icon}</span>
+                  <span className="flex-1">{item.q}</span>
+                  <svg
+                    className="w-5 h-5 transition-transform group-open:rotate-180"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </summary>
+                <div className="mt-3 ml-11 text-xs text-gray-400 leading-relaxed">
+                  {item.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
         {/* Packages */}
         <div className="mk-glass-card">
           <h2 className="mk-section-title">Sponsorship Packages</h2>
-          <p className="mk-muted mb-4">
-            <strong>Pilot Pricing Available:</strong> We're building our case study portfolio with select AI tool brands.
-            Standard pricing shown with introductory pilot rates for first partnerships.
-          </p>
+
+          {/* Pricing Explanation */}
+          <div className="p-6 rounded-lg mb-6 bg-gradient-to-br from-amber-900/30 to-orange-900/30 border-2 border-amber-700/50">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="text-3xl">💡</div>
+              <div>
+                <h3 className="font-bold text-xl mb-2">Pilot vs. Standard Pricing</h3>
+                <p className="text-sm opacity-90">Building our sponsorship portfolio with AI tool brands.</p>
+              </div>
+            </div>
+            {/* NEW: Scarcity Counter */}
+            <div className="p-4 rounded-lg mb-6 bg-gradient-to-r from-red-900/30 to-orange-900/30 border-2 border-red-700/50 text-center">
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <div className="text-3xl">⏰</div>
+                <div>
+                  <div className="text-2xl font-bold text-red-400">50 Pilot Slots Left</div>
+                  <div className="text-sm">First partnerships filling fast</div>
+                </div>
+              </div>
+              <div className="text-xs mt-2 opacity-75">
+                Once we hit 100 case studies, pilot pricing ends permanently
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-gray-800/50 border-2 border-green-600/50">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white">
+                  PILOT PRICING
+                </span>
+                <div className="text-2xl font-bold my-2 text-green-400">€300 - €1,200</div>
+                <p className="text-xs text-green-400 font-semibold">⚡ First partnerships</p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-gray-800/50 border-2 border-blue-600/50">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-600 text-white">
+                  STANDARD PRICING
+                </span>
+                <div className="text-2xl font-bold my-2 text-blue-400">€450 - €2,500</div>
+                <p className="text-xs text-blue-400 font-semibold">📅 After case studies</p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-6">
             {packages.map((pkg, index) => (
               <div key={index} className="mk-package-card">
@@ -437,7 +689,7 @@ const MediaKitPage = () => {
             ))}
           </div>
 
-          {/* CTA to Quote Wizard */}
+          {/* CTA */}
           <div className="text-center my-6">
             <button
               onClick={() => {
@@ -446,185 +698,100 @@ const MediaKitPage = () => {
               className="mk-btn-primary"
               style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}
             >
-              Not Sure Which Package? Get Custom Quote →
+              Get Custom Quote →
             </button>
-            <p className="mk-muted mt-2 text-sm">We'll help you choose the best fit for your goals</p>
+            <p className="mk-muted mt-2 text-sm">We'll help you choose the best package</p>
           </div>
 
-          {/* Risk Reversal */}
+          {/* Guarantee */}
           <div className="mk-text mt-6 p-4 bg-gradient-to-r from-green-500 from-opacity-20 to-blue-500 to-opacity-20 rounded-lg border border-white border-opacity-20">
             <div className="text-center">
               <div className="text-xl font-bold mb-2">🛡️ Zero Risk Guarantee</div>
-              <div>Not satisfied with results in the first 30 days? Get a full refund, no questions asked. We'll over-deliver to earn your testimonial.</div>
+              <div>Not satisfied in 30 days? Full refund, no questions asked. We'll over-deliver to earn your testimonial.</div>
             </div>
           </div>
         </div>
 
-        {/* Add-ons */}
-{/* Add-ons */}
-<div className="mk-glass-card">
-  <h2 className="mk-section-title">Optional Add-ons</h2>
-  <p className="mk-muted mb-4 text-center">
-    💡 Hover over each add-on for more details
-  </p>
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {/* Fast Turnaround */}
-    <div className="mk-addon-wrapper">
-      <div className="mk-stat-card">
-        <div className="mk-stat-number text-lg">+€150</div>
-        <div className="mk-stat-label">Fast Turnaround (48-72h)</div>
-      </div>
-      <div className="mk-addon-tooltip">
-        <strong>⚡ Priority Production</strong>
-        <p>Jump to the front of our queue. Your content will be delivered within 48-72 hours instead of the standard 5-7 day timeline. Perfect for urgent launches or time-sensitive campaigns.</p>
-      </div>
-    </div>
-
-    {/* Extended Usage Rights */}
-    <div className="mk-addon-wrapper">
-      <div className="mk-stat-card">
-        <div className="mk-stat-number text-lg">+€200-€500</div>
-        <div className="mk-stat-label">Extended Usage Rights</div>
-      </div>
-      <div className="mk-addon-tooltip">
-        <strong>📜 Broader Distribution</strong>
-        <p>Use the content beyond social media: ads, website, presentations, trade shows, etc. Includes longer posting duration (6-12 months vs. standard 3 months) and multi-platform rights.</p>
-      </div>
-    </div>
-
-    {/* Extra Edits */}
-    <div className="mk-addon-wrapper">
-      <div className="mk-stat-card">
-        <div className="mk-stat-number text-lg">€80</div>
-        <div className="mk-stat-label">Extra Edits (per round)</div>
-      </div>
-      <div className="mk-addon-tooltip">
-        <strong>🎬 Additional Revisions</strong>
-        <p>Need more tweaks beyond included revisions? Each extra round covers changes to script, visuals, pacing, music, or any creative elements. Get it exactly right.</p>
-      </div>
-    </div>
-
-    {/* Influencer Seeding */}
-    <div className="mk-addon-wrapper">
-      <div className="mk-stat-card">
-        <div className="mk-stat-number text-lg">€250+</div>
-        <div className="mk-stat-label">Influencer Seeding</div>
-      </div>
-      <div className="mk-addon-tooltip">
-        <strong>🌟 Amplified Reach</strong>
-        <p>We'll identify and coordinate with 3-5 micro-influencers in your niche to share your content. Setup fee covers outreach and coordination. Influencer fees separate (typically €50-200 each).</p>
-      </div>
-    </div>
-
-    {/* Custom Voiceover */}
-    <div className="mk-addon-wrapper">
-      <div className="mk-stat-card">
-        <div className="mk-stat-number text-lg">€80-€150</div>
-        <div className="mk-stat-label">Custom Voiceover</div>
-      </div>
-      <div className="mk-addon-tooltip">
-        <strong>🎙️ Professional Narration</strong>
-        <p>High-quality voiceover in English or other languages. Includes script writing, professional voice talent, and multiple takes. €80 for 30-45s, €150 for 60-90s videos.</p>
-      </div>
-    </div>
-
-    {/* Paid Ads Setup */}
-    <div className="mk-addon-wrapper">
-      <div className="mk-stat-card">
-        <div className="mk-stat-number text-lg">€150+</div>
-        <div className="mk-stat-label">Paid Ads Setup</div>
-      </div>
-      <div className="mk-addon-tooltip">
-        <strong>🎯 Ad Campaign Launch</strong>
-        <p>Complete setup of TikTok/Instagram/Facebook ad campaigns. Includes audience targeting, ad creative optimization, pixel installation, and initial campaign structure. Ad spend separate.</p>
-      </div>
-    </div>
-  </div>
-</div>
-
+        {/* Add-ons (Keep your hover tooltips - they're great!) */}
+        <div className="mk-glass-card">
+          <h2 className="mk-section-title">Optional Add-ons</h2>
+          <p className="mk-muted mb-4 text-center">
+            💡 Hover over each add-on for more details
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { price: '+€150', label: 'Fast Turnaround (48-72h)', title: '⚡ Priority Production', desc: 'Jump to the front of our queue. Delivered within 48-72 hours instead of standard 5-7 days. Perfect for urgent launches.' },
+              { price: '+€200-€500', label: 'Extended Usage Rights', title: '📜 Broader Distribution', desc: 'Use beyond social media: ads, website, presentations, trade shows. Includes 6-12 months vs. standard 3 months.' },
+              { price: '€80', label: 'Extra Edits (per round)', title: '🎬 Additional Revisions', desc: 'Need more tweaks? Each round covers changes to script, visuals, pacing, music, or any creative elements.' },
+              { price: '€250+', label: 'Influencer Seeding', title: '🌟 Amplified Reach', desc: 'We coordinate with 3-5 micro-influencers in your niche. Setup fee covers outreach (influencer fees separate €50-200 each).' },
+              { price: '€80-€150', label: 'Custom Voiceover', title: '🎙️ Professional Narration', desc: 'High-quality voiceover in multiple languages. Includes script writing and professional voice talent. €80 for 30-45s, €150 for 60-90s.' },
+              { price: '€150+', label: 'Paid Ads Setup', title: '🎯 Ad Campaign Launch', desc: 'Complete TikTok/Instagram/Facebook ad setup. Includes targeting, creative optimization, pixel installation. Ad spend separate.' }
+            ].map((addon, idx) => (
+              <div key={idx} className="mk-addon-wrapper">
+                <div className="mk-stat-card">
+                  <div className="mk-stat-number text-lg">{addon.price}</div>
+                  <div className="mk-stat-label">{addon.label}</div>
+                </div>
+                <div className="mk-addon-tooltip">
+                  <strong>{addon.title}</strong>
+                  <p>{addon.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Quote Wizard */}
         <div className="mk-glass-card" id="quote-section">
           <QuoteWizard />
         </div>
 
-        {/* What Happens Next */}
+        {/* What Happens Next - Keep but make more visual */}
         <div className="mk-glass-card text-center">
           <h2 className="mk-section-title">✅ What Happens Next?</h2>
-          <p className="mk-text mb-6">
-            Once you submit your quote request above, here's what you can expect:
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="mk-stat-card">
-              <div className="text-3xl mb-2">📧</div>
-              <div className="mk-stat-number text-lg">&lt; 4 hours</div>
-              <div className="mk-stat-label">We'll respond to your request</div>
-            </div>
-            <div className="mk-stat-card">
-              <div className="text-3xl mb-2">💬</div>
-              <div className="mk-stat-number text-lg">15 min</div>
-              <div className="mk-stat-label">Discovery call to discuss details</div>
-            </div>
-            <div className="mk-stat-card">
-              <div className="text-3xl mb-2">🚀</div>
-              <div className="mk-stat-number text-lg">24-48h</div>
-              <div className="mk-stat-label">Start production after deposit</div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
+            {[
+              { icon: '📧', time: '< 4 hours', label: 'We respond to your request' },
+              { icon: '💬', time: '15 min', label: 'Discovery call to discuss details' },
+              { icon: '🚀', time: '24-48h', label: 'Start production after deposit' }
+            ].map((step, idx) => (
+              <div key={idx} className="mk-stat-card">
+                <div className="text-4xl mb-2">{step.icon}</div>
+                <div className="mk-stat-number text-lg">{step.time}</div>
+                <div className="mk-stat-label">{step.label}</div>
+              </div>
+            ))}
           </div>
 
           <div className="mk-text p-4 bg-white bg-opacity-10 rounded-lg mb-6">
-            <strong>Need immediate assistance?</strong> We're available multiple ways:<br />
-            Email:{' '}
-            <a href="mailto:support@aiwaverider.com" className="mk-highlight" style={{ textDecoration: 'underline' }}>
-              support@aiwaverider.com
-            </a>
-            {' '}| TikTok DM:{' '}
-            <a href="https://tiktok.com/@ai.wave.rider" target="_blank" rel="noopener noreferrer" className="mk-highlight" style={{ textDecoration: 'underline' }}>
-              @ai.wave.rider
-            </a>
+            <strong>Need immediate assistance?</strong><br />
+            Email: <a href="mailto:support@aiwaverider.com" className="mk-highlight">support@aiwaverider.com</a>
+            {' '}| TikTok DM: <a href="https://tiktok.com/@ai.wave.rider" target="_blank" rel="noopener noreferrer" className="mk-highlight">@ai.wave.rider</a>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="mk-stat-card">
-              <span className="mk-stat-number text-lg">87x</span>
-              <span className="mk-stat-label">Viral Reach Potential</span>
-            </div>
-            <div className="mk-stat-card">
-              <span className="mk-stat-number text-lg">100%</span>
-              <span className="mk-stat-label">Money-Back Guarantee</span>
-            </div>
-          </div>
-
-          <div className="mk-text mt-6 text-sm opacity-75">
-            🔒 Your information is secure and never shared with third parties
-          </div>
+          {/* Stats Grid - Redundant due to repetition.. 
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { num: '87x', label: 'Reach' },
+              { num: '8.2%', label: 'Engagement' },
+              { num: '< 4h', label: 'Response' },
+              { num: '100%', label: 'Money-Back' }
+            ].map((stat, idx) => (
+              <div key={idx} className="mk-stat-card">
+                <span className="mk-stat-number text-lg">{stat.num}</span>
+                <span className="mk-stat-label">{stat.label}</span>
+              </div>
+            ))}
+          </div>*/}
         </div>
 
-        {/* Prefer Direct Contact - Express Lane */}
+        {/* Direct Contact */}
         <div className="mk-glass-card text-center" style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%)' }}>
           <h2 className="mk-section-title">⚡ Prefer Direct Contact?</h2>
           <p className="mk-text mb-6">
-            Already know what you need? Skip the form and reach out directly, or grab our pricing to share with your team.
+            Already know what you need? Skip the form and reach out directly.
           </p>
 
-          {/* Trust signals */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="mk-stat-card">
-              <span className="mk-stat-number text-lg">87x</span>
-              <span className="mk-stat-label">Viral Reach Potential</span>
-            </div>
-            <div className="mk-stat-card">
-              <span className="mk-stat-number text-lg">&lt; 4h</span>
-              <span className="mk-stat-label">Response Time</span>
-            </div>
-            <div className="mk-stat-card">
-              <span className="mk-stat-number text-lg">100%</span>
-              <span className="mk-stat-label">Money-Back Guarantee</span>
-            </div>
-          </div>
-
-          <div className="mk-button-group justify-center">
+          <div className="flex gap-4 justify-center flex-wrap mb-6">
             <button
               className="mk-btn-primary"
               onClick={() => window.location.href = 'mailto:support@aiwaverider.com?subject=Partnership Inquiry&body=Hi AI Waverider team,%0D%0A%0D%0AI\'m interested in discussing a partnership. Here are my details:%0D%0A%0D%0ACompany: %0D%0AIndustry: %0D%0ABudget Range: %0D%0ATimeline: %0D%0A%0D%0ALooking forward to connecting!'}
@@ -632,45 +799,30 @@ const MediaKitPage = () => {
               Email Us Directly
             </button>
             <button onClick={copyEmailBlock} className="mk-btn-secondary">
-              📋 Copy Pricing for Email
+              📋 Copy Pricing
             </button>
           </div>
 
-          <div className="mk-text mt-4 text-sm opacity-75">
-            Perfect for sharing with stakeholders or your procurement team
+          <div className="mk-text text-sm opacity-75">
+            Perfect for sharing with your team or stakeholders
           </div>
         </div>
 
         {/* Contact & Terms */}
         <div className="mk-glass-card">
-          <h2 className="mk-section-title">Contact & Payment Terms</h2>
-          <div className="mk-text space-y-4">
+          <h2 className="mk-section-title">Contact & Terms</h2>
+          <div className="mk-text space-y-4 text-sm">
             <div>
-              <strong>Payment Structure:</strong><br />
-              • 50% deposit to begin production<br />
-              • Remaining 50% due on delivery<br />
-              • Performance bonuses paid weekly via invoice
+              <strong>Payment:</strong> 50% deposit to start • Remaining 50% on delivery • Performance bonuses paid weekly
             </div>
-
             <div>
-              <strong>Usage Rights:</strong><br />
-              • Social media posting included for specified duration<br />
-              • Extended usage rights available as add-on<br />
-              • Exclusive rights +30% with 2-3 weeks lead time
+              <strong>Usage Rights:</strong> Social media posting included • Extended rights available as add-on • Exclusive rights +30%
             </div>
-
             <div>
-              <strong>Tracking & Reporting:</strong><br />
-              • UTM tags for all links<br />
-              • Daily/weekly lead exports provided<br />
-              • Full performance reporting included
+              <strong>Tracking:</strong> UTM tags for all links • Daily/weekly lead exports • Full performance reporting included
             </div>
-
             <div>
-              <strong>Contact:</strong><br />
-              • Email: support@aiwaverider.com<br />
-              • TikTok: @ai.wave.rider<br />
-              • Response time: Within 24 hours
+              <strong>Contact:</strong> support@aiwaverider.com | TikTok: @ai.wave.rider | Response: Within 4 hours
             </div>
           </div>
         </div>

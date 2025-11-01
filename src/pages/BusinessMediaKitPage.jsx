@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import '../styles/marketing-pages.css';
 import { getTodayIsoDate, printCurrentPageAsPdf } from '../utils/pdf';
 import QuoteWizard from '../components/marketing/QuoteWizard';
+import { useCountUp } from '../hooks/useCountUp';
+
 import {
     FaDownload,
     FaShieldAlt,
@@ -11,6 +13,22 @@ import {
     FaFileAlt,
     FaArrowRight
 } from 'react-icons/fa';
+
+// Add this component before BusinessMediaKitPage
+const AnimatedStat = ({ number, label, duration = 2000, shouldAnimate }) => {
+    const numericValue = parseInt(number.replace(/[^0-9]/g, ''));
+    const suffix = number.replace(/[0-9]/g, '');
+    const count = useCountUp(numericValue, duration, shouldAnimate);
+
+    return (
+        <div className="mk-stat-card">
+            <span className="mk-stat-number">
+                {shouldAnimate ? count : numericValue}{suffix}
+            </span>
+            <span className="mk-stat-label">{label}</span>
+        </div>
+    );
+};
 
 const BusinessMediaKitPage = () => {
     const { darkMode } = useTheme();
@@ -21,6 +39,33 @@ const BusinessMediaKitPage = () => {
         totalCategories: 0,
         activeUsers: 0
     });
+    const [shouldAnimateStats, setShouldAnimateStats] = useState(false);
+    const statsRef = useRef(null);
+
+
+    // Add Intersection Observer for scroll trigger
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting && !shouldAnimateStats) {
+                        setShouldAnimateStats(true);
+                    }
+                });
+            },
+            { threshold: 0.5 } // Trigger when 30% of the element is visible
+        );
+
+        if (statsRef.current) {
+            observer.observe(statsRef.current);
+        }
+
+        return () => {
+            if (statsRef.current) {
+                observer.unobserve(statsRef.current);
+            }
+        };
+    }, [shouldAnimateStats]);
 
     // Fetch agent statistics
     useEffect(() => {
@@ -31,7 +76,7 @@ const BusinessMediaKitPage = () => {
                 setAgentStats({
                     totalAgents: totalCount || 150,
                     totalCategories: 40,
-                    activeUsers: 0 // Set to 0 if you don't have real data
+                    activeUsers: 0
                 });
             } catch (error) {
                 setAgentStats({
@@ -122,17 +167,17 @@ const BusinessMediaKitPage = () => {
         }
     ];
 
-    // Marketplace Statistics - HONEST NUMBERS ONLY
+    // Marketplace Statistics
     const marketplaceStats = [
-        { number: `${agentStats.totalAgents}+`, label: "N8N Workflows Available" },
-        { number: `${agentStats.totalCategories}+`, label: "Categories & Use Cases" },
-        { number: "200+", label: "Integrations Supported" },
-        { number: "24/7", label: "Automated Execution" },
-        { number: "< 24h", label: "Custom Setup Time" },
-        { number: "Full Stack", label: "Technical Capability" }
+        { number: "5600+", label: "N8N Workflows Available", duration: 2500 },
+        { number: "200+", label: "Integrations Supported", duration: 2500 },
+        { number: "40+", label: "Categories & Use Cases", duration: 2500 },
+        { number: "24/7", label: "Automated Execution", duration: 0 }, // No animation
+        { number: "< 24h", label: "Custom Setup Time", duration: 0 }, // No animation
+        { number: "Full Stack", label: "N8N Experts", duration: 0 } // No animation
     ];
 
-    // Performance Metrics - HONEST PROJECTIONS
+    // Performance Metrics
     const performanceMetrics = [
         { title: "Time Savings Potential", value: "15-30 hrs", subtitle: "Per workflow per week (estimated)" },
         { title: "Setup Speed", value: "< 24h", subtitle: "Ready-to-use workflows" },
@@ -268,204 +313,253 @@ const BusinessMediaKitPage = () => {
                             <FaDownload className="mr-2" />
                             Download PDF
                         </button>
-                        <Link
-                            to="/media-kit"
-                            className="mk-btn-secondary"
-                        >
+                        <Link to="/media-kit" className="mk-btn-secondary">
                             View Personal Media Kit →
                         </Link>
                     </div>
                 </div>
-    
-                {/* Hero Section - IMPROVED */}
+
+                {/* VISUAL-FIRST HERO SECTION */}
                 <div className="mk-glass-card">
-                    <div className="text-center mb-6">
-                        <div className="inline-block px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full text-sm font-bold mb-4 text-white">
-                            🚀 Save 15-30 Hours Per Week on Autopilot
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                            We Build AI Workflows That Work While You Sleep
-                        </h2>
-                        <p className="text-lg md:text-xl mk-muted mb-6 max-w-3xl mx-auto">
-                            Custom N8N automation workflows that handle your repetitive tasks 24/7—from AI video creation
-                            to lead generation to content distribution. No coding required.
-                        </p>
-                        <div className="flex gap-4 justify-center items-center flex-wrap mb-4">
-                            <button 
-                                onClick={() => {
-                                    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
-                                }}
-                                className="mk-btn-primary text-base md:text-lg px-6 md:px-8 py-3"
-                            >
-                                See How It Works →
-                            </button>
-                            <Link to="/agents" className="mk-btn-secondary text-base md:text-lg px-6 md:px-8 py-3">
-                                Browse Workflows
-                            </Link>
-                        </div>
-                        <p className="text-sm text-gray-400">
-                            ⚡ First 50 businesses get intro pricing • 💰 100% money-back guarantee
-                        </p>
-                    </div>
-    
-                    {/* Company Info */}
-                    <div className="border-t border-white border-opacity-10 pt-6 mt-6">
-                        <h3 className="mk-section-title text-2xl">AI Waverider — N8N AI Agentic Automation Marketplace</h3>
-                        <p className="mk-text text-base md:text-lg mb-3">Business Process Automation | N8N AI Agentic Workflows & Integration</p>
-                        
-                        <p className="mk-muted mt-3">
-                            <strong>Specialized Social Media & Content Automation:</strong> Our AI Agentic workflows enable fully automated content creation
-                            and distribution. Generate video scripts based on market research, create videos using Sora 2, Veo 3.1, and other cutting-edge AI models
-                            while you sleep, automatically generate thumbnails and descriptions, schedule posts across all platforms, and set up comment-to-DM
-                            workflows for seamless lead capture—all running autonomously 24/7.
-                        </p>
-    
-                        <div className={`mt-4 p-4 rounded-lg ${darkMode ? 'bg-amber-900/20 border-amber-700/50' : 'bg-amber-50 border-amber-200'} border`}>
-                            <strong>🎯 Building Business Portfolio:</strong> We're offering introductory pricing for the first 50 businesses that partner with us.
-                            Same expert service and workflows, reduced investment to help us build proven case studies in the business automation space.
-                        </div>
-                    </div>
-    
-                    {/* Trust Badges */}
-                    <div className="flex flex-wrap gap-4 mt-6 justify-center">
-                        <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
-                            <span className="mk-stat-number text-sm">200+</span>
-                            <span className="mk-stat-label text-xs">Integrations</span>
-                        </div>
-                        <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
-                            <span className="mk-stat-number text-sm">100%</span>
-                            <span className="mk-stat-label text-xs">Money-Back Guarantee</span>
-                        </div>
-                        <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
-                            <span className="mk-stat-number text-sm">&lt; 24h</span>
-                            <span className="mk-stat-label text-xs">Setup Time</span>
-                        </div>
-                        <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
-                            <span className="mk-stat-number text-sm">24/7</span>
-                            <span className="mk-stat-label text-xs">Automated Execution</span>
-                        </div>
-                    </div>
-                </div>
-    
-                {/* NEW: Building Portfolio Section */}
-                <div className="mk-glass-card">
-                    <div className="text-center">
-                        <h3 className="text-2xl md:text-3xl font-bold mb-4">Industries We Automate</h3>
-                        <p className="mk-muted mb-8 max-w-2xl mx-auto">
-                            We're partnering with forward-thinking businesses to build proven case studies.
-                            Get intro pricing and be featured as an early success story.
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all`}>
-                                <div className="text-4xl mb-3">🎯</div>
-                                <div className="text-xl font-bold mb-2">E-commerce</div>
-                                <div className="text-sm text-gray-400">Order automation, inventory sync, customer follow-ups</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-8">
+                        {/* Left: Minimal Text */}
+                        <div>
+                            <div className="inline-block px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full text-sm font-bold mb-4 text-white">
+                                🚀 Save 15-30 Hours/Week
                             </div>
-                            <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all`}>
-                                <div className="text-4xl mb-3">📱</div>
-                                <div className="text-xl font-bold mb-2">Content Creators</div>
-                                <div className="text-sm text-gray-400">AI video generation, posting, engagement workflows</div>
+                            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                                AI Workflows That Work While You Sleep
+                            </h1>
+                            <p className="text-xl mk-muted mb-6">
+                                Automate repetitive tasks in 24 hours. No coding required.
+                            </p>
+                            <div className="flex gap-4 flex-wrap">
+                                <button
+                                    onClick={() => {
+                                        document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                                    }}
+                                    className="mk-btn-primary"
+                                >
+                                    See How It Works →
+                                </button>
+                                <Link to="/agents" className="mk-btn-secondary">
+                                    Browse Workflows
+                                </Link>
                             </div>
-                            <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all`}>
-                                <div className="text-4xl mb-3">💼</div>
-                                <div className="text-xl font-bold mb-2">B2B Services</div>
-                                <div className="text-sm text-gray-400">Lead gen, CRM sync, proposal automation</div>
+                            <p className="text-sm text-gray-400 mt-4">
+                                ⚡ Intro pricing • 💰 Money-back guarantee
+                            </p>
+                        </div>
+
+                        {/* Right: LARGE VISUAL PLACEHOLDER */}
+                        <div className="relative">
+                            <div className={`aspect-video rounded-xl overflow-hidden border-2 ${darkMode ? 'border-teal-500 bg-gray-800' : 'border-teal-300 bg-gray-100'} shadow-2xl`}>
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <div className="text-center p-8">
+                                        <div className="text-6xl mb-4">🎬</div>
+                                        <p className="text-lg font-semibold mb-2">Watch 90-Second Demo</p>
+                                        <p className="text-sm text-gray-400">See automation in action</p>
+                                        <div className="mt-4 text-xs text-gray-500">
+                                            📸 Demo video coming soon
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Floating Stats */}
+                            <div className={`absolute -bottom-4 -left-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl p-4 border-2 border-teal-500`}>
+                                <div className="text-2xl font-bold text-teal-500">15-30 hrs</div>
+                                <div className="text-xs">saved per week</div>
+                            </div>
+                            <div className={`absolute -top-4 -right-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl p-4 border-2 border-blue-500`}>
+                                <div className="text-2xl font-bold text-blue-500">&lt; 24h</div>
+                                <div className="text-xs">to go live</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Company Info - Condensed */}
+                    <div className="border-t border-white border-opacity-10 pt-6">
+                        <h3 className="text-xl font-bold mb-2">AI Waverider — N8N AI Agentic Automation Marketplace</h3>
+                        <p className="mk-muted mb-4">
+                            <strong>Specialized in Social Media & Content Automation:</strong> AI workflows that create videos with Sora 2/Veo 3.1,
+                            generate thumbnails, write descriptions, schedule posts, and capture leads—all running 24/7 while you sleep.
+                        </p>
+
+                        <div className={`p-4 rounded-lg ${darkMode ? 'bg-amber-900/20 border-amber-700/50' : 'bg-amber-50 border-amber-200'} border mb-4`}>
+                            <strong>🎯 Building Portfolio:</strong> First 50 businesses get intro pricing. Same expert service, reduced investment.
+                        </div>
+
+                        {/* Trust Badges */}
+                        <div className="flex flex-wrap gap-3 justify-center">
+                            <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
+                                <span className="mk-stat-number text-sm">200+</span>
+                                <span className="mk-stat-label text-xs">Integrations</span>
+                            </div>
+                            <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
+                                <span className="mk-stat-number text-sm">100%</span>
+                                <span className="mk-stat-label text-xs">Money-Back</span>
+                            </div>
+                            <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
+                                <span className="mk-stat-number text-sm">&lt; 24h</span>
+                                <span className="mk-stat-label text-xs">Setup</span>
+                            </div>
+                            <div className="mk-stat-card" style={{ padding: '0.75rem', minWidth: 'auto' }}>
+                                <span className="mk-stat-number text-sm">24/7</span>
+                                <span className="mk-stat-label text-xs">Automation</span>
                             </div>
                         </div>
                     </div>
                 </div>
-    
-                {/* IMPROVED: Before/After + Statistics */}
+
+                {/* VISUAL: Industries We Automate */}
                 <div className="mk-glass-card">
-                    <h2 className="mk-section-title">Why Businesses Choose AI Waverider</h2>
-    
-                    {/* Before/After Comparison */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        <div className={`p-6 rounded-lg ${darkMode ? 'bg-red-900/20 border-red-700/50' : 'bg-red-50 border-red-200'} border-2`}>
-                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                <span className="text-2xl">😰</span> Without Automation
-                            </h3>
-                            <ul className="space-y-3">
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-500 text-xl">✗</span>
-                                    <span className="text-sm">15-30 hours/week on repetitive tasks</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-500 text-xl">✗</span>
-                                    <span className="text-sm">Manual data entry and copy-paste work</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-500 text-xl">✗</span>
-                                    <span className="text-sm">Inconsistent processes across team</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-500 text-xl">✗</span>
-                                    <span className="text-sm">Limited scale without hiring more people</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-500 text-xl">✗</span>
-                                    <span className="text-sm">Human errors and missed follow-ups</span>
-                                </li>
-                            </ul>
+                    <h2 className="mk-section-title">Industries We Automate</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                        <div className={`p-6 rounded-xl text-center ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all transform hover:-translate-y-1`}>
+                            <div className="text-5xl mb-3">🎯</div>
+                            <div className="text-xl font-bold mb-2">E-commerce</div>
+                            <div className="text-sm text-gray-400">Order automation, inventory sync, customer follow-ups</div>
                         </div>
-    
-                        <div className={`p-6 rounded-lg ${darkMode ? 'bg-green-900/20 border-green-700/50' : 'bg-green-50 border-green-200'} border-2`}>
-                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                <span className="text-2xl">🚀</span> With AI Waverider
-                            </h3>
-                            <ul className="space-y-3">
-                                <li className="flex items-start gap-2">
-                                    <span className="text-green-500 text-xl">✓</span>
-                                    <span className="text-sm">Workflows run 24/7 automatically</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-green-500 text-xl">✓</span>
-                                    <span className="text-sm">Zero manual work on repetitive tasks</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-green-500 text-xl">✓</span>
-                                    <span className="text-sm">Consistent, error-free execution every time</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-green-500 text-xl">✓</span>
-                                    <span className="text-sm">Scale infinitely without hiring</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-green-500 text-xl">✓</span>
-                                    <span className="text-sm">100% reliable follow-through on every task</span>
-                                </li>
-                            </ul>
+                        <div className={`p-6 rounded-xl text-center ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all transform hover:-translate-y-1`}>
+                            <div className="text-5xl mb-3">📱</div>
+                            <div className="text-xl font-bold mb-2">Content Creators</div>
+                            <div className="text-sm text-gray-400">AI video generation, posting, engagement workflows</div>
+                        </div>
+                        <div className={`p-6 rounded-xl text-center ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all transform hover:-translate-y-1`}>
+                            <div className="text-5xl mb-3">💼</div>
+                            <div className="text-xl font-bold mb-2">B2B Services</div>
+                            <div className="text-sm text-gray-400">Lead gen, CRM sync, proposal automation</div>
                         </div>
                     </div>
-    
+                </div>
+
+                {/* VISUAL: The Transformation (Before/After) */}
+                <div className="mk-glass-card">
+                    <h2 className="mk-section-title">The Transformation</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                        {/* Before */}
+                        <div className={`p-6 rounded-xl ${darkMode ? 'bg-red-900/20 border-red-700/50' : 'bg-red-50 border-red-300'} border-2`}>
+                            <div className="text-center mb-4">
+                                <div className="text-6xl mb-2">😰</div>
+                                <h3 className="text-2xl font-bold">Before Automation</h3>
+                            </div>
+                            <div className="space-y-3">
+                                {[
+                                    { icon: '⏰', text: '30 hours/week on manual tasks' },
+                                    { icon: '😓', text: 'Overwhelmed team' },
+                                    { icon: '📊', text: 'Inconsistent results' },
+                                    { icon: '🐌', text: 'Can\'t scale without hiring' },
+                                    { icon: '❌', text: 'Human errors and missed follow-ups' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className={`p-3 rounded-lg ${darkMode ? 'bg-red-800/30' : 'bg-red-100'} flex items-center gap-3`}>
+                                        <div className="text-2xl">{item.icon}</div>
+                                        <div className="text-sm font-medium">{item.text}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* After */}
+                        <div className={`p-6 rounded-xl ${darkMode ? 'bg-green-900/20 border-green-700/50' : 'bg-green-50 border-green-300'} border-2`}>
+                            <div className="text-center mb-4">
+                                <div className="text-6xl mb-2">🚀</div>
+                                <h3 className="text-2xl font-bold">After Automation</h3>
+                            </div>
+                            <div className="space-y-3">
+                                {[
+                                    { icon: '⚡', text: 'Tasks run 24/7 automatically' },
+                                    { icon: '😌', text: 'Team focuses on growth' },
+                                    { icon: '✓', text: '100% consistent execution' },
+                                    { icon: '📈', text: 'Scale infinitely without hiring' },
+                                    { icon: '🎯', text: 'Perfect follow-through every time' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className={`p-3 rounded-lg ${darkMode ? 'bg-green-800/30' : 'bg-green-100'} flex items-center gap-3`}>
+                                        <div className="text-2xl">{item.icon}</div>
+                                        <div className="text-sm font-medium">{item.text}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Arrow (desktop only) */}
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-5xl hidden md:block">
+                            →
+                        </div>
+                    </div>
+
                     {/* Stats Grid */}
-                    <h3 className="text-xl font-bold mb-4 text-center">Our Automation Platform</h3>
-                    <div className="mk-stats-grid">
-                        {marketplaceStats.map((stat, index) => (
-                            <div key={index} className="mk-stat-card">
-                                <span className="mk-stat-number">{stat.number}</span>
-                                <span className="mk-stat-label">{stat.label}</span>
-                            </div>
-                        ))}
+                    <div className="mt-8" ref={statsRef}>
+                        <h3 className="text-xl font-bold mb-4 text-center">Our Automation Platform</h3>
+                        <div className="mk-stats-grid">
+                            {marketplaceStats.map((stat, index) => {
+                                // Only animate numeric stats
+                                if (stat.duration > 0) {
+                                    return (
+                                        <AnimatedStat
+                                            key={index}
+                                            number={stat.number}
+                                            label={stat.label}
+                                            duration={stat.duration}
+                                            shouldAnimate={shouldAnimateStats}
+                                        />
+                                    );
+                                }
+
+                                // Static stats (24/7, etc.)
+                                return (
+                                    <div key={index} className="mk-stat-card">
+                                        <span className="mk-stat-number">{stat.number}</span>
+                                        <span className="mk-stat-label">{stat.label}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-    
-                {/* IMPROVED: Featured Workflows */}
+
+                {/* VISUAL: How It Works Timeline */}
+                <div className="mk-glass-card" id="how-it-works">
+                    <h2 className="mk-section-title">How It Works — Simple 4-Step Process</h2>
+                    <div className="relative mt-8">
+                        {/* Timeline line */}
+                        <div className="hidden md:block absolute top-20 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 via-blue-500 to-green-500"></div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+                            {[
+                                { num: 1, emoji: '📞', title: 'Discovery Call', desc: '15-min consultation', color: 'teal' },
+                                { num: 2, emoji: '📋', title: 'Custom Proposal', desc: 'Detailed plan & timeline', color: 'blue' },
+                                { num: 3, emoji: '⚙️', title: 'Build & Test', desc: 'We develop, you approve', color: 'purple' },
+                                { num: 4, emoji: '🚀', title: 'Launch & Support', desc: 'Go live with training', color: 'green' }
+                            ].map((step, idx) => (
+                                <div key={idx} className="text-center">
+                                    <div className="relative mx-auto mb-6">
+                                        <div className={`w-32 h-32 mx-auto rounded-2xl ${darkMode ? `bg-gradient-to-br from-${step.color}-900 to-${step.color}-700` : `bg-gradient-to-br from-${step.color}-100 to-${step.color}-300`} flex items-center justify-center border-4 ${darkMode ? 'border-gray-900' : 'border-white'} shadow-xl`}>
+                                            <div className="text-5xl">{step.emoji}</div>
+                                        </div>
+                                        <div className={`absolute -top-2 -right-2 w-10 h-10 bg-${step.color}-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                                            {step.num}
+                                        </div>
+                                    </div>
+                                    <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                                    <p className="text-sm text-gray-400">{step.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Featured Workflows (kept as is but condensed) */}
                 <div className="mk-glass-card">
                     <h2 className="mk-section-title">Featured Workflows</h2>
-    
-                    {/* Visual Proof Coming Soon Notice */}
+
                     <div className={`p-4 rounded-lg mb-6 ${darkMode ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-200'} border`}>
                         <p className="text-sm">
-                            <strong>📸 Coming Soon:</strong> Live workflow screenshots and demo videos showing automation in action.
-                            <Link to="/agents" className="mk-highlight ml-1">View available workflows in marketplace →</Link>
+                            <strong>📸 Coming Soon:</strong> Live workflow screenshots and demo videos.
+                            <Link to="/agents" className="mk-highlight ml-1">View marketplace →</Link>
                         </p>
                     </div>
-    
-                    <p className="mk-muted mb-6">
-                        Explore our most popular automation workflows, designed to save time and streamline business operations:
-                    </p>
-    
+
                     {/* Workflow Carousel */}
                     <div className="mk-carousel-container">
                         <div className="mk-carousel-main">
@@ -476,16 +570,14 @@ const BusinessMediaKitPage = () => {
                                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${darkMode ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700'}`}>
                                                 {topWorkflows[currentWorkflow].category}
                                             </span>
-                                            <div className="flex items-center gap-1">
-                                                <span className={`px-2 py-1 rounded text-xs font-semibold ${darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700'}`}>
-                                                    {topWorkflows[currentWorkflow].rating}
-                                                </span>
-                                            </div>
+                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700'}`}>
+                                                {topWorkflows[currentWorkflow].rating}
+                                            </span>
                                         </div>
                                         <h3 className="mk-video-title">{topWorkflows[currentWorkflow].title}</h3>
                                         <p className="mk-video-description">{topWorkflows[currentWorkflow].description}</p>
                                     </div>
-    
+
                                     <div className={`mk-workflow-body ${darkMode ? 'bg-gray-700' : 'bg-white'} p-4`}>
                                         <div className="grid grid-cols-2 gap-4 mb-4">
                                             <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-600' : 'bg-gray-50'}`}>
@@ -499,7 +591,7 @@ const BusinessMediaKitPage = () => {
                                                 <div className="text-xs text-gray-500">in marketplace</div>
                                             </div>
                                         </div>
-    
+
                                         <div className="mb-4">
                                             <div className="text-sm font-semibold mb-2">Integrations:</div>
                                             <div className="flex flex-wrap gap-2">
@@ -510,18 +602,14 @@ const BusinessMediaKitPage = () => {
                                                 ))}
                                             </div>
                                         </div>
-    
-                                        <Link
-                                            to="/agents"
-                                            className="mk-btn-primary w-full text-center inline-block"
-                                        >
+
+                                        <Link to="/agents" className="mk-btn-primary w-full text-center inline-block">
                                             Browse All Workflows <FaArrowRight className="inline ml-2" />
                                         </Link>
                                     </div>
                                 </div>
                             </div>
-    
-                            {/* Navigation buttons */}
+
                             <button
                                 onClick={() => setCurrentWorkflow(prev => prev > 0 ? prev - 1 : topWorkflows.length - 1)}
                                 className="mk-carousel-btn mk-carousel-prev"
@@ -537,8 +625,7 @@ const BusinessMediaKitPage = () => {
                                 ›
                             </button>
                         </div>
-    
-                        {/* Thumbnail navigation */}
+
                         <div className="mk-carousel-thumbnails">
                             {topWorkflows.map((workflow, index) => (
                                 <button
@@ -553,13 +640,10 @@ const BusinessMediaKitPage = () => {
                         </div>
                     </div>
                 </div>
-    
-                {/* Performance Metrics */}
+
+                {/* Service Capabilities */}
                 <div className="mk-glass-card">
                     <h2 className="mk-section-title">Service Capabilities</h2>
-                    <p className="mk-muted mb-6 text-center">
-                        What you can expect when working with us:
-                    </p>
                     <div className="mk-dashboard-grid">
                         {performanceMetrics.map((metric, index) => (
                             <div key={index} className="mk-metric-card">
@@ -569,98 +653,60 @@ const BusinessMediaKitPage = () => {
                             </div>
                         ))}
                     </div>
-    
-                    <div className={`mk-text mt-6 p-4 rounded-lg ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                        <strong>Note on Time Savings:</strong> Estimated time savings are based on typical use cases and will vary depending on
-                        your specific processes, complexity, and implementation. We recommend starting with pilot workflows to measure actual impact
-                        for your business.
-                    </div>
                 </div>
-    
-                {/* Social Media & Content Automation Feature */}
+
+                {/* Social Media Automation - Visual Cards */}
                 <div className="mk-glass-card">
-                    <h2 className="mk-section-title">🤖 AI-Powered Social Media & Content Automation</h2>
+                    <h2 className="mk-section-title">🤖 AI-Powered Social Media Automation</h2>
                     <p className="mk-muted mb-6 text-center">
-                        Our specialized AI Agentic workflows transform content creation from a time-consuming manual process into a fully automated,
-                        hands-off operation. Here's what you can automate:
+                        Complete content automation—from creation to posting to lead capture
                     </p>
-    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all`}>
-                            <div className="text-3xl mb-3">🎬</div>
-                            <h3 className="font-bold text-lg mb-2">Video Creation Automation</h3>
-                            <ul className="text-sm space-y-2 text-gray-400">
-                                <li>✓ AI-generated video scripts based on market research</li>
-                                <li>✓ Automatic video generation with Sora 2, Veo 3.1, and more</li>
-                                <li>✓ Runs while you sleep—24/7 autonomous workflow execution</li>
-                                <li>✓ Multi-platform video format optimization</li>
-                            </ul>
-                        </div>
-    
-                        <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all`}>
-                            <div className="text-3xl mb-3">🎨</div>
-                            <h3 className="font-bold text-lg mb-2">Content Asset Generation</h3>
-                            <ul className="text-sm space-y-2 text-gray-400">
-                                <li>✓ AI-powered thumbnail creation</li>
-                                <li>✓ Automatic description generation optimized for each platform</li>
-                                <li>✓ Hashtag research and suggestion</li>
-                                <li>✓ Brand-consistent styling across all assets</li>
-                            </ul>
-                        </div>
-    
-                        <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all`}>
-                            <div className="text-3xl mb-3">📱</div>
-                            <h3 className="font-bold text-lg mb-2">Automated Posting & Distribution</h3>
-                            <ul className="text-sm space-y-2 text-gray-400">
-                                <li>✓ Schedule posts across TikTok, Instagram, YouTube, LinkedIn</li>
-                                <li>✓ Optimal posting time optimization per platform</li>
-                                <li>✓ Cross-platform content adaptation</li>
-                                <li>✓ Automatic posting while you sleep</li>
-                            </ul>
-                        </div>
-    
-                        <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all`}>
-                            <div className="text-3xl mb-3">💬</div>
-                            <h3 className="font-bold text-lg mb-2">Engagement & Lead Capture</h3>
-                            <ul className="text-sm space-y-2 text-gray-400">
-                                <li>✓ Comment-to-DM automated workflows</li>
-                                <li>✓ Lead qualification and routing</li>
-                                <li>✓ Automated follow-up sequences</li>
-                                <li>✓ Engagement analytics and reporting</li>
-                            </ul>
-                        </div>
-                    </div>
-    
-                    <div className={`p-5 rounded-lg ${darkMode ? 'bg-teal-900/30' : 'bg-teal-50'} border-2 ${darkMode ? 'border-teal-700' : 'border-teal-300'}`}>
-                        <p className="text-sm">
-                            <strong>💡 The Complete Automation Loop:</strong> From market research → script generation → AI video creation (Sora 2, Veo 3.1)
-                            → thumbnail & description generation → scheduled posting → comment engagement → lead capture → CRM integration.
-                            All running autonomously, all while you focus on growing your business.
-                        </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                            { emoji: '🎬', title: 'Video Creation', items: ['AI scripts', 'Sora 2/Veo 3.1', '24/7 execution', 'Multi-platform'] },
+                            { emoji: '🎨', title: 'Asset Generation', items: ['AI thumbnails', 'Auto descriptions', 'Hashtag research', 'Brand styling'] },
+                            { emoji: '📱', title: 'Auto Posting', items: ['TikTok, IG, YouTube', 'Optimal timing', 'Cross-platform', 'While you sleep'] },
+                            { emoji: '💬', title: 'Lead Capture', items: ['Comment-to-DM', 'Lead routing', 'Auto follow-ups', 'CRM integration'] }
+                        ].map((card, idx) => (
+                            <div key={idx} className={`p-5 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-teal-500 transition-all transform hover:-translate-y-1`}>
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="text-4xl">{card.emoji}</div>
+                                    <h3 className="font-bold text-lg">{card.title}</h3>
+                                </div>
+                                <ul className="text-sm space-y-1 text-gray-400">
+                                    {card.items.map((item, i) => (
+                                        <li key={i}>✓ {item}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
                     </div>
                 </div>
-    
+
                 {/* Integration Capabilities */}
                 <div className="mk-glass-card">
-                    <h2 className="mk-section-title">Integration Capabilities</h2>
-                    <p className="mk-muted mb-6 text-center">
-                        Our workflows integrate with 200+ popular business tools and platforms, including the latest AI video generation models:
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <h2 className="mk-section-title">200+ Integration Capabilities</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {integrations.map((integration, index) => (
                             <div key={index} className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:border-blue-500 transition-all`}>
                                 <div className="flex items-center justify-between mb-2">
-                                    <h3 className="font-semibold text-lg">{integration.name}</h3>
+                                    <h3 className="font-semibold">{integration.name}</h3>
                                     <span className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700'}`}>
-                                        {integration.count} apps
+                                        {integration.count}
                                     </span>
                                 </div>
                                 <div className="flex flex-wrap gap-1 mt-2">
-                                    {integration.examples.map((example, idx) => (
+                                    {integration.examples.slice(0, 3).map((example, idx) => (
                                         <span key={idx} className={`px-2 py-0.5 rounded text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-600'}`}>
                                             {example}
                                         </span>
                                     ))}
+                                    {integration.examples.length > 3 && (
+                                        <span className={`px-2 py-0.5 rounded text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-600'}`}>
+                                            +{integration.examples.length - 3}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -668,36 +714,31 @@ const BusinessMediaKitPage = () => {
                 </div>
 
                 {/* Business Service Packages */}
-                {/* Business Service Packages */}
                 <div className="mk-glass-card">
                     <h2 className="mk-section-title">Business Service Packages</h2>
 
                     {/* Real AI Efficiency Data */}
                     <div className={`p-6 rounded-lg mb-6 ${darkMode ? 'bg-gradient-to-br from-teal-900/40 to-blue-900/40 border-teal-700/50' : 'bg-gradient-to-br from-teal-50 to-blue-50 border-teal-200'} border-2`}>
-                        <h3 className="font-bold text-xl mb-3 flex items-center gap-2">
-                            📊 Real AI Automation Impact (Industry Data)
-                        </h3>
+                        <h3 className="font-bold text-xl mb-3">📊 Real AI Automation Impact (Industry Data)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800/50' : 'bg-white/80'}`}>
                                 <div className="text-3xl font-bold text-teal-400">30-70%</div>
                                 <div className="text-sm mt-1">Productivity increase</div>
-                                <div className="text-xs text-gray-400 mt-1">Source: McKinsey Global Institute</div>
+                                <div className="text-xs text-gray-400 mt-1">McKinsey Global Institute</div>
                             </div>
                             <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800/50' : 'bg-white/80'}`}>
                                 <div className="text-3xl font-bold text-blue-400">15-30 hrs</div>
                                 <div className="text-sm mt-1">Saved per employee/week</div>
-                                <div className="text-xs text-gray-400 mt-1">Source: Harvard Business Review</div>
+                                <div className="text-xs text-gray-400 mt-1">Harvard Business Review</div>
                             </div>
                             <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800/50' : 'bg-white/80'}`}>
                                 <div className="text-3xl font-bold text-purple-400">50-80%</div>
-                                <div className="text-sm mt-1">Reduction in task time</div>
-                                <div className="text-xs text-gray-400 mt-1">Source: Gartner Research</div>
+                                <div className="text-sm mt-1">Task time reduction</div>
+                                <div className="text-xs text-gray-400 mt-1">Gartner Research</div>
                             </div>
                         </div>
                         <p className="text-sm">
-                            <strong>Real-World Impact:</strong> Businesses implementing AI workflow automation report average time savings of
-                            20-25 hours per employee per week on repetitive tasks. For a team of 10 people, that's <span className="font-bold text-teal-400">200-250 hours
-                                saved weekly</span>, equivalent to hiring 5-6 additional full-time employees—without the salary costs.
+                            <strong>Real-World Impact:</strong> For a team of 10 people, that's <span className="font-bold text-teal-400">200-250 hours saved weekly</span>—equivalent to 5-6 full-time employees without salary costs.
                         </p>
                     </div>
 
@@ -706,68 +747,44 @@ const BusinessMediaKitPage = () => {
                         <div className="flex items-start gap-3 mb-4">
                             <div className="text-3xl">💡</div>
                             <div>
-                                <h3 className="font-bold text-xl mb-2">Understanding Intro vs. Standard Pricing</h3>
-                                <p className="text-sm opacity-90 mb-4">
-                                    We're offering limited-time introductory rates while building our business automation case study portfolio.
-                                </p>
+                                <h3 className="font-bold text-xl mb-2">Intro vs. Standard Pricing</h3>
+                                <p className="text-sm opacity-90">Limited-time introductory rates while building our portfolio.</p>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800/50 border-green-600/50' : 'bg-white/80 border-green-300'} border-2`}>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${darkMode ? 'bg-green-600' : 'bg-green-500 text-white'}`}>
-                                        INTRO PRICING
-                                    </span>
-                                </div>
-                                <div className="text-2xl font-bold mb-2 text-green-400">€997 - €9,997</div>
-                                <div className="text-sm space-y-2">
-                                    <p><strong>Who:</strong> First 50 businesses</p>
-                                    <p><strong>Why:</strong> Help us build proven case studies</p>
-                                    <p><strong>Benefit:</strong> Same service, reduced investment</p>
-                                    <p className="text-xs text-green-400 font-semibold">⚡ Limited availability</p>
-                                </div>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${darkMode ? 'bg-green-600' : 'bg-green-500 text-white'}`}>
+                                    INTRO PRICING
+                                </span>
+                                <div className="text-2xl font-bold my-2 text-green-400">€997 - €9,997</div>
+                                <p className="text-xs text-green-400 font-semibold">⚡ First 50 businesses</p>
                             </div>
 
                             <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800/50 border-blue-600/50' : 'bg-white/80 border-blue-300'} border-2`}>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${darkMode ? 'bg-blue-600' : 'bg-blue-500 text-white'}`}>
-                                        STANDARD PRICING
-                                    </span>
-                                </div>
-                                <div className="text-2xl font-bold mb-2 text-blue-400">€1,497 - €12,997</div>
-                                <div className="text-sm space-y-2">
-                                    <p><strong>When:</strong> After portfolio completion</p>
-                                    <p><strong>Same:</strong> Deliverables, support, guarantees</p>
-                                    <p><strong>Value:</strong> Regular market rate</p>
-                                    <p className="text-xs text-blue-400 font-semibold">📅 Coming soon</p>
-                                </div>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${darkMode ? 'bg-blue-600' : 'bg-blue-500 text-white'}`}>
+                                    STANDARD PRICING
+                                </span>
+                                <div className="text-2xl font-bold my-2 text-blue-400">€1,497 - €12,997</div>
+                                <p className="text-xs text-blue-400 font-semibold">📅 After portfolio completion</p>
                             </div>
                         </div>
 
                         <div className={`p-3 rounded-lg ${darkMode ? 'bg-amber-800/30' : 'bg-amber-100'} text-center`}>
                             <p className="text-sm font-semibold">
-                                🔥 <span className="text-amber-400">Lock in intro pricing now</span> - Save up to €3,000 per package
+                                🔥 Save up to €3,000 per package with intro pricing
                             </p>
                         </div>
                     </div>
 
-                    <p className="mk-muted mb-6 text-center">
-                        Choose the package that best fits your business needs. All packages include setup, training, and support.
-                    </p>
-
-                    {/* ACTUAL PACKAGE CARDS - THIS WAS MISSING */}
+                    {/* Package Cards */}
                     <div className="space-y-6">
                         {businessPackages.map((pkg, index) => (
                             <div key={index} className="mk-package-card">
                                 <div className="mk-package-title">{pkg.name}</div>
                                 <div className="mk-package-subtitle text-lg mb-2">{pkg.subtitle}</div>
                                 <div className="mk-package-price">
-                                    {pkg.intro ? (
-                                        <>Standard: {pkg.price} | <span className="mk-highlight">Intro: {pkg.intro}</span></>
-                                    ) : (
-                                        pkg.price
-                                    )}
+                                    Standard: {pkg.price} | <span className="mk-highlight">Intro: {pkg.intro}</span>
                                 </div>
                                 <div className="mk-package-details mb-4">{pkg.description}</div>
 
@@ -791,7 +808,7 @@ const BusinessMediaKitPage = () => {
                         ))}
                     </div>
 
-                    {/* CTA to Quote Wizard */}
+                    {/* CTA */}
                     <div className="text-center my-6">
                         <button
                             onClick={() => {
@@ -800,132 +817,59 @@ const BusinessMediaKitPage = () => {
                             className="mk-btn-primary"
                             style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}
                         >
-                            Not Sure Which Package? Get Custom Quote →
+                            Get Custom Quote →
                         </button>
-                        <p className="mk-muted mt-2 text-sm">We'll help you choose the best fit for your business</p>
+                        <p className="mk-muted mt-2 text-sm">We'll help you choose the best fit</p>
                     </div>
 
-                    {/* Risk Reversal */}
+                    {/* Guarantee */}
                     <div className="mk-text mt-6 p-4 bg-gradient-to-r from-green-500 from-opacity-20 to-blue-500 to-opacity-20 rounded-lg border border-white border-opacity-20">
                         <div className="text-center">
                             <div className="text-xl font-bold mb-2"><FaShieldAlt className="inline mr-2" />Money-Back Guarantee</div>
-                            <div>Not satisfied with results? Get a full refund within the guarantee period (30-90 days depending on package), no questions asked. We'll over-deliver to earn your testimonial.</div>
+                            <div>Not satisfied? Full refund within 30-90 days (depending on package), no questions asked.</div>
                         </div>
                     </div>
                 </div>
 
-                {/* NEW SECTION: How It Works - ADD AFTER PACKAGES */}
-                <div className="mk-glass-card">
-                    <h2 className="mk-section-title">How It Works — Simple 4-Step Process</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div className="text-center">
-                            <div className={`w-16 h-16 rounded-full ${darkMode ? 'bg-teal-600' : 'bg-teal-500'} text-white flex items-center justify-center text-2xl font-bold mx-auto mb-3`}>
-                                1
-                            </div>
-                            <h3 className="font-bold mb-2">Discovery Call</h3>
-                            <p className="text-sm text-gray-400">15-30 min consultation to understand your processes and goals</p>
-                        </div>
-
-                        <div className="text-center">
-                            <div className={`w-16 h-16 rounded-full ${darkMode ? 'bg-blue-600' : 'bg-blue-500'} text-white flex items-center justify-center text-2xl font-bold mx-auto mb-3`}>
-                                2
-                            </div>
-                            <h3 className="font-bold mb-2">Custom Proposal</h3>
-                            <p className="text-sm text-gray-400">Detailed workflow plan with timeline and exact deliverables</p>
-                        </div>
-
-                        <div className="text-center">
-                            <div className={`w-16 h-16 rounded-full ${darkMode ? 'bg-purple-600' : 'bg-purple-500'} text-white flex items-center justify-center text-2xl font-bold mx-auto mb-3`}>
-                                3
-                            </div>
-                            <h3 className="font-bold mb-2">Build & Test</h3>
-                            <p className="text-sm text-gray-400">We develop workflows, you provide feedback, we refine until perfect</p>
-                        </div>
-
-                        <div className="text-center">
-                            <div className={`w-16 h-16 rounded-full ${darkMode ? 'bg-green-600' : 'bg-green-500'} text-white flex items-center justify-center text-2xl font-bold mx-auto mb-3`}>
-                                4
-                            </div>
-                            <h3 className="font-bold mb-2">Launch & Support</h3>
-                            <p className="text-sm text-gray-400">Go live with full training and ongoing support included</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* NEW SECTION: Why Choose Us - ADD BEFORE QUOTE WIZARD */}
+                {/* Why Choose Us */}
                 <div className="mk-glass-card">
                     <h2 className="mk-section-title">Why Choose AI Waverider?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <div className="flex items-start gap-3">
-                                <div className="text-3xl">🚀</div>
-                                <div>
-                                    <h3 className="font-bold text-lg mb-2">Fast Implementation</h3>
-                                    <p className="text-sm text-gray-400">Most workflows live within 1-2 weeks. No months-long "discovery phases" or enterprise bloat.</p>
+                        {[
+                            { icon: '🚀', title: 'Fast Implementation', desc: 'Live within 1-2 weeks. No months-long "discovery phases"' },
+                            { icon: '💰', title: 'Transparent Pricing', desc: 'Fixed-price packages. You know exactly what you\'re paying' },
+                            { icon: '🛡️', title: 'Zero Risk', desc: '30-90 day money-back guarantee. If it doesn\'t work, you don\'t pay' },
+                            { icon: '🎯', title: 'Custom Built', desc: 'Not templates. Each workflow tailored to your specific needs' }
+                        ].map((item, idx) => (
+                            <div key={idx} className={`p-5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <div className="flex items-start gap-3">
+                                    <div className="text-3xl">{item.icon}</div>
+                                    <div>
+                                        <h3 className="font-bold text-lg mb-2">{item.title}</h3>
+                                        <p className="text-sm text-gray-400">{item.desc}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <div className="flex items-start gap-3">
-                                <div className="text-3xl">💰</div>
-                                <div>
-                                    <h3 className="font-bold text-lg mb-2">Transparent Pricing</h3>
-                                    <p className="text-sm text-gray-400">Fixed-price packages, no hidden fees. You know exactly what you're paying before we start.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <div className="flex items-start gap-3">
-                                <div className="text-3xl">🛡️</div>
-                                <div>
-                                    <h3 className="font-bold text-lg mb-2">Zero Risk</h3>
-                                    <p className="text-sm text-gray-400">30-90 day money-back guarantee on all packages. If it doesn't work, you don't pay.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className={`p-5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <div className="flex items-start gap-3">
-                                <div className="text-3xl">🎯</div>
-                                <div>
-                                    <h3 className="font-bold text-lg mb-2">Custom Built</h3>
-                                    <p className="text-sm text-gray-400">Not cookie-cutter templates. Each workflow tailored specifically to your processes and tools.</p>
-                                </div>
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
 
-                {/* NEW SECTION: Common Questions - ADD BEFORE QUOTE WIZARD */}
+                {/* FAQ */}
                 <div className="mk-glass-card">
                     <h2 className="mk-section-title">Common Questions</h2>
                     <div className="space-y-4">
-                        <details className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <summary className="font-semibold cursor-pointer">How long until I see time savings?</summary>
-                            <p className="mt-2 text-sm text-gray-400">Most clients see immediate impact once workflows go live (1-2 weeks). Full optimization typically takes 30-60 days as we refine based on usage.</p>
-                        </details>
-
-                        <details className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <summary className="font-semibold cursor-pointer">What if my team isn't technical?</summary>
-                            <p className="mt-2 text-sm text-gray-400">That's exactly who we built this for. We handle all the technical complexity. Your team just uses the workflows through simple interfaces—no coding required.</p>
-                        </details>
-
-                        <details className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <summary className="font-semibold cursor-pointer">Can workflows be modified after launch?</summary>
-                            <p className="mt-2 text-sm text-gray-400">Absolutely. All packages include optimization period. Enterprise and Retainer packages include ongoing modifications as your needs evolve.</p>
-                        </details>
-
-                        <details className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <summary className="font-semibold cursor-pointer">What happens if something breaks?</summary>
-                            <p className="mt-2 text-sm text-gray-400">All packages include support period. We monitor workflows, fix issues quickly, and provide documentation for common troubleshooting. Enterprise gets 24/7 monitoring.</p>
-                        </details>
-
-                        <details className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <summary className="font-semibold cursor-pointer">Do I need to buy N8N licenses?</summary>
-                            <p className="mt-2 text-sm text-gray-400">N8N has a generous free tier for small teams. For larger deployments, licensing costs are separate (~€20-50/month depending on scale). We'll advise on the best option for your needs.</p>
-                        </details>
+                        {[
+                            { q: 'How long until I see time savings?', a: 'Most clients see immediate impact once workflows go live (1-2 weeks). Full optimization takes 30-60 days.' },
+                            { q: 'What if my team isn\'t technical?', a: 'We handle all technical complexity. Your team uses simple interfaces—no coding required.' },
+                            { q: 'Can workflows be modified after launch?', a: 'Yes. All packages include optimization. Enterprise/Retainer packages include ongoing modifications.' },
+                            { q: 'What happens if something breaks?', a: 'All packages include support. We monitor, fix issues quickly, and provide documentation. Enterprise gets 24/7 monitoring.' },
+                            { q: 'Do I need to buy N8N licenses?', a: 'N8N has a free tier for small teams. Larger deployments cost ~€20-50/month. We\'ll advise on the best option.' }
+                        ].map((item, idx) => (
+                            <details key={idx} className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <summary className="font-semibold cursor-pointer">{item.q}</summary>
+                                <p className="mt-2 text-sm text-gray-400">{item.a}</p>
+                            </details>
+                        ))}
                     </div>
                 </div>
 
@@ -938,83 +882,61 @@ const BusinessMediaKitPage = () => {
                 <div className="mk-glass-card text-center">
                     <h2 className="mk-section-title">Ready to Automate Your Business?</h2>
                     <p className="mk-text mb-6">
-                        Get in touch to discuss your automation needs, explore custom workflows, or get a personalized quote.
+                        Get in touch to discuss your automation needs or get a personalized quote.
                     </p>
 
-                    {/* Trust signals */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div className="mk-stat-card">
-                            <span className="mk-stat-number text-lg">200+</span>
-                            <span className="mk-stat-label">Integrations</span>
-                        </div>
-                        <div className="mk-stat-card">
-                            <span className="mk-stat-number text-lg">&lt; 24h</span>
-                            <span className="mk-stat-label">Setup Time</span>
-                        </div>
-                        <div className="mk-stat-card">
-                            <span className="mk-stat-number text-lg">24/7</span>
-                            <span className="mk-stat-label">Automation</span>
-                        </div>
-                        <div className="mk-stat-card">
-                            <span className="mk-stat-number text-lg">100%</span>
-                            <span className="mk-stat-label">Money-Back Guarantee</span>
-                        </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        {[
+                            { num: '200+', label: 'Integrations' },
+                            { num: '< 24h', label: 'Setup' },
+                            { num: '24/7', label: 'Automation' },
+                            { num: '100%', label: 'Money-Back' }
+                        ].map((stat, idx) => (
+                            <div key={idx} className="mk-stat-card">
+                                <span className="mk-stat-number text-lg">{stat.num}</span>
+                                <span className="mk-stat-label">{stat.label}</span>
+                            </div>
+                        ))}
                     </div>
 
-                    <div className="mk-button-group justify-center flex-wrap">
+                    <div className="flex gap-4 justify-center flex-wrap">
                         <button
                             className="mk-btn-primary"
-                            onClick={() => window.location.href = 'mailto:support@aiwaverider.com?subject=Business Automation Inquiry&body=Hi AI Waverider team,%0D%0A%0D%0AI\'m interested in your automation services. Here are my details:%0D%0A%0D%0ACompany: %0D%0AIndustry: %0D%0ATeam Size: %0D%0ACurrent Challenges: %0D%0ABudget Range: %0D%0ATimeline: %0D%0A%0D%0ALooking forward to discussing how automation can help!'}
+                            onClick={() => window.location.href = 'mailto:support@aiwaverider.com?subject=Business Automation Inquiry&body=Hi AI Waverider team,%0D%0A%0D%0AI\'m interested in your automation services. Here are my details:%0D%0A%0D%0ACompany: %0D%0AIndustry: %0D%0ATeam Size: %0D%0ACurrent Challenges: %0D%0ABudget Range: %0D%0ATimeline: %0D%0A%0D%0ALooking forward to discussing!'}
                         >
                             <FaFileAlt className="inline mr-2" />
-                            Contact for Business Quote
+                            Contact for Quote
                         </button>
                         <button onClick={copyEmailBlock} className="mk-btn-secondary">
                             <FaDownload className="inline mr-2" />
-                            Copy Packages for Email
+                            Copy Packages
                         </button>
                         <Link to="/agents" className="mk-btn-secondary">
                             <FaNetworkWired className="inline mr-2" />
-                            Browse Workflow Marketplace
+                            Browse Workflows
                         </Link>
                     </div>
 
                     <div className="mk-text mt-4 text-sm opacity-75">
-                        🔒 Your information is secure and never shared with third parties
+                        🔒 Your information is secure and never shared
                     </div>
                 </div>
 
                 {/* Contact & Terms */}
                 <div className="mk-glass-card">
                     <h2 className="mk-section-title">Contact & Service Terms</h2>
-                    <div className="mk-text space-y-4">
+                    <div className="mk-text space-y-4 text-sm">
                         <div>
-                            <strong>Payment Structure:</strong><br />
-                            • 50% deposit to begin development<br />
-                            • Remaining 50% due on delivery<br />
-                            • Monthly retainers billed at start of month
+                            <strong>Payment:</strong> 50% deposit to start • Remaining 50% on delivery • Monthly retainers billed at start of month
                         </div>
-
                         <div>
-                            <strong>Implementation Timeline:</strong><br />
-                            • Starter Package: 3-5 business days<br />
-                            • Professional Package: 1-2 weeks<br />
-                            • Enterprise Package: 2-4 weeks<br />
-                            • Rush delivery available (add-on)
+                            <strong>Timeline:</strong> Starter (3-5 days) • Professional (1-2 weeks) • Enterprise (2-4 weeks) • Rush available
                         </div>
-
                         <div>
-                            <strong>Support & Maintenance:</strong><br />
-                            • Email support included in all packages<br />
-                            • Priority support for Professional & Enterprise<br />
-                            • Monthly maintenance plans available
+                            <strong>Support:</strong> Email support included • Priority support for Pro & Enterprise • Maintenance plans available
                         </div>
-
                         <div>
-                            <strong>Contact:</strong><br />
-                            • Email: support@aiwaverider.com<br />
-                            • Response time: Within 4 hours (business days)<br />
-                            • Consultation: <a href="https://calendly.com/aiwaverider8/30min" target="_blank" rel="noopener noreferrer" className="mk-highlight">Schedule a call</a>
+                            <strong>Contact:</strong> support@aiwaverider.com • Response: Within 4 hours • <a href="https://calendly.com/aiwaverider8/30min" target="_blank" rel="noopener noreferrer" className="mk-highlight">Schedule a call</a>
                         </div>
                     </div>
                 </div>
